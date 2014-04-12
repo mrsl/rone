@@ -1,3 +1,3 @@
-[submodule "roneLibs"]
-	path = roneLibs
+[submodule "roneLib"]
+	path = roneLib
 	url = https://github.com/mrsl/roneLibs.git
