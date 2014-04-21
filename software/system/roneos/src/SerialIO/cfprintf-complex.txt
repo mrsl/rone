@@ -1,0 +1,204 @@
+/*******************************************************************
+ *
+ *    Description:
+ *
+ *    Author: James McLurkin, copyright iRobot 2001
+ *
+ *    History:
+ *
+ *******************************************************************/
+
+/******** Include Files ********/
+#include <string.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <stdarg.h>
+
+#include "FreeRTOS.h"
+#include "Task.h"
+#include "queue.h"
+#include "semphr.h"
+
+#include "roneos.h"
+
+/******** Defines ********/
+#define cfprintf_TEXT_STRING_SIZE			256
+
+#define CFPRINTF_MESSAGE_SIZE				3
+#define CFPRINTF_MESSAGE_DISPLAY_IDX		0
+#define CFPRINTF_MESSAGE_FORMAT_IDX			1
+#define CFPRINTF_MESSAGE_ARGS_IDX			2
+
+#define CFPRINTF_CRLF_LF					0
+#define CFPRINTF_CRLF_CR					1
+#define CFPRINTF_CRLF_CRLF					2
+#define CFPRINTF_CRLF_LFCR					3
+
+#define CFPRINTF_STDOUT	0
+#define CFPRINTF_STDERR	1
+
+/******** Variables ********/
+static osSemaphoreHandle cfprintfMutex;
+static osSemaphoreHandle cfprintfFinishedSemaphore;
+static osQueueHandle cfprintfQueue;
+boolean cfPrintfThreadRunning = FALSE;
+uint8 CRLFMode;
+
+char cfprintfRaw_outString[cfprintf_TEXT_STRING_SIZE];
+//char outStringFormattedRemote[cfprintf_TEXT_STRING_SIZE];
+//uint16 outStringFormattedRemoteLength = 0;
+
+
+/******** Functions ********/
+
+
+/** The main printing routine. */
+
+//void cfprintfRaw(void* displaySpec, char* format, va_list arguments) {
+void cfprintfRaw(void* displaySpec, char* format, va_list arguments) {
+	int32 potentialChars;
+	boolean textStringOverRunError = FALSE;
+	char* charPtr;
+
+	//remove below this line
+//	uint16 j;
+//    uint16 formattedLength = 0;
+
+	/* Process the input string and store the output in the 'outStringFormatted' */
+	/* note that vsnprintf returns the number of characters that would have been
+     * written to the buffer if it were large enough. */
+	potentialChars = vsnprintf(cfprintfRaw_outString, cfprintf_TEXT_STRING_SIZE, format, arguments);
+    if (potentialChars > (cfprintf_TEXT_STRING_SIZE - 1)) {
+		textStringOverRunError = TRUE;
+    }
+
+	charPtr = cfprintfRaw_outString;
+	while (*charPtr != '\0') {
+		if (*charPtr == '\n') {
+			/* change '\n' into current CRLF mode */
+			switch (CRLFMode) {
+			case CFPRINTF_CRLF_LF:
+				sputchar('\n');
+			break;
+			case CFPRINTF_CRLF_CR:
+				sputchar('\r');
+			break;
+			case CFPRINTF_CRLF_CRLF:
+				sputchar('\r');
+				sputchar('\n');
+			break;
+			case CFPRINTF_CRLF_LFCR:
+				sputchar('\n');
+				sputchar('\r');
+			break;
+			default:
+				sputchar('\n');
+			break;
+			}
+		} else {
+			sputchar(*charPtr);
+			//terminalTextColor(colorAttr);
+		}
+		charPtr++;
+	}
+
+//    if (textStringOverRunError) {
+//		terminalTextColor(TEXT_COLOR_ERROR);
+//		printString(COMTerminal, "cfprintf text string overflow\n");
+//	}
+
+    //TODO buffer string to print to the remote terminal
+}
+
+//uint32 cfprintfMutexGet(void) {
+//	return tx_mutex_get(&cfprintfMutex, TX_WAIT_FOREVER);
+//}
+//
+//uint32 cfprintfMutexPut(void) {
+//	return tx_mutex_put(&cfprintfMutex);
+//}
+
+//void* displaySpec, char* format, va_list arguments
+
+//void cfprintfSendMessage(void * displaySpec, char* format, va_list arguments) {
+void cfprintfSendMessage(void * displaySpec, char* format, va_list arguments) {
+	void * cfprintfMessage[CFPRINTF_MESSAGE_SIZE];
+
+	cfprintfMessage[CFPRINTF_MESSAGE_DISPLAY_IDX] = displaySpec;
+	cfprintfMessage[CFPRINTF_MESSAGE_FORMAT_IDX] = format;
+	cfprintfMessage[CFPRINTF_MESSAGE_ARGS_IDX] = arguments;
+
+	if (cfPrintfThreadRunning) {
+		osSemaphoreTake(cfprintfMutex, portMAX_DELAY);
+		osQueueSend(cfprintfQueue, cfprintfMessage, 0);
+		/*	Now we need to halt this thread so that this function's stack frame will remain
+			visible to the cfprintf thread that actually does the printing. */
+		osSemaphoreTake(cfprintfFinishedSemaphore, portMAX_DELAY);
+		osSemaphoreGive(cfprintfMutex);
+	}
+	else {
+		cfprintfRaw(displaySpec, format, arguments);
+	}
+}
+
+
+void cfprintf(void * displaySpec, char *format, ...) {
+    va_list arguments;
+
+    va_start(arguments, format);
+	cfprintfSendMessage(displaySpec, format, arguments);
+    va_end(arguments);
+}
+
+
+void cprintf(char *format, ...) {
+    va_list arguments;
+
+    va_start(arguments, format);
+	cfprintfSendMessage(CFPRINTF_STDOUT, format, arguments);
+    va_end(arguments);
+}
+
+
+//void cvfprintf(void * displaySpec, const char * format, va_list arguments) {
+//	cfprintfSendMessage(displaySpec, (void *)format, arguments, 0);
+//}
+
+
+//void cfprintfFlush(void* displaySpec) {
+//	if (displaySpec == CONSOLE) {
+//        displaySpec = COMTerminal;
+//	}
+//    //TODO hack.  I don't know why this doesn't work until after threadX init
+//    if (threadXInit) {
+//        sputcharFlush(displaySpec);
+//    }
+//}
+
+void cfprintfThread(uint32 inputVal) {
+	void * cfprintfMessage[CFPRINTF_MESSAGE_SIZE];
+	void * displaySpec;
+	void * format;
+	void * arguments;
+
+	while (TRUE) {
+		osQueueReceive(cfprintfQueue, cfprintfMessage, portMAX_DELAY);
+		displaySpec = cfprintfMessage[CFPRINTF_MESSAGE_DISPLAY_IDX];
+		format = cfprintfMessage[CFPRINTF_MESSAGE_FORMAT_IDX];
+		arguments = cfprintfMessage[CFPRINTF_MESSAGE_ARGS_IDX];
+		cfprintfRaw(displaySpec, (char *)format, arguments);
+		osSemaphoreGive(cfprintfFinishedSemaphore);
+	}
+}
+
+#define cfprintfThread_PRIORITY	4
+
+void cfprintfInit(void) {
+	CRLFMode = CFPRINTF_CRLF_LF;
+	cfprintfMutex = osSemaphoreCreateMutex();
+	cfprintfFinishedSemaphore = osSemaphoreCreateCounting(1, 0);
+	cfprintfQueue = osQueueCreate(1, sizeof(void*) * CFPRINTF_MESSAGE_SIZE);
+	osTaskCreate(cfprintfThread, "cfprintf", 1024, NULL, cfprintfThread_PRIORITY );
+	cfPrintfThreadRunning = TRUE;
+}
+

@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require "pp"
+File.new((ARGV[1] or "rubyisfunlol.h"), "w") << ((File.new(ARGV[0], "r").read.gsub(/\n|\r|\r\n/, " ").gsub(/(\[[\w\s\-\.]*\])?/, "").gsub(/(?<d1>\d+)\s(?<d2>\d+)/, '\k<d1> | \k<d2>').gsub(/(?<group>\d+\s[A-Za-z\s\-_\+])/, '||\k<group>').scan(/\|\|\d+[A-Za-z\s\-_]+\d*?\s\([\d\D\s\-_]*?\)|\|\|\d+[A-Za-z\s\-_]+\d*?\s/).map { |elt| elt.gsub(/\|/, "").strip }).map {|elt| "#define #{elt.slice((elt.match(/\d+\s/).to_a.first.length)..elt.length).upcase.gsub(/[\[\]\}\{\(\)\s\+\-]+/,'_').gsub(/\A_|_\Z/,"")} (#{elt.match(/\d/).to_a.first})" }).join("\n") + "\n"

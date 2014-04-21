@@ -1,0 +1,48 @@
+/**
+@mainpage
+
+@section overview Overview
+The r-one robots are designed by the Multi-Robotic Systems Lab at Rice University
+
+ http://mrsl.rice.edu/
+ 
+ @subsection stack Software stack
+ The code base is designed to be extensible, with a three-layer software stack: 
+ 
+@li [Applications  (i.e.  @c SensorTest,  @c SuperDemo)                           ]
+@li [ @c ronelib      (basic behaviors that will be used to make other code) ]
+@li [ @c roneos       (hardware, sensors, actuators, system-level code)      ]
+ 
+ @subsection includes Included in roneos:
+ 
+@li @c Audio 
+@li @c InputOutput  
+@li @c IR_Comms
+@li @c Motors
+@li @c Sensors
+@li @c Serial IO
+@li @c System
+ 
+ 
+ @subsection navigation Complete Functions List
+ A complete list of functions in roneos can be found [here].
+ [here]: http://www.clear.rice.edu/comp551/rone_api/roneos/globals_func.html "Complete Index of roneos Functions"
+ 
+ @subsection specs R-One Specifications
+ @image html RoneWithCalloutsSm.jpg
+ 
+ @subsection definitions R-one Vocabulary
+ @image html BearingOrientationPic.png "r-one Bearing, Orientation, and Range"
+ The blue lines projecting from robot a (also colored blue) establish the robot's <b> local 
+ coordinate system </b>. The x and y axis are labeled.
+ 
+ @b Range is indicated by the thick black line between robot a and robot b. At this point, 
+ r-one robots do not have range measuring capabilities.
+ 
+ @b Orientation is measured from a robot's @b heading, indicated by the line inside the robot 
+ circle, to the point on the neighboring robot where range would be measured.
+ 
+ @b Bearing is measured from a robot's x axis to the point on the neighboring robot
+ where range would be measured.
+
+*/

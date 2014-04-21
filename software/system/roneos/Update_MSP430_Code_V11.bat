@@ -1,0 +1,1 @@
+"./../../../430code/MSP430_TI-TXT_to_C_Converter.py" "./../../../430code/BottomBoard/RONE_V11/BottomBoard.txt" "./src/System/msp430ProgramDataRoneV11.h" "./../../../430code/BottomBoard/src/VersionNumber.h" 1

@@ -1,0 +1,28 @@
+Author: Lauren Schmidt
+Date: July 11, 2013
+
+STEP 1 CONVERT MIDI TO TXT
+	a. Open the Midi file with Sublime (Notepad++ will not work - it will look like garbage).
+	b. Select all and paste into a txt document.
+	c. Save into same folder as the ConvertMIDItoC.jar file (directory listed later for reference).
+
+STEP 2 RUN JAR
+	a. To run the jar file, open the command prompt and navigate to the following directory:
+		
+		mrone\robotcode\roneLibs\roneos\src\Audio\ConvertedMIDIFiles\MIDI
+	
+		(I know it's long. Copy & Paste)
+	
+	b. Type the following command into the prompt:
+
+		java -jar ConvertMIDItoC.jar a.text b
+	
+		*a = file name of the midi text
+		*b = what you want the new file to be called (no extensions)
+	
+		For example, to generate the Boogie Woogie file, you would type:
+		java -jar ConvertMIDItoC.jar Boogie_Woogie.txt Boogie
+	
+	c. Add new .c and .h files to the SVN and commit! YAY! COOL SOUNDS! 
+		
+		*There is no need to commit the MIDI or TXT files. 

@@ -1,0 +1,17 @@
+ host: "TP,game,math,program\n"
+ host: "TP,game,math,motion\n"
+ host: "TP,game,story,program\n"
+ host: "TP,game,story,motion\n"
+...
+robot: "TP,game,win\n"
+robot: "TP,game,tryagain\n"
+
+ host: "TP,move,forward\n"
+ host: "TP,move,right\n"
+ host: "TP,move,left\n"
+...
+robot: "TP,move,done\n"
+
+robot: "TP,tag,XX\n"
+robot: "TP,error,string\n"
+robot: "TP,debug,string\n"

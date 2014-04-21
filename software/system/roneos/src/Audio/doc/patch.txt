@@ -1,0 +1,49 @@
+1 Acoustic Grand Piano 33 Acoustic Bass 65 Soprano Sax 97 Rain (FX 1)
+2 Bright Acoustic Piano 34 Electric Bass (finger) 66 Alto Sax 98 Sound Track (FX 2)
+3 Electric Grand Piano 35 Electric Bass (pick) 67 Tenor Sax 99 Crystal (FX 3)
+4 Honky-tonk Piano 36 Fretless Bass 68 Baritone Sax 100 Atmosphere (FX 4)
+5 Electric Piano 1 37 Slap Bass 1 69 Oboe 101 Brightness (FX 5)
+6 Electric Piano 2 38 Slap Bass 2 70 English Horn 102 Goblins (FX 6)
+7 Harpsichord 39 Synth Bass 1 71 Bassoon 103 Echoes (FX 7)
+8 Clavi 40 Synth Bass 2 72 Clarinet 104 Sci-fi (FX 8)
+9 Celesta 41 Violin 73 Piccolo 105 Sitar
+10 Glockenspiel 42 Viola 74 Flute 106 Banjo
+11 Music Box 43 Cello 75 Recorder 107 Shamisen
+12 Vibraphone 44 Contrabass 76 Pan Flute 108 Koto
+13 Marimba 45 Tremolo Strings 77 Blown Bottle 109 Kalimba
+14 Xylophone 46 Pizzicato Strings 78 Shakuhachi 110 Bag Pipe
+15 Tubular Bells 47 Orchestral Harp 79 Whistle 111 Fiddle
+16 Dulcimer 48 Timpani 80 Ocarina 112 Shanai
+17 Drawbar Organ 49 String Ensembles 1 81 Square Lead (Lead 1) 113 Tinkle Bell
+18 Percussive Organ 50 String Ensembles 2 82 Saw Lead (Lead) 114 Agogo
+19 Rock Organ 51 Synth Strings 1 83 Calliope Lead (Lead 3) 115 Pitched Percussion
+20 Church Organ 52 Synth Strings 2 84 Chiff Lead (Lead 4) 116 Woodblock
+21 Reed Organ 53 Choir Aahs 85 Charang Lead (Lead 5) 117 Taiko Drum
+22 Accordion 54 Voice Oohs 86 Voice Lead (Lead 6) 118 Melodic Tom
+23 Harmonica 55 Synth Voice 87 Fifths Lead (Lead 7) 119 Synth Drum
+24 Tango Accordion 56 Orchestra Hit 88 Bass + Lead (Lead 8) 120 Reverse Cymbal
+25 Acoustic Guitar (nylon) 57 Trumpet 89 New Age (Pad 1) 121 Guitar Fret Noise
+26 Acoustic Guitar (steel) 58 Trombone 90 Warm Pad (Pad 2) 122 Breath Noise
+27 Electric Guitar (jazz) 59 Tuba 91 Polysynth (Pad 3) 123 Seashore
+28 Electric Guitar (clean) 60 Muted Trumpet 92 Choir (Pad 4) 124 Bird Tweet
+29 Electric Guitar (muted) 61 French Horn 93 Bowed (Pad 5) 125 Telephone Ring
+30 Overdriven Guitar 62 Brass Section 94 Metallic (Pad 6) 126 Helicopter
+31 Distortion Guitar 63 Synth Brass 1 95 Halo (Pad 7) 127 Applause
+32 Guitar Harmonics 64 Synth Brass 2 96 Sweep (Pad 8) 128 Gunshot
+
+27 High Q 43 High Floor Tom 59 Ride Cymbal 2 75 Claves
+28 Slap 44 Pedal Hi-hat [EXC 1] 60 High Bongo 76 Hi Wood Block
+29 Scratch Push [EXC 7] 45 Low Tom 61 Low Bongo 77 Low Wood Block
+30 Scratch Pull [EXC 7] 46 Open Hi-hat [EXC 1] 62 Mute Hi Conga 78 Mute Cuica [EXC 4]
+31 Sticks 47 Low-Mid Tom 63 Open Hi Conga 79 Open Cuica [EXC 4]
+32 Square Click 48 High Mid Tom 64 Low Conga 80 Mute Triangle [EXC 5]
+33 Metronome Click 49 Crash Cymbal 1 65 High Timbale 81 Open Triangle [EXC 5]
+34 Metronome Bell 50 High Tom 66 Low Timbale 82 Shaker
+35 Acoustic Bass Drum 51 Ride Cymbal 1 67 High Agogo 83 Jingle bell
+36 Bass Drum 1 52 Chinese Cymbal 68 Low Agogo 84 Bell tree
+37 Side Stick 53 Ride Bell 69 Cabasa 85 Castanets
+38 Acoustic Snare 54 Tambourine 70 Maracas 86 Mute Surdo [EXC 6]
+39 Hand Clap 55 Splash Cymbal 71 Short Whistle [EXC 2] 87 Open Surdo [EXC 6]
+40 Electric Snare 56 Cowbell 72 Long Whistle [EXC 2]
+41 Low Floor Tom 57 Crash Cymbal 2 73 Short Guiro [EXC 3]
+42 Closed Hi-hat [EXC 1] 58 Vibra-slap 74 Long Guiro [EXC 3]
