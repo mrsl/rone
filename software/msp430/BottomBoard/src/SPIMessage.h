@@ -1,0 +1,49 @@
+#ifndef SPIMessage_H_
+#define SPIMessage_H_
+
+#define MSP430_CHECKSUM_LENGTH			1
+#define MSP430_CODE_LENGTH				3
+#define MSP430_PAYLOAD_LENGTH			22
+#define MSP430_MSG_LENGTH				(MSP430_CODE_LENGTH + MSP430_PAYLOAD_LENGTH + MSP430_CHECKSUM_LENGTH)
+
+extern const uint8 MSP430Code[];
+
+#define MSP430_MSG_BUMPER_IDX	 		0 + MSP430_CODE_LENGTH
+
+#define MSP430_MSG_ACCEL_START_IDX		1 + MSP430_CODE_LENGTH
+#define MSP430_MSG_MAG_START_IDX_LEFT	1 + MSP430_CODE_LENGTH
+
+#define MSP430_MSG_GYRO_START_IDX		7 + MSP430_CODE_LENGTH
+#define MSP430_MSG_MAG_START_IDX_RIGHT	7 + MSP430_CODE_LENGTH
+
+#define MSP430_MSG_VBAT_IDX				13 + MSP430_CODE_LENGTH
+#define MSP430_MSG_VUSB_IDX				14 + MSP430_CODE_LENGTH
+#define MSP430_MSG_POWER_BUTTON_IDX		15 + MSP430_CODE_LENGTH
+#define MSP430_MSG_VERSION_IDX			16 + MSP430_CODE_LENGTH
+#define MSP430_MSG_CHECKSUM_IDX			MSP430_MSG_LENGTH - 1
+
+/* Commands:
+ * 0x00:	    Normal Operation, LED and Button Information
+ * 0x01:	    Shutdown Command
+ * 0x02-0x04:	Reserved for SPI firmware updates
+ * 0xA0         Command to set the mode of the robot (C or Python)
+ * 0xA1         REPROGRAM Signal to reprogram the msp430 flash with new code
+ */
+#define MSP430_CMD_COMMAND_IDX		   	0 + MSP430_CODE_LENGTH
+#define MSP430_CMD_COMMAND_NORMAL       0x00
+#define MSP430_CMD_COMMAND_SHUTDOWN     0x01
+#define MSP430_CMD_COMMAND_RESET	    0x0A
+#define MSP430_CMD_COMMAND_REPROGRAM    0xA1
+
+//Command Normal Indexes
+#define MSP430_CMD_C_SYSTEM_LED_IDX 	1 + MSP430_CODE_LENGTH
+#define MSP430_CMD_C_BUTTONS_IDX 		2 + MSP430_CODE_LENGTH
+#define MSP430_CMD_C_BEACON_IDX			3 + MSP430_CODE_LENGTH
+#define MSP430_CMD_C_LED_IDX			4 + MSP430_CODE_LENGTH
+#define MSP430_CMD_C_CHECKSUM_IDX		MSP430_MSG_LENGTH - 1
+
+#define LED_DATA_LENGTH					15
+
+void msp430CheckAndUpdate(void);
+
+#endif /*SPIMessage_H_*/
