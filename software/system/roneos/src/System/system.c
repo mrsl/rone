@@ -34,6 +34,7 @@
 #include "driverlib/interrupt.h"
 #include "driverlib/timer.h"
 #include "driverlib/flash.h"
+#include "driverlib/pwm.h"
 
 #include "roneos.h"
 
@@ -42,7 +43,6 @@
 #define WARNING_LIST_SIZE			(ERROR_LIST_SIZE)
 
 /******** structs ********/
-
 /*
  * @brief Error message includes information to track error
  */
@@ -67,7 +67,7 @@ typedef struct warningMessage {
 /******** external functions ********/
 
 // we define these prototypes here because these functions are internal, and not
-// part ofthe external API
+// part of the external API
 void radioIntHandler(void);
 void uartIRQHandler(void);
 void irCommsHandler(void);
@@ -122,21 +122,39 @@ static char * systemPrintStartupFilename;
  */
 void __attribute__((naked))
 bootOS(uint32 ulStartAddr) {
+	// Disable all active and pending interrupts
 	HWREG(NVIC_DIS0) = 0xFFFFFFFF;
 	HWREG(NVIC_DIS1) = 0x00000FFF;
 
 	HWREG(NVIC_UNPEND0) = 0xFFFFFFFF;
 	HWREG(NVIC_UNPEND1) = 0x00000FFF;
+
 	// Set the vector table to the beginning of the program in flash.
 	HWREG(NVIC_VTABLE) = ulStartAddr;
 
-	__asm("    movw     r0, #0x0		\n"
-		  "    ldr     r1, [r0]			\n" /* Load the stack pointer from the application's vector table. */
+	__asm("    ldr     r1, [r0]			\n" /* Load the stack pointer from the application's vector table. */
 	      "    mov     sp, r1			\n"
 		  "    ldr     r0, [r0, #4]		\n" /* Load the initial PC from the application's vector table and branch to the application's entry point */
 	      "    bx      r0				\n"
 		);
 }
+
+
+/*
+ * @brief Stop all interfering subcomponents and branch to bootloader
+ */
+void bootloading() {
+	MAP_IntMasterDisable();
+	// Turn off wheels
+	MAP_PWMPulseWidthSet(PWM_BASE, PWM_OUT_0, 0);
+	MAP_PWMPulseWidthSet(PWM_BASE, PWM_OUT_1, 0);
+	MAP_PWMPulseWidthSet(PWM_BASE, PWM_OUT_2, 0);
+	MAP_PWMPulseWidthSet(PWM_BASE, PWM_OUT_3, 0);
+
+	// Branch to bootloader
+	bootOS(BL_START_ADDRESS);
+}
+
 
 /*
  * @brief Initializes the r-one hardware.
@@ -215,6 +233,7 @@ void systemInit(void) {
 	gyro_init();
 	accelerometer_init();
 	audioInit();
+	//neighborsInit(300);
 	MIDIInit();
 	MIDIFilePlay(MIDIFile_PowerOn); //has a TODO in the function - can't find referenced code
 #endif
@@ -238,35 +257,6 @@ void systemInit(void) {
 }
 
 
-/*
- * @brief Change the state value based on boot command and then branch to the bootloader
- * @return void
- */
-void bootloading(void) {
-	// Check the current state of the bl to see if we can boot directly
-//	if (readBootloaderState() == BL_STATE_BOOT) {
-//		return;
-//	}
-//
-//	if (buttonsGet(BUTTON_RED)) {
-//		// Hold the red button to enter radio receiver mode
-//		writeBootloaderState(BL_STATE_RECEIVE);
-//	} else	if (buttonsGet(BUTTON_GREEN)) {
-//		// Hold the green button to enter radio host mode
-//		writeBootloaderState(BL_STATE_HOST);
-//	} else if (buttonsGet(BUTTON_BLUE)) {
-//		// Hold the blue button to enter xmodem mode
-//		writeBootloaderState(BL_STATE_XMODEM);
-//	} else {
-//		// If no button is pressed, return from bootloader and boot regularly
-//		writeBootloaderState(BL_STATE_NORMAL);
-//	}
-//
-//	bootOS(BL_START_ADDRESS);
-
-}
-
-
 #if (defined(RONE_V9) || defined(RONE_V12))
 /*
  * @brief Turn off the main power supply
@@ -277,7 +267,7 @@ void bootloading(void) {
  * @returns void
  */
 void systemShutdown(void) {
-	//Turn off everything
+	// Turn off everything
 	msp430SystemShutdownCommand();
 }
 
@@ -289,7 +279,7 @@ void systemShutdown(void) {
  * @param filepathString the file path
  * @returns a pointer that points to the file name
  */
-char* sysGetFilenameFromPath(char* filepathString) {
+static char* sysGetFilenameFromPath(char* filepathString) {
 	return (strrchr(filepathString, '/') + 1);
 }
 
@@ -435,11 +425,9 @@ void systemIDInit(void) {
 	}
 }
 
+
 /*
- * Delay system.
- *Should we reword this comment?
- * This is a delay function to be used for simple tests. I would probably avoid using it in meaningful
- * code and mostly wanted it to avoid importing from driverlib when testing.
+ * @brief simple counting delay
  * @param delay the amount of time to delay the system
  * @returns void
  */
@@ -497,7 +485,6 @@ void systemHeartbeatTask(void* parameters) {
 		// Print the startup information once it arrives
 		if(msp430GetCommsValid() && systemPrintStartupInfoFlag && systemMSPVersionGet() != 0){
 			systemPrintStartupInfoFlag = FALSE;
-
 			_systemPrintStartupPrint(systemPrintStartupFilename);
 		}
 
@@ -583,44 +570,25 @@ void systemPrintMemUsage(void) {
 	}
 }
 
+
 void setMSP430SPIOperationState(uint8 state){
 	msp430SPIOperationState = state;
 }
 
-void systemBootloader(void) {
-	/*
-	 *	Disable interrupts directly.
-	 */
-	HWREG( NVIC_DIS0) = 0xffffffff;
-	HWREG( NVIC_DIS1) = 0xffffffff;
-
-	//
-	// Also disable the SysTick interrupt.
-	//
-	MAP_SysTickIntDisable();
-	#if (defined(RONE_V6) || defined(RONE_V9) || defined(RONE_V12))
-	radioIntDisable();
-	#endif
-
-	/*
-	 * Jump to Bootloader
-	 *
-	 */
-	(*((void(*)(void)) (*(unsigned long *) 0x2c)))();
-}
-
-
 
 /*
- * @brief Edit the bootloader state word.
- * @param state The value of the state
+ * @brief Edit the bootloader state words (subnet and bootloader state)
+ * @param state The value of the bootloader state
  * @return void
  */
 void writeBootloaderState(unsigned long state) {
-	// address of the last word (4 bytes) of flash = 0x3FFFC
-	// address of last 1kb block = 0x3FC00
-	FlashErase(BL_STATE_BLOCK);
-	FlashProgram(&state, BL_STATE_WORD, sizeof(uint32));
+	uint32 tempBootloaderSubnet = radioCommandGetLocalSubnet();
+	// address of the last word (4 bytes) of state flash = 0x0003FFFC
+	// address of last 1kb block = 0x0003FC00
+	FlashErase(BL_STATE_BLOCK_ADDRESS);
+	FlashProgram(&state, BL_STATE_WORD_ADDRESS, sizeof(uint32));
+	// address of the second to the last word in state flash
+	FlashProgram(&tempBootloaderSubnet, BL_STATE_SUBNET_ADDRESS, sizeof(uint32));
 }
 
 
@@ -629,11 +597,20 @@ void writeBootloaderState(unsigned long state) {
  * @return the state value
  */
 uint32 readBootloaderState() {
-	return *((uint32 *)BL_STATE_WORD);
+	return *((uint32 *)BL_STATE_WORD_ADDRESS);
 }
 
-// Interrupt handler stubs
 
+/*
+ * @brief Read the bootloader state word
+ * @return the state value
+ */
+uint32 readBootloaderSubnet() {
+	return *((uint32 *)BL_STATE_SUBNET_ADDRESS);
+}
+
+
+// Interrupt handler stubs
 void __attribute__ ((interrupt)) __cs3_isr_uart0(void) {
 	uartIRQHandler();
 }

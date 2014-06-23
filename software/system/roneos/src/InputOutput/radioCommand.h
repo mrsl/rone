@@ -12,19 +12,22 @@
 
 /******** Defines ********/
 // Command masks
+#define RADIO_COMMAND_DEFAULT_SUBNET	RADIO_SUBNET_1
 #define RADIO_COMMAND_TYPE_MASK			0x3F
 #define RADIO_COMMAND_SUBNET_MASK		0x03
 #define RADIO_COMMAND_SUBNET_SHIFTS		6
-#define RADIO_COMMAND_DEFAULT_SUBNET	0
 
 // Bootloader commands
-#define RADIO_BOOTLOADER_COMMANDS			10
-#define RADIO_COMMAND_TYPE_PROGRAM_TIME		0x3F
-#define RADIO_COMMAND_TYPE_CRC_TABLE		0x3E
-#define RADIO_COMMAND_TYPE_QUERY_REQUEST	0x3D
-#define RADIO_COMMAND_TYPE_SEGMENTS			0x3C
-
-#define RADIO_COMMAND_TYPE_REBOOT			0x36
+#define RADIO_BOOTLOADER_COMMANDS				10
+#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V11		0x3F
+#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V12		0x3E
+#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V13		0x3D
+#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V14		0x3C
+#define RADIO_COMMAND_TYPE_CRC_TABLE			0x3B
+#define RADIO_COMMAND_TYPE_QUERY_REQUEST		0x3A
+#define RADIO_COMMAND_TYPE_SEGMENTS				0x39
+// ...
+#define RADIO_COMMAND_TYPE_REBOOT				0x36
 
 
 
@@ -172,6 +175,14 @@ void radioCommandSetSubnet(uint8 subnet);
  * @returns pointer to data associated with the message
  */
 char* radioCommandGetDataPtr(RadioMessage* messagePtr);
+
+
+/*
+ * @brief Get the local subnet
+ *
+ * @returns subnet for the current robot.
+ */
+uint8 radioCommandGetLocalSubnet();
 
 
 //TODO: implement, delete, or debug?

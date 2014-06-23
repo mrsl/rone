@@ -65,6 +65,14 @@ void msp430SystemShutdownCommand(void);
 
 
 /**
+ * @brief Set the command to reset.
+ *
+ * @returns void
+ */
+void msp430SystemResetCommand(void);
+
+
+/**
  * @brief Set the next command to the MSP430 to be to enter the boot-loader.
  *
  * @returns void

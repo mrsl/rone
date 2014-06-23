@@ -11,16 +11,24 @@
 /******** Defines ********/
 
 #define SYSCTL_CLOCK_FREQ		50000000
-#define OS_START_ADDRESS 		0x00008000
-#define BL_START_ADDRESS		0x00000000
-#define BL_STATE_BLOCK			0x0003FC00
-#define BL_STATE_WORD 			0x0003FFFC
+// Flash size = 256 KB = program + bootloader + state
+// Linkerscript need to be changed as well
+#define MAX_PROGRAM_SIZE		232
+#define MAX_BL_SIZE				23
+// Bootloader address values
+// Bootloader high memory values (be sure to change system.h values too)
+#define OS_START_ADDRESS 		0x00000000
+#define BL_START_ADDRESS		(OS_START_ADDRESS + (MAX_PROGRAM_SIZE * 1024))
+#define BL_STATE_BLOCK_ADDRESS	(BL_START_ADDRESS + (MAX_BL_SIZE * 1024))
+#define BL_STATE_WORD_ADDRESS 	(BL_START_ADDRESS + ((MAX_BL_SIZE + 1) * 1024) - (4 * 1))
+#define BL_STATE_SUBNET_ADDRESS (BL_START_ADDRESS + ((MAX_BL_SIZE + 1) * 1024) - (4 * 2))
+// Bootloader state values
 #define BL_STATE_NORMAL			0xFFFFFF00
 #define BL_STATE_HOST			0xFFFFFF01
 #define BL_STATE_RECEIVE		0xFFFFFF02
-#define BL_STATE_XMODEM			0xFFFFFF03
+#define BL_STATE_LIMBO			0xFFFFFF03
+#define BL_STATE_XMODEM			0xFFFFFF05
 #define BL_STATE_BOOT			0xFFFFFF0a
-#define MAX_PROGRAM_SIZE		224
 
 /* Size of the stack allocated to the uIP task. */
 #define BASIC_TASK_STACK_SIZE            	(configMINIMAL_STACK_SIZE * 3)
@@ -113,14 +121,6 @@ void systemShutdown(void);
 
 
 /**
- * @brief jumps to boot loader
- *
- * @returns void
- */
-void systemBootloader(void);
-
-
-/**
 * @brief Print the heap and stack usage.
 *
 * @returns void
@@ -153,7 +153,7 @@ void systemIDInit(void);
 
 
 /**
- * @brief This is a delay function to be used for simple tests.
+ * @brief simple counting delay
  * @param delay the amount of time to delay the system
  * @returns void
  */
@@ -268,20 +268,10 @@ uint8 systemMSPVersionGet(void);
  */
 uint8 systemMSPVersionHardwareGet(void);
 
-/**
- * @brief Turn off the main power supply
- *
- * Shuts down everything in the Rone robot. This processor is turned off, the
- * MSP430 will be put into LPM4 and all LEDs and motors are also turned off,
- * along with the main power supply.
- * @returns void
- */
-void systemShutdown(void);
-
 
 /**
- * @brief Edit the bootloader state word.
- * @param state The value of the state
+ * @brief Edit the bootloader state words (subnet and bootloader state)
+ * @param state The value of the bootloader state
  * @return void
  */
 void writeBootloaderState(unsigned long state);
@@ -295,10 +285,16 @@ uint32 readBootloaderState();
 
 
 /**
- * @brief Change the state value based on boot command and then branch to the bootloader
- * @return void
+ * @brief Read the bootloader state word
+ * @return the state value
  */
-void bootloading(void);
+uint32 readBootloaderSubnet();
+
+
+/**
+ * @brief Stop all interfering subcomponents and branch to bootloader
+ */
+void bootloading();
 
 
 #endif /* SYSTEM_H_ */

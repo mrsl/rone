@@ -115,6 +115,11 @@ void nbrDataCreate16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL, const char* nam
 	nbrDataCreate(nbrDataPtrL, nameL, 8, (uint8)(value));
 }
 
+void nbrDataCreate32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL,
+	const char* nameHH, const char* nameHL, const char* nameLH, const char* nameLL, uint32 value) {
+	nbrDataCreate16(nbrDataPtrHH, nbrDataPtrHL, nameHH, nameHL, (uint16)(value>>16));
+	nbrDataCreate16(nbrDataPtrLH, nbrDataPtrLL, nameLH, nameLL, (uint16)(value));
+}
 
 
 void nbrDataPrintNbr(Nbr* nbrPtr){
@@ -173,6 +178,12 @@ void nbrDataSet16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL, uint16 value){
 	nbrDataSet(nbrDataPtrL, (uint8)(value));
 }
 
+void nbrDataSet32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL,
+	uint32 value){
+	nbrDataSet16(nbrDataPtrHH, nbrDataPtrHL, (uint16)(value>>16));
+	nbrDataSet16(nbrDataPtrLH, nbrDataPtrLL, (uint16)(value));
+}
+
 
 uint8 nbrDataGet(NbrData* nbrDataPtr){
 	if (nbrDataPtr) {
@@ -184,6 +195,10 @@ uint8 nbrDataGet(NbrData* nbrDataPtr){
 
 uint16 nbrDataGet16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL){
 	return ((uint16)(nbrDataGet(nbrDataPtrH))<<8)+nbrDataGet(nbrDataPtrL);
+}
+
+uint32 nbrDataGet32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL){
+	return ((uint32)(nbrDataGet16(nbrDataPtrHH, nbrDataPtrHL))<<16)+nbrDataGet16(nbrDataPtrLH, nbrDataPtrLL);
 }
 
 /*
@@ -216,6 +231,9 @@ uint16 nbrDataGetNbr16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL, Nbr* nbrPtr){
 	return ((uint16)(nbrDataGetNbr(nbrDataPtrH, nbrPtr))<<8)+nbrDataGetNbr(nbrDataPtrL, nbrPtr);
 }
 
+uint32 nbrDataGetNbr32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL, Nbr* nbrPtr){
+	return ((uint32)(nbrDataGetNbr16(nbrDataPtrHH, nbrDataPtrHL, nbrPtr))<<16)+nbrDataGetNbr16(nbrDataPtrLH, nbrDataPtrLL, nbrPtr);
+}
 
 const char* nbrDataGetName(NbrData* nbrMsgPtr){
 	if (nbrMsgPtr) {

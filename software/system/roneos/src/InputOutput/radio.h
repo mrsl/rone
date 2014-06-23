@@ -18,6 +18,12 @@
 #define RADIO_COMMS_QUEUE_RECV_SIZE		8
 #define RADIO_COMMS_QUEUE_XMIT_SIZE		1
 
+// Subnets
+#define RADIO_SUBNET_ALL				0
+#define RADIO_SUBNET_1					1
+#define RADIO_SUBNET_2					2
+#define RADIO_SUBNET_3					3
+
 
 
 /******** Structs ********/

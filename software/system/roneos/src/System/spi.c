@@ -20,8 +20,6 @@
 #include "roneos.h"
 #include "spiInternal.h"
 
-
-
 uint8 SPIWordSize;
 uint8 SPIMode;
 uint32 SPIFrequency;

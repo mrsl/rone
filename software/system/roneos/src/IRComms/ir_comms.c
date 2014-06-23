@@ -438,13 +438,14 @@ boolean irCommsSendMessage_internal(IRCommsMessage *irMessagePtr) {
  * @return TRUE if  _____
  */
 boolean irCommsSendMessage(IRCommsMessage* irMessagePtr) {
+	/* Old RC mode code for older GUI */
 	// If something is controlling the robot, prevent the user from
 	// sending out IR messages. Otherwise send the IR message.
-	if (rcMode == RC_MODE_ON) {
-		return (FALSE);
-	} else {
+	//if (rcMode == RC_MODE_ON) {
+	//	return (FALSE);
+	//} else {
 		return (irCommsSendMessage_internal(irMessagePtr));
-	}
+	//}
 }
 
 /*
@@ -482,11 +483,12 @@ boolean irCommsGetMessage(IRCommsMessage* irMessagePtr) {
 	 * from getting IR messages. Otherwise allow the user to get IR
 	 * messages.
 	 */
-	if (rcMode == RC_MODE_ON) {
-		return (FALSE);
-	} else {
+	/* Old RC mode code for older GUI */
+	//if (rcMode == RC_MODE_ON) {
+	//	return (FALSE);
+	//} else {
 		return (irCommsGetMessage_internal(irMessagePtr));
-	}
+	//}
 }
 
 /*

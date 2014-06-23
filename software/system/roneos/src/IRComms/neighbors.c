@@ -57,6 +57,8 @@ static uint8 neighborsIgnoreList[NEIGHBORS_IGNORE_LIST_SIZE];
 static int32 nbrAnglesIIRTimeConstant = NEIGHBOR_ANGLES_IIR_GAIN;
 static int32 nbrRangeIIRTimeConstant = NEIGHBOR_RANGE_IIR_GAIN;
 
+static SerialCmd serialCmdSN;
+
 #ifdef RONE_IRBEACON
 static boolean beaconHighPowerID = FALSE;
 #endif
@@ -115,15 +117,16 @@ void neighborsXmitEnable(boolean neighbor_xmit_enable_arg) {
  * @returns void
  */
 void neighborsInit(uint32 neighbor_period_arg) {
-	uint32 val;
+	//uint32 val;
 	neighborsSetPeriod(neighbor_period_arg);
 	neighborsSetTimeoutRounds(NBR_SIGNALBITS_ROUNDS_DEFAULT, NBR_SIGNALBITS_MIN_ACTIVE_DEFAULT, NBR_SIGNALBITS_MAX_INACTIVE_DEFAULT);
 
 	nd.nbrsSize = 0;
 	nd.round = 0;
 
-	nbrDataCreateIR(&nbrMsgID, "ID", 7, roneID);
+	nbrDataCreateIR(&nbrMsgID, "ID", 8, roneID);
 	neighborsMutex = osSemaphoreCreateMutex();
+	serialCommandAdd(&serialCmdSN, "sn", serialCmdSNFunc);
 	osTaskCreate(neighborsTask, "neighbors", 2048, NULL, NEIGHBORS_TASK_PRIORITY );
 }
 
@@ -482,6 +485,15 @@ void obstacleExcludeNbrs(NbrList* nbrListPtr, uint8* obstacleBitsGroupPtr, uint8
  */
 void neighborsGetMutex(void) {
 	osSemaphoreTake(neighborsMutex, portMAX_DELAY);
+}
+
+/*
+ * @brief Get neighbors mutex with specified max delay.
+ *
+ * @returns void
+ */
+signed neighborsGetMutexDelay(unsigned long delay) {
+	return osSemaphoreTake(neighborsMutex, delay);
 }
 
 
@@ -938,5 +950,27 @@ uint32 nbrGetUpdateRound(Nbr* nbrPtr) {
 	}
 }
 
+void serialCmdSNFunc(char *command) {
+	int i;
+	NbrList nbrs;
 
+	/* Neighbors */
+	if (neighborsGetMutexDelay(5)) {;
+		nbrListCreate(&nbrs);
+		neighborsPutMutex();
+
+		cprintf("svo %02X\n", nbrs.size);
+
+		for (i = 0; i < nbrs.size; i++) {
+			cprintf("svn %02X,%02X,%04X,%04X,%04X,%02X,%02X\n",
+					i,
+					nbrs.nbrs[i]->ID,
+					abs(nbrs.nbrs[i]->bearing),
+					abs(nbrs.nbrs[i]->orientation),
+					nbrs.nbrs[i]->range,
+					((nbrs.nbrs[i]->bearing > 0) - (nbrs.nbrs[i]->bearing < 0)),
+					((nbrs.nbrs[i]->orientation > 0) - (nbrs.nbrs[i]->orientation < 0)));
+		}
+	}
+}
 

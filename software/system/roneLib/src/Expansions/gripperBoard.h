@@ -12,9 +12,12 @@
 // Servo mode
 /* SPI message */
 
+#define GRIPPER_PERIOD_LENGTH	50
+
 #define GRIPPER_CODE_LENGTH		3		// 3 code bytes for syncing
 #define GRIPPER_PAYLOAD_LENGTH	EXPAND0_PAYLOAD_LENGTH		// 8 data bytes
 #define GRIPPER_MSG_LENGTH		(GRIPPER_PAYLOAD_LENGTH + GRIPPER_CODE_LENGTH + 1) // sync bytes + data bytes + check sum byte
+
 // Incoming and Outgoing
 #define	GRIPPER_MSG_SERVO_VALUE_IDX		0
 // Outgoing only
@@ -30,6 +33,37 @@
 #define SOFT_STOP0_OFFSET	6
 #define SOFT_STOP1_OFFSET	5
 
+#define GRIPPER_DEFUALT_MAX_ANGLE	180
+#define GRIPPER_DEFUALT_MIN_ANGLE	30
+#define GRIPPER_DEFUALT_REST		90
+
+#define GRIPPER_STEP		5
+
+#define GRIPPER_IDLE 			0
+#define GRIPPER_MOVING 			1
+#define GRIPPER_ATTEMPT 		2
+#define GRIPPER_GRIPPED 		3
+#define GRIPPER_CALIBRATE_MIN 	4
+#define GRIPPER_CALIBRATE_MAX 	5
+
+typedef struct gripperState {
+	uint8 current;
+	uint8 readServo;
+	uint8 currServo;
+	uint8 goalServo;
+	boolean force;
+	boolean stop0;
+	boolean stop1;
+	uint8 grippedHistory;
+	uint8 pastPlace;
+	boolean gripped;
+	boolean ungrip;
+	boolean calibrated;
+	uint8	calibratedMaxAngle;
+	uint8	calibratedMinAngle;
+	uint8   calibratedRestAngle;
+} gripperState;
+
 /**
  *  @brief Initialize the message and communication protocol to the gripperboard
  *  @param mode Select software the gripperboard is currently using:
@@ -41,6 +75,25 @@
  */
 void gripperBoardInit();
 
+void gripperDataInit();
+
+void gripperTask(void* parameters);
+
+void gripperGripClockwise();
+
+void gripperGripCounterClockwise();
+
+void gripperGripRelax();
+
+void gripperGripUntilGripped();
+
+void gripperCheckGripped();
+
+void gripperUpdateServo();
+
+void gripperCalibratServo();
+
+uint8 gripperServoCalibratFinish();
 
 /**
  *  @brief Change the position of the servo
@@ -78,5 +131,10 @@ uint8 gripperBoardGetForce();
  */
 uint8 gripperBoardGetStop(uint8 value);
 
-
+/*
+ * @brief Send gripper information over serial
+ * @param Serial input
+ * @returns nothing
+ */
+void serialCmdSGFunc(char* command);
 #endif /* GRIPPERBOARD_H_ */

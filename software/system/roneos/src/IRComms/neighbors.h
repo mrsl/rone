@@ -17,10 +17,10 @@
 
 /******** Defines ********/
 
-#define NEIGHBOR_PERIOD_DEFAULT 		330
+#define NEIGHBOR_PERIOD_DEFAULT 		500
 #define NEIGHBOR_TIMEOUT_ROUNDS			4
 #define OBSTACLE_TIMEOUT_ROUNDS			2
-#define NEIGHBOR_MAX					10
+#define NEIGHBOR_MAX					30					//Defualt is 10
 
 /*
  * TODO: IR: Do these really need to be removed???? It seems like they are kinda necessary
@@ -252,6 +252,14 @@ void neighborsAddReceiveCallback(void(*receiveCallbackArg)(NbrDatabase* ndPtr));
  * @returns void
  */
 void neighborsGetMutex(void);
+
+
+/*
+ * @brief Get neighbors mutex with specified max delay.
+ *
+ * @returns void
+ */
+signed neighborsGetMutexDelay(unsigned long delay);
 
 
 /**
@@ -544,4 +552,7 @@ void nbrMsgRadioPrint(NbrMsgRadio* nbrMsgRadioPtr, Nbr* nbrPtr);
 // low-level function.  Used internally TODO: so should it be removed from the header file?
 Nbr* nbrsGetWithID(uint8 nbrID);
 
+void nbrListCreate(NbrList* nbrListPtr);
+
+void serialCmdSNFunc(char *command);
 #endif /* NEIGHBORS_H_ */

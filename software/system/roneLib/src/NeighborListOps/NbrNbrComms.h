@@ -28,7 +28,7 @@ typedef struct NbrNbr {
  */
 //TODO make field descriptions
 typedef struct NbrNbrList {
-	Nbr* nbrPtr;					/**< Pointer to Neibor*/
+	Nbr* nbrPtr;					/**< Pointer to Neighbor*/
 	uint8 size;						/**< Size*/
 	uint32 updateTime;				/**< Update Time */
 	NbrNbr nbrNbrs[NEIGHBOR_MAX];	/**< */

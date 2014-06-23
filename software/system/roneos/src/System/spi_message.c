@@ -72,6 +72,7 @@ const uint8 MSP430Code[] = {'B', 'O', 'T'};
 #define MSP430_CMD_COMMAND_IDX			0 + MSP430_CODE_LENGTH
 #define MSP430_CMD_COMMAND_NORMAL		0x00
 #define MSP430_CMD_COMMAND_SHUTDOWN		0x01
+#define MSP430_CMD_COMMAND_RESET	    0x0A
 #define MSP430_CMD_COMMAND_REPROGRAM    0xA1
 
 // indexes for Normal Command
@@ -236,6 +237,16 @@ void msp430SystemShutdownCommand(void) {
 
 
 /*
+ * @brief Set the command to reset.
+ *
+ * @returns void
+ */
+void msp430SystemResetCommand(void) {
+	systemMSP430Command = MSP430_CMD_COMMAND_RESET;
+}
+
+
+/*
  * @brief Set the next command to the MSP430 to be to enter the boot-loader.
  *
  * @returns void
@@ -362,7 +373,7 @@ uint8 bottomBoardISR() {
 
 	TimerIntClear(TIMER1_BASE, TIMER_TIMB_TIMEOUT);
 
-	// Multiplex outputs (bottomboard/radio), set delay
+	// Multiplex SPI (bottomboard/radio)
 	if (MSPSPIState == MSPSPI_STATE_XMIT_BYTE) {
 		radioIntDisable();
 		SPISelectDeviceISR(SPI_MSP430);
@@ -379,101 +390,105 @@ uint8 bottomBoardISR() {
 		}
 	}
 
+	// Set delay
 	MAP_TimerLoadSet(TIMER1_BASE, TIMER_B, timerLoadPeriod);
 	MAP_TimerEnable(TIMER1_BASE, TIMER_B);
 
-    if (MSPSPIState == MSPSPI_STATE_XMIT_BYTE) {
-    		// Pack new message
-    		if (MSP430MessageIdx == 0) {
-    			// Pack code
-    			for (i = 0; i < MSP430_CODE_LENGTH; i++) {
-    				MSP430MessageOut[i] = MSP430Code[i];
-    			}
-    			// Build and pack payload
-    			switch (msp430SystemGetCommandMessage()) {
-    			case MSP430_CMD_COMMAND_NORMAL:
-    				blinkySystemBuildMessage(&MSP430MessageOut[MSP430_CMD_SYSTEM_LED_IDX]);
-    				buttonsBuildMessage(&MSP430MessageOut[MSP430_CMD_BUTTONS_IDX]);
-    				ledsBuildMessage(&MSP430MessageOut[MSP430_CMD_LED_IDX]);
-    				break;
-    			case MSP430_CMD_COMMAND_SHUTDOWN:
-    				break;
-    			case MSP430_CMD_COMMAND_REPROGRAM:
-    				bootloaderSet = TRUE;
-    				break;
-    			default:
-    				break;
-    			}
-				msp430SystemCommandBuildMessage(&MSP430MessageOut[MSP430_CMD_COMMAND_IDX]);
-				MSP430MessageOut[MSP430_CMD_CHECKSUM_IDX] =  messageChecksum(MSP430MessageOut, MSP430_CODE_LENGTH, MSP430_MSG_LENGTH);
-    		}
+	// Transmit message to bottomboard
+	if (MSPSPIState == MSPSPI_STATE_XMIT_BYTE) {
+		// Pack new message at the beginning of each cycle
+		if (MSP430MessageIdx == 0) {
+			// Pack code
+			for (i = 0; i < MSP430_CODE_LENGTH; i++) {
+				MSP430MessageOut[i] = MSP430Code[i];
+			}
 
-    		// Shift receive buffer
-    		shiftBuffer(MSP430MessageIn, MSP430_MSG_LENGTH);
+			// Build and pack payload
+			switch (msp430SystemGetCommandMessage()) {
+				case MSP430_CMD_COMMAND_NORMAL:
+					blinkySystemBuildMessage(&MSP430MessageOut[MSP430_CMD_SYSTEM_LED_IDX]);
+					buttonsBuildMessage(&MSP430MessageOut[MSP430_CMD_BUTTONS_IDX]);
+					ledsBuildMessage(&MSP430MessageOut[MSP430_CMD_LED_IDX]);
+					break;
+				case MSP430_CMD_COMMAND_REPROGRAM:
+					bootloaderSet = TRUE;
+					break;
+				default:
+					// Do nothing for shutdown or reset
+					break;
+			}
 
-    		// Put data into the transmit buffer
-    		val = MAP_SSIDataPutNonBlocking(SSI0_BASE, (uint32)MSP430MessageOut[MSP430MessageIdx]);
+			msp430SystemCommandBuildMessage(&MSP430MessageOut[MSP430_CMD_COMMAND_IDX]);
+			MSP430MessageOut[MSP430_CMD_CHECKSUM_IDX] =  messageChecksum(MSP430MessageOut, MSP430_CODE_LENGTH, MSP430_MSG_LENGTH);
+		}
 
-    		if (val == 0) {
-    			SPIBusError_SSIDataPutNonBlocking = 1;
-    		}
+		// Shift receive buffer
+		shiftBuffer(MSP430MessageIn, MSP430_MSG_LENGTH);
 
-    		// Retrieve the received byte
-    		MAP_SSIDataGet(SSI0_BASE, &data);
+		// Put data into the transmit buffer
+		val = MAP_SSIDataPutNonBlocking(SSI0_BASE, (uint32)MSP430MessageOut[MSP430MessageIdx]);
+		if (val == 0) {
+			SPIBusError_SSIDataPutNonBlocking = 1;
+		}
 
-    		// Put byte the the end of the receive buffer
-    		MSP430MessageIn[MSP430_MSG_LENGTH - 1] = data;
+		// Retrieve the received byte
+		MAP_SSIDataGet(SSI0_BASE, &data);
 
-    		// Check to see if we have a complete message, with correct code and checksum
-    		if (MSP430MessageIdx == 0) {
-    			// Checkcode
-    			for (i = 0; i < MSP430_CODE_LENGTH; i++) {
-    				if (MSP430MessageIn[i] != MSP430Code[i])
-    					break;
-    			}
-    			if (i == MSP430_CODE_LENGTH) {
-    				// Checksum
-    				checksum = messageChecksum(MSP430MessageIn, MSP430_CODE_LENGTH, MSP430_MSG_LENGTH);
-    				if (checksum == MSP430MessageIn[MSP430_MSG_LENGTH - 1]) {
-    						// Process incoming message
-    						bumpSensorsUpdate(MSP430MessageIn[MSP430_MSG_BUMPER_IDX]);
-    						accelerometerUpdate(&MSP430MessageIn[MSP430_MSG_ACCEL_START_IDX]);
-    						gyroUpdate(&MSP430MessageIn[MSP430_MSG_GYRO_START_IDX]);
-    						systemBatteryVoltageUpdate(MSP430MessageIn[MSP430_MSG_VBAT_IDX]);
-    						systemUSBVoltageUpdate(MSP430MessageIn[MSP430_MSG_VUSB_IDX]);
-    						systemPowerButtonUpdate(MSP430MessageIn[MSP430_MSG_POWER_BUTTON_IDX]);
-    						systemMSPVersionUpdate(MSP430MessageIn[MSP430_MSG_VERSION_IDX]);
+		// Put byte the the end of the receive buffer
+		MSP430MessageIn[MSP430_MSG_LENGTH - 1] = data;
 
-    						if((MSP430MessageIn[MSP430_MSG_VERSION_IDX] != 0) && (!systemMSP430CommsValid)) {
-    							systemMSP430CommsValid = TRUE;
-    						}
-    				} else {
-    					checksumFailure++;
-    					// Fail checksum
-        				if (showError) {cprintf("Bsum ");}
-    				}
-    			} else {
-    				// Fail checkcode
-    				if (showError) {cprintf("Bcod ");}
-    			}
-    			// Toggle MSP boards, regardless of result
-    			if(expand0En)
-    				MSPSelect = MSP_EXPAND0_BOARD_SEL;
-    		}
+		// Check to see if we have a complete message, with correct code and checksum
+		if (MSP430MessageIdx == 0) {
+			// Checkcode
+			for (i = 0; i < MSP430_CODE_LENGTH; i++) {
+				if (MSP430MessageIn[i] != MSP430Code[i])
+					break;
+			}
 
-    		// Increment index, wrap back to 0 if it exceeds the range
-    		MSP430MessageIdx++;
-    		if (MSP430MessageIdx >= MSP430_MSG_LENGTH) {
-    			MSP430MessageIdx = 0;
-    		}
+			if (i == MSP430_CODE_LENGTH) {
+				// Checksum
+				checksum = messageChecksum(MSP430MessageIn, MSP430_CODE_LENGTH, MSP430_MSG_LENGTH);
+				if (checksum == MSP430MessageIn[MSP430_MSG_LENGTH - 1]) {
+					// Process incoming message
+					bumpSensorsUpdate(MSP430MessageIn[MSP430_MSG_BUMPER_IDX]);
+					accelerometerUpdate(&MSP430MessageIn[MSP430_MSG_ACCEL_START_IDX]);
+					gyroUpdate(&MSP430MessageIn[MSP430_MSG_GYRO_START_IDX]);
+					systemBatteryVoltageUpdate(MSP430MessageIn[MSP430_MSG_VBAT_IDX]);
+					systemUSBVoltageUpdate(MSP430MessageIn[MSP430_MSG_VUSB_IDX]);
+					systemPowerButtonUpdate(MSP430MessageIn[MSP430_MSG_POWER_BUTTON_IDX]);
+					systemMSPVersionUpdate(MSP430MessageIn[MSP430_MSG_VERSION_IDX]);
 
-    		// Toggle states
-    		MSPSPIState = MSPSPI_STATE_DESELECT_SPI;
-    	} else if (MSPSPIState == MSPSPI_STATE_DESELECT_SPI) {
-    		// Toggle states
-    		MSPSPIState = MSPSPI_STATE_XMIT_BYTE;
-    	}
-    return 0;
+					if((MSP430MessageIn[MSP430_MSG_VERSION_IDX] != 0) && (!systemMSP430CommsValid)) {
+						systemMSP430CommsValid = TRUE;
+					}
+				} else {
+					checksumFailure++;
+					// Fail checksum
+					if (showError) {cprintf("Bsum ");}
+				}
+			} else {
+				// Fail checkcode
+				if (showError) {cprintf("Bcod ");}
+			}
+			// Toggle MSP boards, regardless of result
+			if(expand0En)
+				MSPSelect = MSP_EXPAND0_BOARD_SEL;
+		}
+
+		// Increment index, wrap back to 0 if it exceeds the range
+		MSP430MessageIdx++;
+		if (MSP430MessageIdx >= MSP430_MSG_LENGTH) {
+			MSP430MessageIdx = 0;
+		}
+
+		// Toggle states
+		MSPSPIState = MSPSPI_STATE_DESELECT_SPI;
+	} else if (MSPSPIState == MSPSPI_STATE_DESELECT_SPI) {
+		// Toggle states
+		MSPSPIState = MSPSPI_STATE_XMIT_BYTE;
+	}
+
+	return 0;
 }
 
 
@@ -566,9 +581,9 @@ uint8 expand0BoardISR() {
 		// Toggle states
 		MSPSPIState = MSPSPI_STATE_XMIT_BYTE;
 	}
+
 	return 0;
 }
-
 
 /*
  * @brief Interrupt handler for MSP430.

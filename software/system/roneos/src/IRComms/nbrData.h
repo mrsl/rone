@@ -39,6 +39,11 @@ void nbrDataCreate(NbrData* nbrDataPtr, const char* name, uint8 size, uint8 valu
 void nbrDataCreate16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL, const char* nameH, const char* nameL, uint16 value);
 
 /**
+ */
+void nbrDataCreate32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL,
+	const char* nameHH, const char* nameHL, const char* nameLH, const char* nameLL, uint32 value);
+
+/**
  * @brief Create a IR neighbor data.  This is transmitted via IR.  The neighbor
  * system makes one 7-bit data by default for the robot ID.  Only data that need to share
  * the fate of an IR message should go here.  The rest should use radio (See nbrDataCreate())
@@ -78,6 +83,10 @@ void nbrDataSet(NbrData* nbrDataPtr, uint8 value);
  */
 void nbrDataSet16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL, uint16 value);
 
+/**
+ */
+void nbrDataSet32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL,
+	uint32 value);
 
 /**
  *@brief Get value in a neighbor message.
@@ -95,6 +104,8 @@ uint8 nbrDataGet(NbrData* nbrDataPtr);
  *@returns value
  */
 uint16 nbrDataGet16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL);
+
+uint32 nbrDataGet32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL);
 
 /**
  * @brief Get value of the local nbrData
@@ -114,6 +125,8 @@ uint8 nbrDataGetNbr(NbrData* nbrDataPtr, Nbr* nbrPtr);
  * @returns value
  */
 uint16 nbrDataGetNbr16(NbrData* nbrDataPtrH, NbrData* nbrDataPtrL, Nbr* nbrPtr);
+
+uint32 nbrDataGetNbr32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrDataPtrLH, NbrData* nbrDataPtrLL, Nbr* nbrPtr);
 
 /**
  * @brief Get name of neighbor message.

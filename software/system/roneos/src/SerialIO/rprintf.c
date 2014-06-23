@@ -261,8 +261,8 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 		//rprintfRadioBufferPrevPtr = rprintfRadioBufferPtr;
 		//cprintf("rtd,%d,3.7,80 %s", remoteRobotID, batteryLevel, signalQuality, cfprintfRadioBuffer);
 		//cprintf("red,%d,3.7,80 %s,rprintfRadioBuffer);
-		//cprintf("rtd,%d %s", remoteRobotID, rprintfRadioBuffer);
-		cprintf(";%d%s,%d;", remoteRobotID, rprintfRadioBuffer, remoteRobotID);	//###
+		cprintf("rtd,%d %s", remoteRobotID, rprintfRadioBuffer);
+		//cprintf(";%d%s,%d;", remoteRobotID, rprintfRadioBuffer, remoteRobotID);	//###
 	}
 	//else if (remoteRobotState){
 		//if we didnt get a new message, print the previous message - used for nav demo
@@ -509,6 +509,6 @@ void rprintfInit(void) {
 	rprintfSetHostMode(RPRINTF_REMOTE);
 
 	// Create the host task, which will run if the robot is in host mode.
-	osTaskCreate(rprintfHostTask, "rprintfRemote", 1024, NULL, RPRINTFTERMINAL_TASK_PRIORITY);
+	osTaskCreate(rprintfHostTask, "rprintfRemote", 1536, NULL, RPRINTFTERMINAL_TASK_PRIORITY);
 }
 

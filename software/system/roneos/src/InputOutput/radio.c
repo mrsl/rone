@@ -229,11 +229,8 @@ void radioIntDisable(void) {
  * @returns void
  */
 void radioIntHandler(void) {
-	uint32 status, statusFIFO;
-	uint8 pipe;
-	uint32 chip_status;
-	uint32 spi_data;
-	uint8 i;
+	uint32 status, statusFIFO, chip_status, spi_data, i;
+	uint8 pipe, subnet, programTime;
 	portBASE_TYPE val;
 	portBASE_TYPE taskWoken = pdFALSE;
 	RadioMessage message;
@@ -292,20 +289,42 @@ void radioIntHandler(void) {
 		message.raw.timeStamp = osTaskGetTickCountFromISR();
 		//TODO - save this value of val , put into a global variable and look for radio recieve errors,
 
-		// Receiving bootloader messages
-		if ((message.command.type & RADIO_COMMAND_TYPE_MASK) >=  RADIO_COMMAND_TYPE_REBOOT) {
-			writeBootloaderState(BL_STATE_RECEIVE);
-			MAP_IntMasterDisable();
+		// Receiving bootloader messages host reprogramming message
+		if ((message.command.type & RADIO_COMMAND_TYPE_MASK) >  RADIO_COMMAND_TYPE_REBOOT) {
+			// Select to right version
+#if defined(RONE_V9)
+			programTime = RADIO_COMMAND_TYPE_PROGRAM_TIME_V11;
+#elif defined(RONE_V12)
+			programTime = RADIO_COMMAND_TYPE_PROGRAM_TIME_V12;
+#endif
+			subnet = radioCommandGetSubnet(&message);
 
-			// Disable all interrupts
-			SysTickDisable();
-			MAP_IntDisable(INT_TIMER2A);
-			MAP_IntDisable(RADIO_INT);
-			MAP_IntDisable(INT_TIMER1A);
-			MAP_IntDisable(INT_UART0);
-			MAP_IntDisable(INT_TIMER1B);
+//			cprintf("SUBNET = %d\n", subnet);
+//			cprintf("programTime = %d \n", (int)(message.command.type & RADIO_COMMAND_TYPE_MASK));
+//			cprintf("range = [%d, %d] \n",  (int)(message.raw.data[1]), (int)(message.raw.data[2]));
+//			SysCtlDelay(500000);
 
-			bootOS(BL_START_ADDRESS);
+			// Only put robot in receive mode if: correct subnet, right hardware version, and ID range
+			// RADIO_COMMAND_TYPE_PROGRAM_TIME: message_header[4] = [type + subnet, id_range_min, id_range_max, sender ID]
+			if (((subnet == RADIO_SUBNET_ALL) || (subnet == radioCommandGetLocalSubnet())) &&
+					(programTime == (uint8)(message.command.type & RADIO_COMMAND_TYPE_MASK)) &&
+					(roneID >= (uint8)(message.raw.data[1]) && roneID <= (uint8)(message.raw.data[2]))) {
+				writeBootloaderState(BL_STATE_RECEIVE);
+			} else {
+				// If the robot receives non-'Program Time' bootloader commands, traps it
+				if ((message.command.type & RADIO_COMMAND_TYPE_MASK) < RADIO_COMMAND_TYPE_PROGRAM_TIME_V14) {
+					while (1) {
+						blinkyLedSet(1);
+						SysCtlDelay(5000000);
+						blinkyLedSet(0);
+						SysCtlDelay(5000000);
+					}
+				}
+				// Put robot in limbo state if the host program is not meant for this robot (wrong subnet or version)
+				writeBootloaderState(BL_STATE_LIMBO);
+			}
+			// Load bootloader
+			bootloading();
 		}
 
 		// put the received message on the main radio receive queue

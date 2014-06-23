@@ -1,6 +1,6 @@
 /* Linker script for Stellaris LM3S8962
  *
- * Version: Sourcery CodeBench 2011.09-82
+ * Version: Sourcery CodeBench 2011.09-60
  * Support: https://support.codesourcery.com/GNUToolchain/
  *
  * Copyright (c) 2007, 2008, 2009, 2010 CodeSourcery, Inc.
@@ -23,7 +23,7 @@ GROUP(-lgcc -lc -lcs3 -lcs3unhosted -lcs3stellaris_fury)
 MEMORY
 {
   ram (rwx) : ORIGIN = 0x20000000, LENGTH = 64K
-  rom (rx) : ORIGIN = 0x0, LENGTH = 256K
+  rom (rx) : ORIGIN = 0x00000000, LENGTH = 232K
 }
 
 /* These force the linker to search for particular symbols from
@@ -211,4 +211,4 @@ SECTIONS
   .ARM.attributes 0 : { KEEP (*(.ARM.attributes)) }
   /DISCARD/ : { *(.note.GNU-stack) }
 }
-/* checksum: 045395647106d1016a481d */
+/* checksum: 613d51400666f2d37a72e202b */

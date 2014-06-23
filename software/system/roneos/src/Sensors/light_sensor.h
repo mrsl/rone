@@ -19,8 +19,8 @@
 #define LIGHT_SENSOR_REAR                   2
 
 //for v12 robots
-#define LIGHT_SENSOR_REAR_LEFT				2
-#define LIGHT_SENSOR_REAR_RIGHT				3
+#define LIGHT_SENSOR_REAR_RIGHT				2
+#define LIGHT_SENSOR_REAR_LEFT				3
 
 
 /******** Functions ********/

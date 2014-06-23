@@ -116,9 +116,11 @@ static void radioCommandTask(void* parameters) {
 		radioGetMessageBlocking(&message);
 		// check the subnet.  are we on the same subnet?
 		subnet = radioCommandGetSubnet(&message);
-		if(subnet != radioCommandSubnet) {
-			// wrong subnet. discard
-			continue;
+		if (subnet != RADIO_SUBNET_ALL){
+			if(subnet != radioCommandSubnet) {
+				// wrong subnet. discard
+				continue;
+			}
 		}
 		// check to see if this message is for you
 		destID = radioCommandGetDestinationID(&message);
@@ -275,4 +277,8 @@ void radioCommandInit(void) {
 	radioCommandSetSubnet(RADIO_COMMAND_DEFAULT_SUBNET);
 	osTaskCreate(radioCommandTask, "radioCommand", 1024, NULL, RADIOCOMMAND_TASK_PRIORITY);
 	radioCmdStartPtr = NULL;
+}
+
+uint8 radioCommandGetLocalSubnet() {
+	return radioCommandSubnet;
 }

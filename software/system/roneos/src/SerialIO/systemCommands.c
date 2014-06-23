@@ -16,7 +16,7 @@
 //TODO move as much of this as possible to a different file.
 
 /* Sizes for the GUI command data. */
-#define GUI_ARG_COUNT 	5
+#define GUI_ARG_COUNT 	8
 #define GUI_ARG_SIZE	64
 
 #define CMD_AUDIO	'a' /* Test audio. */
@@ -56,6 +56,10 @@ static SerialCmd serialCmdRC;
 static SerialCmd serialCmdR1;
 static SerialCmd serialCmdRT;
 static SerialCmd serialCmdRI;
+static SerialCmd serialCmdRR;
+static SerialCmd serialCmdBH;
+static SerialCmd serialCmdBR;
+static SerialCmd serialCmdBX;
 
 
 // sy = system
@@ -66,23 +70,35 @@ void serialCmdSYFunc(char* command) {
 
 // sv = sensor values
 void serialCmdSVFunc(char* command) {
-	IRCommsMessage ir_msg;
+	int i;
+	//IRCommsMessage ir_msg;
 	RadioMessage radioMessage;
-	uint32 msg_size, msg_linkq;
+	//uint32 msg_size, msg_linkq;
 	//char msg[RADIO_MESSAGE_LENGTH_RAW] = {0};
 
 	/* id */
 	cprintf("svs %04X\n", roneID);
 
 	/* IR */
+	/* Old
 	char copy[IR_COMMS_MESSAGE_LENGTH_MAX+1];
-	int i;
 	if (irCommsGetMessage_internal(&ir_msg)) {
 		for (i = 0; i < IR_COMMS_MESSAGE_LENGTH_MAX; i++) {
 			copy[i] = ir_msg.data[i];
 		}
 		copy[IR_COMMS_MESSAGE_LENGTH_MAX] = '\0';
 		cprintf("svi %s,%02X\n", copy, irCommsGetMessageReceiveBits(&ir_msg));
+	}
+	*/
+	uint8 *obstacleMatrix = irObstaclesGetBitMatrix();
+	cprintf("svi ");
+	for (i = 0; i < IR_COMMS_NUM_OF_RECEIVERS; i++) {
+		cprintf("%02X", obstacleMatrix[i]);
+
+		if (i == IR_COMMS_NUM_OF_RECEIVERS - 1)
+			cprintf("\n");
+		else
+			cprintf(",");
 	}
 
 	/* buttons */
@@ -122,9 +138,8 @@ void serialCmdSVFunc(char* command) {
 	cprintf("svl %04X,%04X,%04X,%04X\n",
 			lightSensorGetValue(LIGHT_SENSOR_FRONT_LEFT),
 			lightSensorGetValue(LIGHT_SENSOR_FRONT_RIGHT),
-			//TODO commented out until we can update the gui
-			//light_sensor_get_value(LIGHT_SENSOR_REAR_RIGHT),
-			lightSensorGetValue(LIGHT_SENSOR_REAR_LEFT));
+			lightSensorGetValue(LIGHT_SENSOR_REAR_LEFT),
+			lightSensorGetValue(LIGHT_SENSOR_REAR_RIGHT));
 	#endif
 
 	/* encoders */
@@ -142,7 +157,6 @@ void serialCmdSVFunc(char* command) {
 #endif
 
 }
-
 
 void parseGUIMsg(char *chrPtr, guiCmdData *command) {
 	int i, j;
@@ -257,7 +271,8 @@ void executeCmd(guiCmdData *command) {
 		break;
 	}
 	case CMD_AUDIO: {
-		//TODO add midi file playback here
+		//TODO: Put something here
+		break;
 	}
 #endif
 
@@ -316,7 +331,6 @@ void stripLeadingAndTrailingSpaces(char* string){
 /*
  * @brief Queries all remote robots for the contents of their cprintf buffer.
  * rt = remote terminal
- *
  */
 void serialCmdR1Func(char* command) {
 	char string[50];
@@ -356,6 +370,30 @@ void serialCmdRIFunc(char* command) {
 	rprintfSetHostMode(RPRINTF_HOST);
 }
 
+
+void serialCmdRRFunc(char* command) {
+	cprintf("rr %04X,%04X\n", roneID, rprintfIsHost());
+}
+
+
+void serialCmdBHFunc() {
+	writeBootloaderState(BL_STATE_HOST);
+	bootloading();
+}
+
+
+void serialCmdBRFunc() {
+	writeBootloaderState(BL_STATE_RECEIVE);
+	bootloading();
+}
+
+
+void serialCmdBXFunc() {
+	writeBootloaderState(BL_STATE_XMODEM);
+	bootloading();
+}
+
+
 #endif /* (defined(RONE_V6) || defined(RONE_V9) || defined(RONE_V12)) */
 
 /*
@@ -373,6 +411,8 @@ void systemCommandsInit() {
 	// remote control
 	serialCommandAdd(&serialCmdRC, "rc", serialCmdRCFunc);
 
+	// RCC
+	serialCommandAdd(&serialCmdRR, "rr", serialCmdRRFunc);
 
 	#if (defined(RONE_V6) || defined(RONE_V9) || defined(RONE_V12))
 	radioCommandAddQueue(&radioCmdGUI, "GUI", 10);
@@ -385,5 +425,15 @@ void systemCommandsInit() {
 
 	// remote include
 	serialCommandAdd(&serialCmdRI, "ri", serialCmdRIFunc);
+
+	// bootloader host
+	serialCommandAdd(&serialCmdBH, "bh", serialCmdBHFunc);
+
+	// bootloader remote
+	serialCommandAdd(&serialCmdBR, "br", serialCmdBRFunc);
+
+	// bootloader xmodem
+	serialCommandAdd(&serialCmdBX, "bx", serialCmdBXFunc);
+
 	#endif
 }

@@ -255,7 +255,7 @@ static void externalPoseNbrCallback(NbrDatabase* ndPtr) {
 			// no more neighbors. clear the remaining external poses
 			externalPoseClear(&externalPoseNbrPosesTemp[i]);
 		}
-		i++;
+		//i++;
 	}
 
 	// copy temp to actual poses
