@@ -5,6 +5,8 @@
  * @author MRSL
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include "roneos.h"
 #include "ronelib.h"
 
@@ -19,6 +21,10 @@
 #define DEMO_TV_SORT					30
 #define DEMO_DISPERSE_SIZE				120  //about 3.3 cm //160 not good - why?//  360 about 10cm //
 #define DEMO_FLOCK_RV_GAIN				40
+
+#define DEMOTEST_TV_MIN  				0
+#define DEMOTEST_TV_MAX  				120
+#define DEMOTEST_TV_STEP				20
 
 #define DEMOMODE_IDLE					0
 #define DEMOMODE_FOLLOW					1
@@ -126,8 +132,8 @@ Beh* behDisperse(Beh* behPtr, NbrList* nbrListPtr, int32 tv){
  */
 void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
-	uint8 demoMode = DEMOMODE_IDLE;
-	uint8 demoModeXmit = DEMOMODE_IDLE;
+	int8 demoMode = DEMOMODE_IDLE;
+	int8 demoModeXmit = DEMOMODE_IDLE;
 	uint8 demoModeXmitCounter = 0;
 	uint32 neighborRoundPrev = 0;
     boolean newNbrData;
@@ -184,10 +190,30 @@ void behaviorTask(void* parameters) {
 	//### minRouter/maxRouter
 	Nbr *minRouter=NULL, *maxRouter=NULL;
 
+	//### test mode
+	uint8 bumpSensorBits, *irObstaclesBitMatrix;
+	int16 demotest_tv = 0;
+	uint8 demotest_counter = 0;
+	uint8 demotest_flag = 0;
+	char rprintbuffer[256];
+	uint8 rprintoffset = 0;
+	uint32 neighborRound = 0;
+
+
+
 	for (;;) {
+		//### host mode
+		//if (rprintfIsHost()) {
+		//	ledsSetBinary(0xff,0xff,0xff);
+		//	osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
+		//	continue;
+		//}
+
 		behOutput = behMove = behIRObstacle = behBump = behRadio = behInactive;
 		neighborsGetMutex();
 		nbrListCreate(&nbrList);
+		irObstaclesBitMatrix = irObstaclesGetBitMatrix();
+		bumpSensorBits = bumpSensorsGetBits();
 
 		// check to see if
 		newNbrData = FALSE;
@@ -210,7 +236,14 @@ void behaviorTask(void* parameters) {
 		buttonRed = buttonsGet(BUTTON_RED);
 		buttonGreen = buttonsGet(BUTTON_GREEN);
 		buttonBlue = buttonsGet(BUTTON_BLUE);
-		if ((buttonRed & !buttonRedOld) || (buttonGreen & !buttonGreenOld) || (buttonBlue & !buttonBlueOld)) {
+		//if(buttonRed && buttonGreen && buttonBlue) {
+		//	demoModeXmit = DEMOMODE_TEST;
+		//	demotest_tv = 0;
+		if (demoMode == DEMOMODE_IDLE && !buttonGreenOld && buttonGreen) {	//### green button for slower
+			demotest_tv -= DEMOTEST_TV_STEP;
+		} else if (demoMode == DEMOMODE_IDLE && !buttonBlueOld && buttonBlue) {	//### blue button for faster
+			demotest_tv += DEMOTEST_TV_STEP;
+		} else if ((buttonRed & !buttonRedOld) || (buttonGreen & !buttonGreenOld) || (buttonBlue & !buttonBlueOld)) {
 			demoModeXmit++;
 		}
 		buttonRedOld = buttonRed;
@@ -409,15 +442,56 @@ void behaviorTask(void* parameters) {
 		}
 		default:
 		case DEMOMODE_IDLE: {
-			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+			//ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+			demotest_tv = bound(demotest_tv, DEMOTEST_TV_MIN, DEMOTEST_TV_MAX);
+			behMoveForward(&behOutput, demotest_tv);
+			demotest_counter++;
+			if(demotest_counter >= 3) {
+				demotest_counter = 0;
+				demotest_flag = 1 - demotest_flag;
+			}
+			uint8 ledR = 0;
+			if(irObstaclesBitMatrix[0] & 0x01) ledR += 0x04;
+			if(irObstaclesBitMatrix[1] & 0x02) ledR += 0x08;
+			if(irObstaclesBitMatrix[2] & 0x04) ledR += 0x10;
+			if(irObstaclesBitMatrix[3] & 0x08) ledR += 0x01;
+			uint8 ledG = 0;
+			if(bumpSensorBits & 0x03) ledG += 0x08;
+			if(bumpSensorBits & 0x0c) ledG += 0x10;
+			if(bumpSensorBits & 0x30) ledG += 0x02;
+			if(bumpSensorBits & 0xc0) ledG += 0x04;
+			uint8 ledB = 0;
+			if(irObstaclesBitMatrix[4] & 0x10) ledB += 0x01;
+			if(irObstaclesBitMatrix[5] & 0x20) ledB += 0x02;
+			if(irObstaclesBitMatrix[6] & 0x40) ledB += 0x04;
+			if(irObstaclesBitMatrix[7] & 0x80) ledB += 0x08;
+			if(demotest_flag) {
+				ledR += 0x02;
+				ledG += 0x01;
+				ledB += 0x10;
+			}
+			ledsSetBinary(ledR,ledG,ledB);
+			if(neighborsNewRoundCheck(&neighborRound)) {
+				rprintoffset = 0;
+				rprintoffset += sprintf(rprintbuffer, "%u,%lu;", roneID, neighborRound);
+				rprintf("%s\n", rprintbuffer);
+				rprintoffset = 0;
+			}
 			// disable the bump behavior
 			behBump = behInactive;
 			break;
 		}
 		}
 
-		if(demoMode != DEMOMODE_IDLE && demoMode!=DEMOMODE_BUBBLESORT) {
+		if(demoMode != DEMOMODE_IDLE && demoMode != DEMOMODE_BUBBLESORT) {
 			behSubsume(&behOutput, &behIRObstacle, &behBump);
+		}
+		if(demoMode != DEMOMODE_IDLE) {
+			demotest_tv=0;
+		}
+
+		if (rprintfIsHost()) {	//###
+			behOutput = behInactive;
 		}
 
 		neighborsPutMutex();

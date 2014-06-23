@@ -17,7 +17,7 @@
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerLog" value=""/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerOther" value="-f interface/busblaster.cfg -f target/stellaris.cfg -c &quot;init&quot;"/>
 <intAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerTelnetPortNumber" value="4444"/>
-<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.otherInitCommands" value="monitor adapter_khz 2000&#13;&#10;&#13;&#10;"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.otherInitCommands" value="monitor adapter_khz 2000"/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.otherRunCommands" value=""/>
 <stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.secondResetType" value="halt"/>
 <stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.imageFileName" value=""/>
