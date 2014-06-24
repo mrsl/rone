@@ -90,11 +90,13 @@ void
 {
 	int i, j, err;
 	int id = 0;
+	int initialized = 0;
 	int isHost = 0;
 	int timer, ttimer;
 	int rid;
 	char buffer[BUFFERSIZE + 1], rbuffer[BUFFERSIZE + 1], sbuf[SBUFSIZE];
-	char *bufp;
+	char *bufp = buffer;
+	char *sbufp;
 	struct commInfo *info;
 	struct remoteRobots *rr, *newRR;
 	serial_t sio;
@@ -111,57 +113,6 @@ void
 	/* Initialize robust IO on the serial */
 	serial_readinitb(&sio, info->hSerial);
 
-	/* Loop until ID and host data has been obtained from the robot */
-	for (;;) {
-		buffer[BUFFERSIZE] = '\0';
-
-		/* Read a line from the serial */
-		if ((err = serial_readlineb(&sio, buffer, BUFFERSIZE)) < 0) {
-			if (VERBOSE)
-			fprintf(stderr, "ERROR: Serial read error\n");
-			Free(info->hSerial);
-			Free(info);
-			return (NULL);
-		} else if (err == 0) {
-			continue;
-		}
-
-		/* Get ID and host status if correct line */
-		if (buffer[0] == 'r' && buffer[1] == 'r') {
-			bufp = buffer + 3;
-			for (i = 0; i < 2; i++) {
-				j = 0;
-				while (*bufp != ',') {
-					if (*bufp == '\r' && *(bufp + 1) == '\n') {
-						sbuf[j] = '\0';
-						break;
-					} else if (j == SBUFSIZE) {
-						sbuf[j] = '\0';
-						break;
-					}
-					sbuf[j] = *bufp;
-
-					j++;
-					bufp++;
-				}
-				bufp++; /* Skip comma */
-				if (i == 0)
-					id = convertASCIIHexWord(sbuf);
-				else
-					isHost = convertASCIIHexWord(sbuf);
-			}
-			break;
-		}
-	}
-
-	if (VERBOSE)
-	printf("S%02d: Connected to robot ID %02d\n", id, id);
-
-	/* Initializing */
-	activateRobot(id, info, isHost);
-	bufp = buffer;
-	timer = clock();
-
 	for (;;) {
 		/* Read a line */
 		if ((err = serial_readlineb(&sio, bufp, BUFFERSIZE)) < 0) {
@@ -177,6 +128,45 @@ void
 			continue;
 		} else {
 			bufp = buffer;
+		}
+
+		/* Loop until ID and host data has been obtained from the robot */
+		if (!initialized) {
+			if (buffer[0] == 'r' && buffer[1] == 'r') {
+				sbufp = buffer + 3;
+				for (i = 0; i < 2; i++) {
+					j = 0;
+					while (*sbufp != ',') {
+						if (*sbufp == '\r' && *(sbufp + 1) == '\n') {
+							sbuf[j] = '\0';
+							break;
+						} else if (j == SBUFSIZE) {
+							sbuf[j] = '\0';
+							break;
+						}
+						sbuf[j] = *sbufp;
+
+						j++;
+						sbufp++;
+					}
+					/* Skip comma */
+					sbufp++;
+					if (i == 0)
+						id = convertASCIIHexWord(sbuf);
+					else
+						isHost = convertASCIIHexWord(sbuf);
+				}
+
+				if (VERBOSE)
+				printf("S%02d: Connected to robot ID %02d\n", id, id);
+
+				/* Initializing */
+				initialized = 1;
+				activateRobot(id, info, isHost);
+				bufp = buffer;
+				timer = clock();
+			}
+			continue;
 		}
 
 		insertBuffer(id, buffer);
@@ -196,6 +186,7 @@ void
 				continue;
 			}
 
+			/* Handle bad numbers */
 			if (newRR->n > MAXROBOTID || newRR->n < 0) {
 				Free(newRR);
 				continue;
@@ -214,6 +205,7 @@ void
 
 			}
 
+			/* Clean up and ignore if error */
 			if (err) {
 				Free(newRR);
 				continue;
@@ -223,12 +215,14 @@ void
 			for (i = 0; i < newRR->n; i++) {
 				rid = newRR->ids[i];
 
+				/* Handle bad numbers */
 				if (rid > MAXROBOTID || rid < 0) {
 					err = 1;
 					break;
 				}
 
 				Pthread_mutex_lock(&robots[rid].mutex);
+				/* Ignore if this is already connected as a local robot */
 				if (robots[rid].hSerial != NULL) {
 					Pthread_mutex_unlock(&robots[rid].mutex);
 					continue;
@@ -241,6 +235,7 @@ void
 				Pthread_mutex_unlock(&robots[rid].mutex);
 			}
 
+			/* Clean up and ignore if error */
 			if (err) {
 				Free(newRR);
 				continue;
@@ -261,6 +256,7 @@ void
 
 			/* If we aren't already connected via serial, put data in buffer */
 			if (robots[rid].hSerial == NULL) {
+				/* Get the beginning of the remote message */
 				if ((bufp = strpbrk(buffer, " ")) == NULL) {
 					bufp = buffer;
 					continue;
