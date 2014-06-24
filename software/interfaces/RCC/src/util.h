@@ -22,6 +22,8 @@ uint32 convertASCIIHexLong(char *val);
 
 void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...);
 
+void Error(const char *fmt, ...);
+
 void Close(int fd);
 
 void *Malloc(size_t size);

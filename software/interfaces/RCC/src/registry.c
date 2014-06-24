@@ -22,6 +22,8 @@ void
 	int i;
 	struct regData data;
 
+	vargp = (void *)vargp;
+
 	for (;;) {
 		enumCommNames(&data);
 
@@ -79,7 +81,7 @@ enumCommNames(struct regData *data)
 
 		if ((status == ERROR_SUCCESS)) {
 			if (strstr(name, "VCP")) {
-				if (sscanf(portName, "COM%d", &port) != 1)
+				if (sscanf((char *)portName, "COM%d", &port) != 1)
 					continue;
 
 				data->ports[numOfComm] = port;

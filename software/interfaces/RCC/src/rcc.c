@@ -50,11 +50,8 @@ main(int argc, char **argv)
 	initCommWatch();
 
 	/* Create web server */
-	if (createServer(port) < 0) {
-		if (verbose)
-		fprintf(stderr, "ERROR: Failed to create server\n");
-		exit (-1);
-	}
+	if (createServer(port) < 0)
+		Error("Failed to create server");
 
 	guiInit();
 

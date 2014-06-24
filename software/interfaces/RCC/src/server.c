@@ -24,17 +24,12 @@ createServer(int port)
 
 	/* Initialize the Windows socket interface */
 	version = MAKEWORD(2, 0);
-	if (WSAStartup(version, &wsaData) != 0) {
-		if (verbose)
-		fprintf(stderr, "ERROR: WSAStartup error\n");
-		exit (-1);
-	}
+	if (WSAStartup(version, &wsaData) != 0)
+		Error("WSAStartup error");
 
 	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) {
 		WSACleanup();
-		if (verbose)
-		fprintf(stderr, "ERROR: WSAStartup error\n");
-		exit (-1);
+		Error("WSAStartup error");
 	}
 
 	/* Get and store the local IP address */
