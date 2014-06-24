@@ -55,26 +55,6 @@ serialConnect(HANDLE *hSerialPtr, int comPort)
 }
 
 /**
- * Write data to a serial port
- */
-void
-fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
-{
-	char text[256];
-	va_list ap;
-
-	if (fmt == NULL)
-		return;
-
-	va_start(ap, fmt);
-		vsprintf(text, fmt, ap);
-	va_end(ap);
-
-	DWORD dwBytesWritten = 0;
-	WriteFile(*hSerialPtr, text, strlen(text), &dwBytesWritten, NULL);
-}
-
-/**
  * Initialize robust IO over a serial connection
  */
 void

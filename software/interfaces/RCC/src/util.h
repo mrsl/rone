@@ -20,6 +20,8 @@ uint8 convertASCIIHexByte(char *val);
 uint16 convertASCIIHexWord(char *val);
 uint32 convertASCIIHexLong(char *val);
 
+void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...);
+
 void Close(int fd);
 
 void *Malloc(size_t size);

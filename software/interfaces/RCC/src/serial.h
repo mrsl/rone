@@ -14,7 +14,6 @@ typedef struct {
 
 
 int serialConnect(HANDLE *hSerialPtr, int comPort);
-void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...);
 void serial_readinitb(serial_t *sp, HANDLE *hSerialPtr);
 ssize_t serial_read(serial_t *sp, char *usrbuf, size_t n);
 ssize_t serial_readlineb(serial_t *sp, char *usrbuf, size_t maxlen);

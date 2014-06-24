@@ -46,6 +46,26 @@ convertASCIIHexLong(char *val)
        return (temp);
 }
 
+/**
+ * Write data to a file handle
+ */
+void
+fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
+{
+	char text[256];
+	va_list ap;
+
+	if (fmt == NULL)
+		return;
+
+	va_start(ap, fmt);
+		vsprintf(text, fmt, ap);
+	va_end(ap);
+
+	DWORD dwBytesWritten = 0;
+	WriteFile(*hSerialPtr, text, strlen(text), &dwBytesWritten, NULL);
+}
+
 void
 Close(int fd)
 {

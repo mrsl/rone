@@ -285,7 +285,7 @@ void
 			/* If there is new data in the robot buffer */
 			while (head != robots[id].head) {
 				Pthread_mutex_lock(&robots[id].mutex);
-				sprintf(buffer, "[%ld] %s", clock(), robots[id].buffer[head]);
+				sprintf(buffer, "%s", robots[id].buffer[head]);
 				Pthread_mutex_unlock(&robots[id].mutex);
 
 				if ((err = socket_writen(conn->fd,

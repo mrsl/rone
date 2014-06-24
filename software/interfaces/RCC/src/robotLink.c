@@ -156,13 +156,28 @@ void
 
 	/* Initializing */
 	activateRobot(id, info);
+	bufp = buffer;
 
-	/* If the robot is a host */
-	if (isHost) {
-		timer = clock();
-		robots[id].type = HOST;
-		for (;;) {
-			buffer[BUFFERSIZE] = '\0';
+	for (;;) {
+		/* Read a line */
+		if ((err = serial_readlineb(&sio, bufp, BUFFERSIZE)) < 0) {
+			if (VERBOSE)
+			fprintf(stderr, "S%02d: Serial read error\n", id);
+			break;
+		} else if (err == 0) {
+			continue;
+		}
+
+		if (bufp[err - 1] != '\n') {
+			bufp += err;
+			continue;
+		} else {
+			bufp = buffer;
+		}
+
+		if (isHost) {
+			timer = clock();
+			robots[id].type = HOST;
 
 			/* Every so many seconds, query again for status */
 			ttimer = clock();
@@ -170,122 +185,94 @@ void
 				fcprintf(info->hSerial, "rt\n");
 				timer = ttimer;
 			}
-
-			/* Read a line */
-			if ((err = serial_readlineb(&sio, buffer, BUFFERSIZE)) < 0) {
-				if (VERBOSE)
-				fprintf(stderr, "S%02d: Serial read error\n", id);
-				break;
-			} else if (err == 0) {
-				continue;
-			}
-
-			err = 0;
-
-			/* Insert the line into the host robot's buffer */
-			insertBuffer(id, buffer);
-
-			/* If we get a status line */
-			if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 's') {
-				newRR = Malloc(sizeof(struct remoteRobots));
-
-				/* Get Number or robots */
-				if (sscanf(buffer, "rts,%d%s", &newRR->n, rbuffer) < 1) {
-					Free(newRR);
-					continue;
-				}
-
-				if (newRR->n > MAXROBOTID || newRR->n < 0) {
-					Free(newRR);
-					continue;
-				}
-
-				/* Get IDs of connected robots */
-				for (i = 0; i < newRR->n; i++) {
-					if (sscanf(rbuffer, ",%d%s", &newRR->ids[i], rbuffer) < 1) {
-						err = 1;
-						break;
-					}
-					if (newRR->ids[i] > MAXROBOTID || newRR->ids[i] < 0) {
-						err = 1;
-						break;
-					}
-				}
-
-				if (err) {
-					Free(newRR);
-					continue;
-				}
-
-				/* Mark each robot as active */
-				for (i = 0; i < newRR->n; i++) {
-					rid = newRR->ids[i];
-
-					if (rid > MAXROBOTID || rid < 0) {
-						err = 1;
-						break;
-					}
-
-					Pthread_mutex_lock(&robots[rid].mutex);
-					if (robots[rid].hSerial != NULL) {
-						Pthread_mutex_unlock(&robots[rid].mutex);
-						continue;
-					}
-
-					robots[rid].type = REMOTE;
-					robots[rid].up = clock();
-					robots[rid].host = id;
-
-					Pthread_mutex_unlock(&robots[rid].mutex);
-				}
-
-				if (err) {
-					Free(newRR);
-					continue;
-				}
-
-				/* Free old list */
-				if (rr)
-					Free(rr);
-
-				rr = newRR;
-			}
-
-			/* If we get a data line */
-			if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 'd') {
-				/* Scan ID and data */
-				if (sscanf(buffer, "rtd,%d %s", &rid, rbuffer) < 1) {
-					continue;
-				}
-
-				sprintf(buffer, "%s\n", rbuffer);
-
-				/* If we aren't already connected via serial, put data in
-				 * the robot buffer */
-				if (robots[rid].hSerial == NULL) {
-					insertBuffer(rid, buffer);
-					robots[rid].host = id;
-				}
-			}
 		}
 
-	/* If it is just a regular robot */
-	} else {
-		/* Loop while still connected */
-		for (;;) {
-			buffer[BUFFERSIZE] = '\0';
+		insertBuffer(id, buffer);
 
-			/* Read a line from the serial */
-			if ((err = serial_readlineb(&sio, buffer, BUFFERSIZE)) < 0) {
-				if (VERBOSE)
-				fprintf(stderr, "S%02d: Serial read error\n", id);
-				break;
-			} else if (err == 0) {
+		err = 0;
+
+		/* If we get a status line */
+		if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 's') {
+			robots[id].type = HOST;
+			isHost = 1;
+
+			newRR = Malloc(sizeof(struct remoteRobots));
+
+			/* Get Number or robots */
+			if (sscanf(buffer, "rts,%d%s", &newRR->n, rbuffer) < 1) {
+				Free(newRR);
 				continue;
 			}
 
-			/* Insert the line into the robot buffer */
-			insertBuffer(id, buffer);
+			if (newRR->n > MAXROBOTID || newRR->n < 0) {
+				Free(newRR);
+				continue;
+			}
+
+			/* Get IDs of connected robots */
+			for (i = 0; i < newRR->n; i++) {
+				if (sscanf(rbuffer, ",%d%s", &newRR->ids[i], rbuffer) < 1) {
+					err = 1;
+					break;
+				}
+				if (newRR->ids[i] > MAXROBOTID || newRR->ids[i] < 0) {
+					err = 1;
+					break;
+				}
+			}
+
+			if (err) {
+				Free(newRR);
+				continue;
+			}
+
+			/* Mark each robot as active */
+			for (i = 0; i < newRR->n; i++) {
+				rid = newRR->ids[i];
+
+				if (rid > MAXROBOTID || rid < 0) {
+					err = 1;
+					break;
+				}
+
+				Pthread_mutex_lock(&robots[rid].mutex);
+				if (robots[rid].hSerial != NULL) {
+					Pthread_mutex_unlock(&robots[rid].mutex);
+					continue;
+				}
+
+				robots[rid].type = REMOTE;
+				robots[rid].up = clock();
+				robots[rid].host = id;
+
+				Pthread_mutex_unlock(&robots[rid].mutex);
+			}
+
+			if (err) {
+				Free(newRR);
+				continue;
+			}
+
+			/* Free old list */
+			if (rr)
+				Free(rr);
+
+			rr = newRR;
+		}
+
+		/* If we get a data line */
+		if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 'd') {
+			/* Scan ID and data */
+			if (sscanf(buffer, "rtd,%d %s", &rid, rbuffer) < 1)
+				continue;
+
+			/* If we aren't already connected via serial, put data in buffer */
+			if (robots[rid].hSerial == NULL) {
+				sprintf(buffer, "%s\n", rbuffer);
+				insertBuffer(rid, buffer);
+				robots[rid].type = REMOTE;
+				robots[rid].host = id;
+			}
 		}
 	}
 
@@ -295,6 +282,7 @@ void
 	/* Clean up */
 	commToNum[info->port] = 0;
 	robots[id].hSerial = NULL;
+	robots[id].type = UNKNOWN;
 	CloseHandle(*info->hSerial);
 	Free(info->hSerial);
 	Free(info);
@@ -325,8 +313,6 @@ activateRobot(int robotID, struct commInfo *info)
 void
 insertBuffer(int robotID, char *buffer)
 {
-	int i;
-
 	/* Lock the robot buffer */
 	Pthread_mutex_lock(&robots[robotID].mutex);
 
@@ -335,16 +321,8 @@ insertBuffer(int robotID, char *buffer)
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
 
-	for (i = 0; i < BUFFERSIZE; i++) {
-		robots[robotID].buffer[robots[robotID].head][i] = buffer[i];
-
-		if (robots[robotID].buffer[robots[robotID].head][i] == '\n') {
-			robots[robotID].buffer[robots[robotID].head][i] = '\r';
-			robots[robotID].buffer[robots[robotID].head][i + 1] = '\n';
-			robots[robotID].buffer[robots[robotID].head][i + 2] = '\0';
-			break;
-		}
-	}
+	sprintf(robots[robotID].buffer[robots[robotID].head], "[%10ld] %s\r\n",
+		clock(), buffer);
 
 	/* Unlock the robot buffer */
 	Pthread_mutex_unlock(&robots[robotID].mutex);
