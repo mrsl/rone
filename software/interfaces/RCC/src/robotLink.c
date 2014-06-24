@@ -157,6 +157,7 @@ void
 	/* Initializing */
 	activateRobot(id, info);
 	bufp = buffer;
+	timer = clock();
 
 	for (;;) {
 		/* Read a line */
@@ -176,9 +177,6 @@ void
 		}
 
 		if (isHost) {
-			timer = clock();
-			robots[id].type = HOST;
-
 			/* Every so many seconds, query again for status */
 			ttimer = clock();
 			if (timer + 3000 < ttimer) {
@@ -269,7 +267,7 @@ void
 
 			/* If we aren't already connected via serial, put data in buffer */
 			if (robots[rid].hSerial == NULL) {
-				sprintf(buffer, "%s\n", rbuffer);
+				sprintf(buffer, "%s\r\n", rbuffer);
 				insertBuffer(rid, buffer);
 				robots[rid].type = REMOTE;
 				robots[rid].host = id;
