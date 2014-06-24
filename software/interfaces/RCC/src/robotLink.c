@@ -219,6 +219,7 @@ void
 					err = 1;
 					break;
 				}
+
 			}
 
 			if (err) {
@@ -321,7 +322,7 @@ insertBuffer(int robotID, char *buffer)
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
 
-	sprintf(robots[robotID].buffer[robots[robotID].head], "[%10ld] %s\r\n",
+	sprintf(robots[robotID].buffer[robots[robotID].head], "[%10ld] %s",
 		clock(), buffer);
 
 	/* Unlock the robot buffer */

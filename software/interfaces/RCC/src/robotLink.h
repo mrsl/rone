@@ -28,7 +28,7 @@ struct commCon {
 		int port;
 		int host;
 	};
-	char buffer[NUMBUFFER][BUFFERSIZE + 1];
+	char buffer[NUMBUFFER][BUFFERSIZE + 13];
 	int head;
 	pthread_mutex_t mutex;
 };
