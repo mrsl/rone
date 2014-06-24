@@ -12,6 +12,7 @@ openClientConnection(int robotID)
     HANDLE hTempFile = INVALID_HANDLE_VALUE;
 
     DWORD dwRetVal = 0;
+    UINT uRetVal   = 0;
 
     TCHAR szTempFileName[MAX_PATH];
     TCHAR lpTempPathBuffer[MAX_PATH];
@@ -23,19 +24,21 @@ openClientConnection(int robotID)
     if (dwRetVal > MAX_PATH || (dwRetVal == 0))
         return (-1);
 
-    if (GetTempFileName(lpTempPathBuffer,
-    					TEXT("SCRIPT"),
-    					0,
-    					szTempFileName) == 0)
-    	return (-1);
+    uRetVal = GetTempFileName(lpTempPathBuffer,
+                              TEXT("SCRIPT"),
+                              0,
+                              szTempFileName);
+    if (uRetVal == 0)
+        return (-1);
 
-    if (CreateFile((LPTSTR) szTempFileName,
-    				GENERIC_WRITE,
-    				0,
-					NULL,
-					CREATE_ALWAYS,
-					FILE_ATTRIBUTE_NORMAL,
-					NULL) == INVALID_HANDLE_VALUE);
+    hTempFile = CreateFile((LPTSTR) szTempFileName,
+						   GENERIC_WRITE,
+						   0,
+						   NULL,
+						   CREATE_ALWAYS,
+						   FILE_ATTRIBUTE_NORMAL,
+						   NULL);
+	if (hTempFile == INVALID_HANDLE_VALUE)
         return (-1);
 
 	/* Output the script to the temporary file */
@@ -48,8 +51,8 @@ openClientConnection(int robotID)
 	if (sprintf(buffer, "/SCRIPT \"%s\"", szTempFileName) < 0)
 		return (-1);
 
-	ShellExecute(GetDesktopWindow(), "open",
-				 "securecrt.exe", buffer, "", SW_SHOW);
+	ShellExecute(GetDesktopWindow(), "open", "securecrt.exe", buffer, "", SW_SHOW);
 
     return (0);
 }
+
