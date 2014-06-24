@@ -1,0 +1,65 @@
+This will run you how to setup MinGW and freeglut on Windows 7.
+
+STEP 1: MinGW
+First, download and install MinGW from the link below:
+	http://sourceforge.net/projects/mingw/files/Installer/mingw-get-inst/mingw-get-inst-20111118/
+	
+[http://sourceforge.net/projects/mingw/files/Installer/mingw-get-inst/mingw-get-inst-20111118/ here]
+	
+Use the default directory ("C:\MinGW") because changing that can
+screw up the installation and then Eclipse won't be able to find
+it. Check the C Compiler and C++ Compiler. 
+
+
+STEP 2: freeglut
+Once that is installed, get the latest freeglut version for Windows
+from here (get the MinGW Package):
+	http://www.transmissionzero.co.uk/software/freeglut-devel/
+
+Or you can get the source and compile your own package, but this 
+isn't going to help with that. The pre-compiled archive works just
+fine and is much simpler.
+
+Once the you have unzipped the archive, do the following:
+	1. Copy the freeglut.dll to "C:\Windows\System32"
+	2. Copy the contents of include\GL to "C:\MinGW\include\GL"
+	3. Copy the contents of lib to "C:\MinGW\lib"
+
+
+STEP 3: Eclipse	(assuming you don't have it yet)
+Now you just need Eclipse CDT. Get that from here:
+	http://eclipse.org/downloads/
+
+Extract it from the zip archive and place it where ever you want.
+Start Eclipse and set the workspace to be "...\mrone\develcode" where
+"..." is the path to the mrone repository on your computer. Now
+everything should be setup and work correctly. Test this by importing
+RoneGUI and doing a clean and build (right click on the project to 
+bring up 'Clean Project' and 'Build Project') and then run 
+(ctrl+F11). If the GUI comes up, then it worked. If not, double check
+you did everything correctly above. If you did, continue to the 
+project settings information (next step).
+
+
+STEP 4: Project Settings
+NOTE: If the GUI built and ran, you don't need to touch this. 
+
+Right click on the project, go to 'Properties'. In the menu tree on
+the far left, go to 'C/C++ Build' then to 'Settings'. In the new 
+menu tree that showed up, go to 'MinGW C Linker' then 'Libraries'.
+
+In libraries (-l), add (or make sure they are there) 
+freeglut_static, opengl32, glu32, gdi32, and winmm. In
+Library Search Path (-L), add "${workspace_loc:/OpenGLDemo/lib}" and
+"C:\MinGW\lib". You DO want the quotes around the Search Path.
+
+Now clean then build the project and try to run again. As long as
+all of the above are in the libraries and Library Search Path,
+it should run correctly. If it still fails, try to delete everything
+that was done and try again.
+
+To delete MinGW run the uninstaller in the MinGW folder and then
+move the remnants of the folder to the trash. To delete Eclipse
+just move the whole folder into the trash. To delete freeglut, just
+remove the .dll from "C:\Windows\System32" as the rest was deleted
+with MinGW.
