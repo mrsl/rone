@@ -14,47 +14,29 @@
 #define NEIGHBOR_ROUND_PERIOD			300
 #define RADIO_MESSAGE_PERSISTANCE		200
 #define BEHAVIOR_TASK_PERIOD			50
-#define FLOCK_RV_GAIN					150
-#define REALESE_WAIT_TIME				2000
-#define LOST_OBJECT_WAIT				5000
-#define CONV_ANGL						1100
 
-#define ACCEL_DEAD_ZONE					5
-#define ACCEL_IIR_GAIN					50
-#define TV_MIN							15
-
-#define MODE_IDLE		 0
-#define SEEKER_SEL		 1
-#define SEEKER			 2
-#define GRIPPED			 3
-#define CONV_SEL		 4
-#define CONVERGE		 5
-#define MOVE_OBJ		 6
-#define REMOTE			 8
-#define RELEASE			 9
-
-#define SEEKING			1
-#define CONVERGING		2
-#define GRIPPING		3
-#define LEAVING			4
+#define BUILD_TREE		 0
+#define GUESS_COM		 1
 
 
-#define CNTCLK			1
-#define CLKWISE			2
-#define REST			0
-#define ATTEMPTING		3
 
+typedef struct posCOM {
+	NbrData X_H;
+	NbrData X_L;
+	NbrData Y_H;
+	NbrData Y_L;
+} posCOM;
 
 void behaviorTask(void* parameters) {
 	//rprintfSetSleepTime(500);
 
 	uint32 lastWakeTime = osTaskGetTickCount();
-	uint8 navigationMode = MODE_IDLE;
+	uint8 state = BUILD_TREE;
 	Beh behOutput;
 	boolean printNow;
 	uint32 neighborRound = 0;
 	NbrList nbrList;
-
+	int i;
 	BroadcastMessage broadcastMessage;
 	broadcastMsgCreate(&broadcastMessage, 20);
 
@@ -66,6 +48,12 @@ void behaviorTask(void* parameters) {
 	NbrData msgNbrType;
 
 	nbrDataCreate(&msgNbrType, "type", 3, 0);
+
+	posCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE];
+	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE; i++){
+		nbrDataCreate16(&treeGuessCOM[i].X_H,&treeGuessCOM[i].X_L,"X_H", "X_L", 0);
+		nbrDataCreate16(&treeGuessCOM[i].Y_H,&treeGuessCOM[i].Y_L,"Y_H", "Y_L", 0);
+	}
 
 	//uint16 IRXmitPower = IR_COMMS_POWER_MAX/4;
 	GlobalRobotList globalRobotListPtr;
@@ -91,7 +79,6 @@ void behaviorTask(void* parameters) {
 				globalRobotListPrintAllTree(&globalRobotListPtr, &nbrList);
 			}
 
-			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 			/*** READ BUTTONS ***/
 			if (buttonsGet(BUTTON_RED)) {
 			}else if (buttonsGet(BUTTON_GREEN)) {
@@ -99,7 +86,22 @@ void behaviorTask(void* parameters) {
 			}
 
 			/** STATES MACHINE **/
-			switch (navigationMode) {
+			switch (state) {
+			case BUILD_TREE:{
+				ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+				if(globalRobotListPtr.size >= GLOBAL_ROBOTLIST_MAX_SIZE){
+					state = GUESS_COM;
+				}
+				break;
+			}
+			case GUESS_COM:{
+				ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+				break;
+			}
+			}
+
+			if(state == GUESS_COM){
+
 			}
 
 			/*** FINAL STUFF ***/
