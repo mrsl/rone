@@ -247,7 +247,7 @@ void globalRobotUpdateTree(GlobalRobotList* globalRobotListPtr, NbrList nbrListP
 			uint8 nbrRobotListID = nbrDataGetNbr(&(globalRobotListPtr->list[j].ID), nbrPtr);
 			uint8 nbrRobotListHops = nbrDataGetNbr(&(globalRobotListPtr->list[j].Hops), nbrPtr);
 			if(nbrRobotListID ==ROBOT_ID_NULL ){
-				return;
+				//return;
 			} else if((nbrRobotListID == grlEltGetID(SelfgrlEltPtr)) && (nbrRobotListHops != 0)){
 				if(nbrDataGet(&(SelfgrlEltPtr->Hops)) == 0){
 					nbrDataSet(&(SelfgrlEltPtr->Hops), nbrRobotListHops + 1);
