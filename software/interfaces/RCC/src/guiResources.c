@@ -105,7 +105,7 @@ textInit(GLvoid)
 GLvoid
 textPrintf(const char *fmt, ...)
 {
-	int i;
+	unsigned int i;
 	GLfloat length = 0;
 	char text[256] = {0};
 	va_list ap;
@@ -117,7 +117,7 @@ textPrintf(const char *fmt, ...)
 		vsprintf(text, fmt, ap);
 	va_end(ap);
 
-	for (i = 0; i < (strlen(text)); i++)
+	for (i = 0; i < strlen(text); i++)
 		length += gmf[(int)text[i]].gmfCellIncX;
 
 	glPushMatrix();

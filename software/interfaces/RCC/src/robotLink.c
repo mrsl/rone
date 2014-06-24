@@ -148,8 +148,8 @@ void
 						j++;
 						sbufp++;
 					}
-					/* Skip comma */
 					sbufp++;
+
 					if (i == 0)
 						id = convertASCIIHexWord(sbuf);
 					else
@@ -166,7 +166,6 @@ void
 			}
 			continue;
 		}
-
 		insertBuffer(id, buffer);
 
 		err = 0;
@@ -200,7 +199,6 @@ void
 					err = 1;
 					break;
 				}
-
 			}
 
 			/* Clean up and ignore if error */
@@ -226,6 +224,7 @@ void
 					continue;
 				}
 
+				/* Update robot */
 				robots[rid].type = REMOTE;
 				robots[rid].up = clock();
 				robots[rid].host = id;

@@ -5,15 +5,9 @@
 #define RCC_H_
 
 /* Standard includes */
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
-#include <string.h>
 #include <pthread.h>
-#include <strings.h>
-#include <stddef.h>
-#include <math.h>
 
 /* Windows includes */
 #include <winsock.h>
