@@ -1,9 +1,9 @@
 #ifndef REG_H_
 #define REG_H_
 
-#define MAXPORT		1000
-#define PORTSIZE	64
-#define SLEEPTIME	1000
+#define MAXPORT			1000
+#define PORTSIZE		64
+#define REGISTRYWATCH	1000
 
 /* Struct to hold registry data over serial ports */
 struct regData {

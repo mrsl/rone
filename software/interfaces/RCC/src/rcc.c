@@ -16,6 +16,7 @@ main(int argc, char **argv)
 	int err = 0;
 	port = 8000; /* Use port 8000 as default */
 
+	/* Parse command line arguments */
 	for (i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
 			verbose = 1;

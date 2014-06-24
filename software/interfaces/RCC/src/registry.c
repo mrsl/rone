@@ -20,8 +20,9 @@ void
 *commWatch(void *vargp)
 {
 	int i;
-	struct regData data;
+	struct regData data;	/* Read data from the registry */
 
+	/* Get rid of pesky compiler warnings */
 	vargp = (void *)vargp;
 
 	for (;;) {
@@ -33,7 +34,7 @@ void
 				initCommCommander(data.ports[i]);
 		}
 
-		Sleep(SLEEPTIME);
+		Sleep(REGISTRYWATCH);
 	}
 	return (NULL);
 }

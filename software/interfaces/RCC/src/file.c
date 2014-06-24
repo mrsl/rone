@@ -4,7 +4,7 @@
 const char scriptTemplate[256] = "#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID you wish to view: \"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\nEnd Sub\r\n";
 
 /**
- * Opens a secureCRT window and autoconnects to the server to the requested ID
+ * Opens a secureCRT window and connects to the server to the requested ID
  */
 int
 openClientConnection(int robotID)
@@ -16,7 +16,6 @@ openClientConnection(int robotID)
 
     TCHAR szTempFileName[MAX_PATH];
     TCHAR lpTempPathBuffer[MAX_PATH];
-
     char buffer[1024];
 
     /* Create a temporary file */
@@ -39,22 +38,20 @@ openClientConnection(int robotID)
 						   CREATE_ALWAYS,
 						   FILE_ATTRIBUTE_NORMAL,
 						   NULL);
-
 	if (hTempFile == INVALID_HANDLE_VALUE)
         return (-1);
 
 	/* Output the script to the temporary file */
 	fcprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
 
-	if (!CloseHandle(hTempFile)) {
+	if (!CloseHandle(hTempFile))
 	   return (-1);
-	}
 
 	/* Open secureCRT with the script as an argument */
-	sprintf(buffer, "/SCRIPT \"%s\"", szTempFileName);
+	if (sprintf(buffer, "/SCRIPT \"%s\"", szTempFileName) < 0)
+		return (-1);
 
-	ShellExecute(GetDesktopWindow(), "open",
-				 "securecrt.exe", buffer, "", SW_SHOW);
+	ShellExecute(GetDesktopWindow(), "open", "securecrt.exe", buffer, "", SW_SHOW);
 
     return (0);
 }
