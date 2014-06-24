@@ -19,20 +19,20 @@ createServer(int port)
 	/* Initialize the accepted connection buffer */
 	buffer_init(&connectionBuffer, CONNECTIONBUFFERSIZE);
 
-	if (VERBOSE)
+	if (verbose)
 	printf("MAS: Thread buffer initialized\n");
 
 	/* Initialize the Windows socket interface */
 	version = MAKEWORD(2, 0);
 	if (WSAStartup(version, &wsaData) != 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: WSAStartup error\n");
 		exit (-1);
 	}
 
 	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) {
 		WSACleanup();
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: WSAStartup error\n");
 		exit (-1);
 	}
@@ -49,7 +49,7 @@ createServer(int port)
 	*ti = listenfd;
 	Pthread_create(&tid, NULL, incomingHandler, ti);
 
-	if (VERBOSE)
+	if (verbose)
 	printf("T00: Server initialized on port %d\n", port);
 
 	/* Create worker threads */
@@ -151,7 +151,7 @@ void
 			continue;
 		}
 
-		if (VERBOSE)
+		if (verbose)
 		printf("T00: New client connection, request number %d\n", count);
 
 		conn->n = count;
@@ -189,7 +189,7 @@ void
 	/* Run thread as detached */
 	Pthread_detach(pthread_self());
 
-	if (VERBOSE)
+	if (verbose)
 	printf("T%02d: Handler thread initialized\n", tid);
 
 	/* Continuously wait for a new connection in the buffer and then handle */
@@ -200,7 +200,7 @@ void
 		/* Initialize robust IO on the socket */
 		socket_readinitb(&socketio, conn->fd);
 
-		if (VERBOSE)
+		if (verbose)
 		printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
 
 		/* Query user for robot ID */
@@ -251,7 +251,7 @@ void
 			continue;
 		}
 
-		if (VERBOSE)
+		if (verbose)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
 		/* Feed new data from the robot to the client until close */
@@ -311,7 +311,7 @@ void
 			}
 		}
 
-		if (VERBOSE)
+		if (verbose)
 		printf("T%02d: [%d] Done!\n", tid, conn->n);
 
 		/* Clean up */

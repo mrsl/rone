@@ -80,7 +80,7 @@ void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);
 void timerEnableDraw(int value);
-void guiInit(int argc, char* argv[]);
+void guiInit();
 
 /* Text functions */
 GLvoid textInit(GLvoid);

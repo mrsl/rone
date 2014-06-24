@@ -418,9 +418,11 @@ timerEnableDraw(int value)
  * Initialize and run the main loop of the GUI
  */
 void
-guiInit(int argc, char* argv[])
+guiInit()
 {
-	glutInit(&argc, argv);
+	int argc = 0;
+	glutInit(&argc, NULL);
+
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow(NAME);

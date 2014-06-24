@@ -69,7 +69,7 @@ initCommCommander(int port)
 
 	/* Connect to the port */
 	if (serialConnect(hSerial, port) < 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: Failed to connect serial\n");
 		return (-1);
 	}
@@ -92,7 +92,6 @@ void
 	int id = 0;
 	int initialized = 0;
 	int isHost = 0;
-	int timer, ttimer;
 	int rid;
 	char buffer[BUFFERSIZE + 1], rbuffer[BUFFERSIZE + 1], sbuf[SBUFSIZE];
 	char *bufp = buffer;
@@ -116,7 +115,7 @@ void
 	for (;;) {
 		/* Read a line */
 		if ((err = serial_readlineb(&sio, bufp, BUFFERSIZE)) < 0) {
-			if (VERBOSE)
+			if (verbose)
 			fprintf(stderr, "S%02d: Serial read error\n", id);
 			break;
 		} else if (err == 0) {
@@ -157,14 +156,13 @@ void
 						isHost = convertASCIIHexWord(sbuf);
 				}
 
-				if (VERBOSE)
+				if (verbose)
 				printf("S%02d: Connected to robot ID %02d\n", id, id);
 
 				/* Initializing */
 				initialized = 1;
 				activateRobot(id, info, isHost);
 				bufp = buffer;
-				timer = clock();
 			}
 			continue;
 		}
@@ -271,7 +269,7 @@ void
 		}
 	}
 
-	if (VERBOSE)
+	if (verbose)
 	printf("S%02d: Done!\n", id);
 
 	/* Clean up */

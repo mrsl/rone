@@ -31,8 +31,7 @@
 #include "file.h"
 #include "gui.h"
 
-#define VERBOSE 1
-
 extern int port;
+extern int verbose;
 
 #endif

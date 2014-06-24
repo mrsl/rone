@@ -4,6 +4,7 @@
 #include "rcc.h"
 
 int port;
+int verbose = 0;
 
 /**
  * Main function
@@ -11,7 +12,38 @@ int port;
 int
 main(int argc, char **argv)
 {
-	port = 8000; /* Use port 8000 */
+	int i;
+	int err = 0;
+	port = 8000; /* Use port 8000 as default */
+
+	for (i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
+			verbose = 1;
+			continue;
+		}
+
+	    if (i + 1 != argc)    {
+			if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--port") == 0) {
+				if (sscanf(argv[i + 1], "%d", &port) != 1) {
+					err = 1;
+					break;
+				}
+
+				continue;
+			}
+	    }
+
+	    err = 1;
+	    break;
+	}
+
+	if (err) {
+		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum]\n", argv[0]);
+		exit (-1);
+	}
+
+	if (!verbose)
+		FreeConsole();
 
 	/* Initialize robot buffers */
 	initRobots();
@@ -19,12 +51,12 @@ main(int argc, char **argv)
 
 	/* Create web server */
 	if (createServer(port) < 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: Failed to create server\n");
 		exit (-1);
 	}
 
-	guiInit(argc, argv);
+	guiInit();
 
 	return (0);
 }

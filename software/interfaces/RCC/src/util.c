@@ -70,7 +70,7 @@ void
 Close(int fd)
 {
 	if (closesocket(fd) < 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: close failure\n");
 		exit (-1);
 	}
@@ -82,7 +82,7 @@ void
 	void *p;
 
 	if ((p = malloc(size)) == NULL) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: malloc failure\n");
 		exit (-1);
 	}
@@ -96,7 +96,7 @@ void
 	void *p;
 
 	if ((p = calloc(nmemb, size)) == NULL) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: calloc failure\n");
 		exit (-1);
 	}
@@ -120,7 +120,7 @@ Pthread_create(pthread_t *tidp, pthread_attr_t *attrp,
 	int rc;
 
 	if ((rc = pthread_create(tidp, attrp, routine, argp)) != 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: pthread_create failure\n");
 		exit (-1);
 	}
@@ -132,7 +132,7 @@ Pthread_detach(pthread_t tid)
 	int rc;
 
 	if ((rc = pthread_detach(tid)) != 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: pthread_detach failure\n");
 		exit (-1);
 	}
@@ -142,7 +142,7 @@ void
 Pthread_mutex_init(pthread_mutex_t *mp, pthread_mutexattr_t *attr)
 {
 	if (pthread_mutex_init(mp, attr) < 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: pthread_mutex_init failure\n");
 		exit (-1);
 	}
@@ -152,7 +152,7 @@ void
 Pthread_cond_init(pthread_cond_t *mp, pthread_condattr_t *attr)
 {
 	if (pthread_cond_init(mp, attr) < 0) {
-		if (VERBOSE)
+		if (verbose)
 		fprintf(stderr, "ERROR: pthread_cond_init failure\n");
 		exit (-1);
 	}
@@ -164,7 +164,7 @@ Pthread_mutex_lock(pthread_mutex_t *mp)
 	if (pthread_mutex_lock(mp) == 0)
 		return;
 
-	if (VERBOSE)
+	if (verbose)
 	fprintf(stderr, "ERROR: pthread_mutex_lock failure\n");
 	exit (-1);
 }
@@ -175,7 +175,7 @@ Pthread_mutex_unlock(pthread_mutex_t *mp)
 	if (pthread_mutex_unlock(mp) == 0)
 		return;
 
-	if (VERBOSE)
+	if (verbose)
 	fprintf(stderr, "ERROR: pthread_mutex_unlock failure\n");
 	exit (-1);
 }
@@ -186,7 +186,7 @@ Pthread_cond_broadcast(pthread_cond_t *cp)
 	if (pthread_cond_broadcast(cp) == 0)
 		return;
 
-	if (VERBOSE)
+	if (verbose)
 	fprintf(stderr, "ERROR: pthread_cond_broadcast failure\n");
 	exit (-1);
 }
@@ -197,7 +197,7 @@ Pthread_cond_signal(pthread_cond_t *cp)
 	if (pthread_cond_signal(cp) == 0)
 		return;
 
-	if (VERBOSE)
+	if (verbose)
 	fprintf(stderr, "ERROR: pthread_cond_signal failure\n");
 	exit (-1);
 }
@@ -209,7 +209,7 @@ Pthread_cond_wait(pthread_cond_t *cp, pthread_mutex_t *mp)
 	if (pthread_cond_wait(cp, mp) == 0)
 		return;
 
-	if (VERBOSE)
+	if (verbose)
 	fprintf(stderr, "ERROR: Pthread_cond_wait failure\n");
 	exit (-1);
 }
