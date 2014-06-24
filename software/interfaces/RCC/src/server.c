@@ -253,17 +253,18 @@ void
 		head = robots[id].head;
 		timer = clock();
 
+		/* Initialize stuff for select */
 		FD_ZERO(&read_set);
 		FD_SET(conn->fd, &read_set);
 
 		for (;;) {
 			ready_set = read_set;
 
-			/* Check if there is data available from the client */
+			/* Check if there is data available from the client. */
 			if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0)
 				break;
 
-			/* If there is data to be read. */
+			/* Is there is data to be read? */
 			if (FD_ISSET(conn->fd, &ready_set)) {
 				if (socket_read(&socketio, inBuffer, BUFFERSIZE) != 0) {
 					/* Write data out to serial port if the robot is local */
@@ -280,7 +281,8 @@ void
 			/* If there is new data in the robot buffer */
 			while (head != robots[id].head) {
 				Pthread_mutex_lock(&robots[id].mutex);
-				sprintf(buffer, "%s", robots[id].buffer[head]);
+				if (sprintf(buffer, "%s", robots[id].buffer[head]) < 0)
+					break;
 				Pthread_mutex_unlock(&robots[id].mutex);
 
 				if ((err = socket_writen(conn->fd,
@@ -292,6 +294,7 @@ void
 			if (err < 0)
 				break;
 
+			/* Check if the robot is actually disconnected. */
 			if (timer + 1000 < clock()) {
 				Pthread_mutex_lock(&robots[id].mutex);
 				err = robots[id].up;
@@ -336,7 +339,7 @@ buffer_init(struct Buffer *buf, int n)
 }
 
 /**
- * Put a buffer struct into the buffer
+ * Put a pointer into the buffer
  */
 void
 buffer_put(struct Buffer *buf, void *conn)
@@ -359,7 +362,7 @@ buffer_put(struct Buffer *buf, void *conn)
 }
 
 /**
- * Pop a buffer struct from the buffer
+ * Pop a pointer from the buffer
  */
 void
 *buffer_pop(struct Buffer *buf)
@@ -421,10 +424,7 @@ socket_read(struct socketIO *sp, char *usrbuf, size_t n)
 	while (sp->count <= 0) {
 		sp->count = recv(sp->fd, sp->buffer, sizeof(sp->buffer), 0);
 
-		if (sp->count < 0) {
-			if (errno != EINTR)	/* Interrupted by sig handler */
-				return (-1);
-		} else if (sp->count == 0) {	/* EOF */
+		if (sp->count == 0) {	/* EOF */
 			return (0);
 		} else {
 			sp->bufp = sp->buffer;	/* Reset buffer ptr */

@@ -28,30 +28,40 @@ initRobots()
 	Pthread_create(&tid, NULL, commManager, NULL);
 }
 
+/**
+ * Performs tasks on all robot links in intervals
+ */
 void
 *commManager(void *vargp)
 {
 	int i;
 
+	/* Get rid of annoying unused variable compiler errors */
 	vargp = (void *)vargp;
 
+	/* Run in detached mode */
 	Pthread_detach(pthread_self());
 
+	/* Iterate through robot list indefinitely */
 	for (;;) {
 		for (i = 0; i < MAXROBOTID; i++) {
 			Pthread_mutex_lock(&robots[i].mutex);
 
-			if (robots[i].up + 5000 < clock() && robots[i].type == REMOTE) {
+			/* If a remote robot has been inactive for a while, deactivate. */
+			if (robots[i].up + GRACETIME < clock() &&
+				robots[i].type == REMOTE) {
 				robots[i].up = 0;
 				robots[i].head = 0;
 			}
 
+			/* Ping all host robots for updated remote robots. */
 			if (robots[i].up && robots[i].type == HOST)
 				fcprintf(robots[i].hSerial, "rt\n");
 
 			Pthread_mutex_unlock(&robots[i].mutex);
 		}
-		Sleep(5000);
+		/* Sleep for a while. */
+		Sleep(SLEEPTIME);
 	}
 
 	return (NULL);
@@ -74,6 +84,7 @@ initCommCommander(int port)
 		return (-1);
 	}
 
+	/* Fill in info struct and pass to thread */
 	info->hSerial = hSerial;
 	info->port = port;
 
@@ -89,21 +100,23 @@ void
 *commCommander(void *vargp)
 {
 	int i, j, err;
-	int id = 0;
-	int initialized = 0;
-	int isHost = 0;
-	int rid;
-	char buffer[BUFFERSIZE + 1], rbuffer[BUFFERSIZE + 1], sbuf[SBUFSIZE];
-	char *bufp = buffer;
+	int id = 0;							/* Robot ID */
+	int initialized = 0;				/* Have we handshaked with the robot? */
+	int isHost = 0;						/* Is this robot a rprintf host? */
+	int rid;							/* Remote robot ID */
+	char buffer[BUFFERSIZE + 1];		/* Buffers */
+	char rbuffer[BUFFERSIZE + 1];
+	char sbuf[SBUFSIZE];
+	char *bufp = buffer;				/* Pointer to buffers */
 	char *sbufp;
-	struct commInfo *info;
-	struct remoteRobots *rr, *newRR;
-	struct serialIO sio;
+	struct commInfo *info;				/* Information on robot connection */
+	struct remoteRobots *rr, *newRR;	/* Host info on remote robots */
+	struct serialIO sio;				/* Robust IO on serial buffer */
 
 	/* Run the thread as detached */
 	Pthread_detach(pthread_self());
 
-	/* Get struct from arg */
+	/* Get info from argument */
 	info = ((struct commInfo *)vargp);
 
 	/* Query the robot for its id, and if it is a host */
@@ -112,6 +125,7 @@ void
 	/* Initialize robust IO on the serial */
 	serial_readinitb(&sio, info->hSerial);
 
+	/* Manage connection indefinitely */
 	for (;;) {
 		/* Read a line */
 		if ((err = serial_readlineb(&sio, bufp, BUFFERSIZE)) < 0) {
@@ -122,6 +136,7 @@ void
 			continue;
 		}
 
+		/* Read in more data if we haven't completed a line */
 		if (bufp[err - 1] != '\n') {
 			bufp += err;
 			continue;
@@ -131,8 +146,10 @@ void
 
 		/* Loop until ID and host data has been obtained from the robot */
 		if (!initialized) {
+			/* Parse in hex data of reverse endianness from the robots */
 			if (buffer[0] == 'r' && buffer[1] == 'r') {
 				sbufp = buffer + 3;
+				/* Get the two arguments */
 				for (i = 0; i < 2; i++) {
 					j = 0;
 					while (*sbufp != ',') {
@@ -150,6 +167,7 @@ void
 					}
 					sbufp++;
 
+					/* Convert hex number in buffer to usable values */
 					if (i == 0)
 						id = convertASCIIHexWord(sbuf);
 					else
@@ -166,12 +184,14 @@ void
 			}
 			continue;
 		}
+		/* Insert the read line into robot's buffer. */
 		insertBuffer(id, buffer);
 
 		err = 0;
 
-		/* If we get a status line */
+		/* If we get a status line from a host robot. */
 		if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 's') {
+			/* This robot is a host robot. */
 			robots[id].type = HOST;
 			isHost = 1;
 
@@ -251,7 +271,7 @@ void
 			if (sscanf(buffer, "rtd,%d", &rid) < 1)
 				continue;
 
-			/* If we aren't already connected via serial, put data in buffer */
+			/* If we aren't already connected via serial, put data in buffer. */
 			if (robots[rid].hSerial == NULL) {
 				/* Get the beginning of the remote message */
 				if ((bufp = strpbrk(buffer, " ")) == NULL) {
@@ -259,6 +279,7 @@ void
 					continue;
 				}
 
+				/* Insert parsed line into remote robot's buffer. */
 				insertBuffer(rid, bufp + 1);
 				robots[rid].type = REMOTE;
 				robots[rid].host = id;

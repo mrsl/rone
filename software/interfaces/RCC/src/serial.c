@@ -11,7 +11,8 @@ serialConnect(HANDLE *hSerialPtr, int comPort)
 {
 	char port[128];
 
-	sprintf(port, "//./COM%d", comPort);
+	if (sprintf(port, "//./COM%d", comPort) < 0)
+		return (-1);
 
 	/* Try and open serial port */
 	*hSerialPtr = CreateFile(port,

@@ -12,7 +12,6 @@ struct serialIO {
 	char buffer[BUFFERSIZE];
 };
 
-
 int serialConnect(HANDLE *hSerialPtr, int comPort);
 void serial_readinitb(struct serialIO *sp, HANDLE *hSerialPtr);
 ssize_t serial_read(struct serialIO *sp, char *usrbuf, size_t n);

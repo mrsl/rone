@@ -37,15 +37,6 @@ convertASCIIHexWord(char *val)
        return (temp);
 }
 
-uint32
-convertASCIIHexLong(char *val)
-{
-       uint32 temp;
-       temp = (uint32)convertASCIIHexWord(val) * 65536;
-       temp = temp + (uint32)convertASCIIHexWord(val + 4);
-       return (temp);
-}
-
 /**
  * Write data to a file handle
  */
@@ -89,6 +80,9 @@ Error(const char *fmt, ...)
 	exit (-1);
 }
 
+/**
+ * Function wrappers
+ */
 void
 Close(int fd)
 {
@@ -124,9 +118,6 @@ Free(void *p)
 	free(p);
 }
 
-/**
- * Creates a new pthread. Exits program with error if failed.
- */
 void
 Pthread_create(pthread_t *tidp, pthread_attr_t *attrp,
     void *(*routine)(void *), void *argp)
