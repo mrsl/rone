@@ -98,7 +98,7 @@ void
 	char *sbufp;
 	struct commInfo *info;
 	struct remoteRobots *rr, *newRR;
-	serial_t sio;
+	struct serialIO sio;
 
 	/* Run the thread as detached */
 	Pthread_detach(pthread_self());

@@ -36,6 +36,7 @@ serialConnect(HANDLE *hSerialPtr, int comPort)
 		dcbSerialParams.ByteSize = 8;
 		dcbSerialParams.StopBits = ONESTOPBIT;
 		dcbSerialParams.Parity = NOPARITY;
+		dcbSerialParams.fAbortOnError = 0;
 
 		if(!SetCommState(*hSerialPtr, &dcbSerialParams))
 			return 0;
@@ -55,53 +56,53 @@ serialConnect(HANDLE *hSerialPtr, int comPort)
 }
 
 /**
- * Initialize robust IO over a serial connection
+ * Initialize robust IO over a serial connection. Adapted from CSAPP.
  */
 void
-serial_readinitb(serial_t *sp, HANDLE *hSerialPtr)
+serial_readinitb(struct serialIO *sp, HANDLE *hSerialPtr)
 {
-	sp->serial_h = hSerialPtr;
-	sp->serial_cnt = 0;
-	sp->serial_bufptr = sp->serial_buf;
+	sp->handle = hSerialPtr;
+	sp->count = 0;
+	sp->bufp = sp->buffer;
 }
 
 /**
- * Robustly read data from a serial port
+ * Robustly read data from a serial port. Adapted from CSAPP.
  */
 ssize_t
-serial_read(serial_t *sp, char *usrbuf, size_t n)
+serial_read(struct serialIO *sp, char *usrbuf, size_t n)
 {
 	int cnt;
 
-	while (sp->serial_cnt <= 0) {
-		if (!ReadFile(*sp->serial_h, sp->serial_buf, BUFFERSIZE,
-			&sp->serial_cnt, NULL))
+	while (sp->count <= 0) {
+		if (!ReadFile(*sp->handle, sp->buffer, BUFFERSIZE,
+			&sp->count, NULL))
 			return (-1);
 
-		if (sp->serial_cnt == 0) {
+		if (sp->count == 0) {
 			return (0);
 		} else {
-			sp->serial_bufptr = sp->serial_buf;
+			sp->bufp = sp->buffer;
 		}
 	}
 
 	cnt = n;
 
-	if (sp->serial_cnt < n)
-		cnt = sp->serial_cnt;
+	if (sp->count < n)
+		cnt = sp->count;
 
-	memcpy(usrbuf, sp->serial_bufptr, cnt);
-	sp->serial_bufptr += cnt;
-	sp->serial_cnt -= cnt;
+	memcpy(usrbuf, sp->bufp, cnt);
+	sp->bufp += cnt;
+	sp->count -= cnt;
 
 	return (cnt);
 }
 
 /**
- * Robustly read a line from a serial port
+ * Robustly read a line from a serial port. Adapted from CSAPP.
  */
 ssize_t
-serial_readlineb(serial_t *sp, char *usrbuf, size_t maxlen)
+serial_readlineb(struct serialIO *sp, char *usrbuf, size_t maxlen)
 {
 	int rc;
 	unsigned int n;

@@ -52,7 +52,7 @@ convertASCIIHexLong(char *val)
 void
 fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 {
-	char text[256];
+	char text[BUFFERSIZE];
 	va_list ap;
 
 	if (fmt == NULL)
@@ -72,7 +72,7 @@ fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 void
 Error(const char *fmt, ...)
 {
-	char text[256];
+	char text[BUFFERSIZE];
 	va_list ap;
 
 	if (verbose) {
