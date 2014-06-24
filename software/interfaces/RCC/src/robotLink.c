@@ -46,6 +46,9 @@ void
 				robots[i].head = 0;
 			}
 
+			if (robots[i].up && robots[i].type == HOST)
+				fcprintf(robots[i].hSerial, "rt\n");
+
 			Pthread_mutex_unlock(&robots[i].mutex);
 		}
 		Sleep(5000);
@@ -155,7 +158,7 @@ void
 	printf("S%02d: Connected to robot ID %02d\n", id, id);
 
 	/* Initializing */
-	activateRobot(id, info);
+	activateRobot(id, info, isHost);
 	bufp = buffer;
 	timer = clock();
 
@@ -174,15 +177,6 @@ void
 			continue;
 		} else {
 			bufp = buffer;
-		}
-
-		if (isHost) {
-			/* Every so many seconds, query again for status */
-			ttimer = clock();
-			if (timer + 3000 < ttimer) {
-				fcprintf(info->hSerial, "rt\n");
-				timer = ttimer;
-			}
 		}
 
 		insertBuffer(id, buffer);
@@ -262,15 +256,21 @@ void
 		/* If we get a data line */
 		if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 'd') {
 			/* Scan ID and data */
-			if (sscanf(buffer, "rtd,%d %s", &rid, rbuffer) < 1)
+			if (sscanf(buffer, "rtd,%d", &rid) < 1)
 				continue;
 
 			/* If we aren't already connected via serial, put data in buffer */
 			if (robots[rid].hSerial == NULL) {
-				sprintf(buffer, "%s\r\n", rbuffer);
-				insertBuffer(rid, buffer);
+				if ((bufp = strpbrk(buffer, " ")) == NULL) {
+					bufp = buffer;
+					continue;
+				}
+
+				insertBuffer(rid, bufp + 1);
 				robots[rid].type = REMOTE;
 				robots[rid].host = id;
+
+				bufp = buffer;
 			}
 		}
 	}
@@ -293,13 +293,18 @@ void
  * Initialize a robot buffer
  */
 void
-activateRobot(int robotID, struct commInfo *info)
+activateRobot(int robotID, struct commInfo *info, int isHost)
 {
 	Pthread_mutex_lock(&robots[robotID].mutex);
 
 	commToNum[info->port] = robotID;
 	robots[robotID].port = info->port;
-	robots[robotID].type = LOCAL;
+
+	if (isHost)
+		robots[robotID].type = HOST;
+	else
+		robots[robotID].type = LOCAL;
+
 	robots[robotID].hSerial = info->hSerial;
 	robots[robotID].up = clock();
 
