@@ -57,7 +57,8 @@ void
 			}
 
 			/* Ping all host robots for updated remote robots. */
-			if (robots[i].up && robots[i].type == HOST)
+			if (robots[i].up && robots[i].type == HOST &&
+				!robots[i].blacklisted)
 				fcprintf(robots[i].hSerial, "rt\n");
 
 			Pthread_mutex_unlock(&robots[i].mutex);

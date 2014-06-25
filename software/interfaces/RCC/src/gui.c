@@ -139,9 +139,11 @@ processHits(GLint hits, GLuint buffer[])
 			}
 			break;
 		}
-		/* Alt click to make into a host */
+		/* Alt-click to make into a host */
 		case (4): {
-			if (robots[robotID].type == LOCAL)
+			if (robots[robotID].type == LOCAL &&
+				robots[robotID].hSerial != NULL &&
+				!robots[robotID].blacklisted)
 				fcprintf(robots[robotID].hSerial, "rt\n");
 			break;
 		}
