@@ -65,10 +65,10 @@ enumCommNames(struct regData *data)
 
 	/* Try to open the registry entry containing serial port information */
 	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-		TEXT("HARDWARE\\DEVICEMAP\\SERIALCOMM"),
-		0,
-		KEY_READ,
-		&hKey) != ERROR_SUCCESS)
+					TEXT("HARDWARE\\DEVICEMAP\\SERIALCOMM"),
+					0,
+					KEY_READ,
+					&hKey) != ERROR_SUCCESS)
 		return;
 
 	/* Read registry until failure */
@@ -77,13 +77,13 @@ enumCommNames(struct regData *data)
 		szPortName = sizeof(portName);
 
 		status = RegEnumValue(hKey,
-			dwIndex++,
-			name,
-			&szName,
-			NULL,
-			&Type,
-			portName,
-			&szPortName);
+							  dwIndex++,
+							  name,
+							  &szName,
+							  NULL,
+							  &Type,
+							  portName,
+							  &szPortName);
 
 		if ((status == ERROR_SUCCESS)) {
 			if (strstr(name, "VCP")) {
