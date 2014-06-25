@@ -14,7 +14,7 @@
 #include "roneos.h"
 #include "ronelib.h"
 
-#define WALL_FOLLOW_RV	500
+#define WALL_FOLLOW_RV	1000
 
 Beh* behWallMove(Beh* behPtr, int32 tv, int8 direction) {
 	NbrList nbrList;

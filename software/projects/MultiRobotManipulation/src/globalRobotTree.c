@@ -20,13 +20,17 @@
 
 #define PI				3147
 
-#define nbrEdgeDis		250				//hardcoded distance
+#define nbrEdgeDis		500				//hardcoded distance
 
 typedef struct posCOM {
-	NbrData X_H;
-	NbrData X_L;
-	NbrData Y_H;
-	NbrData Y_L;
+	NbrData X_HH;
+	NbrData X_HL;
+	NbrData X_LH;
+	NbrData X_LL;
+	NbrData Y_HH;
+	NbrData Y_HL;
+	NbrData Y_LH;
+	NbrData Y_LL;
 } posCOM;
 
 void behaviorTask(void* parameters) {
@@ -47,14 +51,10 @@ void behaviorTask(void* parameters) {
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 	radioCommandSetSubnet(1);
 
-	NbrData msgNbrType;
-
-	nbrDataCreate(&msgNbrType, "type", 3, 0);
-
 	posCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE];
 	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE; i++){
-		nbrDataCreate16(&treeGuessCOM[i].X_H,&treeGuessCOM[i].X_L,"X_H", "X_L", 0);
-		nbrDataCreate16(&treeGuessCOM[i].Y_H,&treeGuessCOM[i].Y_L,"Y_H", "Y_L", 0);
+		nbrDataCreate32(&treeGuessCOM[i].X_HH,&treeGuessCOM[i].X_HL,&treeGuessCOM[i].X_LH,&treeGuessCOM[i].X_LL,"X_HH", "X_HL","X_LH", "X_LL", 0);
+		nbrDataCreate32(&treeGuessCOM[i].Y_HH,&treeGuessCOM[i].Y_HL,&treeGuessCOM[i].Y_LH,&treeGuessCOM[i].Y_LL,"Y_HH", "Y_HL","Y_LH", "Y_LL", 0);
 	}
 
 	//uint16 IRXmitPower = IR_COMMS_POWER_MAX/4;
@@ -105,45 +105,45 @@ void behaviorTask(void* parameters) {
 
 			if(state == GUESS_COM){
 				Nbr* nbrPtr;
-				for (j = 0; j < GLOBAL_ROBOTLIST_MAX_SIZE; j++) {
-					uint16 xtot = 0;
-					uint16 ytot = 0;
+				for (j = 0; j < globalRobotListPtr.size; j++) {
+					int32 xtot = 0;
+					int32 ytot = 0;
 					uint8 wieght = 0;
 
 					for (i = 0; i < nbrList.size; i++){
 						nbrPtr = nbrList.nbrs[i];
 						uint8 nbrTreeParentId = nbrDataGetNbr(&(globalRobotListPtr.list[j].ParentID), nbrPtr);
 						if(nbrTreeParentId == roneID){
-							uint16 x,y,xprime,yprime,x_dob_prime,y_dob_prime,x_tri_prime,y_tri_prime;
-							uint32 nbrOrient =  + PI;
-							uint32 nbrBear = nbrGetBearing(nbrPtr) + PI;
+							int32 x,y,xprime,yprime;
+							nbrPtr = nbrListGetNbr(&nbrList, i);
+							int32 nbrOrient = nbrGetOrientation(nbrPtr);
+							int32 nbrBear = nbrGetBearing(nbrPtr);
 
-							x = nbrDataGetNbr16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_H,nbrPtr);
-							y = nbrDataGetNbr16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_H,nbrPtr);
+							x = nbrDataGetNbr32(&treeGuessCOM[j].X_HH,&treeGuessCOM[j].X_HL,&treeGuessCOM[j].X_LH,&treeGuessCOM[j].X_LL,nbrPtr);
+							y = nbrDataGetNbr32(&treeGuessCOM[j].Y_HH,&treeGuessCOM[j].Y_HL,&treeGuessCOM[j].Y_LH,&treeGuessCOM[j].Y_LL,nbrPtr);
+							if(printNow){rprintf("Nbr %d: X%d Y%d\n",nbrGetID(nbrPtr), x,y);}
 
-							xprime = x*cosMilliRad(nbrOrient)/1000 - y*sinMilliRad(nbrOrient)/1000;
-							yprime = x*sinMilliRad(nbrOrient)/1000 + y*cosMilliRad(nbrOrient)/1000;
+							xprime = x*(cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER) - y*(sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER);
+							yprime = x*(sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER) + y*(cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER);
+							x = xprime;
+							y = yprime + nbrEdgeDis;
 
-							x_dob_prime = xprime;
-							y_dob_prime = yprime + nbrEdgeDis;
-
-							x_tri_prime = x_dob_prime*cosMilliRad(nbrBear)/1000 - y_dob_prime*sinMilliRad(nbrBear)/1000;
-							y_tri_prime = x_dob_prime*sinMilliRad(nbrBear)/1000 + y_dob_prime*cosMilliRad(nbrBear)/1000;
-
-							xtot +=  x_tri_prime;
-							ytot +=  y_tri_prime;
+							xprime = x*(cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER) - y*(sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER);
+							yprime = x*(sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER) + y*(cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER);
+							xtot +=  xprime;
+							ytot +=  yprime;
 							wieght++;
-							if(printNow){rprintf("ID %d NbrID %d TrID %d W %d X %d Y %d X' %d Y' %d X'' %d, Y'' %d X''' %d Y''' %d XT %d YT %d XA %d YA %d\n",
-									roneID, nbrGetID(nbrPtr),nbrDataGetNbr(&(globalRobotListPtr.list[j].ID), nbrPtr),wieght, x, y, xprime, yprime,
-									x_dob_prime,y_dob_prime,x_tri_prime,y_tri_prime,xtot,ytot,xtot/wieght,ytot/wieght);}
 						}
 					}
 					if(wieght == 0){
-						nbrDataSet16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_L,0);
-						nbrDataSet16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_L,0);
+						nbrDataSet32(&treeGuessCOM[j].X_HH,&treeGuessCOM[j].X_HL,&treeGuessCOM[j].X_LH,&treeGuessCOM[j].X_LL,0);
+						nbrDataSet32(&treeGuessCOM[j].Y_HH,&treeGuessCOM[j].Y_HL,&treeGuessCOM[j].Y_LH,&treeGuessCOM[j].Y_LL,0);
 					}else{
-						nbrDataSet16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_L,xtot/wieght);
-						nbrDataSet16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_L,ytot/wieght);
+						int32 xave = xtot/wieght;
+						int32 yave = ytot/wieght;
+						nbrDataSet32(&treeGuessCOM[j].X_HH,&treeGuessCOM[j].X_HL,&treeGuessCOM[j].X_LH,&treeGuessCOM[j].X_LL,xave);
+						nbrDataSet32(&treeGuessCOM[j].Y_HH,&treeGuessCOM[j].Y_HL,&treeGuessCOM[j].Y_LH,&treeGuessCOM[j].Y_LL,yave);
+						//if(printNow){rprintf("TrID %d XA %d YA %d\n", nbrDataGetNbr(&(globalRobotListPtr.list[j].ID), nbrPtr),xave,yave);}
 					}
 					//rprintf(" XT %d, YT %d\n", 	nbrDataGet16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_L), nbrDataGet16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_L));
 				}
