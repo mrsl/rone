@@ -20,7 +20,7 @@
 
 #define PI				3147
 
-#define nbrEdgeDis		500				//hardcoded distance
+#define nbrEdgeDis		5000				//hardcoded distance
 
 typedef struct posCOM {
 	NbrData X_HH;
@@ -121,15 +121,16 @@ void behaviorTask(void* parameters) {
 
 							x = nbrDataGetNbr32(&treeGuessCOM[j].X_HH,&treeGuessCOM[j].X_HL,&treeGuessCOM[j].X_LH,&treeGuessCOM[j].X_LL,nbrPtr);
 							y = nbrDataGetNbr32(&treeGuessCOM[j].Y_HH,&treeGuessCOM[j].Y_HL,&treeGuessCOM[j].Y_LH,&treeGuessCOM[j].Y_LL,nbrPtr);
-							if(printNow){rprintf("Nbr %d: X%d Y%d\n",nbrGetID(nbrPtr), x,y);}
+							//if(printNow){rprintf("Nbr %d: X%d Y%d\n",nbrGetID(nbrPtr), x,y);}
 
-							xprime = x*(cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER) - y*(sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER);
-							yprime = x*(sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER) + y*(cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER);
+							xprime = x*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
+							yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 							x = xprime;
 							y = yprime + nbrEdgeDis;
 
-							xprime = x*(cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER) - y*(sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER);
-							yprime = x*(sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER) + y*(cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER);
+							xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+							yprime = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+							//if(printNow){rprintf("Nbr %d: O%d B%d X''%d Y''%d XCOM%d YCOM%d\n",nbrGetID(nbrPtr),nbrOrient,nbrBear,x,y, xprime,yprime);}
 							xtot +=  xprime;
 							ytot +=  yprime;
 							wieght++;
@@ -143,9 +144,13 @@ void behaviorTask(void* parameters) {
 						int32 yave = ytot/wieght;
 						nbrDataSet32(&treeGuessCOM[j].X_HH,&treeGuessCOM[j].X_HL,&treeGuessCOM[j].X_LH,&treeGuessCOM[j].X_LL,xave);
 						nbrDataSet32(&treeGuessCOM[j].Y_HH,&treeGuessCOM[j].Y_HL,&treeGuessCOM[j].Y_LH,&treeGuessCOM[j].Y_LL,yave);
-						//if(printNow){rprintf("TrID %d XA %d YA %d\n", nbrDataGetNbr(&(globalRobotListPtr.list[j].ID), nbrPtr),xave,yave);}
+						if(printNow){rprintf("TrID %d XA1 %d YA1 %d XA2 %d YA2 %d\n", nbrDataGetNbr(&(globalRobotListPtr.list[j].ID), nbrPtr),xave,yave,
+								nbrDataGet32(&treeGuessCOM[j].X_HH,&treeGuessCOM[j].X_HL,&treeGuessCOM[j].X_LH,&treeGuessCOM[j].X_LL),
+								nbrDataGet32(&treeGuessCOM[j].Y_HH,&treeGuessCOM[j].Y_HL,&treeGuessCOM[j].Y_LH,&treeGuessCOM[j].Y_LL));}
 					}
-					//rprintf(" XT %d, YT %d\n", 	nbrDataGet16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_L), nbrDataGet16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_L));
+					//if(printNow){rprintf("TrID %d XT %d, YT %d\n",nbrDataGet(&(globalRobotListPtr.list[j].ID)),
+					//		nbrDataGet32(&treeGuessCOM[j].X_HH,&treeGuessCOM[j].X_HL,&treeGuessCOM[j].X_LH,&treeGuessCOM[j].X_LL),
+					//		nbrDataGet32(&treeGuessCOM[j].Y_HH,&treeGuessCOM[j].Y_HL,&treeGuessCOM[j].Y_LH,&treeGuessCOM[j].Y_LL));}
 				}
 			}
 
