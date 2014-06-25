@@ -24,25 +24,22 @@ main(int argc, char **argv)
 			verbose = 1;
 			continue;
 		}
-
 	    if (i + 1 != argc)    {
 			if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--port") == 0) {
 				if (sscanf(argv[i + 1], "%d", &port) != 1) {
 					err = 1;
 					break;
 				}
-
 				continue;
 			}
 	    }
-
 	    err = 1;
 	    break;
 	}
 
 	if (err) {
 		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum]\n", argv[0]);
-		exit (-1);
+		return (-1);
 	}
 
 	if (!verbose)
