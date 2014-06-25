@@ -1,0 +1,10 @@
+Output: Cadnetix Netlist
+Type  : CadnetixNetlist
+From  : Project [roneMotorBoard-v15.PrjPcb]
+   Generated File[roneMotorBoard-v15.NET]
+
+
+Files Generated   : 1
+Documents Printed : 0
+
+Finished Output Generation At 10:49:39 AM On 5/28/2013

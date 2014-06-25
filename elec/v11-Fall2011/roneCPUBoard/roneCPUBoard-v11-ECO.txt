@@ -1,0 +1,54 @@
+roneCPUBoard-v11 ECO list
+
+== Chris ==
+* reduce resistor current to LED driver by factor of around 10, possibly ore
+
+* test the sound chip with differential amp - need software change
+
+
+
+== Nathan ==
+* Test IR  (nathan approves,  meagan needs to do a full orientation test) 
+
+* Test the SD card 
+
+
+
+
+== done ==
+* fix sch symbol of 741 amp - add power pad (pin 9), reduce pad size to allow 8mil space
+
+* check data sheet for Radio - what should the body pad be connected to? (Didn't we look this up already?)
+
+* move ref designators around on silk screen to not be over parts.  You will need to make an assembly drawing for some of the tight areas, there will be no room for the refdes.
+
+* check footprint og charge LED and TX, RX LEDs why so big? (I made charge LED smaller)
+
+* Test motors 
+
+* Test radio with sound and MSP430 (3 spi devices) 
+
+* Test IR Beacons
+
+* add termination to SPI lines  (we need to measure ring first)
+
+* test value of FTDI pull-up resistors.  10k may be too large.  Put this on the scope at 230kbaud to verify rise/fall times.
+
+* line up all LED indicators in a vertical line with silk screen to the right
+
+* add diode to RX line (opposite direction of TX line, resistor pull-up to 3.3v)
+
+* Move switches to equal spacing
+
+* Test radio (DONE) 
+
+* Test buttons (DONE) 
+
+* Test usb (DONE) 
+
+* Test encoders (DONE) 
+
+
+== v12 ==
+
+* consider a four-layer board.

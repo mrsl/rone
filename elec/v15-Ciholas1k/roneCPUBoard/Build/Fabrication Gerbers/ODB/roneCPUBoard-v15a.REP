@@ -1,0 +1,136 @@
+*************************************************************
+FileName = roneCPUBoard-v15a.PcbDoc
+ODB++ directory structure
+*************************************************************
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\matrix\matrix
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\profile
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\stephdr
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topoverlay\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topoverlay\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\toppaste\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\toppaste\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topsolder\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topsolder\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\top\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\top\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottom\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottom\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomsolder\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomsolder\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottompaste\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottompaste\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomoverlay\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomoverlay\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\drill\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\drill\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\drill\tools
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\keepout\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\keepout\attrlist
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_top\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_top\components
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_bot\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_bot\components
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\steps\pcb\eda\data
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect35.4331x27.5591_191\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect35.4331x27.5591_198\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect35.4331x27.5591_126\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect35.4331x27.5591_54\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect35.4331x27.5591_342\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect35.4331x27.5591_135\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect19.685x23.622_22\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect19.685x23.622_68\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect19.685x23.622_112\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect19.685x23.622_158\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect19.685x23.622_202\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect19.685x23.622_248\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect80x50_256\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\s98.4252_60\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\s98.4252_120\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect17.3228x98.4252_115\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect64.9606x21.6535_101\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\oval86.6142x70.8661_281\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect43.4331x35.5591_191\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect43.4331x35.5591_198\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect43.4331x35.5591_126\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect43.4331x35.5591_54\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect43.4331x35.5591_342\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect43.4331x35.5591_135\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect27.685x31.622_22\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect27.685x31.622_68\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect27.685x31.622_112\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect27.685x31.622_158\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect27.685x31.622_202\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect27.685x31.622_248\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect88x58_256\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\s106.4252_60\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\s106.4252_120\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect25.3228x106.4252_115\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\rect72.9606x29.6535_101\features
+
+Generated File : \\piano\prj\rice\r-one\ciholas revision\CPUv15\Build\Fabrication Gerbers\ODB\odb\symbols\oval94.6142x78.8661_281\features
+

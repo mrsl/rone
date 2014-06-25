@@ -1,0 +1,52 @@
+roneMotorBoard-v10 ECO list
+
+== Nnena ==
+
+
+
+
+
+
+
+== James ==
+
+* how to charge when robot is off? hold reset low, poweren high?
+
+
+
+== done ==
+* resize holes 
+
+* Pull down/up address 0 select lines on the gyro and the accelerometer
+
+* Pull down power_en to ground - power_en is disabled by default
+
+* Why is the power button via larger than the other vias?  Is that for a wire or something? (fix via size)
+
+* Center the main connector
+
+* Add a 0.250 keep-out to the stand-off screws.  0.250" diameter should do it.
+
+* remove reset from main connector
+
+* remove as many traces as possible from underneath skirt sliders
+
+* Add a ground test clip and a 3.3v connector to this board.
+
+* Move the battery connector closer to the edge of the board, to improve the battery disconnection
+
+* experiment with the test line: How can we use the other four pins for I/O?  The best lines to move here are the four rear bump sensors.
+
+* add a testpoint to bump sensor #0 (front left) to bottom of board.  This is so we can probe it during class.
+
+* there are resistors in the shell keep-out zone:  R47 for example
+
+* add 0 ohm resistors or switch to change between rear bump sensors and JTAG
+
+* move ref designators around on silk screen to not be over parts.  You will need to make an assembly drawing for some of the tight areas.
+
+* Update and triple check the motor parts on the v9 board.
+
+* route bump sensors
+
+* route reset output to the MSP430 to rest of robot.

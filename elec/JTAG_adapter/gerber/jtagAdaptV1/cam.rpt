@@ -1,0 +1,14 @@
+CAMtasticDXP Drill Report
+Serial Number:0000-00-00000
+Drill File: C:\Users\Nnena\Desktop\SVN\mrone\elec\JTAG_adapter\gerber\jtagAdaptV1\cam.drl
+Format: 2.3
+Units: English (Inch)
+Step & Repeat Codes Used: NO
+
+
+TOOL		SIZE		COUNT
+====		======		=====
+
+ 1 		0.0280		4
+ 2 		0.0354		24
+ 3 		0.0866		4

@@ -1,0 +1,11 @@
+Version 15 changelog
+
+SHEET MSP430:
+Changed R1 and R2 to 2.2K.
+Added R5 and C31 to RESET_430
+
+SHEET POWER
+Added R40, SW2, and Q2 to implement a hard power on/off switch
+Removed S1.
+
+

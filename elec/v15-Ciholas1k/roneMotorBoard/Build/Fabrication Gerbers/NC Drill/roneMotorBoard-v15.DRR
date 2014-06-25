@@ -1,0 +1,27 @@
+---------------------------------------------------------------------------
+NCDrill File Report For: roneMotorBoard-v15.PcbDoc   5/28/2013  10:49:27 AM
+---------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : roneMotorBoard-v15.TXT
+EIA File   : roneMotorBoard-v15.DRL
+
+Tool         Hole Size           Hole Type     Hole Count Plated       Tool Travel
+---------------------------------------------------------------------------
+T1        12.99mil (0.32995mm)     Round          9                0.38 Inch (9.60 mm)
+T2        20mil (0.508mm)          Round          232              39.43 Inch (1001.52 mm)
+T3        35mil (0.889mm)          Round          2                0.08 Inch (2.03 mm)
+T4        35.43mil (0.89992mm)     Round          12               4.35 Inch (110.42 mm)
+T5        39.37mil (1mm)           Round          4                1.18 Inch (30.01 mm)
+T6        46.85mil (1.18999mm)     Round          2                0.86 Inch (21.89 mm)
+T7        96mil (2.4384mm)         Round          4                3.60 Inch (91.49 mm)
+T8        136mil (3.4544mm)        Round          4                3.52 Inch (89.46 mm)
+T9        175mil (4.445mm)         Round          2                0.90 Inch (22.86 mm)
+T10       915mil (23.241mm)        Round          1                0.00 Inch (0.00 mm)
+T11       31mil (0.7874mm)         Round          12        NPTH   4.48 Inch (113.79 mm)
+T12       35.43mil (0.89992mm)     Round          2         NPTH   0.12 Inch (3.00 mm)
+T13       158mil (4.0132mm)        Round          2         NPTH   5.94 Inch (150.91 mm)
+---------------------------------------------------------------------------
+Totals                                            288              64.84 Inch (1646.98 mm)
+
+Total Processing Time (hh:mm:ss) : 00:00:00

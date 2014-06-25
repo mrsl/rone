@@ -1,0 +1,16 @@
+CAMtasticDXP Drill Report
+Serial Number:0000-00-00000
+Drill File: C:\Users\Taylor\svn\mrone\elec\armControlBoard\Gerbers\cam.drl
+Format: 2.4
+Units: English (Inch)
+Step & Repeat Codes Used: NO
+
+
+TOOL		SIZE		COUNT
+====		======		=====
+
+ 1 		0.0130		4
+ 2 		0.0200		66
+ 3 		0.0354		29
+ 4 		0.0469		2
+ 5 		0.1290		2

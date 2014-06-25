@@ -1,0 +1,15 @@
+Change [Test result]
+
+Speaker moved [Fits]
+
+LED_RESET line [Works]
+
+Power the speaker from the battery [Made noises]
+
+4th light sensor [Works]
+
+Moved charge LED to VBAT [Beautiful]
+
+Changed SPI line to accomodate for SD card [Done]
+
+
