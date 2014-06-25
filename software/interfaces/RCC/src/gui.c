@@ -97,7 +97,7 @@ processHits(GLint hits, GLuint buffer[])
 	int i;
 	unsigned int j;
 	GLuint names, *ptr;
-	int hitType;
+	int robotID;
 
 	if (hits == 0)
 		return;
@@ -114,12 +114,39 @@ processHits(GLint hits, GLuint buffer[])
 
 		for (j = 0; j < names; j++)	{
 			if (j == 0)
-				hitType = *ptr;
+				robotID = *ptr;
 
 			ptr++;
 		}
 
-		openClientConnection(hitType);
+		/* If modifier keys are held down */
+		switch (glutGetModifiers())
+		{
+		/* Blacklist local robots */
+		case (2): {
+			if (robots[robotID].type == LOCAL || robots[robotID].type == HOST) {
+				if (robots[robotID].blacklisted) {
+					robots[robotID].blacklisted = 0;
+					if (initCommCommander(robots[robotID].port) < 0) {
+						commToNum[robots[robotID].port] = 0;
+						robots[robotID].type = UNKNOWN;
+					}
+				} else {
+					robots[robotID].blacklisted = 1;
+					if (robots[robotID].hSerial != NULL)
+						CloseHandle(*robots[robotID].hSerial);
+				}
+			}
+			break;
+		}
+		case (0):
+		default: {
+			if (!robots[robotID].blacklisted)
+				openClientConnection(robotID);
+			break;
+		}
+		}
+
 	}
 }
 
@@ -424,6 +451,21 @@ drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 				}
 				textPrintf("%02d", robot->id);
 
+			glPopMatrix();
+		}
+
+		if (robot->blacklisted) {
+			glPushMatrix();
+				glColor3fv(color_red);
+				glRotatef(45, 0, 0, 1);
+				glBegin(GL_LINES);
+					glVertex2f(-ROBOT_RADIUS / scale, 0);
+					glVertex2f(ROBOT_RADIUS / scale, 0);
+				glEnd();
+				glBegin(GL_LINES);
+					glVertex2f(0, -ROBOT_RADIUS / scale);
+					glVertex2f(0, ROBOT_RADIUS / scale);
+				glEnd();
 			glPopMatrix();
 		}
 

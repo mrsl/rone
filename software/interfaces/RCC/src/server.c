@@ -173,7 +173,7 @@ void
 	int tid;					/* Thread ID */
 	int id;						/* Requested robot ID */
 	int head;					/* Last location of robot buffer viewed */
-	int err;					/* Flag */
+	int err, bl;					/* Flag */
 	clock_t timer;				/* Event timer */
 	struct Connection *conn;	/* Connection information */
 	char buffer[BUFFERSIZE];	/* General use buffer */
@@ -231,9 +231,10 @@ void
 
 			Pthread_mutex_lock(&robots[id].mutex);
 			err = robots[id].up;
+			bl = robots[id].blacklisted;
 			Pthread_mutex_unlock(&robots[id].mutex);
 
-			if (err) {
+			if (err && !bl) {
 				if (socket_writen(conn->fd, "Connected!\r\n", 12) < 0)
 					break;
 			} else {
@@ -311,6 +312,11 @@ void
 				}
 
 				timer = 0;
+			}
+
+			if (robots[id].blacklisted) {
+				socket_writen(conn->fd, "Robot ID blacklisted!\r\n", 23);
+				break;
 			}
 		}
 

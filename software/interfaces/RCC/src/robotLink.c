@@ -19,6 +19,7 @@ initRobots()
 	/* Initialize values in the struct */
 	for (i = 0; i < MAXROBOTID; i++) {
 		robots[i].id = i;
+		robots[i].blacklisted = 0;
 		robots[i].hSerial = NULL;
 		robots[i].up = 0;
 		robots[i].head = 0;
@@ -290,14 +291,22 @@ void
 		}
 	}
 
-	if (verbose)
-	printf("S%02d: Done!\n", id);
-
-	/* Clean up */
-	commToNum[info->port] = 0;
 	robots[id].hSerial = NULL;
-	robots[id].type = UNKNOWN;
-	CloseHandle(*info->hSerial);
+
+	/* If blacklisted, should break out of loop due to serial read error. */
+	if (robots[id].blacklisted) {
+		if (verbose)
+		printf("S%02d: Blacklisted!\n", id);
+	/* If we exited from something else */
+	} else {
+		if (verbose)
+		printf("S%02d: Done!\n", id);
+
+		/* Clean up */
+		commToNum[info->port] = 0;
+		robots[id].type = UNKNOWN;
+		CloseHandle(*info->hSerial);
+	}
 	Free(info->hSerial);
 	Free(info);
 

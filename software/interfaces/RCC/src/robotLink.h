@@ -12,10 +12,10 @@
 #define SLEEPTIME 5000
 #define GRACETIME 7000
 
-#define LOCAL 	0
-#define REMOTE	1
-#define HOST	2
-#define UNKNOWN	3
+#define LOCAL 		0
+#define REMOTE		1
+#define HOST		2
+#define UNKNOWN		3
 
 /* Contains info needed to be passed to the managing thread */
 struct commInfo {
@@ -26,6 +26,7 @@ struct commInfo {
 /* Robot buffer */
 struct commCon {
 	int id;				/* Robot ID */
+	int blacklisted;	/* Is this robot ID blacklisted? */
 	HANDLE *hSerial;	/* Serial handle if connected via serial */
 	time_t up;			/* Last time we confirmed this robot's existence */
 	int type;			/* Type of robot */
