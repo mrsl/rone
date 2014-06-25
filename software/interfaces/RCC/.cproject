@@ -56,6 +56,8 @@
 								</option>
 								<option id="gnu.c.link.option.other.158337144" name="Other options (-Xlinker [option])" superClass="gnu.c.link.option.other"/>
 								<option id="gnu.c.link.option.noshared.2074359063" name="No shared libraries (-static)" superClass="gnu.c.link.option.noshared" value="true" valueType="boolean"/>
+								<option id="gnu.c.link.option.userobjs.1230550007" name="Other objects" superClass="gnu.c.link.option.userobjs" valueType="userObjs"/>
+								<option id="gnu.c.link.option.ldflags.560392549" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-DPTW32_STATIC_LIB" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.756396334" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
