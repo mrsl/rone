@@ -248,7 +248,7 @@ void globalRobotUpdateTree(GlobalRobotList* globalRobotListPtr, NbrList nbrListP
 			uint8 nbrRobotListHops = nbrDataGetNbr(&(globalRobotListPtr->list[j].Hops), nbrPtr);
 			if(nbrRobotListID ==ROBOT_ID_NULL ){
 				//return;
-			} else if((nbrRobotListID == grlEltGetID(SelfgrlEltPtr)) && (nbrRobotListHops != 0)){
+			} else if((nbrRobotListID == grlEltGetID(SelfgrlEltPtr)) && (nbrRobotListHops != 0) && !(nbrRobotListHops > 11) ){
 				if(nbrDataGet(&(SelfgrlEltPtr->Hops)) == 0){
 					nbrDataSet(&(SelfgrlEltPtr->Hops), nbrRobotListHops + 1);
 					nbrDataSet(&(SelfgrlEltPtr->ParentID), nbrPtrID);
@@ -279,17 +279,17 @@ void globalRobotListPrintAllTree(GlobalRobotList* globalRobotListPtr, NbrList* n
 void globalRobotListPrintSelfTree(GlobalRobotList* globalRobotListPtr) {
 	int j;
 	GlobalRobotListElement* grlEltPtr;
-	cprintf("Self %d Nonce %d, Size %d Round %d\n",roneID, globalRobotListPtr->nonce, globalRobotListPtr->size, neighborsGetRound());
+	rprintf("Self %d Nonce %d, Size %d Round %d\n",roneID, globalRobotListPtr->nonce, globalRobotListPtr->size, neighborsGetRound());
 	for (j = 0; j < globalRobotListPtr->size; j++) {
 		grlEltPtr = globalRobotListGetElt(globalRobotListPtr, j);
 		uint8 nbrTotalRobotListRobotID =grlEltGetID(grlEltPtr);
-		cprintf("	ID %d, Nonce %d, Hops %d, ParentID %d, Update Round %d \n",nbrTotalRobotListRobotID, grlEltGetNonce(grlEltPtr),grlEltGetHops(grlEltPtr),grlEltGetParentID(grlEltPtr),globalRobotListPtr->list[j].updateRound);
+		rprintf("	ID %d, Nonce %d, Hops %d, ParentID %d, Update Round %d \n",nbrTotalRobotListRobotID, grlEltGetNonce(grlEltPtr),grlEltGetHops(grlEltPtr),grlEltGetParentID(grlEltPtr),globalRobotListPtr->list[j].updateRound);
 	}
 }
 
 void globalRobotListPrintNbrTree(GlobalRobotList* globalRobotListPtr, Nbr* nbrptr){
 	int j;
-	cprintf("Origin %d\n",nbrGetID(nbrptr));
+	rprintf("Origin %d\n",nbrGetID(nbrptr));
 	for (j = 0; j < GLOBAL_ROBOTLIST_MAX_SIZE; j++) {
 		uint8 nbrRobotListID = nbrDataGetNbr(&(globalRobotListPtr->list[j].ID), nbrptr);
 		uint8 nbrRobotListRobotNonce = nbrDataGetNbr(&(globalRobotListPtr->list[j].nonce), nbrptr);
@@ -298,7 +298,7 @@ void globalRobotListPrintNbrTree(GlobalRobotList* globalRobotListPtr, Nbr* nbrpt
 		if(nbrRobotListID ==ROBOT_ID_NULL ){
 			return;
 		}
-		cprintf("	ID %d, Nonce %d, Hops %d, ParentID %d \n",nbrRobotListID,nbrRobotListRobotNonce, nbrRobotListHops,nbrRobotListParentID );
+		rprintf("	ID %d, Nonce %d, Hops %d, ParentID %d \n",nbrRobotListID,nbrRobotListRobotNonce, nbrRobotListHops,nbrRobotListParentID );
 	}
 }
 
