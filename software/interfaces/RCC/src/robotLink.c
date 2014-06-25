@@ -1,7 +1,8 @@
 /**
  * robotLink.c
+ *
+ * Robot serial connection and data management
  */
-
 #include "rcc.h"
 
 struct commCon robots[MAXROBOTID]; /* Robot buffers */

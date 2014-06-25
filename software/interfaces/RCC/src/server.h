@@ -1,5 +1,7 @@
 /**
  * server.h
+ *
+ * Header for server.c
  */
 #ifndef SERVER_H_
 #define SERVER_H_

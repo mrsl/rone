@@ -1,7 +1,7 @@
 /**
  * util.c
  *
- * Utility functions such as robust IO
+ * Miscellaneous utility functions
  */
 #include "rcc.h"
 
@@ -43,6 +43,7 @@ convertASCIIHexWord(char *val)
 void
 fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 {
+	DWORD dwBytesWritten;
 	char text[BUFFERSIZE];
 	va_list ap;
 
@@ -53,7 +54,6 @@ fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 		vsprintf(text, fmt, ap);
 	va_end(ap);
 
-	DWORD dwBytesWritten = 0;
 	WriteFile(*hSerialPtr, text, strlen(text), &dwBytesWritten, NULL);
 }
 

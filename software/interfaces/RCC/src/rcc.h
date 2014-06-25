@@ -1,5 +1,7 @@
 /**
  * rcc.h
+ *
+ * Main header file for all files
  */
 #ifndef RCC_H_
 #define RCC_H_
@@ -22,7 +24,6 @@
 #include "serial.h"
 #include "registry.h"
 #include "robotLink.h"
-#include "file.h"
 #include "gui.h"
 
 extern int port;

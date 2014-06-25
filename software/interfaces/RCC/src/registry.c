@@ -1,3 +1,8 @@
+/**
+ * registry.c
+ *
+ * Registry watcher and enumerator. Used to monitor serial ports.
+ */
 #include "rcc.h"
 
 int commToNum[MAXPORT];

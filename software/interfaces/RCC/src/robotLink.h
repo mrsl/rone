@@ -1,5 +1,7 @@
 /**
  * robotLink.h
+ *
+ * Header file for robotLink.c
  */
 #ifndef RLINK_H_
 #define RLINK_H_

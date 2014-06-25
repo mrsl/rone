@@ -1,3 +1,8 @@
+/**
+ * gui.h
+ *
+ * Header file for gui.c and guiResources.c
+ */
 #ifndef GUI_H_
 #define GUI_H_
 
@@ -15,7 +20,7 @@
 
 #define PICK_DELTA		3.0
 
-#define DRAW_DELAY		100
+#define DRAW_DELAY		50
 
 #define TITLE_POS_X		-19.5
 #define TITLE_POS_Y		13.5
@@ -71,11 +76,14 @@ extern const float color_red[COLOR_SIZE];
 extern const float color_black[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
 
+extern const char scriptTemplate[256];
+
 /* GUI functions and drawing functions */
 void display();
 void reshape(int w, int h);
 void mouse(int button, int state, int x, int y);
 void processHits(GLint hits, GLuint buffer[]);
+int openClientConnection(int robotID);
 void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);

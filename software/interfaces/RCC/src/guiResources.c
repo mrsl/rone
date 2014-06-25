@@ -1,3 +1,8 @@
+/**
+ * guiResources.c
+ *
+ * Text, primitives, and color resources for the GUI to draw
+ */
 #include "rcc.h"
 
 const GLfloat color_red[COLOR_SIZE] = {1.0, 0.0, 0.0};

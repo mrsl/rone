@@ -1,5 +1,7 @@
 /**
- * main.c
+ * rcc.c
+ *
+ * Main function of the RCC
  */
 #include "rcc.h"
 

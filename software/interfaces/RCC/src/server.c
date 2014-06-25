@@ -1,10 +1,15 @@
+/**
+ * server.c
+ *
+ * Web server handlers and related functions
+ */
 #include "rcc.h"
 
 char ipAddress[15];
 struct Buffer connectionBuffer;
 
 /**
- * Creates the web server component of the RCC. Spawns listening thread and
+ * Creates the server component of the RCC. Spawns listening thread and
  * worker threads.
  */
 int

@@ -1,5 +1,7 @@
 /**
  * serial.c
+ *
+ * Serial port connection and IO functions
  */
 #include "rcc.h"
 

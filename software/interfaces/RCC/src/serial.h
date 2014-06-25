@@ -1,5 +1,7 @@
 /**
  * serial.h
+ *
+ * Header file for serial.c
  */
 #ifndef SERIAL_H_
 #define SERIAL_H_

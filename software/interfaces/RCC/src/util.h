@@ -1,5 +1,7 @@
 /**
  * util.h
+ *
+ * Header file for util.c
  */
 #ifndef UTIL_H_
 #define UTIL_H_

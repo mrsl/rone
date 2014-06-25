@@ -1,3 +1,8 @@
+/**
+ * registry.h
+ *
+ * Header file for registry.c
+ */
 #ifndef REG_H_
 #define REG_H_
 
