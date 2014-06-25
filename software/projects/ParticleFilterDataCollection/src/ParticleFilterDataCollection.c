@@ -18,6 +18,7 @@
 #define PI2 			1571
 
 #define TV_SPEED		70
+#define WALL_FOLLOW_SIDE 0
 
 RadioMessage radioMessageTX;
 RadioMessage radioMessageRX;
@@ -37,6 +38,7 @@ behaviorTask(void* parameters)
 	int16 bearing, orientation, newRV;
 	int32 tv, rv;
 	int32 tvR, rvR = 0;
+	boolean foundObj = 0;
 	Beh behU = behInactive;
 	uint32 lastWakeTime = osTaskGetTickCount();
 	char* RXmsg;
@@ -107,13 +109,13 @@ behaviorTask(void* parameters)
 		    nbrDataSet(&moving, STATE_SEND);
 			nbrListCreate(&nbrList);
 
-			if (nbrList.size > 0) {
+			/*if (nbrList.size > 0) {
 				bearing = nbrList.nbrs[0]->bearing;
 
-				/* If we are still driving towards the nbr */
+				// If we are still driving towards the nbr
 				if (abs(bearing) < PI2) {
 					behSetTvRv(&behU, TV_SPEED, 0);
-				/* Orbiting the nbr */
+				 //Orbiting the nbr
 				} else {
 					bearing -= PI2;
 
@@ -129,11 +131,11 @@ behaviorTask(void* parameters)
 						behSetTvRv(&behU, TV_SPEED, 0);
 				}
 
-				/* If we have completed a half circle, just go forward */
+				// If we have completed a half circle, just go forward
 				orientation = nbrList.nbrs[0]->orientation;
 				if (orientation > 2900)
 					behSetTvRv(&behU, TV_SPEED, 0);
-			/* Go to idle if we lose the nbr */
+			// Go to idle if we lose the nbr
 			} else {
 				dead++;
 
@@ -143,6 +145,12 @@ behaviorTask(void* parameters)
 							LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 					break;
 				}
+			}*/
+			if(irObstaclesGetBearing() || foundObj){
+				foundObj = 1;
+				behWallMove(&behU,TV_SPEED, WALL_FOLLOW_SIDE);
+			} else{
+				behSetTvRv(&behU,TV_SPEED,0);
 			}
 
 			/* Transmit tv and rv */
@@ -163,13 +171,14 @@ behaviorTask(void* parameters)
 		/* Idle until active */
 		case STATE_IDLE:
 		default: {
+			foundObj == 0;
 		    nbrDataSet(&moving, STATE_IDLE);
 			behU = behInactive;
 			break;
 		}
 		}
 		neighborsPutMutex();
-		//motorSetBeh(&behU);
+		motorSetBeh(&behU);
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 	}
 }
