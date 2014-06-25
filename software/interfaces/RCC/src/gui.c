@@ -119,10 +119,10 @@ processHits(GLint hits, GLuint buffer[])
 			ptr++;
 		}
 
-		/* If modifier keys are held down */
+		/* Do different things based on which mod keys are being held */
 		switch (glutGetModifiers())
 		{
-		/* Blacklist local robots */
+		/* Ctrl-Click to Blacklist local robots */
 		case (2): {
 			if (robots[robotID].type == LOCAL || robots[robotID].type == HOST) {
 				if (robots[robotID].blacklisted) {
@@ -139,7 +139,7 @@ processHits(GLint hits, GLuint buffer[])
 			}
 			break;
 		}
-		/* Alt-click to make into a host */
+		/* Alt-click to make robot into a host */
 		case (4): {
 			if (robots[robotID].type == LOCAL &&
 				robots[robotID].hSerial != NULL &&
@@ -147,6 +147,7 @@ processHits(GLint hits, GLuint buffer[])
 				fcprintf(robots[robotID].hSerial, "rt\n");
 			break;
 		}
+		/* Click to open a secureCRT connection */
 		case (0):
 		default: {
 			if (!robots[robotID].blacklisted)
@@ -154,7 +155,6 @@ processHits(GLint hits, GLuint buffer[])
 			break;
 		}
 		}
-
 	}
 }
 
@@ -225,14 +225,14 @@ aspectHandle(int w, int h)
 {
 	if (w <= h * ASPECT) {
 		gluOrtho2D(-GUI_WIDTH / 2.,
-			GUI_WIDTH / 2.,
-   			-GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT,
-   			GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT);
+				   GUI_WIDTH / 2.,
+				   -GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT,
+				   GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT);
 	} else {
 		gluOrtho2D (-GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
-   			GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
-   			-GUI_HEIGHT / 2.,
-   			GUI_HEIGHT / 2.);
+					GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
+					-GUI_HEIGHT / 2.,
+					GUI_HEIGHT / 2.);
 	}
 }
 
