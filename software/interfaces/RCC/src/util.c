@@ -119,79 +119,21 @@ Free(void *p)
 }
 
 void
-Pthread_create(pthread_t *tidp, pthread_attr_t *attrp,
-    void *(*routine)(void *), void *argp)
+Pthread_mutex_lock(pthread_mutex_t *m)
 {
-	int rc;
-
-	if ((rc = pthread_create(tidp, attrp, routine, argp)) != 0)
-		Error("pthread_create failure");
+	EnterCriticalSection(m);
 }
 
 void
-Pthread_detach(pthread_t tid)
+Pthread_mutex_unlock(pthread_mutex_t *m)
 {
-	int rc;
-
-	if ((rc = pthread_detach(tid)) != 0)
-		Error("pthread_detach failure");
+	LeaveCriticalSection(m);
 }
 
 void
-Pthread_mutex_init(pthread_mutex_t *mp, pthread_mutexattr_t *attr)
+Pthread_mutex_init(pthread_mutex_t *m)
 {
-	if (pthread_mutex_init(mp, attr) < 0)
-		Error("pthread_mutex_init failure");
+	InitializeCriticalSection(m);
 }
 
-void
-Pthread_cond_init(pthread_cond_t *mp, pthread_condattr_t *attr)
-{
-	if (pthread_cond_init(mp, attr) < 0)
-		Error("pthread_cond_init failure");
-}
 
-void
-Pthread_mutex_lock(pthread_mutex_t *mp)
-{
-	if (pthread_mutex_lock(mp) == 0)
-		return;
-
-	Error("pthread_mutex_lock failure");
-}
-
-void
-Pthread_mutex_unlock(pthread_mutex_t *mp)
-{
-	if (pthread_mutex_unlock(mp) == 0)
-		return;
-
-	Error("pthread_mutex_unlock failure");
-}
-
-void
-Pthread_cond_broadcast(pthread_cond_t *cp)
-{
-	if (pthread_cond_broadcast(cp) == 0)
-		return;
-
-	Error("pthread_cond_broadcast failure");
-}
-
-void
-Pthread_cond_signal(pthread_cond_t *cp)
-{
-	if (pthread_cond_signal(cp) == 0)
-		return;
-
-	Error("pthread_cond_signal failure");
-}
-
-void
-Pthread_cond_wait(pthread_cond_t *cp, pthread_mutex_t *mp)
-{
-	if (pthread_cond_wait(cp, mp) == 0)
-		return;
-
-	Error("pthread_cond_wait failure");
-}

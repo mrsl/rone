@@ -13,16 +13,17 @@ int commToNum[MAXPORT];
 void
 initCommWatch()
 {
-	pthread_t tid;
+	//pthread_t tid;
 
-	Pthread_create(&tid, NULL, commWatch, NULL);
+	//Pthread_create(&tid, NULL, commWatch, NULL);
+	_beginthread(&commWatch, 0, 0);
 }
 
 /**
  * Watches the registry for possible robots to connect to
  */
 void
-*commWatch(void *vargp)
+commWatch(void *vargp)
 {
 	int i;
 	struct regData data;	/* Read data from the registry */
@@ -41,7 +42,6 @@ void
 
 		Sleep(REGISTRYWATCH);
 	}
-	return (NULL);
 }
 
 /**

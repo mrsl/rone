@@ -20,7 +20,7 @@ struct regData {
 extern int commToNum[MAXPORT];
 
 void initCommWatch();
-void *commWatch(void *vargp);
+void commWatch(void *vargp);
 void enumCommNames(struct regData *data);
 
 #endif

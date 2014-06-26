@@ -9,18 +9,18 @@
 /* Standard includes */
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 /* Windows includes */
 #include <winsock.h>
 #include <windows.h>
+#include <process.h>
 
 /* Open GL */
 #include "GL/freeglut.h"
 
 /* File includes */
-#include "server.h"
 #include "util.h"
+#include "server.h"
 #include "serial.h"
 #include "registry.h"
 #include "robotLink.h"

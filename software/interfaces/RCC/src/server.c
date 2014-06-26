@@ -19,10 +19,9 @@ createServer(int port)
 	int i, *ti;
 	WSADATA wsaData;	/* Things for winsock setup */
 	WORD version;
-	pthread_t tid;		/* Thread ID */
 
 	/* Initialize the accepted connection buffer */
-	buffer_init(&connectionBuffer, CONNECTIONBUFFERSIZE);
+	//buffer_init(&connectionBuffer, CONNECTIONBUFFERSIZE);
 
 	if (verbose)
 	printf("MAS: Thread buffer initialized\n");
@@ -47,18 +46,20 @@ createServer(int port)
 	/* Create incoming connection handler */
 	ti = Malloc(sizeof(int));
 	*ti = listenfd;
-	Pthread_create(&tid, NULL, incomingHandler, ti);
+	//Pthread_create(&tid, NULL, incomingHandler, ti);
+	_beginthread(&incomingHandler, 0, ti);
+
 
 	if (verbose)
 	printf("T00: Server initialized on port %d\n", port);
 
 	/* Create worker threads */
+	/*
 	for (i = 1; i <= NTHREADS; i++) {
-		/* Malloc to prevent data races */
 		ti = Malloc(sizeof(int));
 		*ti = i;
-		Pthread_create(&tid, NULL, connectionHandler, ti);
-	}
+		_beginthread(&connectionHandler, 0, ti);
+	}*/
 
 	/* Success */
 	return (0);
@@ -127,7 +128,7 @@ openListenFD(int port)
  * Thread to handle all incoming connection requests
  */
 void
-*incomingHandler(void *vargp)
+incomingHandler(void *vargp)
 {
 	int listenfd;				/* FD we are listening on */
 	int len;
@@ -140,7 +141,7 @@ void
 	Free(vargp);
 
 	/* Run thread as detached */
-	Pthread_detach(pthread_self());
+	//Pthread_detach(pthread_self());
 
 	/* Continuously listen and accept connections */
 	for (;;) {
@@ -157,24 +158,25 @@ void
 		conn->n = count;
 
 		/* Put the connection in the buffer */
-		buffer_put(&connectionBuffer, (void *)conn);
+		//buffer_put(&connectionBuffer, (void *)conn);
+
+		_beginthread(&connectionHandler, 0, conn);
+
 		count++;
 	}
-
-	return (NULL);
 }
 
 /**
  * Thread to handle a connection, feeds data to the port
  */
 void
-*connectionHandler(void *vargp) 
+connectionHandler(void *vargp)
 {
 	int tid;					/* Thread ID */
 	int id;						/* Requested robot ID */
 	int head;					/* Last location of robot buffer viewed */
 	int err, bl;					/* Flag */
-	clock_t timer;				/* Event timer */
+	unsigned long timer;				/* Event timer */
 	struct Connection *conn;	/* Connection information */
 	char buffer[BUFFERSIZE];	/* General use buffer */
 	struct socketIO socketio;	/* Robust IO buffer for socket */
@@ -182,158 +184,144 @@ void
 	struct timeval tv = {0, 1};	/* Timeout for select */
 	char inBuffer[BUFFERSIZE];	/* Input buffer from client */
 
-	/* Grab thread ID from argument */
-	tid = *((int *)vargp);
-	Free(vargp);
-
-	/* Run thread as detached */
-	Pthread_detach(pthread_self());
+	conn = (struct Connection *)vargp;
+	tid = conn->n;
 
 	if (verbose)
 	printf("T%02d: Handler thread initialized\n", tid);
 
-	/* Continuously wait for a new connection in the buffer and then handle */
-	for (;;) {
-		/* Grab a new connection */
-		conn = (struct Connection *)buffer_pop(&connectionBuffer);
+	/* Initialize robust IO on the socket */
+	socket_readinitb(&socketio, conn->fd);
 
-		/* Initialize robust IO on the socket */
-		socket_readinitb(&socketio, conn->fd);
+	if (verbose)
+	printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
 
-		if (verbose)
-		printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
+	/* Query user for robot ID */
+	id = 0;
+	while (id == 0) {
+		if (socket_writen(conn->fd,
+			"Enter the robot ID you wish to view: ", 37) < 0)
+			break;
 
-		/* Query user for robot ID */
-		id = 0;
-		while (id == 0) {
+		if (socket_readlineb(&socketio, buffer, BUFFERSIZE) == 0)
+			break;
+
+		if (sscanf(buffer, "%d\n", &id) != 1) {
 			if (socket_writen(conn->fd,
-				"Enter the robot ID you wish to view: ", 37) < 0)
+				"Invalid ID! Try Again.\r\n", 24) < 0)
 				break;
-
-			if (socket_readlineb(&socketio, buffer, BUFFERSIZE) == 0)
-				break;
-
-			if (sscanf(buffer, "%d\n", &id) != 1) {
-				if (socket_writen(conn->fd,
-					"Invalid ID! Try Again.\r\n", 24) < 0)
-					break;
-				continue;
-			}
-
-			/* Handle bad numbers */
-			if (id >= MAXROBOTID || id < 0) {
-				id = 0;
-				if (socket_writen(conn->fd,
-					"Invalid ID! Try Again.\r\n", 24) < 0)
-					break;
-				continue;
-			}
-
-			Pthread_mutex_lock(&robots[id].mutex);
-			err = robots[id].up;
-			bl = robots[id].blacklisted;
-			Pthread_mutex_unlock(&robots[id].mutex);
-
-			if (err && !bl) {
-				if (socket_writen(conn->fd, "Connected!\r\n", 12) < 0)
-					break;
-			} else {
-				id = 0;
-				if (socket_writen(conn->fd,
-					"Robot ID not connected!\r\n", 25) < 0)
-					break;
-			}
-		}
-
-		/* Close if the connection broke */
-		if (id == 0) {
-			Close(conn->fd);
-			Free(conn);
 			continue;
 		}
 
-		if (verbose)
-		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
-
-		/* Feed new data from the robot to the client until close */
-		head = robots[id].head;
-		timer = clock();
-
-		/* Initialize stuff for select */
-		FD_ZERO(&read_set);
-		FD_SET(conn->fd, &read_set);
-
-		for (;;) {
-			ready_set = read_set;
-
-			/* Check if there is data available from the client. */
-			if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0)
+		/* Handle bad numbers */
+		if (id >= MAXROBOTID || id < 0) {
+			id = 0;
+			if (socket_writen(conn->fd,
+				"Invalid ID! Try Again.\r\n", 24) < 0)
 				break;
+			continue;
+		}
 
-			/* Is there is data to be read? */
-			if (FD_ISSET(conn->fd, &ready_set)) {
-				if (socket_read(&socketio, inBuffer, BUFFERSIZE) != 0) {
-					/* Write data out to serial port if the robot is local */
-					Pthread_mutex_lock(&robots[id].mutex);
-					if(robots[id].type == LOCAL || robots[id].type == HOST)
-						fcprintf(robots[id].hSerial, inBuffer);
+		Pthread_mutex_lock(&robots[id].mutex);
+		err = robots[id].up;
+		bl = robots[id].blacklisted;
+		Pthread_mutex_unlock(&robots[id].mutex);
 
-					Pthread_mutex_unlock(&robots[id].mutex);
-				} else {
-					break;
-				}
-			}
-
-			/* If there is new data in the robot buffer */
-			while (head != robots[id].head) {
-				Pthread_mutex_lock(&robots[id].mutex);
-				if (sprintf(buffer, "%s", robots[id].buffer[head]) < 0)
-					break;
-				Pthread_mutex_unlock(&robots[id].mutex);
-
-				if ((err = socket_writen(conn->fd,
-					buffer, strlen(buffer))) < 0)
-					break;
-
-				head = (head + 1) % NUMBUFFER;
-			}
-			if (err < 0)
+		if (err && !bl) {
+			if (socket_writen(conn->fd, "Connected!\r\n", 12) < 0)
 				break;
+		} else {
+			id = 0;
+			if (socket_writen(conn->fd,
+				"Robot ID not connected!\r\n", 25) < 0)
+				break;
+		}
+	}
 
-			/* Check if the robot is actually disconnected. */
-			if (timer + 1000 < clock()) {
+	/* Close if the connection broke */
+	if (id == 0) {
+		Close(conn->fd);
+		Free(conn);
+		return;
+	}
+
+	if (verbose)
+	printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
+
+	/* Feed new data from the robot to the client until close */
+	head = robots[id].head;
+	timer = clock();
+
+	/* Initialize stuff for select */
+	FD_ZERO(&read_set);
+	FD_SET(conn->fd, &read_set);
+
+	for (;;) {
+		ready_set = read_set;
+
+		/* Check if there is data available from the client. */
+		if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0)
+			break;
+
+		/* Is there is data to be read? */
+		if (FD_ISSET(conn->fd, &ready_set)) {
+			if (socket_read(&socketio, inBuffer, BUFFERSIZE) != 0) {
+				/* Write data out to serial port if the robot is local */
 				Pthread_mutex_lock(&robots[id].mutex);
-				err = robots[id].up;
+				if(robots[id].type == LOCAL || robots[id].type == HOST)
+					fcprintf(robots[id].hSerial, inBuffer);
+
 				Pthread_mutex_unlock(&robots[id].mutex);
-
-				if (!err) {
-					socket_writen(conn->fd, "Robot ID disconnected!\r\n", 24);
-					break;
-				}
-
-				timer = 0;
-			}
-
-			if (robots[id].blacklisted) {
-				socket_writen(conn->fd, "Robot ID blacklisted!\r\n", 23);
+			} else {
 				break;
 			}
 		}
 
-		if (verbose)
-		printf("T%02d: [%d] Done!\n", tid, conn->n);
+		/* If there is new data in the robot buffer */
+		while (head != robots[id].head) {
+			Pthread_mutex_lock(&robots[id].mutex);
+			if (sprintf(buffer, "%s", robots[id].buffer[head]) < 0)
+				break;
+			Pthread_mutex_unlock(&robots[id].mutex);
 
-		/* Clean up */
-		Close(conn->fd);
-		Free(conn);
+			if ((err = socket_writen(conn->fd,
+				buffer, strlen(buffer))) < 0)
+				break;
+
+			head = (head + 1) % NUMBUFFER;
+		}
+		if (err < 0)
+			break;
+
+		/* Check if the robot is actually disconnected. */
+		if (timer + 1000 < clock()) {
+			Pthread_mutex_lock(&robots[id].mutex);
+			err = robots[id].up;
+			Pthread_mutex_unlock(&robots[id].mutex);
+
+			if (!err) {
+				socket_writen(conn->fd, "Robot ID disconnected!\r\n", 24);
+				break;
+			}
+
+			timer = 0;
+		}
+
+		if (robots[id].blacklisted) {
+			socket_writen(conn->fd, "Robot ID blacklisted!\r\n", 23);
+			break;
+		}
 	}
 
-	return (NULL);
+	if (verbose)
+	printf("T%02d: [%d] Done!\n", tid, conn->n);
+
+	/* Clean up */
+	Close(conn->fd);
+	Free(conn);
 }
 
-/**
- * Initialize the thread connection buffer
- */
+/*
 void
 buffer_init(struct Buffer *buf, int n)
 {
@@ -349,56 +337,45 @@ buffer_init(struct Buffer *buf, int n)
 
 }
 
-/**
- * Put a pointer into the buffer
- */
 void
 buffer_put(struct Buffer *buf, void *conn)
 {
-	Pthread_mutex_lock(&buf->mutex);	/* Lock the buffer. */
+	Pthread_mutex_lock(&buf->mutex);
 
-	/* Wait until the buffer has space to begin filling. */
 	while (buf->count == buf->size)
 		Pthread_cond_wait(&buf->empty, &buf->mutex);
 
-	/* Put the pointer in the array and update put position and count. */
 	buf->array[buf->put_index] = conn;
 	buf->put_index = (buf->put_index + 1) % buf->size;
 	buf->count = buf->count + 1;
 
-	/* Broadcast that there is something in the buffer. */
 	Pthread_cond_broadcast(&buf->full);
 
-	Pthread_mutex_unlock(&buf->mutex);	/* Unlock the buffer. */
+	Pthread_mutex_unlock(&buf->mutex);
 }
 
-/**
- * Pop a pointer from the buffer
- */
 void
 *buffer_pop(struct Buffer *buf)
 {
 	struct Connection *conn;
 
-	Pthread_mutex_lock(&buf->mutex);	/* Lock the buffer. */
+	Pthread_mutex_lock(&buf->mutex);
 
-	/* Wait until something is in the buffer. */
 	while (buf->count == 0)
 		Pthread_cond_wait(&buf->full, &buf->mutex);
 
-	/* Pop a pointer from the buffer and update read position and count. */
 	conn = buf->array[buf->pop_index];
 	buf->pop_index = (buf->pop_index + 1) % buf->size;
 	buf->count = buf->count - 1;
 
-	/* Signal that there is now room to fill in the buffer. */
 	if (buf->count == 0)
 		Pthread_cond_signal(&buf->empty);
 
-	Pthread_mutex_unlock(&buf->mutex);	/* Unlock the buffer. */
+	Pthread_mutex_unlock(&buf->mutex);
 
 	return (conn);
 }
+*/
 
 /**
  * Robustly write data to a socket. Adapted from CSAPP.

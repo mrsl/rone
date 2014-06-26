@@ -39,8 +39,6 @@ struct Buffer {
 	int count;				/* The count of items in the buffer */
 	int size;				/* The current size of the buffer */
 	pthread_mutex_t mutex;	/* Mutex lock */
-	pthread_cond_t empty;	/* Condition variable when nothing in buffer */
-	pthread_cond_t full;	/* Condition variable when buffer is full */
 };
 
 extern char ipAddress[15];				/* String form of local IP address */
@@ -50,8 +48,8 @@ int createServer(int port);
 void getIPAddress();
 int openListenFD(int port);
 
-void *incomingHandler(void *vargp);
-void *connectionHandler(void *vargp);
+void incomingHandler(void *vargp);
+void connectionHandler(void *vargp);
 
 void buffer_init(struct Buffer *buf, int n);
 void buffer_put(struct Buffer *buf, void *conn);

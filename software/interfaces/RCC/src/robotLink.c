@@ -14,7 +14,6 @@ void
 initRobots()
 {
 	int i;
-	pthread_t tid;
 
 	/* Initialize values in the struct */
 	for (i = 0; i < MAXROBOTID; i++) {
@@ -24,17 +23,17 @@ initRobots()
 		robots[i].up = 0;
 		robots[i].head = 0;
 		robots[i].type = UNKNOWN;
-		Pthread_mutex_init(&robots[i].mutex, NULL);
+		Pthread_mutex_init(&robots[i].mutex);
 	}
 
-	Pthread_create(&tid, NULL, commManager, NULL);
+	_beginthread(&commManager, 0, 0);
 }
 
 /**
  * Performs tasks on all robot links in intervals
  */
 void
-*commManager(void *vargp)
+commManager(void *vargp)
 {
 	int i;
 
@@ -42,7 +41,7 @@ void
 	vargp = (void *)vargp;
 
 	/* Run in detached mode */
-	Pthread_detach(pthread_self());
+	//Pthread_detach(pthread_self());
 
 	/* Iterate through robot list indefinitely */
 	for (;;) {
@@ -66,8 +65,6 @@ void
 		/* Sleep for a while. */
 		Sleep(SLEEPTIME);
 	}
-
-	return (NULL);
 }
 
 /**
@@ -76,7 +73,6 @@ void
 int
 initCommCommander(int port)
 {
-	pthread_t tid;
 	struct commInfo *info = Malloc(sizeof(struct commInfo));
 	HANDLE *hSerial = Malloc(sizeof(HANDLE));
 
@@ -91,7 +87,7 @@ initCommCommander(int port)
 	info->hSerial = hSerial;
 	info->port = port;
 
-	Pthread_create(&tid, NULL, commCommander, info);
+	_beginthread(&commCommander, 0, info);
 
 	return (0);
 }
@@ -100,7 +96,7 @@ initCommCommander(int port)
  * Thread to manage a serial connection and input data into robot buffers
  */
 void
-*commCommander(void *vargp)
+commCommander(void *vargp)
 {
 	int i, j, err;
 	int id = 0;							/* Robot ID */
@@ -117,7 +113,7 @@ void
 	struct serialIO sio;				/* Robust IO on serial buffer */
 
 	/* Run the thread as detached */
-	Pthread_detach(pthread_self());
+	//Pthread_detach(pthread_self());
 
 	/* Get info from argument */
 	info = ((struct commInfo *)vargp);
@@ -310,8 +306,6 @@ void
 	}
 	Free(info->hSerial);
 	Free(info);
-
-	return (NULL);
 }
 
 /**
