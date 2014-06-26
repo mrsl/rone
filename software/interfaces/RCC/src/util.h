@@ -6,7 +6,6 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
-
 typedef signed char 	int8;
 typedef signed short 	int16;
 

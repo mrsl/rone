@@ -9,13 +9,14 @@
 /* Standard includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 /* Windows includes */
 #include <winsock.h>
 #include <windows.h>
 #include <process.h>
 
-/* Open GL */
+/* OpenGL */
 #include "GL/freeglut.h"
 
 /* File includes */

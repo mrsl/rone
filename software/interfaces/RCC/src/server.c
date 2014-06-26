@@ -6,7 +6,6 @@
 #include "rcc.h"
 
 char ipAddress[15];
-struct Buffer connectionBuffer;
 
 /**
  * Creates the server component of the RCC. Spawns listening thread and
@@ -16,12 +15,9 @@ int
 createServer(int port)
 {
 	int listenfd;		/* The fd we are listening on */
-	int i, *ti;
+	int *ti;
 	WSADATA wsaData;	/* Things for winsock setup */
 	WORD version;
-
-	/* Initialize the accepted connection buffer */
-	//buffer_init(&connectionBuffer, CONNECTIONBUFFERSIZE);
 
 	if (verbose)
 	printf("MAS: Thread buffer initialized\n");
@@ -46,20 +42,10 @@ createServer(int port)
 	/* Create incoming connection handler */
 	ti = Malloc(sizeof(int));
 	*ti = listenfd;
-	//Pthread_create(&tid, NULL, incomingHandler, ti);
 	_beginthread(&incomingHandler, 0, ti);
-
 
 	if (verbose)
 	printf("T00: Server initialized on port %d\n", port);
-
-	/* Create worker threads */
-	/*
-	for (i = 1; i <= NTHREADS; i++) {
-		ti = Malloc(sizeof(int));
-		*ti = i;
-		_beginthread(&connectionHandler, 0, ti);
-	}*/
 
 	/* Success */
 	return (0);
@@ -140,9 +126,6 @@ incomingHandler(void *vargp)
 	listenfd = *((int *)vargp);
 	Free(vargp);
 
-	/* Run thread as detached */
-	//Pthread_detach(pthread_self());
-
 	/* Continuously listen and accept connections */
 	for (;;) {
 		conn = Malloc(sizeof(struct Connection));
@@ -157,9 +140,7 @@ incomingHandler(void *vargp)
 
 		conn->n = count;
 
-		/* Put the connection in the buffer */
-		//buffer_put(&connectionBuffer, (void *)conn);
-
+		/* Spawn a thread to handle the connection */
 		_beginthread(&connectionHandler, 0, conn);
 
 		count++;
@@ -175,8 +156,8 @@ connectionHandler(void *vargp)
 	int tid;					/* Thread ID */
 	int id;						/* Requested robot ID */
 	int head;					/* Last location of robot buffer viewed */
-	int err, bl;					/* Flag */
-	unsigned long timer;				/* Event timer */
+	int err, bl;				/* Flag */
+	clock_t timer;				/* Event timer */
 	struct Connection *conn;	/* Connection information */
 	char buffer[BUFFERSIZE];	/* General use buffer */
 	struct socketIO socketio;	/* Robust IO buffer for socket */
@@ -320,62 +301,6 @@ connectionHandler(void *vargp)
 	Close(conn->fd);
 	Free(conn);
 }
-
-/*
-void
-buffer_init(struct Buffer *buf, int n)
-{
-	buf->array = Calloc(n, sizeof(void *));
-	buf->put_index = 0;
-	buf->pop_index = 0;
-	buf->count = 0;
-	buf->size = n;
-
-	Pthread_mutex_init(&buf->mutex, NULL);
-	Pthread_cond_init(&buf->empty, NULL);
-	Pthread_cond_init(&buf->full, NULL);
-
-}
-
-void
-buffer_put(struct Buffer *buf, void *conn)
-{
-	Pthread_mutex_lock(&buf->mutex);
-
-	while (buf->count == buf->size)
-		Pthread_cond_wait(&buf->empty, &buf->mutex);
-
-	buf->array[buf->put_index] = conn;
-	buf->put_index = (buf->put_index + 1) % buf->size;
-	buf->count = buf->count + 1;
-
-	Pthread_cond_broadcast(&buf->full);
-
-	Pthread_mutex_unlock(&buf->mutex);
-}
-
-void
-*buffer_pop(struct Buffer *buf)
-{
-	struct Connection *conn;
-
-	Pthread_mutex_lock(&buf->mutex);
-
-	while (buf->count == 0)
-		Pthread_cond_wait(&buf->full, &buf->mutex);
-
-	conn = buf->array[buf->pop_index];
-	buf->pop_index = (buf->pop_index + 1) % buf->size;
-	buf->count = buf->count - 1;
-
-	if (buf->count == 0)
-		Pthread_cond_signal(&buf->empty);
-
-	Pthread_mutex_unlock(&buf->mutex);
-
-	return (conn);
-}
-*/
 
 /**
  * Robustly write data to a socket. Adapted from CSAPP.

@@ -12,7 +12,7 @@
 #define BUFFERSIZE				8192
 
 /**
- * Connection information struct that is passed into request buffer
+ * Connection information struct that is passed to the handlers
  */
 struct Connection {
 	int n;		/* Request number */
@@ -29,18 +29,6 @@ struct socketIO {
 	char buffer[BUFFERSIZE];/* Buffer */
 };
 
-/**
- * Connection buffer used by the web server
- */
-struct Buffer {
-	void **array;			/* Array of pointers, the buffer */
-	int put_index;			/* The current put index */
-	int pop_index;			/* The current pop index */
-	int count;				/* The count of items in the buffer */
-	int size;				/* The current size of the buffer */
-	pthread_mutex_t mutex;	/* Mutex lock */
-};
-
 extern char ipAddress[15];				/* String form of local IP address */
 extern struct Buffer connectionBuffer;	/* Connection buffer */
 
@@ -50,10 +38,6 @@ int openListenFD(int port);
 
 void incomingHandler(void *vargp);
 void connectionHandler(void *vargp);
-
-void buffer_init(struct Buffer *buf, int n);
-void buffer_put(struct Buffer *buf, void *conn);
-void *buffer_pop(struct Buffer *buf);
 
 ssize_t socket_writen(int fd, char *usrbuf, size_t n);
 ssize_t socket_read(struct socketIO *sp, char *usrbuf, size_t n);
