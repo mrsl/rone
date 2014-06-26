@@ -14,23 +14,25 @@
 /**
  * Connection information struct that is passed to the handlers
  */
-struct Connection {
-	int n;		/* Request number */
-	SOCKET fd;	/* File descriptor */
+struct Connection
+{
+	int n; /* Request number */
+	SOCKET fd; /* File descriptor */
 };
 
 /**
  * Robust IO struct used for socket IO. Adapted from CSAPP.
  */
-struct socketIO {
-	int fd;					/* File descriptor */
-	int count;				/* Count */
-	char *bufp;				/* Buffer pointer */
+struct socketIO
+{
+	int fd; /* File descriptor */
+	int count; /* Count */
+	char *bufp; /* Buffer pointer */
 	char buffer[BUFFERSIZE];/* Buffer */
 };
 
-extern char ipAddress[15];				/* String form of local IP address */
-extern struct Buffer connectionBuffer;	/* Connection buffer */
+extern char ipAddress[15]; /* String form of local IP address */
+extern struct Buffer connectionBuffer; /* Connection buffer */
 
 int createServer(int port);
 void getIPAddress();

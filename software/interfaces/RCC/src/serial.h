@@ -7,7 +7,8 @@
 #define SERIAL_H_
 
 /* Robust IO buffer struct */
-struct serialIO {
+struct serialIO
+{
 	HANDLE *handle;
 	DWORD count;
 	char *bufp;

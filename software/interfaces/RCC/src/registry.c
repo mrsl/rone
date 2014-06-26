@@ -10,26 +10,21 @@ int commToNum[MAXPORT];
 /**
  * Creates the thread to watch the registry
  */
-void
-initCommWatch()
+void initCommWatch()
 {
-	//pthread_t tid;
-
-	//Pthread_create(&tid, NULL, commWatch, NULL);
 	_beginthread(&commWatch, 0, 0);
 }
 
 /**
  * Watches the registry for possible robots to connect to
  */
-void
-commWatch(void *vargp)
+void commWatch(void *vargp)
 {
 	int i;
-	struct regData data;	/* Read data from the registry */
+	struct regData data; /* Read data from the registry */
 
 	/* Get rid of pesky compiler warnings */
-	vargp = (void *)vargp;
+	vargp = (void *) vargp;
 
 	for (;;) {
 		enumCommNames(&data);
@@ -47,28 +42,26 @@ commWatch(void *vargp)
 /**
  * Opens and views the registry and fills a data struct with possible robots
  */
-void
-enumCommNames(struct regData *data)
+void enumCommNames(struct regData *data)
 {
 	int port;
 	int numOfComm = 0;
 
 	LONG status;
 
-	HKEY  hKey;
+	HKEY hKey;
 	DWORD dwIndex = 0;
-	CHAR  name[48];
+	CHAR name[48];
 	DWORD szName;
 	UCHAR portName[48];
 	DWORD szPortName;
 	DWORD Type;
 
 	/* Try to open the registry entry containing serial port information */
-	if(RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-					TEXT("HARDWARE\\DEVICEMAP\\SERIALCOMM"),
-					0,
-					KEY_READ,
-					&hKey) != ERROR_SUCCESS)
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+					 TEXT("HARDWARE\\DEVICEMAP\\SERIALCOMM"),
+					 0,
+					 KEY_READ, &hKey) != ERROR_SUCCESS)
 		return;
 
 	/* Read registry until failure */
@@ -87,7 +80,7 @@ enumCommNames(struct regData *data)
 
 		if ((status == ERROR_SUCCESS)) {
 			if (strstr(name, "VCP")) {
-				if (sscanf((char *)portName, "COM%d", &port) != 1)
+				if (sscanf((char *) portName, "COM%d", &port) != 1)
 					continue;
 
 				data->ports[numOfComm] = port;

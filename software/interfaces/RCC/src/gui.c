@@ -6,21 +6,20 @@
 #include "rcc.h"
 
 /* The script template */
-const char scriptTemplate[256] = "#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID you wish to view: \"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\nEnd Sub\r\n";
+const char scriptTemplate[256] =
+	"#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID you wish to view: \"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\nEnd Sub\r\n";
 
 /**
  * Display function, we don't want to do anything here
  */
-void
-display()
+void display()
 {
 }
 
 /**
  * Handles the reshaping of the GUI
  */
-void
-reshape(int w, int h)
+void reshape(int w, int h)
 {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
@@ -35,8 +34,7 @@ reshape(int w, int h)
 /**
  * Handles mouse events on the GUI
  */
-void
-mouse(int button, int state, int x, int y)
+void mouse(int button, int state, int x, int y)
 {
 	GLuint selectBuf[GUI_BUFFER];
 	GLint hits;
@@ -62,7 +60,7 @@ mouse(int button, int state, int x, int y)
 		glLoadIdentity();
 
 		gluPickMatrix((GLdouble) x, (GLdouble) (h - y),
-			PICK_DELTA, PICK_DELTA, viewport);
+		PICK_DELTA, PICK_DELTA, viewport);
 
 		/* Handle skewed aspect ratios. */
 		aspectHandle(w, h);
@@ -91,8 +89,7 @@ mouse(int button, int state, int x, int y)
 /**
  * Find out which robot was clicked on the GUI
  */
-void
-processHits(GLint hits, GLuint buffer[])
+void processHits(GLint hits, GLuint buffer[])
 {
 	int i;
 	unsigned int j;
@@ -102,7 +99,7 @@ processHits(GLint hits, GLuint buffer[])
 	if (hits == 0)
 		return;
 
-	ptr = (GLuint *)buffer;
+	ptr = (GLuint *) buffer;
 
 	/* Iterate through all hits */
 	for (i = 0; i < hits; i++) {
@@ -112,7 +109,7 @@ processHits(GLint hits, GLuint buffer[])
 		if (names == 0)
 			continue;
 
-		for (j = 0; j < names; j++)	{
+		for (j = 0; j < names; j++) {
 			if (j == 0)
 				robotID = *ptr;
 
@@ -141,10 +138,15 @@ processHits(GLint hits, GLuint buffer[])
 		}
 		/* Alt-click to make robot into a host */
 		case (4): {
-			if (robots[robotID].type == LOCAL &&
-				robots[robotID].hSerial != NULL &&
-				!robots[robotID].blacklisted)
+			if (robots[robotID].type == LOCAL && robots[robotID].hSerial != NULL
+				&& !robots[robotID].blacklisted)
 				fcprintf(robots[robotID].hSerial, "rt\n");
+			break;
+		}
+		case (6): {
+			if (robots[robotID].type != REMOTE &&
+				robots[robotID].hSerial != NULL && !robots[robotID].blacklisted)
+				directConnect(robotID);
 			break;
 		}
 		/* Click to open a secureCRT connection */
@@ -161,49 +163,72 @@ processHits(GLint hits, GLuint buffer[])
 /**
  * Opens a secureCRT window and connects to the server to the requested ID
  */
-int
-openClientConnection(int robotID)
+int openClientConnection(int robotID)
 {
-    HANDLE hTempFile = INVALID_HANDLE_VALUE;
+	HANDLE hTempFile = INVALID_HANDLE_VALUE;
 
-    DWORD dwRetVal = 0;
-    UINT uRetVal   = 0;
+	DWORD dwRetVal = 0;
+	UINT uRetVal = 0;
 
-    TCHAR szTempFileName[MAX_PATH];
-    TCHAR lpTempPathBuffer[MAX_PATH];
-    char buffer[1024];
+	TCHAR szTempFileName[MAX_PATH];
+	TCHAR lpTempPathBuffer[MAX_PATH];
+	char buffer[1024];
 
-    /* Create a temporary file */
+	/* Create a temporary file */
 	dwRetVal = GetTempPath(MAX_PATH, lpTempPathBuffer);
 
-    if (dwRetVal > MAX_PATH || (dwRetVal == 0))
-        return (-1);
+	if (dwRetVal > MAX_PATH || (dwRetVal == 0))
+		return (-1);
 
-    uRetVal = GetTempFileName(lpTempPathBuffer,
-                              TEXT("SCRIPT"),
-                              0,
-                              szTempFileName);
-    if (uRetVal == 0)
-        return (-1);
+	uRetVal = GetTempFileName(lpTempPathBuffer,
+							  TEXT("SCRIPT"),
+							  0,
+							  szTempFileName);
+	if (uRetVal == 0)
+		return (-1);
 
-    hTempFile = CreateFile((LPTSTR) szTempFileName,
-						   GENERIC_WRITE,
-						   0,
+	hTempFile = CreateFile((LPTSTR) szTempFileName,
+						   GENERIC_WRITE, 0,
 						   NULL,
 						   CREATE_ALWAYS,
 						   FILE_ATTRIBUTE_NORMAL,
 						   NULL);
 	if (hTempFile == INVALID_HANDLE_VALUE)
-        return (-1);
+		return (-1);
 
 	/* Output the script to the temporary file */
 	fcprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
 
 	if (!CloseHandle(hTempFile))
-	   return (-1);
+		return (-1);
 
 	/* Open secureCRT with the script as an argument */
 	if (sprintf(buffer, "/SCRIPT \"%s\"", szTempFileName) < 0)
+		return (-1);
+
+	ShellExecute(GetDesktopWindow(),
+					 "open",
+					 "securecrt.exe",
+					 buffer,
+					 "",
+					 SW_SHOW);
+
+	return (0);
+}
+
+/**
+ * Opens a direct secureCRT connection to a local robot
+ */
+int directConnect(int robotID)
+{
+	char buffer[BUFFERSIZE];
+
+	robots[robotID].blacklisted = 1;
+	if (robots[robotID].hSerial != NULL)
+		CloseHandle(*robots[robotID].hSerial);
+
+	if (sprintf(buffer, "/SERIAL COM%d /BAUD 230400 /NOCTS",
+		robots[robotID].port) < 0)
 		return (-1);
 
 	ShellExecute(GetDesktopWindow(),
@@ -213,45 +238,40 @@ openClientConnection(int robotID)
 				 "",
 				 SW_SHOW);
 
-    return (0);
+	return (0);
 }
-
 
 /**
  * Handles aspect ratio skew
  */
-void
-aspectHandle(int w, int h)
+void aspectHandle(int w, int h)
 {
 	if (w <= h * ASPECT) {
 		gluOrtho2D(-GUI_WIDTH / 2.,
-				   GUI_WIDTH / 2.,
-				   -GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT,
-				   GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT);
+		GUI_WIDTH / 2., -GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT,
+		GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT);
 	} else {
-		gluOrtho2D (-GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
-					GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
-					-GUI_HEIGHT / 2.,
-					GUI_HEIGHT / 2.);
+		gluOrtho2D(-GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
+		GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT, -GUI_HEIGHT / 2.,
+		GUI_HEIGHT / 2.);
 	}
 }
 
 /**
  * Draw all the robots current connected
  */
-void
-drawRobots(GLenum mode)
+void drawRobots(GLenum mode)
 {
 	int i;
 
-	GLfloat lx;	/* Local robot x position */
-	GLfloat ly;	/* Local robot y position */
-	GLfloat rx;	/* Remote robot x position */
-	GLfloat ry;	/* Remote robot y position */
-	GLfloat sx;	/* Starting x position */
+	GLfloat lx; /* Local robot x position */
+	GLfloat ly; /* Local robot y position */
+	GLfloat rx; /* Remote robot x position */
+	GLfloat ry; /* Remote robot y position */
+	GLfloat sx; /* Starting x position */
 
-	GLfloat ls = SCALE_LARGE;	/* Local robot scale factor */
-	GLfloat rs = SCALE_LARGE;	/* Remote robot scale factor */
+	GLfloat ls = SCALE_LARGE; /* Local robot scale factor */
+	GLfloat rs = SCALE_LARGE; /* Remote robot scale factor */
 
 	int numLocal = 0;
 	int numRemote = 0;
@@ -261,19 +281,18 @@ drawRobots(GLenum mode)
 
 	/* Iterate through robot list and find all active robots */
 	for (i = 0; i < MAXROBOTID; i++) {
-		Pthread_mutex_lock(&robots[i].mutex);
+		mutexLock(&robots[i].mutex);
 
 		/* If the robot is active */
 		if (robots[i].up != 0) {
 			if (robots[i].type == LOCAL || robots[i].type == HOST) {
 				local[numLocal++] = &robots[i];
-			}
-			else if (robots[i].type == REMOTE) {
+			} else if (robots[i].type == REMOTE) {
 				remote[numRemote++] = &robots[i];
 			}
 		}
 
-		Pthread_mutex_unlock(&robots[i].mutex);
+		mutexUnlock(&robots[i].mutex);
 	}
 
 	/* Figure scale for local robot pane */
@@ -302,12 +321,12 @@ drawRobots(GLenum mode)
 
 	/* Draw local robots */
 	for (i = 0; i < numLocal; i++) {
-		Pthread_mutex_lock(&local[i]->mutex);
+		mutexLock(&local[i]->mutex);
 		if (mode == GL_SELECT)
 			glLoadName(local[i]->id);
 
 		drawRobot(lx, ly, local[i], ls);
-		Pthread_mutex_unlock(&local[i]->mutex);
+		mutexUnlock(&local[i]->mutex);
 
 		lx += ROBOT_STEP_X / ls;
 		if (lx > -sx) {
@@ -342,12 +361,12 @@ drawRobots(GLenum mode)
 
 	/* Draw remote robots */
 	for (i = 0; i < numRemote; i++) {
-		Pthread_mutex_lock(&remote[i]->mutex);
+		mutexLock(&remote[i]->mutex);
 		if (mode == GL_SELECT)
 			glLoadName(remote[i]->id);
 
 		drawRobot(rx, ry, remote[i], rs);
-		Pthread_mutex_unlock(&remote[i]->mutex);
+		mutexUnlock(&remote[i]->mutex);
 
 		rx += ROBOT_STEP_X / rs;
 		if (rx > -sx) {
@@ -360,122 +379,121 @@ drawRobots(GLenum mode)
 /**
  * Draw a robot at a given coordinate and scale
  */
-void
-drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
+void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 {
 	glPushMatrix();
-		glTranslatef(x, y, 0);
+	glTranslatef(x, y, 0);
 
-		/* Draw a local robot */
-		if (robot->type == LOCAL || robot->type == HOST) {
-			if (robot->type == HOST) {
-				glPushMatrix();
-					glColor3fv(color_red);
-					glScalef(HOST_RADIUS / scale, HOST_RADIUS / scale, 0);
-					glCallList(LIST_CIRCLE_FILLED);
-				glPopMatrix();
-				glPushMatrix();
-					glColor3fv(color_white);
-					glScalef(OUTER_RADIUS / scale, OUTER_RADIUS / scale, 0);
-					glCallList(LIST_CIRCLE_FILLED);
-				glPopMatrix();
-			}
-
-			glPushMatrix();
-				glScalef(ROBOT_RADIUS / scale, ROBOT_RADIUS / scale, 0);
-				glColor3fv(color_black);
-				glCallList(LIST_CIRCLE_FILLED);
-			glPopMatrix();
-
-			glPushMatrix();
-				textSetAlignment(ALIGN_CENTER);
-				glColor3fv(color_white);
-
-				/* Draw different text for different sizes */
-				if (scale == SCALE_LARGE) {
-					textSetSize(TEXT_MED);
-
-					glTranslatef(0, -ROBOT_RADIUS + 1, 0);
-					textPrintf("COM%d", robot->port);
-
-					glTranslatef(0, ROBOT_RADIUS, 0);
-				} else if (scale == SCALE_MED) {
-					textSetSize(TEXT_SMALL);
-
-					glTranslatef(0, -ROBOT_RADIUS + 1.2, 0);
-					textPrintf("COM%d", robot->port);
-
-					glTranslatef(0, ROBOT_RADIUS / scale, 0);
-					textSetSize(TEXT_MED);
-				} else if (scale == SCALE_SMALL) {
-					textSetSize(TEXT_SMALL);
-
-					glTranslatef(0, 0.4, 0);
-				} else if (scale == SCALE_TINY) {
-					textSetSize(TEXT_SMALL);
-				}
-				textPrintf("%02d", robot->id);
-
-			glPopMatrix();
-
-		/* Draw a remote robot */
-		} else {
-			/* Make the robot hollow for remote robots */
-			glPushMatrix();
-				glScalef(ROBOT_RADIUS / scale, ROBOT_RADIUS / scale, 0);
-				glColor3fv(color_black);
-				glCallList(LIST_CIRCLE_FILLED);
-			glPopMatrix();
-			glPushMatrix();
-				glColor3fv(color_white);
-				glScalef(INNER_RADIUS / scale, INNER_RADIUS / scale, 0);
-				glCallList(LIST_CIRCLE_FILLED);
-			glPopMatrix();
-
-			glPushMatrix();
-				textSetAlignment(ALIGN_CENTER);
-				glColor3fv(color_black);
-
-				/* Draw different text for different sizes */
-				if (scale == SCALE_LARGE) {
-					textSetSize(TEXT_SMALL);
-
-					glTranslatef(0, -ROBOT_RADIUS + 1, 0);
-					textPrintf("Host:%02d", robot->host);
-
-					glTranslatef(0, ROBOT_RADIUS, 0);
-					textSetSize(TEXT_MED);
-
-				} else if (scale == SCALE_MED) {
-					textSetSize(TEXT_MED);
-					glTranslatef(0, ROBOT_RADIUS * (1. / scale - 1) + 1.2, 0);
-
-				} else if (scale == SCALE_SMALL) {
-					textSetSize(TEXT_SMALL);
-
-					glTranslatef(0, 0.4, 0);
-				} else if (scale == SCALE_TINY) {
-					textSetSize(TEXT_SMALL);
-				}
-				textPrintf("%02d", robot->id);
-
-			glPopMatrix();
-		}
-
-		if (robot->blacklisted) {
+	/* Draw a local robot */
+	if (robot->type == LOCAL || robot->type == HOST) {
+		if (robot->type == HOST) {
 			glPushMatrix();
 				glColor3fv(color_red);
-				glRotatef(45, 0, 0, 1);
-				glBegin(GL_LINES);
-					glVertex2f(-ROBOT_RADIUS / scale, 0);
-					glVertex2f(ROBOT_RADIUS / scale, 0);
-				glEnd();
-				glBegin(GL_LINES);
-					glVertex2f(0, -ROBOT_RADIUS / scale);
-					glVertex2f(0, ROBOT_RADIUS / scale);
-				glEnd();
+				glScalef(HOST_RADIUS / scale, HOST_RADIUS / scale, 0);
+				glCallList(LIST_CIRCLE_FILLED);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_white);
+				glScalef(OUTER_RADIUS / scale, OUTER_RADIUS / scale, 0);
+				glCallList(LIST_CIRCLE_FILLED);
 			glPopMatrix();
 		}
+
+		glPushMatrix();
+			glScalef(ROBOT_RADIUS / scale, ROBOT_RADIUS / scale, 0);
+			glColor3fv(color_black);
+			glCallList(LIST_CIRCLE_FILLED);
+		glPopMatrix();
+
+		glPushMatrix();
+		textSetAlignment(ALIGN_CENTER);
+		glColor3fv(color_white);
+
+		/* Draw different text for different sizes */
+		if (scale == SCALE_LARGE) {
+			textSetSize(TEXT_MED);
+
+			glTranslatef(0, -ROBOT_RADIUS + 1, 0);
+			textPrintf("COM%d", robot->port);
+
+			glTranslatef(0, ROBOT_RADIUS, 0);
+		} else if (scale == SCALE_MED) {
+			textSetSize(TEXT_SMALL);
+
+			glTranslatef(0, -ROBOT_RADIUS + 1.2, 0);
+			textPrintf("COM%d", robot->port);
+
+			glTranslatef(0, ROBOT_RADIUS / scale, 0);
+			textSetSize(TEXT_MED);
+		} else if (scale == SCALE_SMALL) {
+			textSetSize(TEXT_SMALL);
+
+			glTranslatef(0, 0.4, 0);
+		} else if (scale == SCALE_TINY) {
+			textSetSize(TEXT_SMALL);
+		}
+		textPrintf("%02d", robot->id);
+
+		glPopMatrix();
+
+		/* Draw a remote robot */
+	} else {
+		/* Make the robot hollow for remote robots */
+		glPushMatrix();
+			glScalef(ROBOT_RADIUS / scale, ROBOT_RADIUS / scale, 0);
+			glColor3fv(color_black);
+			glCallList(LIST_CIRCLE_FILLED);
+		glPopMatrix();
+		glPushMatrix();
+			glColor3fv(color_white);
+			glScalef(INNER_RADIUS / scale, INNER_RADIUS / scale, 0);
+			glCallList(LIST_CIRCLE_FILLED);
+		glPopMatrix();
+
+		glPushMatrix();
+		textSetAlignment(ALIGN_CENTER);
+		glColor3fv(color_black);
+
+		/* Draw different text for different sizes */
+		if (scale == SCALE_LARGE) {
+			textSetSize(TEXT_SMALL);
+
+			glTranslatef(0, -ROBOT_RADIUS + 1, 0);
+			textPrintf("Host:%02d", robot->host);
+
+			glTranslatef(0, ROBOT_RADIUS, 0);
+			textSetSize(TEXT_MED);
+
+		} else if (scale == SCALE_MED) {
+			textSetSize(TEXT_MED);
+			glTranslatef(0, ROBOT_RADIUS * (1. / scale - 1) + 1.2, 0);
+
+		} else if (scale == SCALE_SMALL) {
+			textSetSize(TEXT_SMALL);
+
+			glTranslatef(0, 0.4, 0);
+		} else if (scale == SCALE_TINY) {
+			textSetSize(TEXT_SMALL);
+		}
+		textPrintf("%02d", robot->id);
+
+		glPopMatrix();
+	}
+
+	if (robot->blacklisted) {
+		glPushMatrix();
+			glColor3fv(color_red);
+			glRotatef(45, 0, 0, 1);
+			glBegin(GL_LINES);
+			glVertex2f(-ROBOT_RADIUS / scale, 0);
+			glVertex2f(ROBOT_RADIUS / scale, 0);
+			glEnd();
+			glBegin(GL_LINES);
+			glVertex2f(0, -ROBOT_RADIUS / scale);
+			glVertex2f(0, ROBOT_RADIUS / scale);
+			glEnd();
+		glPopMatrix();
+	}
 
 	glPopMatrix();
 }
@@ -483,8 +501,7 @@ drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 /**
  * Draw the robots and GUI features on this timed function
  */
-void
-timerEnableDraw(int value)
+void timerEnableDraw(int value)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -499,8 +516,8 @@ timerEnableDraw(int value)
 		glTranslatef(-TITLE_POS_X, -TEXT_LARGE / 2, 0);
 
 		glBegin(GL_LINES);
-			glVertex2f(-GUI_WIDTH, 0);
-			glVertex2f(GUI_WIDTH, 0);
+		glVertex2f(-GUI_WIDTH, 0);
+		glVertex2f(GUI_WIDTH, 0);
 		glEnd();
 
 		glTranslatef(TITLE_POS_X, -TEXT_MED, 0);
@@ -513,8 +530,8 @@ timerEnableDraw(int value)
 		glTranslatef(0, -TEXT_LARGE, 0);
 		glColor3fv(color_black);
 		glBegin(GL_LINES);
-			glVertex2f(-GUI_WIDTH, 0);
-			glVertex2f(GUI_WIDTH, 0);
+		glVertex2f(-GUI_WIDTH, 0);
+		glVertex2f(GUI_WIDTH, 0);
 		glEnd();
 
 		glTranslatef(TITLE_POS_X, -TEXT_MED, 0);
@@ -535,8 +552,7 @@ timerEnableDraw(int value)
 /**
  * Initialize and run the main loop of the GUI
  */
-void
-guiInit()
+void guiInit()
 {
 	int argc = 0;
 	glutInit(&argc, NULL);

@@ -84,6 +84,7 @@ void reshape(int w, int h);
 void mouse(int button, int state, int x, int y);
 void processHits(GLint hits, GLuint buffer[]);
 int openClientConnection(int robotID);
+int directConnect(int robotID);
 void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);

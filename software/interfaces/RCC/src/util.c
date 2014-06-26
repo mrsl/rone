@@ -5,43 +5,39 @@
  */
 #include "rcc.h"
 
-uint8
-convertASCIIHexNibble(char val)
+uint8 convertASCIIHexNibble(char val)
 {
-       if (val >= '0' && val <= '9')
-               return (val - '0');
-       else if (val >= 'A' && val <= 'F')
-               return (val - 'A' + 10);
-       else if (val >= 'a' && val <= 'f')
-               return (val - 'a' + 10);
-       else
-               return (0);
+	if (val >= '0' && val <= '9')
+		return (val - '0');
+	else if (val >= 'A' && val <= 'F')
+		return (val - 'A' + 10);
+	else if (val >= 'a' && val <= 'f')
+		return (val - 'a' + 10);
+	else
+		return (0);
 }
 
-uint8
-convertASCIIHexByte(char *val)
+uint8 convertASCIIHexByte(char *val)
 {
-       uint8 temp;
-       temp = convertASCIIHexNibble(*val) * 16;
-       temp = temp + convertASCIIHexNibble(*(val + 1));
-       return (temp);
+	uint8 temp;
+	temp = convertASCIIHexNibble(*val) * 16;
+	temp = temp + convertASCIIHexNibble(*(val + 1));
+	return (temp);
 }
 
-uint16
-convertASCIIHexWord(char *val)
+uint16 convertASCIIHexWord(char *val)
 {
-       uint16 temp;
+	uint16 temp;
 
-       temp = (uint16)(convertASCIIHexByte(val)) * 256;
-       temp = temp + (uint16)(convertASCIIHexByte(val + 2));
-       return (temp);
+	temp = (uint16) (convertASCIIHexByte(val)) * 256;
+	temp = temp + (uint16) (convertASCIIHexByte(val + 2));
+	return (temp);
 }
 
 /**
  * Write data to a file handle
  */
-void
-fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
+void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 {
 	DWORD dwBytesWritten;
 	char text[BUFFERSIZE];
@@ -51,7 +47,7 @@ fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 		return;
 
 	va_start(ap, fmt);
-		vsprintf(text, fmt, ap);
+	vsprintf(text, fmt, ap);
 	va_end(ap);
 
 	WriteFile(*hSerialPtr, text, strlen(text), &dwBytesWritten, NULL);
@@ -60,8 +56,7 @@ fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 /**
  * Print a nice message and exit on error
  */
-void
-Error(const char *fmt, ...)
+void Error(const char *fmt, ...)
 {
 	char text[BUFFERSIZE];
 	va_list ap;
@@ -71,27 +66,25 @@ Error(const char *fmt, ...)
 			return;
 
 		va_start(ap, fmt);
-			vsprintf(text, fmt, ap);
+		vsprintf(text, fmt, ap);
 		va_end(ap);
 
 		fprintf(stderr, "ERROR: %s\n", text);
 	}
 
-	exit (-1);
+	exit(-1);
 }
 
 /**
  * Function wrappers
  */
-void
-Close(int fd)
+void Close(int fd)
 {
 	if (closesocket(fd) < 0)
 		Error("close failure");
 }
 
-void
-*Malloc(size_t size)
+void *Malloc(size_t size)
 {
 	void *p;
 
@@ -101,8 +94,7 @@ void
 	return (p);
 }
 
-void
-*Calloc(size_t nmemb, size_t size)
+void *Calloc(size_t nmemb, size_t size)
 {
 	void *p;
 
@@ -112,28 +104,23 @@ void
 	return (p);
 }
 
-void
-Free(void *p)
+void Free(void *p)
 {
 	free(p);
 }
 
-void
-Pthread_mutex_lock(pthread_mutex_t *m)
+void mutexLock(pthread_mutex_t *m)
 {
 	EnterCriticalSection(m);
 }
 
-void
-Pthread_mutex_unlock(pthread_mutex_t *m)
+void mutexUnlock(pthread_mutex_t *m)
 {
 	LeaveCriticalSection(m);
 }
 
-void
-Pthread_mutex_init(pthread_mutex_t *m)
+void mutexInit(pthread_mutex_t *m)
 {
 	InitializeCriticalSection(m);
 }
-
 

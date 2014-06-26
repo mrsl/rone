@@ -10,8 +10,7 @@ struct commCon robots[MAXROBOTID]; /* Robot buffers */
 /**
  * Initialize the robot buffers
  */
-void
-initRobots()
+void initRobots()
 {
 	int i;
 
@@ -23,7 +22,7 @@ initRobots()
 		robots[i].up = 0;
 		robots[i].head = 0;
 		robots[i].type = UNKNOWN;
-		Pthread_mutex_init(&robots[i].mutex);
+		mutexInit(&robots[i].mutex);
 	}
 
 	_beginthread(&commManager, 0, 0);
@@ -32,35 +31,32 @@ initRobots()
 /**
  * Performs tasks on all robot links in intervals
  */
-void
-commManager(void *vargp)
+void commManager(void *vargp)
 {
 	int i;
 
 	/* Get rid of annoying unused variable compiler errors */
-	vargp = (void *)vargp;
+	vargp = (void *) vargp;
 
 	/* Run in detached mode */
 	//Pthread_detach(pthread_self());
-
 	/* Iterate through robot list indefinitely */
 	for (;;) {
 		for (i = 0; i < MAXROBOTID; i++) {
-			Pthread_mutex_lock(&robots[i].mutex);
+			mutexLock(&robots[i].mutex);
 
 			/* If a remote robot has been inactive for a while, deactivate. */
-			if (robots[i].up + GRACETIME < clock() &&
-				robots[i].type == REMOTE) {
+			if (robots[i].up + GRACETIME < clock() && robots[i].type == REMOTE) {
 				robots[i].up = 0;
 				robots[i].head = 0;
 			}
 
 			/* Ping all host robots for updated remote robots. */
-			if (robots[i].up && robots[i].type == HOST &&
-				!robots[i].blacklisted)
+			if (robots[i].up && robots[i].type == HOST
+				&& !robots[i].blacklisted)
 				fcprintf(robots[i].hSerial, "rt\n");
 
-			Pthread_mutex_unlock(&robots[i].mutex);
+			mutexUnlock(&robots[i].mutex);
 		}
 		/* Sleep for a while. */
 		Sleep(SLEEPTIME);
@@ -70,8 +66,7 @@ commManager(void *vargp)
 /**
  * Spawn a thread to manage a serial connection
  */
-int
-initCommCommander(int port)
+int initCommCommander(int port)
 {
 	struct commInfo *info = Malloc(sizeof(struct commInfo));
 	HANDLE *hSerial = Malloc(sizeof(HANDLE));
@@ -79,7 +74,7 @@ initCommCommander(int port)
 	/* Connect to the port */
 	if (serialConnect(hSerial, port) < 0) {
 		if (verbose)
-		fprintf(stderr, "ERROR: Failed to connect serial\n");
+			fprintf(stderr, "ERROR: Failed to connect serial\n");
 		return (-1);
 	}
 
@@ -95,28 +90,24 @@ initCommCommander(int port)
 /**
  * Thread to manage a serial connection and input data into robot buffers
  */
-void
-commCommander(void *vargp)
+void commCommander(void *vargp)
 {
 	int i, j, err;
-	int id = 0;							/* Robot ID */
-	int initialized = 0;				/* Have we handshaked with the robot? */
-	int isHost = 0;						/* Is this robot a rprintf host? */
-	int rid;							/* Remote robot ID */
-	char buffer[BUFFERSIZE + 1];		/* Buffers */
+	int id = 0;							// Robot ID
+	int initialized = 0;				// Have we handshaked with the robot?
+	int isHost = 0;						// Is this robot a rprintf host?
+	int rid;							// Remote robot ID
+	char buffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
 	char sbuf[SBUFSIZE];
-	char *bufp = buffer;				/* Pointer to buffers */
+	char *bufp = buffer;				// Pointer to buffers
 	char *sbufp;
-	struct commInfo *info;				/* Information on robot connection */
-	struct remoteRobots *rr, *newRR;	/* Host info on remote robots */
-	struct serialIO sio;				/* Robust IO on serial buffer */
-
-	/* Run the thread as detached */
-	//Pthread_detach(pthread_self());
+	struct commInfo *info;				// Information on robot connection
+	struct remoteRobots *rr, *newRR;	// Host info on remote robots
+	struct serialIO sio;				// Robust IO on serial buffer
 
 	/* Get info from argument */
-	info = ((struct commInfo *)vargp);
+	info = ((struct commInfo *) vargp);
 
 	/* Query the robot for its id, and if it is a host */
 	fcprintf(info->hSerial, "rr\n");
@@ -129,7 +120,7 @@ commCommander(void *vargp)
 		/* Read a line */
 		if ((err = serial_readlineb(&sio, bufp, BUFFERSIZE)) < 0) {
 			if (verbose)
-			fprintf(stderr, "S%02d: Serial read error\n", id);
+				fprintf(stderr, "S%02d: Serial read error\n", id);
 			break;
 		} else if (err == 0) {
 			continue;
@@ -174,7 +165,7 @@ commCommander(void *vargp)
 				}
 
 				if (verbose)
-				printf("S%02d: Connected to robot ID %02d\n", id, id);
+					printf("S%02d: Connected to robot ID %02d\n", id, id);
 
 				/* Initializing */
 				initialized = 1;
@@ -236,10 +227,10 @@ commCommander(void *vargp)
 					break;
 				}
 
-				Pthread_mutex_lock(&robots[rid].mutex);
+				mutexLock(&robots[rid].mutex);
 				/* Ignore if this is already connected as a local robot */
 				if (robots[rid].hSerial != NULL) {
-					Pthread_mutex_unlock(&robots[rid].mutex);
+					mutexUnlock(&robots[rid].mutex);
 					continue;
 				}
 
@@ -248,7 +239,7 @@ commCommander(void *vargp)
 				robots[rid].up = clock();
 				robots[rid].host = id;
 
-				Pthread_mutex_unlock(&robots[rid].mutex);
+				mutexUnlock(&robots[rid].mutex);
 			}
 
 			/* Clean up and ignore if error */
@@ -287,23 +278,23 @@ commCommander(void *vargp)
 			}
 		}
 	}
-
 	robots[id].hSerial = NULL;
 
 	/* If blacklisted, should break out of loop due to serial read error. */
 	if (robots[id].blacklisted) {
 		if (verbose)
-		printf("S%02d: Blacklisted!\n", id);
-	/* If we exited from something else */
+			printf("S%02d: Blacklisted!\n", id);
+		/* If we exited from something else */
 	} else {
 		if (verbose)
-		printf("S%02d: Done!\n", id);
+			printf("S%02d: Done!\n", id);
 
 		/* Clean up */
 		commToNum[info->port] = 0;
 		robots[id].type = UNKNOWN;
 		CloseHandle(*info->hSerial);
 	}
+
 	Free(info->hSerial);
 	Free(info);
 }
@@ -311,10 +302,9 @@ commCommander(void *vargp)
 /**
  * Initialize a robot buffer
  */
-void
-activateRobot(int robotID, struct commInfo *info, int isHost)
+void activateRobot(int robotID, struct commInfo *info, int isHost)
 {
-	Pthread_mutex_lock(&robots[robotID].mutex);
+	mutexLock(&robots[robotID].mutex);
 
 	commToNum[info->port] = robotID;
 	robots[robotID].port = info->port;
@@ -327,26 +317,25 @@ activateRobot(int robotID, struct commInfo *info, int isHost)
 	robots[robotID].hSerial = info->hSerial;
 	robots[robotID].up = clock();
 
-	Pthread_mutex_unlock(&robots[robotID].mutex);
+	mutexUnlock(&robots[robotID].mutex);
 }
 
 /**
  * Insert a line in a robot's buffer
  */
-void
-insertBuffer(int robotID, char *buffer)
+void insertBuffer(int robotID, char *buffer)
 {
 	/* Lock the robot buffer */
-	Pthread_mutex_lock(&robots[robotID].mutex);
+	mutexLock(&robots[robotID].mutex);
 
 	robots[robotID].up = clock();
 
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
 
-	sprintf(robots[robotID].buffer[robots[robotID].head], "[%10ld] %s",
-		clock(), buffer);
+	sprintf(robots[robotID].buffer[robots[robotID].head], "[%10ld] %s", clock(),
+		buffer);
 
 	/* Unlock the robot buffer */
-	Pthread_mutex_unlock(&robots[robotID].mutex);
+	mutexUnlock(&robots[robotID].mutex);
 }

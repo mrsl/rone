@@ -11,7 +11,8 @@
 #define REGISTRYWATCH	1000
 
 /* Struct to hold registry data over serial ports */
-struct regData {
+struct regData
+{
 	int n;
 	int ports[MAXPORT];
 };

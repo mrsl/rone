@@ -6,11 +6,11 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
-typedef signed char 	int8;
-typedef signed short 	int16;
+typedef signed char int8;
+typedef signed short int16;
 
-typedef unsigned char	uint8;
-typedef unsigned short	uint16;
+typedef unsigned char uint8;
+typedef unsigned short uint16;
 
 typedef CRITICAL_SECTION pthread_mutex_t;
 
@@ -28,10 +28,8 @@ void *Malloc(size_t size);
 void *Calloc(size_t nmemb, size_t size);
 void Free(void *p);
 
-void mutexInit(HANDLE *mutex);
-
-void Pthread_mutex_init(pthread_mutex_t *mp);
-void Pthread_mutex_lock(pthread_mutex_t *mp);
-void Pthread_mutex_unlock(pthread_mutex_t *mp);
+void mutexLock(pthread_mutex_t *mp);
+void mutexUnlock(pthread_mutex_t *mp);
+void mutexInit(pthread_mutex_t *mp);
 
 #endif

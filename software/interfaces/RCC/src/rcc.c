@@ -34,7 +34,7 @@ main(int argc, char **argv)
 			}
 	    }
 	    err = 1;
-	    break;
+		break;
 	}
 
 	if (err) {

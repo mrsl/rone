@@ -18,31 +18,35 @@
 #define UNKNOWN		3
 
 /* Contains info needed to be passed to the managing thread */
-struct commInfo {
-	HANDLE *hSerial;	/* Serial handle */
-	int port;			/* Comm port */
+struct commInfo
+{
+	HANDLE *hSerial; /* Serial handle */
+	int port; /* Comm port */
 };
 
 /* Robot buffer */
-struct commCon {
-	int id;				/* Robot ID */
-	int blacklisted;	/* Is this robot ID blacklisted? */
-	HANDLE *hSerial;	/* Serial handle if connected via serial */
-	time_t up;			/* Last time we confirmed this robot's existence */
-	int type;			/* Type of robot */
-	union {
-		int port;		/* If local, the comm port */
-		int host;		/* If remote, the host robot */
+struct commCon
+{
+	int id; /* Robot ID */
+	int blacklisted; /* Is this robot ID blacklisted? */
+	HANDLE *hSerial; /* Serial handle if connected via serial */
+	time_t up; /* Last time we confirmed this robot's existence */
+	int type; /* Type of robot */
+	union
+	{
+		int port; /* If local, the comm port */
+		int host; /* If remote, the host robot */
 	};
 	char buffer[NUMBUFFER][BUFFERSIZE + 13]; /* Rotating buffer array */
-	int head;			/* Head of buffer */
+	int head; /* Head of buffer */
 	pthread_mutex_t mutex;
 };
 
 /* Data on the remote robots attached */
-struct remoteRobots {
-	int n;					/* Number of remote robots */
-	int ids[MAXROBOTID];	/* IDs of remote robots */
+struct remoteRobots
+{
+	int n; /* Number of remote robots */
+	int ids[MAXROBOTID]; /* IDs of remote robots */
 };
 
 /* Array of robot buffers */

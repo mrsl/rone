@@ -11,16 +11,15 @@ char ipAddress[15];
  * Creates the server component of the RCC. Spawns listening thread and
  * worker threads.
  */
-int
-createServer(int port)
+int createServer(int port)
 {
-	int listenfd;		/* The fd we are listening on */
+	int listenfd;		// The fd we are listening on
 	int *ti;
-	WSADATA wsaData;	/* Things for winsock setup */
+	WSADATA wsaData;	// Things for winsock setup
 	WORD version;
 
 	if (verbose)
-	printf("MAS: Thread buffer initialized\n");
+		printf("MAS: Thread buffer initialized\n");
 
 	/* Initialize the Windows socket interface */
 	version = MAKEWORD(2, 0);
@@ -36,7 +35,7 @@ createServer(int port)
 	getIPAddress();
 
 	/* Open a port to listen on */
-	if((listenfd = openListenFD(port)) < 0)
+	if ((listenfd = openListenFD(port)) < 0)
 		return (-1);
 
 	/* Create incoming connection handler */
@@ -45,7 +44,7 @@ createServer(int port)
 	_beginthread(&incomingHandler, 0, ti);
 
 	if (verbose)
-	printf("T00: Server initialized on port %d\n", port);
+		printf("T00: Server initialized on port %d\n", port);
 
 	/* Success */
 	return (0);
@@ -54,33 +53,31 @@ createServer(int port)
 /**
  * Gets the local IP address and stores it as a string.
  */
-void
-getIPAddress()
+void getIPAddress()
 {
 	int i;
-    char name[80];
-    struct hostent *hostname;
-    struct in_addr addr;
+	char name[80];
+	struct hostent *hostname;
+	struct in_addr addr;
 
-    if (gethostname(name, sizeof(name)) == SOCKET_ERROR)
-        return;
+	if (gethostname(name, sizeof(name)) == SOCKET_ERROR)
+		return;
 
-    /* Just use gethostbyname as we don't need to worry about reentrance */
-    hostname = gethostbyname(name);
-    if (hostname == 0)
-        return;
+	/* Just use gethostbyname as we don't need to worry about reentrance */
+	hostname = gethostbyname(name);
+	if (hostname == 0)
+		return;
 
-    for (i = 0; hostname->h_addr_list[i] != 0; ++i) {
-        memcpy(&addr, hostname->h_addr_list[i], sizeof(struct in_addr));
-        strcpy(ipAddress, inet_ntoa(addr));
-    }
+	for (i = 0; hostname->h_addr_list[i] != 0; ++i) {
+		memcpy(&addr, hostname->h_addr_list[i], sizeof(struct in_addr));
+		strcpy(ipAddress, inet_ntoa(addr));
+	}
 }
 
 /**
  * Opens and binds a port to listen for connections on
  */
-int
-openListenFD(int port) 
+int openListenFD(int port)
 {
 	int listenfd, optval = 1;
 	struct sockaddr_in serveraddr;
@@ -88,19 +85,18 @@ openListenFD(int port)
 	/* Create a socket descriptor */
 	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return (-1);
- 
+
 	/* Eliminates "Address already in use" error from bind */
-	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, 
-	    (const void *)&optval , sizeof(int)) < 0)
+	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval,
+		sizeof(int)) < 0)
 		return (-1);
 
 	memset((char *) &serveraddr, 0, sizeof(serveraddr));
-	serveraddr.sin_family = AF_INET; 
-	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY); 
-	serveraddr.sin_port = htons((unsigned short)port); 
+	serveraddr.sin_family = AF_INET;
+	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serveraddr.sin_port = htons((unsigned short) port);
 
-	if (bind(listenfd, (struct sockaddr *)&serveraddr,
-		sizeof(serveraddr)) < 0)
+	if (bind(listenfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
 		return (-1);
 
 	/* Make it a listening socket ready to accept connection requests */
@@ -113,17 +109,16 @@ openListenFD(int port)
 /**
  * Thread to handle all incoming connection requests
  */
-void
-incomingHandler(void *vargp)
+void incomingHandler(void *vargp)
 {
-	int listenfd;				/* FD we are listening on */
+	int listenfd; 				// fd we are listening on
 	int len;
 	int count = 0;
 	struct sockaddr addr;
-	struct Connection *conn;	/* Pointer to connection info */
+	struct Connection *conn;	// Pointer to connection info
 
 	/* Grab the open listening file descriptor from the args */
-	listenfd = *((int *)vargp);
+	listenfd = *((int *) vargp);
 	Free(vargp);
 
 	/* Continuously listen and accept connections */
@@ -136,7 +131,7 @@ incomingHandler(void *vargp)
 		}
 
 		if (verbose)
-		printf("T00: New client connection, request number %d\n", count);
+			printf("T00: New client connection, request number %d\n", count);
 
 		conn->n = count;
 
@@ -150,46 +145,44 @@ incomingHandler(void *vargp)
 /**
  * Thread to handle a connection, feeds data to the port
  */
-void
-connectionHandler(void *vargp)
+void connectionHandler(void *vargp)
 {
-	int tid;					/* Thread ID */
-	int id;						/* Requested robot ID */
-	int head;					/* Last location of robot buffer viewed */
-	int err, bl;				/* Flag */
-	clock_t timer;				/* Event timer */
-	struct Connection *conn;	/* Connection information */
-	char buffer[BUFFERSIZE];	/* General use buffer */
-	struct socketIO socketio;	/* Robust IO buffer for socket */
-	fd_set read_set, ready_set;	/* Read set for select */
-	struct timeval tv = {0, 1};	/* Timeout for select */
-	char inBuffer[BUFFERSIZE];	/* Input buffer from client */
+	int tid;						// Thread ID
+	int id;							// Requested robot ID
+	int head;						// Last location of robot buffer viewed
+	int err, bl;					// Flag
+	clock_t timer;					// Event timer
+	struct Connection *conn;		// Connection information
+	char buffer[BUFFERSIZE];		// General use buffer
+	struct socketIO socketio;		// Robust IO buffer for socket
+	fd_set read_set, ready_set;		// Read set for select
+	struct timeval tv = { 0, 1 };	// Timeout for select
+	char inBuffer[BUFFERSIZE];		// Input buffer from client
 
-	conn = (struct Connection *)vargp;
+	conn = (struct Connection *) vargp;
 	tid = conn->n;
 
 	if (verbose)
-	printf("T%02d: Handler thread initialized\n", tid);
+		printf("T%02d: Handler thread initialized\n", tid);
 
 	/* Initialize robust IO on the socket */
 	socket_readinitb(&socketio, conn->fd);
 
 	if (verbose)
-	printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
+		printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
 
 	/* Query user for robot ID */
 	id = 0;
 	while (id == 0) {
-		if (socket_writen(conn->fd,
-			"Enter the robot ID you wish to view: ", 37) < 0)
+		if (socket_writen(conn->fd, "Enter the robot ID you wish to view: ", 37)
+			< 0)
 			break;
 
 		if (socket_readlineb(&socketio, buffer, BUFFERSIZE) == 0)
 			break;
 
 		if (sscanf(buffer, "%d\n", &id) != 1) {
-			if (socket_writen(conn->fd,
-				"Invalid ID! Try Again.\r\n", 24) < 0)
+			if (socket_writen(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
 				break;
 			continue;
 		}
@@ -197,24 +190,22 @@ connectionHandler(void *vargp)
 		/* Handle bad numbers */
 		if (id >= MAXROBOTID || id < 0) {
 			id = 0;
-			if (socket_writen(conn->fd,
-				"Invalid ID! Try Again.\r\n", 24) < 0)
+			if (socket_writen(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
 				break;
 			continue;
 		}
 
-		Pthread_mutex_lock(&robots[id].mutex);
+		mutexLock(&robots[id].mutex);
 		err = robots[id].up;
 		bl = robots[id].blacklisted;
-		Pthread_mutex_unlock(&robots[id].mutex);
+		mutexUnlock(&robots[id].mutex);
 
 		if (err && !bl) {
 			if (socket_writen(conn->fd, "Connected!\r\n", 12) < 0)
 				break;
 		} else {
 			id = 0;
-			if (socket_writen(conn->fd,
-				"Robot ID not connected!\r\n", 25) < 0)
+			if (socket_writen(conn->fd, "Robot ID not connected!\r\n", 25) < 0)
 				break;
 		}
 	}
@@ -227,7 +218,7 @@ connectionHandler(void *vargp)
 	}
 
 	if (verbose)
-	printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
+		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
 	/* Feed new data from the robot to the client until close */
 	head = robots[id].head;
@@ -248,11 +239,11 @@ connectionHandler(void *vargp)
 		if (FD_ISSET(conn->fd, &ready_set)) {
 			if (socket_read(&socketio, inBuffer, BUFFERSIZE) != 0) {
 				/* Write data out to serial port if the robot is local */
-				Pthread_mutex_lock(&robots[id].mutex);
-				if(robots[id].type == LOCAL || robots[id].type == HOST)
+				mutexLock(&robots[id].mutex);
+				if (robots[id].type == LOCAL || robots[id].type == HOST)
 					fcprintf(robots[id].hSerial, inBuffer);
 
-				Pthread_mutex_unlock(&robots[id].mutex);
+				mutexUnlock(&robots[id].mutex);
 			} else {
 				break;
 			}
@@ -260,13 +251,12 @@ connectionHandler(void *vargp)
 
 		/* If there is new data in the robot buffer */
 		while (head != robots[id].head) {
-			Pthread_mutex_lock(&robots[id].mutex);
+			mutexLock(&robots[id].mutex);
 			if (sprintf(buffer, "%s", robots[id].buffer[head]) < 0)
 				break;
-			Pthread_mutex_unlock(&robots[id].mutex);
+			mutexUnlock(&robots[id].mutex);
 
-			if ((err = socket_writen(conn->fd,
-				buffer, strlen(buffer))) < 0)
+			if ((err = socket_writen(conn->fd, buffer, strlen(buffer))) < 0)
 				break;
 
 			head = (head + 1) % NUMBUFFER;
@@ -276,9 +266,9 @@ connectionHandler(void *vargp)
 
 		/* Check if the robot is actually disconnected. */
 		if (timer + 1000 < clock()) {
-			Pthread_mutex_lock(&robots[id].mutex);
+			mutexLock(&robots[id].mutex);
 			err = robots[id].up;
-			Pthread_mutex_unlock(&robots[id].mutex);
+			mutexUnlock(&robots[id].mutex);
 
 			if (!err) {
 				socket_writen(conn->fd, "Robot ID disconnected!\r\n", 24);
@@ -295,7 +285,7 @@ connectionHandler(void *vargp)
 	}
 
 	if (verbose)
-	printf("T%02d: [%d] Done!\n", tid, conn->n);
+		printf("T%02d: [%d] Done!\n", tid, conn->n);
 
 	/* Clean up */
 	Close(conn->fd);
@@ -305,8 +295,7 @@ connectionHandler(void *vargp)
 /**
  * Robustly write data to a socket. Adapted from CSAPP.
  */
-ssize_t
-socket_writen(int fd, char *usrbuf, size_t n)
+ssize_t socket_writen(int fd, char *usrbuf, size_t n)
 {
 	size_t nleft = n;
 	ssize_t nwritten;
@@ -328,8 +317,7 @@ socket_writen(int fd, char *usrbuf, size_t n)
 /**
  * Robustly read data from a socket. Adapted from CSAPP.
  */
-ssize_t
-socket_read(struct socketIO *sp, char *usrbuf, size_t n)
+ssize_t socket_read(struct socketIO *sp, char *usrbuf, size_t n)
 {
 	int cnt;
 
@@ -337,10 +325,10 @@ socket_read(struct socketIO *sp, char *usrbuf, size_t n)
 	while (sp->count <= 0) {
 		sp->count = recv(sp->fd, sp->buffer, sizeof(sp->buffer), 0);
 
-		if (sp->count == 0) {	/* EOF */
+		if (sp->count == 0) { /* EOF */
 			return (0);
 		} else {
-			sp->bufp = sp->buffer;	/* Reset buffer ptr */
+			sp->bufp = sp->buffer; /* Reset buffer ptr */
 		}
 	}
 
@@ -361,8 +349,7 @@ socket_read(struct socketIO *sp, char *usrbuf, size_t n)
 /**
  * Initializes robust IO. Adapted from CSAPP.
  */
-void
-socket_readinitb(struct socketIO *sp, int fd)
+void socket_readinitb(struct socketIO *sp, int fd)
 {
 	sp->fd = fd;
 	sp->count = 0;
@@ -372,8 +359,7 @@ socket_readinitb(struct socketIO *sp, int fd)
 /**
  * Robustly reads a line delimited by '\n' into a buffer. Adapted from CSAPP.
  */
-ssize_t
-socket_readlineb(struct socketIO *sp, char *usrbuf, size_t maxlen)
+ssize_t socket_readlineb(struct socketIO *sp, char *usrbuf, size_t maxlen)
 {
 	int rc;
 	unsigned int n;
