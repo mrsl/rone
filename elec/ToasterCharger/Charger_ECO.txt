@@ -1,3 +1,0 @@
-* Make DCDC output 6.5V
-
-* Change BNC connector to male, CAD correct footprint

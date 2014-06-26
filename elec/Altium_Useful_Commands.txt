@@ -1,6 +1,0 @@
-To Select all Traces Shorter than 5mils (i.e. kinks):
-In PCB Filter Type:
-
-IsWire AND (TraceLength < 10)
-
-and hit Apply. (Also make sure that Dim is selected, not Normal selection mode).

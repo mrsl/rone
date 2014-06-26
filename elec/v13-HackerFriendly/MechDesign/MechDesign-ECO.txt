@@ -1,8 +1,0 @@
-rone-v13 Mechanical design ECO list
-
-== TODO ==
-* Make new drawings
-
-
-
-== done ==
