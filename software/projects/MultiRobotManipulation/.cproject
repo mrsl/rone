@@ -113,7 +113,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/objManipDemo.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/wallFollow_test.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/objManipDemo.c|src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/wallFollow_test.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -215,7 +215,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/objManipDemo.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/wallFollow_test.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="src/objManipDemo.c|src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/wallFollow_test.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
