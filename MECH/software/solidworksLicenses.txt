@@ -1,0 +1,17 @@
+Last updated : 08 August 2012
+---------------------------------------------------------------------
+Solidworks Licenses Readme
+---------------------------------------------------------------------
+
+//Renewal of Licenses
+One solidworks license can be used by one person on two computers: 
+personal and work. If you are unable to use the license then that 
+means someone is already using it. If you call goengineer tech
+support they will ask for your license (in the pdf) and then look up
+who is using the license. The easiest way to transfer a license is to 
+go to Solidworks on the computer they tell you then 
+Help>Transfer Licenses. However if impossible then ask to start the 
+deactivation process. The guy that handles our licenses is 
+Arvind Krishnan <akrishnan@goengineer.com> contact him. Follow what 
+he says and you are all good. It takes a day to do but the reps do
+NOT like doing it so will try to avoid doing it. Good luck!
