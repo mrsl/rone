@@ -6,13 +6,15 @@
 #ifndef SERIAL_H_
 #define SERIAL_H_
 
-/* Robust IO buffer struct */
+/**
+ *  Robust IO buffer struct
+ */
 struct serialIO
 {
-	HANDLE *handle;
-	DWORD count;
-	char *bufp;
-	char buffer[BUFFERSIZE];
+	HANDLE *handle;				// Serial handle
+	DWORD count;				// Count
+	char *bufp;					// Buffer pointer
+	char buffer[BUFFERSIZE];	// Buffer
 };
 
 int serialConnect(HANDLE *hSerialPtr, int comPort);

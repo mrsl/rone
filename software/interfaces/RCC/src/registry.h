@@ -13,8 +13,8 @@
 /* Struct to hold registry data over serial ports */
 struct regData
 {
-	int n;
-	int ports[MAXPORT];
+	int n;				// Number of registry entries found
+	int ports[MAXPORT];	// Array of ports that are connected
 };
 
 /* Array that maps COM number to robot ID */

@@ -16,8 +16,8 @@
  */
 struct Connection
 {
-	int n; /* Request number */
-	SOCKET fd; /* File descriptor */
+	int n;		// Request number
+	SOCKET fd;	// File descriptor
 };
 
 /**
@@ -25,14 +25,14 @@ struct Connection
  */
 struct socketIO
 {
-	int fd; /* File descriptor */
-	int count; /* Count */
-	char *bufp; /* Buffer pointer */
-	char buffer[BUFFERSIZE];/* Buffer */
+	int fd;						// File descriptor
+	int count;					// Count
+	char *bufp;					// Buffer pointer
+	char buffer[BUFFERSIZE];	// Buffer
 };
 
-extern char ipAddress[15]; /* String form of local IP address */
-extern struct Buffer connectionBuffer; /* Connection buffer */
+extern char ipAddress[15];				// String form of local IP address
+extern struct Buffer connectionBuffer;	// Connection buffer
 
 int createServer(int port);
 void getIPAddress();

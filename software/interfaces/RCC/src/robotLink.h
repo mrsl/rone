@@ -20,33 +20,33 @@
 /* Contains info needed to be passed to the managing thread */
 struct commInfo
 {
-	HANDLE *hSerial; /* Serial handle */
-	int port; /* Comm port */
+	HANDLE *hSerial;	// Serial handle
+	int port;			// COM port
 };
 
 /* Robot buffer */
 struct commCon
 {
-	int id; /* Robot ID */
-	int blacklisted; /* Is this robot ID blacklisted? */
-	HANDLE *hSerial; /* Serial handle if connected via serial */
-	time_t up; /* Last time we confirmed this robot's existence */
-	int type; /* Type of robot */
+	int id; 									// Robot ID
+	int blacklisted;							// Is this robot ID blacklisted?
+	HANDLE *hSerial;							// Serial handle if connected
+	time_t up;									// Last time we saw the robot
+	int type;									// Type of robot
 	union
 	{
-		int port; /* If local, the comm port */
-		int host; /* If remote, the host robot */
+		int port;								// If local, the COM port
+		int host;								// If remote, the host robot
 	};
-	char buffer[NUMBUFFER][BUFFERSIZE + 13]; /* Rotating buffer array */
-	int head; /* Head of buffer */
-	CRITICAL_SECTION mutex;
+	char buffer[NUMBUFFER][BUFFERSIZE + 13];	// Rotating buffer array
+	int head;									// Head of buffer
+	CRITICAL_SECTION mutex;						// Mutex for this robot
 };
 
 /* Data on the remote robots attached */
 struct remoteRobots
 {
-	int n; /* Number of remote robots */
-	int ids[MAXROBOTID]; /* IDs of remote robots */
+	int n;					// Number of remote robots
+	int ids[MAXROBOTID];	// IDs of remote robots
 };
 
 /* Array of robot buffers */
