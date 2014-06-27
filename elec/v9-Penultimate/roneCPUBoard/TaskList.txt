@@ -1,0 +1,84 @@
+== Nnena ==
+
+
+
+
+
+
+
+
+== James == 
+
+
+
+
+== done ==
+
+* fix crystals
+
+* cut notch in board for light sensors (removed traces, we cut manually)
+
+* check polarity of the enable line on 1.8v audio LDO - should match power supply polarity i.e. low = disable
+
+* fix pad 33 on the LED controller.  It should be a pin that we can connect to ground
+
+* JTAG Cool routing (what does this mean?)
+
+* move power LED and MSP430 LED - make pretty status light row
+
+* re route radio
+
+* tighten FTDI layout
+
+* route audio circuit
+
+* change layout of bridge rectifier
+
+* clear ant placement with william
+
+* symetrical sound chip layout
+
+* check '138 pinout to 138 chip
+
+* Radio Polygon
+
+* make sch for expansion connector
+
+* move light sensor
+
+* Lock IR Beacons
+
+* remove board cut-outs
+
+* fix pins on '138
+
+* check part footprint for C46, the the 2.2uf cap on the audio amp.  Is it the right size for a 2.2uf ceramic cap? (none in lab but ordered more of the 0603(1608) package
+
+* order Samtec sudden samples of 8 & 10 pos connectors
+
+* verify shift register footprint
+
+* enlarge holes for screws - make pads 250mils
+
+* check footprints for D1, D8, D29. 
+
+* check audio amp data sheet for power pad
+
+
+* check silkscreen on button switch - is it the right size?
+
+
+* check silkscreen footprint on JTAG connector.  is it big enough? 
+
+* move bypas caps on IR receivers to top layer
+
+
+* make smaller amp part for audio amp - check data sheet for different package? no smaller size
+
+
+* fix silkscreen for part for '138  and for the '595 the silk screen is too small: I merged the two TSSOP-16 parts to one footprint
+
+* fix crystal part for sound chip - pins/pads not connected right, crystal should be on diagonal, and grouds on other diagonal
+
+* order new crystals - unify all crystals to same manufactorer/type as much as possible
+

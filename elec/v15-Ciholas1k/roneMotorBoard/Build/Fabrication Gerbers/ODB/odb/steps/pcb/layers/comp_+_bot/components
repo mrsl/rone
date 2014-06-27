@@ -1,0 +1,10 @@
+#
+#Component attribute names
+#
+@0 .comp_mount_type
+@1 .comp_height
+
+# CMP 0
+CMP 23 3.105 5.48 0 N TP1 TestPoint ;0=1,1=0.0433
+TOP 0 3.105 5.48 270 N 52 0 TP1-1
+#

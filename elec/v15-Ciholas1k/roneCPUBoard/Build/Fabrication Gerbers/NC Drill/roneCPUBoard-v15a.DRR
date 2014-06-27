@@ -1,0 +1,25 @@
+---------------------------------------------------------------------------
+NCDrill File Report For: roneCPUBoard-v15a.PcbDoc   5/29/2013  7:19:18 AM
+---------------------------------------------------------------------------
+
+Layer Pair : Top Layer to Bottom Layer
+ASCII RoundHoles File : roneCPUBoard-v15a.TXT
+EIA File   : roneCPUBoard-v15a.DRL
+
+Tool         Hole Size           Hole Type     Hole Count Plated       Tool Travel
+---------------------------------------------------------------------------
+T1        12mil (0.3048mm)         Round          65               12.34 Inch (313.49 mm)
+T2        12.99mil (0.32995mm)     Round          16               2.24 Inch (56.84 mm)
+T3        20mil (0.508mm)          Round          347              51.36 Inch (1304.44 mm)
+T4        35mil (0.889mm)          Round          50               17.78 Inch (451.71 mm)
+T5        35.43mil (0.89992mm)     Round          12               2.14 Inch (54.47 mm)
+T6        46.85mil (1.18999mm)     Round          2                0.86 Inch (21.87 mm)
+T7        52mil (1.3208mm)         Round          4                0.52 Inch (13.10 mm)
+T8        59.5mil (1.5113mm)       Round          5                0.68 Inch (17.33 mm)
+T9        129mil (3.2766mm)        Round          4                7.57 Inch (192.19 mm)
+T10       31mil (0.7874mm)         Round          12        NPTH   9.91 Inch (251.62 mm)
+T11       158mil (4.0132mm)        Round          2         NPTH   5.66 Inch (143.68 mm)
+---------------------------------------------------------------------------
+Totals                                            519              111.05 Inch (2820.73 mm)
+
+Total Processing Time (hh:mm:ss) : 00:00:00

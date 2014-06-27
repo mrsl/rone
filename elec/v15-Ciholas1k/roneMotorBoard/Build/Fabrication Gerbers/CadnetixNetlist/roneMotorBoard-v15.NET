@@ -1,0 +1,291 @@
+PARTS LIST
+
+Cap Semi          CAPC1005L       C1
+Cap Semi          CAPC1005L       C2
+Cap Semi          CAPC1005L       C3
+Cap Semi          CAPC1005L       C4
+Cap Semi          CAPC1608L       C5
+Cap Semi          CAPC1608L       C6
+Cap               CAPC1005L       C7
+Cap               CAPC1608L       C8
+Cap               CAPC1608L       C9
+Cap               CAPC1608L       C10
+Cap               CAPC1005L       C11
+Cap               CAPC1608L       C12
+Cap Semi          CAPC1005L       C13
+Cap Semi          CAPC1005L       C14
+Cap Semi          CAPC1005L       C15
+Cap Semi          CAPC1005L       C16
+Cap Semi          CAPC1005L       C17
+Cap Semi          CAPC1005L       C18
+Cap Semi          CAPC1005L       C19
+Cap Semi          CAPC1005L       C20
+Cap Semi          CAPC1005L       C21
+Cap Semi          CAPC1005L       C22
+Cap Semi          CAPC1005L       C23
+Cap Semi          CAPC1005L       C24
+Cap Semi          CAPC1005L       C25
+Cap Semi          CAPC1005L       C26
+Cap Semi          CAPC1608L       C27
+Cap Semi          CAPC1005L       C28
+Cap Semi          CAPC1005L       C29
+Cap               CAPC1005L       C30
+Cap Semi          CAPC1005L       C31
+non connect       3/4"CASTER2     Caster1
+Charge            INDC2012L       D1
+Power             INDC2012L       D2
+PTC               ERJ8G-1206      F1
+H_FID_F40         F40             H1
+H_FID_F40         F40             H2
+HCOMM/MOT         HeaderSM 13x2   J1
+JTAG              HDR2X5          J2
+Bat               BatteryConnJST  J3
+3.3V conn         HDR1X2          J4
+3.3uH             IndPow          L1
+2.2uH             IndPow          L2
+Inductor          INDC2012L       L3
+motorEncoder_V7b  motorEncoder_V7bM1
+motorEncoder_V7b  motorEncoder_V7bM2
+MOSFET-P          SOT-23          Q1
+Q_MOSFETP4D_SOT23-6SOT23-6         Q2
+Res3              RESC1608L       R1
+Res3              RESC1608L       R2
+Res3              RESC1608L       R3
+Res3              RESC1608L       R4
+Res3              RESC1608L       R5
+Res3              RESC1608L       R6
+Res3              RESC1608L       R7
+Res3              RESC1608L       R8
+Res3              RESC1608L       R9
+Res3              RESC1608L       R10
+Res3              RESC1608L       R11
+                  RESC1608L       R12
+                  RESC1608L       R13
+                  RESC1608L       R14
+                  RESC1608L       R15
+                  RESC1608L       R16
+                  RESC1608L       R17
+Res3              RESC1608L       R18
+Res3              RESC1608L       R19
+Res3              RESC1608L       R20
+Res3              RESC1608L       R21
+Res3              RESC1608L       R22
+Res3              RESC1608L       R23
+Res3              RESC1608L       R24
+Res3              J1-0603         R25
+Res3              RESC1608L       R26
+Res3              CAPC1608L       R27
+Res3              RESC1608L       R28
+Res3              RESC1608L       R29
+Res3              RESC1608L       R30
+Res3              RESC1608L       R31
+Res3              RESC1608L       R32
+Res3              RESC1608L       R33
+Res3              RESC1608L       R34
+Res3              RESC1608L       R35
+Res3              RESC1608L       R36
+Res3              RESC1608L       R37
+Res3              RESC1608L       R38
+Res3              RESC1608L       R39
+Res3              RESC1608L       R40
+Res3              J1-0603         R43
+Res3              RESC1608L       R44
+Res3              RESC1608L       R45
+Res3              RESC1608L       R50
+S_SSSS810701_SSSS810701SSSS810701      SW2
+TestPoint         TestPoint       TP1
+MSP430            MSP430_32PIN    U1
+LTC3566           QFN-24          U2
+schmit trigger    DCK(R-PDSO-C6)  U4
+MOTOR-A3906       QFN-20          U5
+schmit trigger    DCK(R-PDSO-C6)  U6
+L3G4200D          L3G2004D        U8
+MMA8452Q          MMA8452Q        U9
+SFH9240-Z         SFH9240-Z       U10
+SFH9240-Z         SFH9240-Z       U11
+SFH9240-Z         SFH9240-Z       U12
+SFH9240-Z         SFH9240-Z       U13
+SFH9240-Z         SFH9240-Z       U14
+SFH9240-Z         SFH9240-Z       U15
+SFH9240-Z         SFH9240-Z       U16
+SFH9240-Z         SFH9240-Z       U17
+EOS
+NET LIST
+
+NODENAME VBAT_IN          $
+    F1         2  J3         1  J4         2
+NODENAME VBAT +300        $
+    C8         2  C9         1  L1         2  U2         9  U2        20
+NODENAME NetC7-2          $
+    C7         2  R21        2  U2         2
+NODENAME NetC11-1         $
+    C11        1  R23        2  R24        1  U2         4
+NODENAME NetC11-2         $
+    C11        2  U2         5
+NODENAME NetD1-2          $
+    D1         2  R20        2
+NODENAME NetD2-2          $
+    D2         2  R26        2
+NODENAME NetF1-1          $
+    F1         1  Q2         4
+NODENAME NetL1-1          $
+    L1         1  U2        22
+NODENAME NetL2-1          $
+    L2         1  U2         7
+NODENAME NetL2-2          $
+    L2         2  U2        11
+NODENAME NetQ2-3          $
+    Q2         3  SW2        2
+NODENAME NetR18-2         $
+    R18        2  U2        23
+NODENAME NetR22-1         $
+    R22        1  U2        15
+NODENAME NetR40-1         $
+    R40        1  SW2        1
+NODENAME 3.3LDO           $
+    C1         2  C10        1  J2         2  R3         2  R4         2  R25        1  U1        30  U2         1
+NODENAME VBAT_SENSE       $
+    C29        2  R28        2  R44        1  U1        16
+NODENAME VBAT             $
+    C4         1  C5         2  D1         1  J1        21  Q2         1  Q2         2  Q2         5  Q2         6  R44        2  U2        19  U5        13
+NODENAME SPI_SEL_MSP430   $
+    J1         3  U1        12
+NODENAME SPI_MOSI         $
+    J1         7  U1        13
+NODENAME SPI_MISO         $
+    J1         5  U1        14
+NODENAME SPI_CLK          $
+    J1         9  U1         9
+NODENAME RESET_430_R      $
+    C31        2  R4         1  R5         1  U1         5
+NODENAME RESET-430        $
+    J2         4  R5         2
+NODENAME RESET            $
+    J1        18  R45        1
+NODENAME POWER_EN         $
+    R19        2  U1        21  U2        24
+NODENAME POWER_BUTTON     $
+    J1        19  R3         1  U1        23
+NODENAME NetR45-2         $
+    R45        2  U1        19
+NODENAME LED_RESET        $
+    J1        16  U1        22
+NODENAME JTAG_BOTTOM_TEST $
+    J2         6  U1        29
+NODENAME FTDI_RESET       $
+    J1        12  U1        24
+NODENAME CHRG             $
+    J1        14  R20        1  U2        16
+NODENAME CHARGE_LIMIT_LIM1$
+    R50        2  U1        32  U2        14
+NODENAME 5VUSB_SENSE      $
+    C28        2  R29        1  R30        2  U1        18
+NODENAME 5VUSB            $
+    C6         2  J1        23  J1        24  R29        2  U2        21
+NODENAME QEI_1B_ANALOG    $
+    M2        E2  R12        2  U6         3
+NODENAME QEI_1B           $
+    J1        17  U6         4
+NODENAME QEI_1A_ANALOG    $
+    M2        E1  R14        2  U6         1
+NODENAME QEI_1A           $
+    J1        15  U6         6
+NODENAME QEI_0B_ANALOG    $
+    M1        E2  R15        1  U4         3
+NODENAME QEI_0B           $
+    J1        13  U4         4
+NODENAME QEI_0A_ANALOG    $
+    M1        E1  R17        2  U4         1
+NODENAME QEI_0A           $
+    J1        11  U4         6
+NODENAME NetC2-1          $
+    C2         1  U5        19
+NODENAME NetC2-2          $
+    C2         2  U5         1
+NODENAME NetC3-1          $
+    C3         1  U5        18
+NODENAME NetC3-2          $
+    C3         2  U5        20
+NODENAME NetC4-2          $
+    C4         2  U5        17
+NODENAME NetM1_A          $
+    M1         A  R16        1
+NODENAME NetM2_A          $
+    M2         A  R13        1
+NODENAME MOT_SLEEP        $
+    R27        1  U1        15  U5         3
+NODENAME MOT_0B           $
+    M1        M1  U5        14
+NODENAME MOT_0A           $
+    M1        M2  U5        16
+NODENAME MOT1_PWMB        $
+    J1        10  R9         1  U5         7
+NODENAME MOT1_PWMA        $
+    J1         8  R8         1  U5         6
+NODENAME MOT1_CUR         $
+    R10        1  U5        11
+NODENAME MOT1_B           $
+    M2        M1  U5        12
+NODENAME MOT1_A           $
+    M2        M2  U5        10
+NODENAME MOT0_PWMB        $
+    J1         6  R7         1  U5         5
+NODENAME MOT0_PWMA        $
+    J1         4  R6         1  U5         4
+NODENAME MOT0_CUR         $
+    R11        1  U5        15
+NODENAME VDDA             $
+    C24        2  C27        2  L3         1  U8         5  U8        15  U8        16  U9        14
+NODENAME PLLFILT          $
+    C21        1  C22        1  U8        14
+NODENAME NetC22-2         $
+    C22        2  R39        2
+NODENAME NetC26-2         $
+    C26        2  U9         2
+NODENAME I2C_SDA          $
+    J1        20  R1         1  U1        10  U8         3  U9         6
+NODENAME I2C_SCL          $
+    J1        22  R2         1  U1        11  U8         2  U9         4
+NODENAME GND              $
+    C1         1  C5         1  C6         1  C7         1  C8         1  C9         2  C10        2  C12        1  C13        1  C14        1  C15        1  C16        1  C17        1  C18        1  C19        1  C20        1  C21        2  C23        1  C24        1  C25        1  C26        1  C27        1  C28        1  C29        1  C31        1  J1        25  J1        26  J2         8  J2         9  J3         2  J4         1  M1         K  M2         K  R6         2  R7         2  R8         2  R9         2  R10        2  R11        2  R12        1  R14        1  R15        2  R17        1  R18        1  R19        1  R21        1  R22        2  R24        2  R26        1  R27        2  R28        1  R30        1  R39        1  R40        2  R50        1  U1         1  U1        33  U2         3  U2         6  U2         8  U2        12  U2        17  U2        25  U4         2  U5         2  U5        21  U6         2  U8         4  U8         8  U8         9  U8        10  U8        11  U8        12  U8        13  U9         5  U9         7  U9        10  U9        12  U10        5  U10        6  U11        5  U11        6  U12        5  U12        6  U13        5  U13        6  U14        5  U14        6  U15        5  U15        6  U16        5  U16        6  U17        5  U17        6
+NODENAME NetC30-1         $
+    C30        1  Q1         1  R25        2  R43        2
+NODENAME NetR31-1         $
+    R31        1  U10        1
+NODENAME NetR32-1         $
+    R32        1  U11        1
+NODENAME NetR33-1         $
+    R33        1  U12        1
+NODENAME NetR34-1         $
+    R34        1  U13        1
+NODENAME NetR35-1         $
+    R35        1  U14        1
+NODENAME NetR36-1         $
+    R36        1  U15        1
+NODENAME NetR37-1         $
+    R37        1  U16        1
+NODENAME NetR38-1         $
+    R38        1  U17        1
+NODENAME JTAG_BOTTOM_TMS_BUMP3$
+    J2         3  U1        26  U13        2
+NODENAME JTAG_BOTTOM_TDO_BUMP5$
+    J2         5  U1        28  U15        2
+NODENAME JTAG_BOTTOM_TDI_BUMP4$
+    J2         7  U1        27  U14        2
+NODENAME JTAG_BOTTOM_TCK_BUMP2$
+    J2         1  U1        25  U12        2
+NODENAME BUMP_PWR_ENABLE  $
+    R43        1  U1         8
+NODENAME BUMP_PWR         $
+    C13        2  C14        2  C15        2  C16        2  C17        2  C18        2  C19        2  C20        2  C30        2  Q1         3  R31        2  R32        2  R33        2  R34        2  R35        2  R36        2  R37        2  R38        2  U10        3  U11        3  U12        3  U13        3  U14        3  U15        3  U16        3  U17        3
+NODENAME BUMP7            $
+    U1         2  U17        2
+NODENAME BUMP6            $
+    U1         3  U16        2
+NODENAME BUMP1            $
+    U1         7  U11        2
+NODENAME BUMP0            $
+    TP1        1  U1         6  U10        2
+NODENAME 3.3V             $
+    C12        2  C23        2  C25        2  D2         1  J1         1  J1         2  L3         2  M1         C  M2         C  Q1         2  R1         2  R2         2  R13        2  R16        2  R23        1  U2        10  U2        13  U4         5  U6         5  U8         1  U9         1
+EOS

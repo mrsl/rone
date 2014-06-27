@@ -1,0 +1,80 @@
+roneCPUBoard-v11 ECO list
+
+== Abandoned/Next Version ==
+
+* make a four-layer board.
+
+== Done ==
+
+* Tent only the top side of the vias
+
+* Cleanup weird kinks in traces (Figure out how to do a drc on them)
+
+* Add markers for where the robot ID should go and make room for it.
+
+* Add to the expansion connector: Another GND Pin, Another 3.3V pins, Another VBAT pin
+
+* Ensure that the IR transmit and recive lines are always at right angles or far apart (cross-talk)
+
+* update resistor values to production values?
+	sound chip op amp
+	LEDs
+	LED controller
+
+* Determine Final Speaker Connector Position --Right now, it is rotated oddly for the ammount of room it has. Consider rotating 90 -Jeremy
+
+* Cleanup Ground
+ 
+* Cleanup 3.3V
+
+* Move and scale Rone Logo
+
+* add open source hardware logo
+
+* Silkscreen cleanup and revision
+
+* Add LED_RESET line to the inter board connector and the LEDs. This reset comes from the MSP430. It allows the LEDs to be used by 
+	the MSP while the motors, 8962, sound chip, and radio are held in reset. 
+
+* Remove the Single Sided resistors for audio amplifyier
+
+* Remove 5V_BOOST Line and just always power the Speaker from the battery.
+
+* In the connector inbetween the boards, the 5V_BOOST line needs to become a second 5VUSB and the CHRGEN line needs to become FTDI_RESET.
+
+* Add 4th light sensor
+
+* Move the speaker connector to the V12 position
+
+* move charge LED source from 3.3V to VBAT so that they work properly (bottom board too)
+
+* change the diode bridge from 0.9A to 2A to support the new 1A charge current
+
+* measure standby current draw
+
+* Fix the SD card (Fixed by see below)
+
+* add seperate ftdi reset line
+
+* In order to fix the SD card, change the pullups on the MISO and MOSI lines to pull-ups instead of pull-downs.
+
+* Move IR_Beacon to LED_HEartbeat pin (for PWM), Move LED_Heartbeat to CHRGEN pin, Remove CHRGEN
+
+* how to charge when robot is off? hold reset low, poweren high? -Doesn't the robot already charge when off (at 100mA)? -Jeremy
+
+* Look into interfacing with the expansion gumstix board UART with diodes -Decided against. Diodes will be on the actual expansion board. -Jeremy  
+
+* Add diodes to uart receive pins
+
+* check FTDI brown-on when unplugged - why the voltage?
+
+* how to charge when robot is off? hold reset low, poweren high?
+
+* measure standby current draw
+
+Battery Currents:
+0.06 mA When Robot is Off
+180 mA when the robot is On but the processer is in Suspend
+210 mA when the robot is on with nothing but the Idle (System, Heartbeat, Power) LEDs on.
+210 mA when the robot is On with some LEDs (no Motors)
+Cannot Test with Motors, Current Sense Meter Repeatadly Shuts Down Robot before motors start

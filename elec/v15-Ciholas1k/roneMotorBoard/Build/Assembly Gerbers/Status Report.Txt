@@ -1,0 +1,10 @@
+Output: IPC
+Type  : Test Points
+From  : PCB Document [roneMotorBoard-v15.PcbDoc]
+   Generated File[Assembly Testpoint Report for roneMotorBoard-v15.ipc]
+
+
+Files Generated   : 1
+Documents Printed : 0
+
+Finished Output Generation At 8:15:52 AM On 5/29/2013

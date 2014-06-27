@@ -1,0 +1,100 @@
+*************************************************************
+FileName = roneMotorBoard-v15.PcbDoc
+ODB++ directory structure
+*************************************************************
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\matrix\matrix
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\profile
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\stephdr
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topoverlay\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topoverlay\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\toppaste\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\toppaste\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topsolder\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\topsolder\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\top\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\top\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottom\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottom\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomsolder\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomsolder\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottompaste\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottompaste\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomoverlay\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\bottomoverlay\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\drill\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\drill\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\drill\tools
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\keepout\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\keepout\attrlist
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_top\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_top\components
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_bot\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\layers\comp_+_bot\components
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\steps\pcb\eda\data
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_160\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_20\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_340\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_240\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_200\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_60\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_120\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect24x47_300\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\s59.0551_225\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_160\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_20\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_340\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_240\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_200\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_60\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_120\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\rect32x55_300\features
+
+Generated File : \\PIANO\prj\rice\r-one\ciholas revision\Motorv15\build\Fabrication Gerbers\ODB\odb\symbols\s67.0551_225\features
+

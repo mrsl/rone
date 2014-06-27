@@ -1,0 +1,83 @@
+roneCPUBoard-v10 ECO list
+
+== Chris ==
+
+* add angles to rear sensor cutout
+
+
+
+
+
+
+== James ==
+
+
+== V11 ==
+
+* consider a four-layer board.
+
+* add 5v boost to top board?
+
+* add termination to SPI lines  (we need to measure ring first)
+
+* move ref designators around on silk screen to not be over parts.  You will need to make an assembly drawing for some of the tight areas, there will be no room for the refdes.
+
+
+
+== done ==
+* check power and ground network
+
+* Make cutout for rear light sensor
+
+* add cutouts to top board for light sensor. work with William on this.
+
+* move rear light sensor to rear of PCB to mech location from William.
+
+* the 10uf caps on the audio amp changed.  Is this correct?
+
+* make keepout under USB connector
+
+* fix demux schematic design
+
+* add differential amp circuit to the audio section.  Label the resistors as optional
+
+* add schottkey diode w/ 10K pull-up resistor to FTDI_TX line
+
+* tie reset to 3.3V with resistor
+
+* move all class testpoints to a new schematic page.  Leave the reset one where it is.
+
+* add 0-ohm jumper resistor from 5V_BOOST to VBAT
+
+* add i2c lines to expansino connector
+
+* switch to larger LDO package for the 1.8v LDO for the sound chip - not doing this
+
+* move hole location and resize 4-40 screws
+
+* pull reset high
+
+*change and check footprint for '138 and '595 chip 
+
+* add a whole bunch of labeled testpoints for elec lab:
+MOT0_PWMA
+MOT0_PWMB
+QEI_0A
+QEI_0B
+LIGHT_FR
+IR_EMIT_0
+IR_EMIT_4
+IR_RECV_0
+IR_RECV_4
+FTDI_TX
+FTDI_RX
+SW_RED
+3.3V
+VBAT
+We will get the students to probe these test points with a multimeter to measure voltages.  You can put them anywhere that is conveinent, but keep their traces short.
+
+* change C45 and C44 footprint to 1608
+
+* change the footprint of the audio amp to the power pad version
+
+* add keepout under SD card (actually moved vias)

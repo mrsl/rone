@@ -1,0 +1,17 @@
+Last updated : 08 August 2012
+---------------------------------------------------------------------
+Solidworks for Elecs Readme
+---------------------------------------------------------------------
+
+//How to Prepare files for Elecs
+Since Altium does coordinate systems and doesn't like objects at (0,0)
+, it helpful to display key points in drawings using coordinates.
+Solidworks doesn't have a native way to do this though some people 
+recommend making a macro (i've had no luck). What I do is make a small 
+circle 2" by 2" away from the lower left corner then make a drawing 
+from the part. Then I do horizontal and vertical ordinate dimensions
+on the key points. Sometimes it is helpful to draw a top layer sketch 
+containing only points on key locations so that ordinate can work well.
+Afterwards, make a note and click on the x coordinate then "," then 
+click on the y coordinate. Do this for all the key points then 
+hide/delete the ordinate dimensions. It's good to double check. 
