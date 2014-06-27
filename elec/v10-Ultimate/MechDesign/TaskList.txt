@@ -1,0 +1,18 @@
+rone-v10 Mechanical design ECO list
+
+== William ==
+
+produce drawing of skirt slider zone so we can remove traces from the PCB in these areas.  Is it the same as the keep-out zoen that we already have?
+
+
+== James ==
+
+nada
+
+
+
+== done ==
+* resize holes for 4-40 tap screws.  Allow anough space so we can use the same size screw in all holes
+
+* make PCB cutout drawing for the light sensor. Positions of front light sensors will not change from V9 and earlier. Positions of back light sensor denoted in Topboard-Keepout.
+

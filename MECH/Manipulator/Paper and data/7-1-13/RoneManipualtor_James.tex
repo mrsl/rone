@@ -1,0 +1,86 @@
+\documentclass[12pt]{article}
+
+\usepackage{times} %LaTex will use the Postscript Times type 1 fonts
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{fullpage}
+%\usepackage{caption}
+\usepackage{subfigure}
+
+\title{Manipulator Research and Assembly}
+\author{
+        Amanda Boone\\
+        Kevin Koch\\
+}
+\date{\today}
+
+
+\begin{document}
+\maketitle
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=5in]{Figs/close_grab.JPG} 
+\caption{This is a close-up view of the robot so, showing that we chose a three claw design so that there would be no pinching or twisting of the object or of the manipulator.}
+\end{center}
+\label{fig:Grab}
+\end{figure}
+
+After initially sitting down at the drawing board, Amanda and I went through many iterations of design options with this prototype actuated manipulator. 
+We decided on the servo-actuated gripper because of its relatively simple design, functionality, and expandability. We decided to use three claw levels with only one actuated claw disk because it provides the best stability of the item that it is grabbing. The three claws provide three points of contact with the item, such as a pen, and thus hold the item more straight up and down than if we were to use a two claw design that would pinch and twist the item, shown in Figure \ref{fig:Grab}. ABS plastic was chosen because of both its strength and lightweight properties. It is stronger than wood, and this is beneficial because the servo exerts a good amount of torque, which would cause the small pieces of wood to break. An added bonus of the ABS that we chose was that it has a very low coefficient of friction on the textured side, which is great for the movement of the pieces.
+We decided against more complex designs such as an inverted gear or rotary linkage for the initial prototype due to time constraints and simplicity. Keeping things as simple as possible has always worked out the best for us, so that's what we chose. 
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=4.5in]{Figs/final_assembly_explodedisometric.PDF} 
+\end{center}
+\caption{An exploded view of the CAD model of the Actuated Manipulator}
+\label{fig:explode}
+\end{figure}
+
+\begin{figure}[h!]
+
+\centering
+\subfigure[A top view of the robot with the manipulator fully closed]{
+\includegraphics[width=3in]{Figs/top_closed.JPG} 
+\label{fig:closed}
+}
+\subfigure[A top view of the robot with the manipulator fully open.]{
+\includegraphics[width=3in]{Figs/top_open.JPG} 
+
+\label{fig:open}
+}
+\end{figure}
+
+Our prototype uses the same clips as the Velcro Manipulator, however, they are just cut the ends to allow for the turning of the servo arm. The claws are made this way because we want the robots to be able to grab other robots as well as the objects made for the robot world, smooth manipulators would grab nothing. 
+
+There are a few issues with our current prototype that have to be addressed, however we ran out of time to fix them, but we have analyzed and diagnosed them. The first of which is the current peg on the robot that is attached to the servo must be fixed. It rubs and catches on the very bottom claw disk and prevents full motion, as can be seen in the video and in Figure \ref{fig:problem}. Next to be revamped, the slots used to rotate the manipulator, they are too big and allow for too much play in the rotation, posing slight issues unless we used large spacers like the ones we did. This can be fixed through the use of a smaller slit and a simple pin going down from the servo arm. The next issue we did not have time for was the counter-rotation issue. We propose that, in order to get free rotation of the manipulator around the robot, we must counter-rotate the manipulator claws, so that there is still torque applied to an object regardless of which way the robot spins. Power transmission is the other issue with this, contact strips along the outside of the robot, onto which contacts to the servos rub in order to get power seems like the simplest option, albeit fairly complex.
+
+\begin{figure}[h!]
+\begin{center}
+\includegraphics[width=4.5in]{Figs/bottom_problem.JPG} 
+\end{center}
+\caption{This is currently the worst issue we face, the pin extrudes into the plane of the bottom claw disk, causing it to catch and prevent movement.}
+\label{fig:problem}
+\end{figure}
+
+We did research in order to determine the most accurate way to detect whether the robot had indeed grabbed something or not, and this was to analyze the current change with different forces acting on the servo. We did this by hanging weights on a lone servo acting at 35.75 mm moment arm and comparing that to the servo that actuates the manipulator, again, by hanging weights. 
+
+
+
+
+\begin{figure}[h!]
+\centering
+\subfigure[The graphical result of the Force vs. Current graph of the servo itself.]{
+
+\includegraphics[width=3in]{Figs/Test_on_Battlebot_Aparatus.pdf} 
+\label{fig:BB Test}
+}
+\subfigure[The graphical result of the Force vs. Current graph of the servo itself.]{
+\includegraphics[width=3.2in]{Figs/Test_on_servo.pdf} 
+\label{fig:Servo Test}
+}
+\end{figure}
+The results of the current-force experiment can be seen in Figures \ref{fig:BB Test} and \ref{fig:Servo Test}. The measurements we took from both the lone servo and the manipulator servo were strange, because while taking the readings, the Pulse Width Modulation (PWM) Frequency of the servo and the measurement refresh frequency of the ammeter were out of phase, causing the ammeter to read the baseline of the servo, or 0.0050 $\mu$m. These graphs show there is a definite increase in current required for higher forces. 
+
+
+\end{document}

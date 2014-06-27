@@ -1,0 +1,90 @@
+\documentclass[12pt,onecolumn]{report}
+
+\usepackage[pdftex]{graphicx}
+%\usepackage[footnotesize]{caption}
+%\usepackage[footnotesize]{subfigure}
+\usepackage{textcomp}
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage{setspace}
+\usepackage{Tabbing}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{graphics}
+\usepackage{comment}
+\usepackage[T1]{fontenc}
+\usepackage{mdwlist}
+\usepackage[cmyk]{xcolor}
+\usepackage{bibentry}
+
+
+% Adjust margins:
+%\topmargin=-0.45in      %
+%\evensidemargin=0in     %
+%\oddsidemargin=0in      %
+%\textwidth=6.5in        %
+%\textheight=9.0in       %
+%\headsep=0.25in         %
+\usepackage[margin=1.00in]{geometry}
+\usepackage{setspace}
+\doublespacing
+
+%\newcommand{\Section}[1]{\section{#1} \setcounter{figure}{1}}
+\renewcommand\thesection{\arabic{section}}
+
+
+% Homework Specific Information
+\newcommand{\hmwkTitle}{Manipulator Research and Assembly}
+\newcommand{\hmwkDueDate}{}
+\newcommand{\hmwkClass}{Multi-Robot Systems Lab}
+\newcommand{\hmwkClassInstructor}{Dr. James McLurkin}
+\newcommand{\hmwkAuthorName}{Amanda Boone, Kevin Koch}
+
+
+% Header and Footer:
+\headheight = 15pt
+\pagestyle{fancy}
+\lhead{Boone, Koch}
+\chead{}
+\rhead{\hmwkClass\ : \hmwkTitle}
+\lfoot{} 
+\cfoot{}
+\rfoot{Page\ \thepage\ of\ \pageref{LastPage}} 
+\renewcommand\headrulewidth{0.4pt}
+\renewcommand\footrulewidth{0.4pt}
+
+
+% Title:/
+\title{\textmd{\Huge{\textbf{\hmwkTitle}}}\\
+\Large{\textbf{\hmwkClass:\ \textit{\hmwkClassInstructor}}}\vspace{0.75in}
+}
+%
+\vspace{1in}
+\author{\Large{\textbf{\hmwkAuthorName}}}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\addtocontents{toc}{\protect\thispagestyle{fancy}}
+
+%change 0.1 to 1 for numbering purposes.
+\renewcommand*\thesection{\arabic{section}} 
+
+\newpage
+\onehalfspacing
+
+\input{Design}
+\input{Research}
+\input{Assembly}
+\input{Further}
+
+\section{APPENDIX}
+\label{sec:Appendix}
+The following pages include the SolidWorks drawings
+of each piece required to assemble a the R-one actuated manipulator.
+
+\end{document}
+
+% % % %
+%
+%

@@ -1,0 +1,12 @@
+rone-v10 Mechanical design ECO list
+
+== William ==
+
+produce drawing of skirt slider zone so we can remove traces from the PCB in these areas.  Is it the same as the keep-out zoen that we already have?
+
+
+== James ==
+
+
+
+== done ==

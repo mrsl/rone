@@ -1,0 +1,68 @@
+roneMotorBoard-v11 ECO list
+
+== TODO ==
+* Move silkscreens on of labels away from the giant label. They are currently stuck in it...
+
+
+== abandoned ==
+
+* add split plane around charger and motor controller (maybe not needed around motor controller)
+
+* redefine primary orientation of MSP430 programming connector to have pin 1 match when programming from the bottom
+
+* figure out static on bottom board
+
+
+== done ==
+
+* measure standby current draw
+
+* add seperate ftdi reset line
+
+* attached the CHARGE_LIMIT_LIM1 (LIM1 input to the charge controller) line to the MSP40 with a 10k pull-down resistor which allows the MSP430 to change the charge rate between 500mA and 1A
+
+* add series resistor to reset line for top board
+
+* how to charge when robot is off? hold reset low, poweren high?
+
+* add cap to a/d inputs to hold charge for conversion
+
+* run MSP reset line on top of bottom board
+
+* update LED resistor values: power and charge
+
+* move charge LED source from 3.3V to VBAT so that they work properly (top board too)
+
+* add open source hardware logo
+
+* add Rice 'R' to bottom silk screen
+
+* Remove cliff sensor from bottom board
+
+* cover vias with solder mask on top and bottom boards (There is already some there. Tenting?)
+
+* Tent bottom of vias
+
+* Swap the IR beacon pin and the Power enable pin. (Next to each other)
+
+* add 0.1uF cap on both the MSP430 ADC inputs (VBAT_SENSE and 5VUSB_SENSE) to ground to prevent reading droop. Place caps near MSP430
+
+* Change the 5VUSB_SENSE voltage divider so that the bottom resistor (R30, 5VUSB_SENSE to GND) is 2M Ohm and the top resistor (R29, 5VUSB to 5VUSB_SENSE) is 1M ohm. Make both of these at least as good as 1% to match voltages.
+
+* Don't need VPRONG_SENSE
+
+* FTDI_RESET -> 5VUSB
+
+* CHARGEN -> FTDI_RESET
+
+* change MOSFET to BJT and add Miller cap
+
+* Enable pin on power chip always high
+
+* move bump sensors in to avoid mech conflict (20 mils)
+
+* Remove LED_IR_BEACON line
+
+* add r/c to bump emitter MOSFET gate
+
+* Change pullup resistor on power.sch PFET to 3.3VLDO. JUST the pullup, not the input to the PFET!

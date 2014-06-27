@@ -1,0 +1,212 @@
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (MiKTeX 2.9 64-bit) (preloaded format=pdflatex 2013.1.13)  7 MAY 2013 22:54
+entering extended mode
+**RoneManipualtor_James.tex
+(C:\Users\Kevin\Desktop\Manipulator\Paper\RoneManipualtor_James.tex
+LaTeX2e <2011/06/27>
+Babel <v3.8m> and hyphenation patterns for english, afrikaans, ancientgreek, ar
+abic, armenian, assamese, basque, bengali, bokmal, bulgarian, catalan, coptic, 
+croatian, czech, danish, dutch, esperanto, estonian, farsi, finnish, french, ga
+lician, german, german-x-2009-06-19, greek, gujarati, hindi, hungarian, iceland
+ic, indonesian, interlingua, irish, italian, kannada, kurmanji, lao, latin, lat
+vian, lithuanian, malayalam, marathi, mongolian, mongolianlmc, monogreek, ngerm
+an, ngerman-x-2009-06-19, nynorsk, oriya, panjabi, pinyin, polish, portuguese, 
+romanian, russian, sanskrit, serbian, slovak, slovenian, spanish, swedish, swis
+sgerman, tamil, telugu, turkish, turkmen, ukenglish, ukrainian, uppersorbian, u
+senglishmax, welsh, loaded.
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\article.cls"
+Document Class: article 2007/10/19 v1.4h Standard LaTeX document class
+("C:\Program Files\MiKTeX 2.9\tex\latex\base\size12.clo"
+File: size12.clo 2007/10/19 v1.4h Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+("C:\Program Files\MiKTeX 2.9\tex\latex\psnfss\times.sty"
+Package: times 2005/04/12 PSNFSS-v9.2a (SPQR) 
+)
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphicx.sty"
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\keyval.sty"
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphics.sty"
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\trig.sty"
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+("C:\Program Files\MiKTeX 2.9\tex\latex\00miktex\graphics.cfg"
+File: graphics.cfg 2007/01/18 v1.5 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: pdftex.def on input line 91.
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\pdftex-def\pdftex.def"
+File: pdftex.def 2011/05/27 v0.06d Graphics/color for pdfTeX
+
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\infwarerr.sty"
+Package: infwarerr 2010/04/08 v1.3 Providing info/warning/error messages (HO)
+)
+("C:\Program Files\MiKTeX 2.9\tex\generic\oberdiek\ltxcmds.sty"
+Package: ltxcmds 2011/11/09 v1.22 LaTeX kernel commands for general use (HO)
+)
+\Gread@gobject=\count87
+))
+\Gin@req@height=\dimen103
+\Gin@req@width=\dimen104
+)
+(C:\Users\Kevin\AppData\Roaming\MiKTeX\2.9\tex\latex\subfigure\subfigure.sty
+Package: subfigure 2002/07/30 v2.1.4 subfigure package
+\subfigtopskip=\skip43
+\subfigcapskip=\skip44
+\subfigcaptopadj=\dimen105
+\subfigbottomskip=\skip45
+\subfigcapmargin=\dimen106
+\subfiglabelskip=\skip46
+\c@subfigure=\count88
+\c@lofdepth=\count89
+\c@subtable=\count90
+\c@lotdepth=\count91
+
+****************************************
+* Local config file subfigure.cfg used *
+****************************************
+(C:\Users\Kevin\AppData\Roaming\MiKTeX\2.9\tex\latex\subfigure\subfigure.cfg)
+\subfig@top=\skip47
+\subfig@bottom=\skip48
+)
+(C:\Users\Kevin\AppData\Roaming\MiKTeX\2.9\tex\latex\preprint\fullpage.sty
+Package: fullpage 1999/02/23 1.1 (PWD)
+\FP@margin=\skip49
+)
+(C:\Users\Kevin\Desktop\Manipulator\Paper\RoneManipualtor_James.aux)
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 18.
+LaTeX Font Info:    ... okay on input line 18.
+LaTeX Font Info:    Try loading font information for OT1+ptm on input line 18.
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\psnfss\ot1ptm.fd"
+File: ot1ptm.fd 2001/06/04 font definitions for OT1/ptm.
+)
+(C:\Users\Kevin\AppData\Roaming\MiKTeX\2.9\tex\context\base\supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count92
+\scratchdimen=\dimen107
+\scratchbox=\box26
+\nofMPsegments=\count93
+\nofMParguments=\count94
+\everyMPshowfont=\toks15
+\MPscratchCnt=\count95
+\MPscratchDim=\dimen108
+\MPnumerator=\count96
+\makeMPintoPDFobject=\count97
+\everyMPtoPDFconversion=\toks16
+)
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <14.4> on input line 19.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 19.
+ <Figs/close_grab.JPG, id=1, 4015.0pt x 3011.25pt>
+File: Figs/close_grab.JPG Graphic file (type jpg)
+ <use Figs/close_grab.JPG>
+Package pdftex.def Info: Figs/close_grab.JPG used on input line 22.
+(pdftex.def)             Requested size: 361.34999pt x 271.00081pt.
+
+[1
+
+{C:/Users/Kevin/AppData/Local/MiKTeX/2.9/pdftex/config/pdftex.map} <C:/Users/Ke
+vin/Desktop/Manipulator/Paper/Figs/close_grab.JPG>]
+<Figs/final_assembly_explodedisometric.PDF, id=7, 794.97pt x 614.295pt>
+File: Figs/final_assembly_explodedisometric.PDF Graphic file (type pdf)
+
+<use Figs/final_assembly_explodedisometric.PDF>
+Package pdftex.def Info: Figs/final_assembly_explodedisometric.PDF used on inpu
+t line 34.
+(pdftex.def)             Requested size: 325.215pt x 251.30954pt.
+
+<Figs/top_closed.JPG, id=8, 4015.0pt x 3011.25pt>
+File: Figs/top_closed.JPG Graphic file (type jpg)
+ <use Figs/top_closed.JPG>
+Package pdftex.def Info: Figs/top_closed.JPG used on input line 46.
+(pdftex.def)             Requested size: 216.81pt x 162.56372pt.
+
+<Figs/top_open.JPG, id=9, 4015.0pt x 3011.25pt>
+File: Figs/top_open.JPG Graphic file (type jpg)
+ <use Figs/top_open.JPG>
+Package pdftex.def Info: Figs/top_open.JPG used on input line 51.
+(pdftex.def)             Requested size: 216.81pt x 162.56372pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[2 <C:/Users/Kevin/Desktop/Manipulator/Paper/Figs/final_assembly_explodedisomet
+ric.PDF>] <Figs/bottom_problem.JPG, id=14, 4015.0pt x 3011.25pt>
+File: Figs/bottom_problem.JPG Graphic file (type jpg)
+
+<use Figs/bottom_problem.JPG>
+Package pdftex.def Info: Figs/bottom_problem.JPG used on input line 60.
+(pdftex.def)             Requested size: 325.215pt x 243.89154pt.
+
+<Figs/Test_on_Battlebot_Aparatus.pdf, id=15, 389.7782pt x 325.44588pt>
+File: Figs/Test_on_Battlebot_Aparatus.pdf Graphic file (type pdf)
+
+<use Figs/Test_on_Battlebot_Aparatus.pdf>
+Package pdftex.def Info: Figs/Test_on_Battlebot_Aparatus.pdf used on input line
+ 77.
+(pdftex.def)             Requested size: 216.81pt x 181.02682pt.
+
+<Figs/Test_on_servo.pdf, id=16, 406.51875pt x 325.215pt>
+File: Figs/Test_on_servo.pdf Graphic file (type pdf)
+
+<use Figs/Test_on_servo.pdf>
+Package pdftex.def Info: Figs/Test_on_servo.pdf used on input line 81.
+(pdftex.def)             Requested size: 231.26378pt x 185.00725pt.
+ [3 <C:/Users/Kevin/Desktop/Manipulator/Paper/Figs/top_closed.JPG> <C:/Users/Ke
+vin/Desktop/Manipulator/Paper/Figs/top_open.JPG> <C:/Users/Kevin/Desktop/Manipu
+lator/Paper/Figs/bottom_problem.JPG>]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 83.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 83.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 83.
+ [4 <C:/Users/Kevin/Desktop/Manipulator/Paper/Figs/Test_on_Battlebot_Aparatus.p
+df> <C:/Users/Kevin/Desktop/Manipulator/Paper/Figs/Test_on_servo.pdf>]
+(C:\Users\Kevin\Desktop\Manipulator\Paper\RoneManipualtor_James.aux) ) 
+Here is how much of TeX's memory you used:
+ 1400 strings out of 494045
+ 19531 string characters out of 3148387
+ 68672 words of memory out of 3000000
+ 4707 multiletter control sequences out of 15000+200000
+ 13629 words of font info for 34 fonts, out of 3000000 for 9000
+ 715 hyphenation exceptions out of 8191
+ 27i,6n,24p,1233b,252s stack positions out of 5000i,500n,10000p,200000b,50000s
+{C:/Progr
+am Files/MiKTeX 2.9/fonts/enc/dvips/fontname/8r.enc}<C:/Program Files/MiKTeX 2.
+9/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Program Files/MiKTeX 2.9/fonts/
+type1/urw/times/utmr8a.pfb>
+Output written on RoneManipualtor_James.pdf (4 pages, 8324838 bytes).
+PDF statistics:
+ 44 PDF objects out of 1000 (max. 8388607)
+ 0 named destinations out of 1000 (max. 500000)
+ 36 words of extra memory for PDF output out of 10000 (max. 10000000)
+
