@@ -16,24 +16,33 @@
 void creatGlobalTreeCOMList(PosistionCOM * posListPtr){
 	int i;
 	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE; i++){
-		//nbrDataCreate32(&treeGuessCOM[i].X_HH,&treeGuessCOM[i].X_HL,&treeGuessCOM[i].X_LH,&treeGuessCOM[i].X_LL,"X_HH", "X_HL","X_LH", "X_LL", 0);
-		//nbrDataCreate32(&treeGuessCOM[i].Y_HH,&treeGuessCOM[i].Y_HL,&treeGuessCOM[i].Y_LH,&treeGuessCOM[i].Y_LL,"Y_HH", "Y_HL","Y_LH", "Y_LL", 0);
 		nbrDataCreate16(&posListPtr[i].X_H,&posListPtr[i].X_L,"X_H", "X_L", 0);
 		nbrDataCreate16(&posListPtr[i].Y_H,&posListPtr[i].Y_L,"Y_H", "Y_L", 0);
 	}
 
 }
 
+/*
+ * @brief Updates the center of mass for each tree
+ * @param 	globalRobotList - list of robotTrees
+ * 			nbrList - list of nbrs
+ * 			posListPtr - list center of mass positions for each robot
+ * 			Range - defualt range until new way of finding range is created
+ * @return void
+ */
 void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, PosistionCOM* posListPtr, int Range){
 	Nbr* nbrPtr;
 	int j,i;
+	//For Every tree in the list
 	for (j = 0; j < globalRobotList.size; j++) {
 		int32 xtot = 0;
 		int32 ytot = 0;
 		uint8 wieght = 0;
+		//For ever nbr
 		for (i = 0; i < nbrList.size; i++){
 			nbrPtr = nbrList.nbrs[i];
 			uint8 nbrTreeParentId = nbrDataGetNbr(&(globalRobotList.list[j].ParentID), nbrPtr);
+			//If parent of nbr is me, Convert Center of mass to my cordinate frame average with other robots center of mass
 			if(nbrTreeParentId == roneID){
 				int16 x,y,xprime,yprime;
 				nbrPtr = nbrListGetNbr(&nbrList, i);
@@ -144,16 +153,23 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 	}
 }
 
-
+/*
+ * @brief Orbits the given point in X,Y coordinates
+ * @param 	COMX - x position of point to orbit
+ * 			COMY - y position of point to orbit
+ * 			Behrotate - output of orbit behavior
+ * 			TV - intended TV of a robot that is orbiting i.e 0 TV means robots stay in place and turn
+ * @return void
+ */
 void orbitGlobalTreePoint(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 	int32 bearing = atan2MilliRad((int32)COMY,(int32)COMX) - 3141;
 	int32 newRv = 0;
 	if(abs(bearing) > 100){
 		if(bearing < 0){
-			newRv = bearing/ 1.5;
+			newRv = bearing/ 2;
 			behSetTvRv(BehRotate, 0, newRv);
 		} else{
-			newRv = bearing/ 1.5;
+			newRv = bearing/ 2;
 			behSetTvRv(BehRotate, 0, newRv);
 		}
 	}else{

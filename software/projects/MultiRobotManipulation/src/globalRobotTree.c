@@ -80,7 +80,7 @@ void behaviorTask(void* parameters) {
 			/*** READ BUTTONS ***/
 			if (buttonsGet(BUTTON_RED)) {
 			}else if (buttonsGet(BUTTON_GREEN)) {
-			} else if (buttonsGet(BUTTON_BLUE)) {
+			}else if (buttonsGet(BUTTON_BLUE)) {
 				state = GUESS_COM;
 			}
 
