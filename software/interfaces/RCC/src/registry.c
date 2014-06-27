@@ -12,7 +12,7 @@ int commToNum[MAXPORT];
  */
 void initCommWatch()
 {
-	_beginthread(&commWatch, 0, 0);
+	CloseHandle((HANDLE)_beginthread(&commWatch, 0, 0));
 }
 
 /**
