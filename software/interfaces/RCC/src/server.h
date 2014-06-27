@@ -41,9 +41,9 @@ int openListenFD(int port);
 void incomingHandler(void *vargp);
 void connectionHandler(void *vargp);
 
-ssize_t socket_writen(int fd, char *usrbuf, size_t n);
-ssize_t socket_read(struct socketIO *sp, char *usrbuf, size_t n);
-void socket_readinitb(struct socketIO *sp, int fd);
-ssize_t socket_readlineb(struct socketIO *sp, char *usrbuf, size_t maxlen);
+ssize_t socketWrite(int fd, char *usrbuf, size_t n);
+ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n);
+void socketInitIO(struct socketIO *sp, int fd);
+ssize_t socketReadline(struct socketIO *sp, char *usrbuf, size_t maxlen);
 
 #endif

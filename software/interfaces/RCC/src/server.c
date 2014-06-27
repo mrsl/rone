@@ -166,7 +166,7 @@ void connectionHandler(void *vargp)
 		printf("T%02d: Handler thread initialized\n", tid);
 
 	/* Initialize robust IO on the socket */
-	socket_readinitb(&socketio, conn->fd);
+	socketInitIO(&socketio, conn->fd);
 
 	if (verbose)
 		printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
@@ -174,15 +174,15 @@ void connectionHandler(void *vargp)
 	/* Query user for robot ID */
 	id = 0;
 	while (id == 0) {
-		if (socket_writen(conn->fd, "Enter the robot ID you wish to view: ", 37)
+		if (socketWrite(conn->fd, "Enter the robot ID you wish to view: ", 37)
 			< 0)
 			break;
 
-		if (socket_readlineb(&socketio, buffer, BUFFERSIZE) == 0)
+		if (socketReadline(&socketio, buffer, BUFFERSIZE) == 0)
 			break;
 
 		if (sscanf(buffer, "%d\n", &id) != 1) {
-			if (socket_writen(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
+			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
 				break;
 			continue;
 		}
@@ -190,7 +190,7 @@ void connectionHandler(void *vargp)
 		/* Handle bad numbers */
 		if (id >= MAXROBOTID || id < 0) {
 			id = 0;
-			if (socket_writen(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
+			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
 				break;
 			continue;
 		}
@@ -201,11 +201,11 @@ void connectionHandler(void *vargp)
 		mutexUnlock(&robots[id].mutex);
 
 		if (err && !bl) {
-			if (socket_writen(conn->fd, "Connected!\r\n", 12) < 0)
+			if (socketWrite(conn->fd, "Connected!\r\n", 12) < 0)
 				break;
 		} else {
 			id = 0;
-			if (socket_writen(conn->fd, "Robot ID not connected!\r\n", 25) < 0)
+			if (socketWrite(conn->fd, "Robot ID not connected!\r\n", 25) < 0)
 				break;
 		}
 	}
@@ -237,11 +237,11 @@ void connectionHandler(void *vargp)
 
 		/* Is there is data to be read? */
 		if (FD_ISSET(conn->fd, &ready_set)) {
-			if (socket_read(&socketio, inBuffer, BUFFERSIZE) != 0) {
+			if (socketRead(&socketio, inBuffer, BUFFERSIZE) != 0) {
 				/* Write data out to serial port if the robot is local */
 				mutexLock(&robots[id].mutex);
 				if (robots[id].type == LOCAL || robots[id].type == HOST)
-					fcprintf(robots[id].hSerial, inBuffer);
+					hprintf(robots[id].hSerial, inBuffer);
 
 				mutexUnlock(&robots[id].mutex);
 			} else {
@@ -256,7 +256,7 @@ void connectionHandler(void *vargp)
 				break;
 			mutexUnlock(&robots[id].mutex);
 
-			if ((err = socket_writen(conn->fd, buffer, strlen(buffer))) < 0)
+			if ((err = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
 				break;
 
 			head = (head + 1) % NUMBUFFER;
@@ -271,7 +271,7 @@ void connectionHandler(void *vargp)
 			mutexUnlock(&robots[id].mutex);
 
 			if (!err) {
-				socket_writen(conn->fd, "Robot ID disconnected!\r\n", 24);
+				socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
 				break;
 			}
 
@@ -279,7 +279,7 @@ void connectionHandler(void *vargp)
 		}
 
 		if (robots[id].blacklisted) {
-			socket_writen(conn->fd, "Robot ID blacklisted!\r\n", 23);
+			socketWrite(conn->fd, "Robot ID blacklisted!\r\n", 23);
 			break;
 		}
 	}
@@ -295,7 +295,7 @@ void connectionHandler(void *vargp)
 /**
  * Robustly write data to a socket. Adapted from CSAPP.
  */
-ssize_t socket_writen(int fd, char *usrbuf, size_t n)
+ssize_t socketWrite(int fd, char *usrbuf, size_t n)
 {
 	size_t nleft = n;
 	ssize_t nwritten;
@@ -317,7 +317,7 @@ ssize_t socket_writen(int fd, char *usrbuf, size_t n)
 /**
  * Robustly read data from a socket. Adapted from CSAPP.
  */
-ssize_t socket_read(struct socketIO *sp, char *usrbuf, size_t n)
+ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n)
 {
 	int cnt;
 
@@ -349,7 +349,7 @@ ssize_t socket_read(struct socketIO *sp, char *usrbuf, size_t n)
 /**
  * Initializes robust IO. Adapted from CSAPP.
  */
-void socket_readinitb(struct socketIO *sp, int fd)
+void socketInitIO(struct socketIO *sp, int fd)
 {
 	sp->fd = fd;
 	sp->count = 0;
@@ -359,7 +359,7 @@ void socket_readinitb(struct socketIO *sp, int fd)
 /**
  * Robustly reads a line delimited by '\n' into a buffer. Adapted from CSAPP.
  */
-ssize_t socket_readlineb(struct socketIO *sp, char *usrbuf, size_t maxlen)
+ssize_t socketReadline(struct socketIO *sp, char *usrbuf, size_t maxlen)
 {
 	int rc;
 	unsigned int n;
@@ -367,7 +367,7 @@ ssize_t socket_readlineb(struct socketIO *sp, char *usrbuf, size_t maxlen)
 
 	/* Read data until newline or error */
 	for (n = 1; n < maxlen; n++) {
-		if ((rc = socket_read(sp, &c, 1)) == 1) {
+		if ((rc = socketRead(sp, &c, 1)) == 1) {
 			*bufp++ = c;
 
 			if (c == '\n') {
