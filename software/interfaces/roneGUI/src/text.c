@@ -22,19 +22,19 @@ GLvoid textInit(GLvoid)
 	HFONT font;
 
 	font = CreateFont(-12,
-			0,
-			0,
-			0,
-			FW_ULTRALIGHT,
-			FALSE,
-			FALSE,
-			FALSE,
-			ANSI_CHARSET,
-			OUT_TT_PRECIS,
-			CLIP_DEFAULT_PRECIS,
-			ANTIALIASED_QUALITY,
-			FF_DONTCARE|DEFAULT_PITCH,
-			"Lucida Console");
+					  0,
+					  0,
+					  0,
+					  FW_ULTRALIGHT,
+					  FALSE,
+					  FALSE,
+					  FALSE,
+					  ANSI_CHARSET,
+					  OUT_TT_PRECIS,
+					  CLIP_DEFAULT_PRECIS,
+					  ANTIALIASED_QUALITY,
+					  FF_DONTCARE|DEFAULT_PITCH,
+					  "Lucida Console");
 
 	SelectObject(hdc, font);
 
@@ -43,21 +43,21 @@ GLvoid textInit(GLvoid)
 
 	/* Create the font and font outline (for antialias) */
 	wglUseFontOutlines(hdc,
-			0,
-			255,
-			base,
-			0.0,
-			0.0,
-			WGL_FONT_POLYGONS,
-			gmf);
+					   0,
+					   255,
+					   base,
+					   0.0,
+					   0.0,
+					   WGL_FONT_POLYGONS,
+					   gmf);
 	wglUseFontOutlines(hdc,
-			0,
-			255,
-			baseOut,
-			0.0,
-			0.0,
-			WGL_FONT_LINES,
-			gmfOut);
+					   0,
+					   255,
+					   baseOut,
+					   0.0,
+					   0.0,
+					   WGL_FONT_LINES,
+					   gmfOut);
 
 	DeleteObject(font);
 }
@@ -82,37 +82,36 @@ GLvoid textPrintf(const char *fmt, ...)
 		length += gmf[(int)text[loop]].gmfCellIncX;
 	}
 	glPushMatrix();
-	glScalef(textWidth, textHeight, 0);
-	switch(alignment)
-	{
-	case ALIGN_RIGHT:
-		glTranslatef(-length, 0.0, 0.0);
-		break;
-	case ALIGN_CENTER:
-		glTranslatef(-length/2, 0.0, 0.0);
-		break;
-	case ALIGN_LEFT:
-		break;
-	}
+		glScalef(textWidth, textHeight, 0);
+		switch(alignment)
+		{
+		case ALIGN_RIGHT:
+			glTranslatef(-length, 0.0, 0.0);
+			break;
+		case ALIGN_CENTER:
+			glTranslatef(-length/2, 0.0, 0.0);
+			break;
+		case ALIGN_LEFT:
+			break;
+		}
 
-	glPushAttrib(GL_LIST_BIT);
-	glPushMatrix();
-	glListBase(base);
-	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
-	glPopMatrix();
+		glPushAttrib(GL_LIST_BIT);
+			glPushMatrix();
+				glListBase(base);
+				glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
+			glPopMatrix();
 
-	if (textWidth != TEXT_LARGE) {
-		glLineWidth(LINE_WIDTH_SMALL);
-	}
+			if (textWidth != TEXT_LARGE) {
+				glLineWidth(LINE_WIDTH_SMALL);
+			}
 
-	glPushMatrix();
-	glListBase(baseOut);
-	glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
-	glPopMatrix();
+			glPushMatrix();
+				glListBase(baseOut);
+				glCallLists(strlen(text), GL_UNSIGNED_BYTE, text);
+			glPopMatrix();
 
-	glLineWidth(LINE_WIDTH);
-
-	glPopAttrib();
+			glLineWidth(LINE_WIDTH);
+		glPopAttrib();
 	glPopMatrix();
 }
 

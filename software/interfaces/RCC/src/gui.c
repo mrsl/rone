@@ -140,7 +140,7 @@ void processHits(GLint hits, GLuint buffer[])
 		case (4): {
 			if (robots[robotID].type == LOCAL && robots[robotID].hSerial != NULL
 				&& !robots[robotID].blacklisted)
-				fcprintf(robots[robotID].hSerial, "rt\n");
+				hprintf(robots[robotID].hSerial, "rt\n");
 			break;
 		}
 		case (6): {
@@ -197,7 +197,7 @@ int openClientConnection(int robotID)
 		return (-1);
 
 	/* Output the script to the temporary file */
-	fcprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
+	hprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
 
 	if (!CloseHandle(hTempFile))
 		return (-1);
@@ -264,14 +264,14 @@ void drawRobots(GLenum mode)
 {
 	int i;
 
-	GLfloat lx; /* Local robot x position */
-	GLfloat ly; /* Local robot y position */
-	GLfloat rx; /* Remote robot x position */
-	GLfloat ry; /* Remote robot y position */
-	GLfloat sx; /* Starting x position */
+	GLfloat lx; // Local robot x position
+	GLfloat ly; // Local robot y position
+	GLfloat rx; // Remote robot x position
+	GLfloat ry; // Remote robot y position
+	GLfloat sx; // Starting x position
 
-	GLfloat ls = SCALE_LARGE; /* Local robot scale factor */
-	GLfloat rs = SCALE_LARGE; /* Remote robot scale factor */
+	GLfloat ls = SCALE_LARGE; // Local robot scale factor
+	GLfloat rs = SCALE_LARGE; // Remote robot scale factor
 
 	int numLocal = 0;
 	int numRemote = 0;

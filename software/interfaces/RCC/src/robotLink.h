@@ -39,7 +39,7 @@ struct commCon
 	};
 	char buffer[NUMBUFFER][BUFFERSIZE + 13]; /* Rotating buffer array */
 	int head; /* Head of buffer */
-	pthread_mutex_t mutex;
+	CRITICAL_SECTION mutex;
 };
 
 /* Data on the remote robots attached */

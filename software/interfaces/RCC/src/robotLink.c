@@ -54,7 +54,7 @@ void commManager(void *vargp)
 			/* Ping all host robots for updated remote robots. */
 			if (robots[i].up && robots[i].type == HOST
 				&& !robots[i].blacklisted)
-				fcprintf(robots[i].hSerial, "rt\n");
+				hprintf(robots[i].hSerial, "rt\n");
 
 			mutexUnlock(&robots[i].mutex);
 		}
@@ -110,15 +110,15 @@ void commCommander(void *vargp)
 	info = ((struct commInfo *) vargp);
 
 	/* Query the robot for its id, and if it is a host */
-	fcprintf(info->hSerial, "rr\n");
+	hprintf(info->hSerial, "rr\n");
 
 	/* Initialize robust IO on the serial */
-	serial_readinitb(&sio, info->hSerial);
+	serialInitIO(&sio, info->hSerial);
 
 	/* Manage connection indefinitely */
 	for (;;) {
 		/* Read a line */
-		if ((err = serial_readlineb(&sio, bufp, BUFFERSIZE)) < 0) {
+		if ((err = serialReadline(&sio, bufp, BUFFERSIZE)) < 0) {
 			if (verbose)
 				fprintf(stderr, "S%02d: Serial read error\n", id);
 			break;
@@ -284,7 +284,7 @@ void commCommander(void *vargp)
 	if (robots[id].blacklisted) {
 		if (verbose)
 			printf("S%02d: Blacklisted!\n", id);
-		/* If we exited from something else */
+	/* If we exited from something else */
 	} else {
 		if (verbose)
 			printf("S%02d: Done!\n", id);
