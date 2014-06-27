@@ -99,7 +99,7 @@ void commCommander(void *vargp)
 	int rid;							// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
-	char sbuf[SBUFSIZE];
+	char sbuf[BUFFERSIZE + 1];
 	char *bufp = buffer;				// Pointer to buffers
 	char *sbufp;
 	struct commInfo *info;				// Information on robot connection
@@ -249,7 +249,7 @@ void commCommander(void *vargp)
 			}
 
 			/* Free old list */
-			if (rr)
+			if (rr != NULL)
 				Free(rr);
 
 			rr = newRR;

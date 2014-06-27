@@ -103,7 +103,7 @@ int openListenFD(int port)
 	if (listen(listenfd, LISTENQ) < 0)
 		return (-1);
 
-	return listenfd;
+	return (listenfd);
 }
 
 /**
@@ -173,6 +173,7 @@ void connectionHandler(void *vargp)
 
 	/* Query user for robot ID */
 	id = 0;
+	err = 0;
 	while (id == 0) {
 		if (socketWrite(conn->fd, "Enter the robot ID you wish to view: ", 37)
 			< 0)
@@ -261,6 +262,7 @@ void connectionHandler(void *vargp)
 
 			head = (head + 1) % NUMBUFFER;
 		}
+
 		if (err < 0)
 			break;
 

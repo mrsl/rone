@@ -6,9 +6,9 @@
 #ifndef REG_H_
 #define REG_H_
 
-#define MAXPORT			1000
+#define MAXPORT			100
 #define PORTSIZE		64
-#define REGISTRYWATCH	1000
+#define REGISTRYWATCH	500
 
 /* Struct to hold registry data over serial ports */
 struct regData
