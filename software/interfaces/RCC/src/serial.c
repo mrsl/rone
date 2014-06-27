@@ -32,7 +32,7 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 
 		if (!GetCommState(*hSerialPtr, &dcbSerialParams))
-			return 0;
+			return (0);
 
 		dcbSerialParams.BaudRate = 230400;
 		dcbSerialParams.ByteSize = 8;
@@ -41,7 +41,7 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 		dcbSerialParams.fAbortOnError = 0;
 
 		if (!SetCommState(*hSerialPtr, &dcbSerialParams))
-			return 0;
+			return (0);
 
 		COMMTIMEOUTS timeouts = { 0 };
 
@@ -54,7 +54,7 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 		if (!SetCommTimeouts(*hSerialPtr, &timeouts))
 			return (-1);
 	}
-	return 0;
+	return (0);
 }
 
 /**

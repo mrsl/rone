@@ -37,9 +37,12 @@ uint16 convertASCIIHexWord(char *val)
 	return (temp);
 }
 
+/**
+ * Creates a new native Windows thread that runs detached
+ */
 void makeThread(void *function, void *args)
 {
-	CloseHandle((HANDLE)_beginthread(function, 0, args));
+	CloseHandle((HANDLE) _beginthread(function, 0, args));
 }
 
 /**

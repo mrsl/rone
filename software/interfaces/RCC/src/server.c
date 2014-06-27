@@ -151,7 +151,6 @@ void connectionHandler(void *vargp)
 	int id;							// Requested robot ID
 	int head;						// Last location of robot buffer viewed
 	int err, bl;					// Flag
-	clock_t timer;					// Event timer
 	struct Connection *conn;		// Connection information
 	char buffer[BUFFERSIZE];		// General use buffer
 	struct socketIO socketio;		// Robust IO buffer for socket
@@ -223,7 +222,6 @@ void connectionHandler(void *vargp)
 
 	/* Feed new data from the robot to the client until close */
 	head = robots[id].head;
-	timer = clock();
 
 	/* Initialize stuff for select */
 	FD_ZERO(&read_set);

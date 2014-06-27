@@ -211,11 +211,11 @@ int openClientConnection(int robotID)
 		return (-1);
 
 	ShellExecute(GetDesktopWindow(),
-					 "open",
-					 "securecrt.exe",
-					 buffer,
-					 "",
-					 SW_SHOW);
+				 "open",
+				 "securecrt.exe",
+				 buffer,
+				 "",
+				 SW_SHOW);
 
 	return (0);
 }
@@ -252,12 +252,14 @@ void aspectHandle(int w, int h)
 {
 	if (w <= h * ASPECT) {
 		gluOrtho2D(-GUI_WIDTH / 2.,
-		GUI_WIDTH / 2., -GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT,
-		GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT);
+				   GUI_WIDTH / 2.,
+				   -GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT,
+				   GUI_HEIGHT * (GLfloat) h / (GLfloat) w / 2. * ASPECT);
 	} else {
 		gluOrtho2D(-GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
-		GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT, -GUI_HEIGHT / 2.,
-		GUI_HEIGHT / 2.);
+				   GUI_WIDTH * (GLfloat) w / (GLfloat) h / 2. / ASPECT,
+				   -GUI_HEIGHT / 2.,
+				   GUI_HEIGHT / 2.);
 	}
 }
 
@@ -440,7 +442,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 		glPopMatrix();
 
-		/* Draw a remote robot */
+	/* Draw a remote robot */
 	} else {
 		/* Make the robot hollow for remote robots */
 		glPushMatrix();
