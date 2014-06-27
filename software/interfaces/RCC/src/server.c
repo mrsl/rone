@@ -243,47 +243,41 @@ void connectionHandler(void *vargp)
 				mutexLock(&robots[id].mutex);
 				if (robots[id].type == LOCAL || robots[id].type == HOST)
 					hprintf(robots[id].hSerial, inBuffer);
-
 				mutexUnlock(&robots[id].mutex);
 			} else {
 				break;
 			}
 		}
 
+		/* Extensively use the mutex to prevent all data-races */
+		mutexLock(&robots[id].mutex);
 		/* If there is new data in the robot buffer */
 		while (head != robots[id].head) {
-			mutexLock(&robots[id].mutex);
-			if (sprintf(buffer, "%s", robots[id].buffer[head]) < 0)
+			if (sprintf(buffer, "%s", robots[id].buffer[head]) < 0) {
+				mutexUnlock(&robots[id].mutex);
 				break;
+			}
 			mutexUnlock(&robots[id].mutex);
 
 			if ((err = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
 				break;
 
 			head = (head + 1) % NUMBUFFER;
+			mutexLock(&robots[id].mutex);
 		}
-
 		if (err < 0)
 			break;
 
-		/* Check if the robot is actually disconnected. */
-		if (timer + 1000 < clock()) {
-			mutexLock(&robots[id].mutex);
-			err = robots[id].up;
-			mutexUnlock(&robots[id].mutex);
-
-			if (!err) {
-				socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
-				break;
-			}
-
-			timer = 0;
-		}
-
+		/* Check if the robot is disconnected. */
 		if (robots[id].blacklisted) {
 			socketWrite(conn->fd, "Robot ID blacklisted!\r\n", 23);
 			break;
 		}
+		if (!robots[id].up) {
+			socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
+			break;
+		}
+		mutexUnlock(&robots[id].mutex);
 	}
 
 	if (verbose)

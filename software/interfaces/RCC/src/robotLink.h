@@ -10,7 +10,7 @@
 #define MAXROBOTID 256
 #define SBUFSIZE 256
 #define SLEEPTIME 1000
-#define GRACETIME 5000
+#define GRACETIME 10000
 
 #define LOCAL 		0
 #define REMOTE		1
