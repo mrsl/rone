@@ -37,6 +37,11 @@ uint16 convertASCIIHexWord(char *val)
 	return (temp);
 }
 
+void makeThread(void *function, void *args)
+{
+	CloseHandle((HANDLE)_beginthread(function, 0, args));
+}
+
 /**
  * Write data to a file handle
  */

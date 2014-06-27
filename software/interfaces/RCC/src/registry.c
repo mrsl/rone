@@ -8,14 +8,6 @@
 int commToNum[MAXPORT];
 
 /**
- * Creates the thread to watch the registry
- */
-void initCommWatch()
-{
-	CloseHandle((HANDLE)_beginthread(&commWatch, 0, 0));
-}
-
-/**
  * Watches the registry for possible robots to connect to
  */
 void commWatch(void *vargp)

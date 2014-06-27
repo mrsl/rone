@@ -25,7 +25,7 @@ void initRobots()
 		mutexInit(&robots[i].mutex);
 	}
 
-	CloseHandle((HANDLE)_beginthread(&commManager, 0, 0));
+	makeThread(&commManager, 0);
 }
 
 /**
@@ -82,7 +82,7 @@ int initCommCommander(int port)
 	info->hSerial = hSerial;
 	info->port = port;
 
-	CloseHandle((HANDLE)_beginthread(&commCommander, 0, info));
+	makeThread(&commCommander, info);
 
 	return (0);
 }

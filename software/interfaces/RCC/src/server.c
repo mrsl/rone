@@ -41,7 +41,7 @@ int createServer(int port)
 	/* Create incoming connection handler */
 	ti = Malloc(sizeof(int));
 	*ti = listenfd;
-	CloseHandle((HANDLE)_beginthread(&incomingHandler, 0, ti));
+	makeThread(&incomingHandler, ti);
 
 	if (verbose)
 		printf("T00: Server initialized on port %d\n", port);
@@ -136,7 +136,7 @@ void incomingHandler(void *vargp)
 		conn->n = count;
 
 		/* Spawn a thread to handle the connection */
-		CloseHandle((HANDLE)_beginthread(&connectionHandler, 0, conn));
+		makeThread(&connectionHandler, conn);
 
 		count++;
 	}

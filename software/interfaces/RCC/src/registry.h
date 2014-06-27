@@ -20,7 +20,6 @@ struct regData
 /* Array that maps COM number to robot ID */
 extern int commToNum[MAXPORT];
 
-void initCommWatch();
 void commWatch(void *vargp);
 void enumCommNames(struct regData *data);
 

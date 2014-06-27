@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 
 	/* Initialize robot buffers */
 	initRobots();
-	initCommWatch();
+	makeThread(&commWatch, 0);
 
 	/* Create web server */
 	if (createServer(port) < 0)
