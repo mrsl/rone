@@ -16,8 +16,8 @@ struct serialIO
 };
 
 int serialConnect(HANDLE *hSerialPtr, int comPort);
-void serial_readinitb(struct serialIO *sp, HANDLE *hSerialPtr);
-ssize_t serial_read(struct serialIO *sp, char *usrbuf, size_t n);
-ssize_t serial_readlineb(struct serialIO *sp, char *usrbuf, size_t maxlen);
+void serialInitIO(struct serialIO *sp, HANDLE *hSerialPtr);
+ssize_t serialRead(struct serialIO *sp, char *usrbuf, size_t n);
+ssize_t serialReadline(struct serialIO *sp, char *usrbuf, size_t maxlen);
 
 #endif

@@ -12,14 +12,12 @@ typedef signed short int16;
 typedef unsigned char uint8;
 typedef unsigned short uint16;
 
-typedef CRITICAL_SECTION pthread_mutex_t;
-
 /* Function Declarations */
 uint8 convertASCIIHexNibble(char val);
 uint8 convertASCIIHexByte(char *val);
 uint16 convertASCIIHexWord(char *val);
 
-void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...);
+void hprintf(HANDLE *hSerialPtr, const char *fmt, ...);
 
 void Error(const char *fmt, ...);
 
@@ -28,8 +26,8 @@ void *Malloc(size_t size);
 void *Calloc(size_t nmemb, size_t size);
 void Free(void *p);
 
-void mutexLock(pthread_mutex_t *mp);
-void mutexUnlock(pthread_mutex_t *mp);
-void mutexInit(pthread_mutex_t *mp);
+void mutexLock(CRITICAL_SECTION *mp);
+void mutexUnlock(CRITICAL_SECTION *mp);
+void mutexInit(CRITICAL_SECTION *mp);
 
 #endif

@@ -60,7 +60,7 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 /**
  * Initialize robust IO over a serial connection. Adapted from CSAPP.
  */
-void serial_readinitb(struct serialIO *sp, HANDLE *hSerialPtr)
+void serialInitIO(struct serialIO *sp, HANDLE *hSerialPtr)
 {
 	sp->handle = hSerialPtr;
 	sp->count = 0;
@@ -70,7 +70,7 @@ void serial_readinitb(struct serialIO *sp, HANDLE *hSerialPtr)
 /**
  * Robustly read data from a serial port. Adapted from CSAPP.
  */
-ssize_t serial_read(struct serialIO *sp, char *usrbuf, size_t n)
+ssize_t serialRead(struct serialIO *sp, char *usrbuf, size_t n)
 {
 	int cnt;
 
@@ -100,14 +100,14 @@ ssize_t serial_read(struct serialIO *sp, char *usrbuf, size_t n)
 /**
  * Robustly read a line from a serial port. Adapted from CSAPP.
  */
-ssize_t serial_readlineb(struct serialIO *sp, char *usrbuf, size_t maxlen)
+ssize_t serialReadline(struct serialIO *sp, char *usrbuf, size_t maxlen)
 {
 	int rc;
 	unsigned int n;
 	char c, *bufp = usrbuf;
 
 	for (n = 1; n < maxlen; n++) {
-		if ((rc = serial_read(sp, &c, 1)) == 1) {
+		if ((rc = serialRead(sp, &c, 1)) == 1) {
 			*bufp++ = c;
 
 			if (c == '\n') {
