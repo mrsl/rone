@@ -18,5 +18,5 @@ typedef struct posCOM {
 
 void creatGlobalTreeCOMList(PosistionCOM* posListPtr);
 void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, PosistionCOM* posListPtr, int Range);
-
+void orbitGlobalTreePoint(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV);
 #endif /* GLOBALTREECOM_H_ */

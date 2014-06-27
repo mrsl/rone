@@ -12,6 +12,7 @@
 #include "ronelib.h"
 #include "globalTreeCOM.h"
 
+
 void creatGlobalTreeCOMList(PosistionCOM * posListPtr){
 	int i;
 	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE; i++){
@@ -47,6 +48,78 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 				xprime = x*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				x = xprime;
+				switch(roneID){
+				case 53:{
+					switch(nbrGetID(nbrPtr)){
+						case 42:{
+							Range = 400;
+							break;
+						}
+						case 2:{
+							Range = 570;
+							break;
+						}
+						case 31:{
+							Range = 500;
+							break;
+						}
+					}
+					break;
+				}
+				case 42:{
+					switch(nbrGetID(nbrPtr)){
+						case 53:{
+							Range = 400;
+							break;
+						}
+						case 2:{
+							Range = 310;
+							break;
+						}
+						case 31:{
+							Range = 670;
+							break;
+						}
+					}
+					break;
+
+				}
+				case 2:{
+					switch(nbrGetID(nbrPtr)){
+						case 53:{
+							Range = 570;
+							break;
+						}
+						case 42:{
+							Range = 310;
+							break;
+						}
+						case 31:{
+							Range = 450;
+							break;
+						}
+					}
+					break;
+
+				}
+				case 31:{
+					switch(nbrGetID(nbrPtr)){
+						case 53:{
+							Range = 500;
+							break;
+						}
+						case 42:{
+							Range = 670;
+							break;
+						}
+						case 2:{
+							Range = 450;
+							break;
+						}
+					}
+					break;
+				}
+				}
 				y = yprime + Range;
 
 				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
@@ -69,4 +142,23 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 			//if(printNow){rprintf("TrID %d XA %d YA %d\n", nbrDataGet(&(globalRobotList.list[j].ID)),xave,yave);}
 		}
 	}
+}
+
+
+void orbitGlobalTreePoint(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
+	int32 bearing = atan2MilliRad((int32)COMY,(int32)COMX) - 3141;
+	int32 newRv = 0;
+	if(abs(bearing) > 100){
+		if(bearing < 0){
+			newRv = bearing/ 1.5;
+			behSetTvRv(BehRotate, 0, newRv);
+		} else{
+			newRv = bearing/ 1.5;
+			behSetTvRv(BehRotate, 0, newRv);
+		}
+	}else{
+		behSetTvRv(BehRotate, TV, 0);
+	}
+	rprintf("X%d Y%d b%d RV%d\n",COMX,COMY,bearing,newRv);
+
 }

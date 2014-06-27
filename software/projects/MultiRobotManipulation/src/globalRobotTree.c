@@ -23,9 +23,12 @@
 #define PI				3147
 #define nbrEdgeDis		500				//hardcoded distance
 #define COM_WAIT		3
-#define NORM_RV			250
-#define NORM_TV			0
+#define NORM_TV			125
 
+#define REST			0
+#define CNTCLK			1
+#define CLKWISE			2
+#define ATTEMPTING		3
 
 void behaviorTask(void* parameters) {
 	//rprintfSetSleepTime(500);
@@ -52,6 +55,8 @@ void behaviorTask(void* parameters) {
 	GlobalRobotList globalRobotList;
 	globalRobotListCreate(&globalRobotList);
 
+	gripperBoardInit();
+	uint8 gripPos = REST;
 
 	for (;;) {
 		if (rprintfIsHost()) {
@@ -94,51 +99,20 @@ void behaviorTask(void* parameters) {
 			}
 			}
 
+
+			if(!gripperBoardGetGripped()){
+				if(gripPos != ATTEMPTING){
+					gripperGripUntilGripped();
+					gripPos = ATTEMPTING;
+				}
+			}else{
+				gripPos = CLKWISE;
+				if(gripperBoardGetServo() > 100){
+					gripPos = CNTCLK;
+				}
+			}
+
 			if(state == GUESS_COM){
-				/*Nbr* nbrPtr;
-				for (j = 0; j < globalRobotListPtr.size; j++) {
-					int32 xtot = 0;
-					int32 ytot = 0;
-					uint8 wieght = 0;
-
-					for (i = 0; i < nbrList.size; i++){
-						nbrPtr = nbrList.nbrs[i];
-						uint8 nbrTreeParentId = nbrDataGetNbr(&(globalRobotListPtr.list[j].ParentID), nbrPtr);
-						if(nbrTreeParentId == roneID){
-							int16 x,y,xprime,yprime;
-							nbrPtr = nbrListGetNbr(&nbrList, i);
-							int32 nbrOrient = nbrGetOrientation(nbrPtr);
-							int32 nbrBear = nbrGetBearing(nbrPtr);
-
-							x = nbrDataGetNbr16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_L,nbrPtr);
-							y = nbrDataGetNbr16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_L,nbrPtr);
-
-							//if(printNow){rprintf("ID %d TrID %d J%d - Nbr %d: X%d Y%d\n", roneID, nbrDataGetNbr(&(globalRobotListPtr.list[j].ID),nbrPtr), j, nbrGetID(nbrPtr), x,y);}
-
-							xprime = x*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
-							yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
-							x = xprime;
-							y = yprime + nbrEdgeDis;
-
-							xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
-							yprime = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
-							//if(printNow){rprintf("Nbr %d: O%d B%d X''%d Y''%d XCOM%d YCOM%d\n",nbrGetID(nbrPtr),nbrOrient,nbrBear,x,y, xprime,yprime);}
-							xtot +=  xprime;
-							ytot +=  yprime;
-							wieght++;
-						}
-					}
-					if(wieght == 0){
-						//nbrDataSet16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_L,0);
-						//nbrDataSet16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_L,0);
-					}else{
-						int16 xave = xtot/wieght;
-						int16 yave = ytot/wieght;
-						nbrDataSet16(&treeGuessCOM[j].X_H,&treeGuessCOM[j].X_L,xave);
-						nbrDataSet16(&treeGuessCOM[j].Y_H,&treeGuessCOM[j].Y_L,yave);
-						//if(printNow){rprintf("TrID %d XA %d YA %d\n", nbrDataGet(&(globalRobotListPtr.list[j].ID)),xave,yave);}
-					}
-				}*/
 				updateGlobalTreeCOM(globalRobotList, nbrList, treeGuessCOM, nbrEdgeDis);
 
 				if(changeCOM >= COM_WAIT){
@@ -150,18 +124,9 @@ void behaviorTask(void* parameters) {
 					}else{
 						COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
 						COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
-						if(printNow){rprintf("X%d, Y%d\n",COM_X, COM_Y);}
 					}
-					if(abs(COM_Y) > 10){
-						if(COM_Y > 0){
-							behSetTvRv(&behOutput, NORM_TV/2, NORM_RV);
-						}else{
-							behSetTvRv(&behOutput, NORM_TV/2, -NORM_RV);
-						}
 
-					}else{
-						behSetTvRv(&behOutput, NORM_TV, 0);
-					}
+					orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  NORM_TV);
 				}else{
 					changeCOM++;
 				}
