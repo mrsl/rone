@@ -226,18 +226,19 @@ void commCommander(void *vargp)
 
 		/* If we get a data line */
 		if (strncmp(buffer, "rtd", 3) == 0) {
+			/* Get the beginning of the remote message */
+			if ((bufp = strpbrk(buffer, " ")) == NULL) {
+				bufp = buffer;
+				continue;
+			}
+			*bufp = "\0";
+
 			/* Scan ID and data */
 			if (sscanf(buffer, "rtd,%d", &rid) < 1)
 				continue;
 
 			/* If we aren't already connected via serial, put data in buffer. */
 			if (robots[rid].hSerial == NULL) {
-				/* Get the beginning of the remote message */
-				if ((bufp = strpbrk(buffer, " ")) == NULL) {
-					bufp = buffer;
-					continue;
-				}
-
 				/* Insert parsed line into remote robot's buffer. */
 				insertBuffer(rid, bufp + 1);
 				robots[rid].type = REMOTE;

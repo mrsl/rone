@@ -9,7 +9,7 @@
 #define NUMBUFFER 64
 #define MAXROBOTID 256
 #define SBUFSIZE 256
-#define SLEEPTIME 1000
+#define SLEEPTIME 3000
 #define GRACETIME 10000
 
 #define LOCAL 		0
