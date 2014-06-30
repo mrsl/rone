@@ -115,7 +115,8 @@
 				<externalSettings containerId="roneos;" factoryId="org.eclipse.cdt.core.cfg.export.settings.sipplier">
 					<externalSetting>
 						<entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/roneos"/>
-						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/roneos/bin_rone_v12"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/roneos/Debug"/>
+						<entry flags="VALUE_WORKSPACE_PATH" kind="libraryPath" name="/roneos/bin_rone_v09"/>
 						<entry flags="RESOLVED" kind="libraryFile" name="roneos" srcPrefixMapping="" srcRootPath=""/>
 					</externalSetting>
 				</externalSettings>

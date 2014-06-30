@@ -16,19 +16,30 @@
 #define NEIGHBOR_ROUND_PERIOD			300
 #define RADIO_MESSAGE_PERSISTANCE		200
 #define BEHAVIOR_TASK_PERIOD			50
+#define FLOCK_RV_GAIN_MOVEOBJ			150
+
+#define ACCEL_DEAD_ZONE					5
+#define ACCEL_IIR_GAIN					50
+#define TV_MIN							15
 
 #define BUILD_TREE		 0
 #define GUESS_COM		 1
+#define REMOTE			 2
 
 #define PI				3147
 #define nbrEdgeDis		500				//hardcoded distance
 #define COM_WAIT		3
-#define NORM_TV			125
+#define NORM_TV			75
 
 #define REST			0
 #define CNTCLK			1
 #define CLKWISE			2
 #define ATTEMPTING		3
+
+RadioMessage radioMessageTX;
+RadioMessage radioMessageRX;
+RadioCmd radioCmdRemoteControl;
+char* name = "RCwifi";
 
 void behaviorTask(void* parameters) {
 	//rprintfSetSleepTime(500);
@@ -36,19 +47,20 @@ void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
 	uint8 state = BUILD_TREE;
 	Beh behOutput = behInactive;
+	Beh behRadio;
 	boolean printNow;
 	uint32 neighborRound = 0;
 	NbrList nbrList;
 	uint8 changeCOM = 0;
 	BroadcastMessage broadcastMessage;
 	broadcastMsgCreate(&broadcastMessage, 20);
-
+	uint8 moveState = 0;
 	systemPrintStartup();
 	systemPrintMemUsage();
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 	radioCommandSetSubnet(1);
 
-	PosistionCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE];
+	PosistionCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1];
 	creatGlobalTreeCOMList(treeGuessCOM);
 
 	//uint16 IRXmitPower = IR_COMMS_POWER_MAX/4;
@@ -58,13 +70,26 @@ void behaviorTask(void* parameters) {
 	gripperBoardInit();
 	uint8 gripPos = REST;
 
+	///Radio Init
+	uint32 radioMessageTimePrev = 0;
+	int TVcmd, RVcmd = 0;
+	int comRed = 0;
+	int comBlue = 0;
+	int comGreen = 0;
+	int bounceBlue = 0;
+	int bounceRed = 0;
+	int bounceGreen = 0;
+	int32 accX = 0;
+	int32 accY = 0;
+	radioCommandAddQueue(&radioCmdRemoteControl,name, 1);
+
 	for (;;) {
 		if (rprintfIsHost()) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 			continue;
 		}else{
 			/*** INIT STUFF ***/
-			//behOutput = behInactive;
+			behRadio = behInactive;
 			neighborsGetMutex();
 			printNow = neighborsNewRoundCheck(&neighborRound);
 			//irCommsSetXmitPower(IRXmitPower);
@@ -78,10 +103,13 @@ void behaviorTask(void* parameters) {
 			}
 
 			/*** READ BUTTONS ***/
-			if (buttonsGet(BUTTON_RED)) {
-			}else if (buttonsGet(BUTTON_GREEN)) {
-			}else if (buttonsGet(BUTTON_BLUE)) {
-				state = GUESS_COM;
+			if(state!= REMOTE){
+				if (buttonsGet(BUTTON_RED)) {
+					state = REMOTE;
+				}else if (buttonsGet(BUTTON_GREEN)) {
+				}else if (buttonsGet(BUTTON_BLUE)) {
+					state = GUESS_COM;
+				}
 			}
 
 			/** STATES MACHINE **/
@@ -94,7 +122,24 @@ void behaviorTask(void* parameters) {
 				break;
 			}
 			case GUESS_COM:{
-				ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+				switch (moveState){
+				case 0:{
+					ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					break;
+				}
+				case 1:{
+					ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					break;
+				}
+				case 2:{
+					ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					break;
+				}
+				}
+				break;
+			}
+			case REMOTE:{
+				ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 				break;
 			}
 			}
@@ -112,24 +157,112 @@ void behaviorTask(void* parameters) {
 				}
 			}
 
+			if( radioCommandReceive(&radioCmdRemoteControl, &radioMessageRX,0) ) {
+				//Grabing stream and paresing
+				char* RXmsg = radioCommandGetDataPtr(&radioMessageRX);
+				radioMessageTimePrev = osTaskGetTickCount();
+				sscanf(RXmsg,"%d,%d,%d,%d,%d", &TVcmd, &RVcmd, &comBlue, &comRed,&comGreen); //parse the speed and turning rate
+				if(comGreen){
+					moveState++;
+					if(moveState >= 2){
+						moveState = 0;
+					}
+				}
+				if(comBlue){
+					state = GUESS_COM;
+				}
+
+			} else {
+				// no message this time.  see if you can just run the last command, or if it has timed out
+				if (osTaskGetTickCount() > (radioMessageTimePrev + RADIO_MESSAGE_PERSISTANCE)) {
+					// the previous message is too old.  clear the behRadio
+					TVcmd = 0;
+					comBlue = 0;
+					comRed = 0;
+					comGreen = 0;
+				}
+			}
+
 			if(state == GUESS_COM){
+
 				updateGlobalTreeCOM(globalRobotList, nbrList, treeGuessCOM, nbrEdgeDis);
 
 				if(changeCOM >= COM_WAIT){
 					changeCOM = 0;
-					int16 COM_Y,COM_X;
-					int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
-					if(selfIdx == -1){
-						COM_Y = 0;
-					}else{
-						COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
-						COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
+					if(moveState == 0){				//Transport
+						behFlock_gain(&behOutput, &nbrList, TVcmd, FLOCK_RV_GAIN_MOVEOBJ);
+						behOutput.rv  = behOutput.rv + (RVcmd*10);
+					}else if(moveState == 1){		//Rotate
+						int16 COM_Y,COM_X;
+						int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
+						if(selfIdx == -1){
+							COM_Y = 0;
+							COM_X = 0;
+						}else{
+							COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
+							COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
+						}
+						orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  RVcmd);
+					}else if(moveState == 2){		//Pivot
+						int16 COM_Y,COM_X;
+						COM_Y =  nbrDataGet16(&treeGuessCOM[10].Y_H,&treeGuessCOM[10].Y_L);
+						COM_X =  nbrDataGet16(&treeGuessCOM[10].X_H,&treeGuessCOM[10].X_L);
+						orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  RVcmd);
 					}
-
-					orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  NORM_TV);
 				}else{
 					changeCOM++;
 				}
+			}
+			if(state == REMOTE){
+				behOutput = behInactive;
+
+				//convrols tv and rv using accelarmotor sensors
+				accX = (((int32)accelerometerGetValue(ACCELEROMETER_X) * ACCEL_IIR_GAIN) + (accX * (100 - ACCEL_IIR_GAIN))) / 100;
+				accY = (((int32)accelerometerGetValue(ACCELEROMETER_Y) * ACCEL_IIR_GAIN) + (accY * (100 - ACCEL_IIR_GAIN))) / 100;
+				accX = deadzone(accX, ACCEL_DEAD_ZONE);
+				accY = deadzone(accY, ACCEL_DEAD_ZONE);
+
+				int sc = 7;			//How fast we want the TV to be
+				TVcmd = -accX/sc;
+				RVcmd = -accY/sc;
+				if (abs(TVcmd) < TV_MIN) {			//Minimum TV
+					if(TVcmd > 0) {
+						TVcmd = TV_MIN;
+					} else {
+						TVcmd = -TV_MIN;
+					}
+				}
+
+				comBlue = 0;			//Tells robot to grip, moves SEEKER bot to GRIPPING
+				comRed = 0;				//Tells robot to release object, moves all robots from MOVE_OBJ to RELEASE mode
+				comGreen = 0;				//Sends comand to rotate based on TVcmd as rotational speed/direction
+				if (buttonsGet(BUTTON_BLUE) && bounceBlue) {
+					comBlue = 1;
+					bounceBlue = 0;
+				}
+				if (buttonsGet(BUTTON_RED) && bounceRed) {
+					comRed = 1;
+					bounceRed = 0;
+				}
+				if (buttonsGet(BUTTON_GREEN) && bounceGreen) {
+					comGreen = 1;
+					bounceGreen = 0;
+				}
+
+				if (!buttonsGet(BUTTON_BLUE)) {
+					bounceBlue = 1;
+				}
+				if (!buttonsGet(BUTTON_RED)) {
+					bounceRed = 1;
+				}
+				if (!buttonsGet(BUTTON_GREEN)) {
+					bounceGreen = 1;
+				}
+
+				//Sends commands over radio
+				sprintf(radioMessageTX.command.data,"%d,%d,%d,%d,%d",TVcmd, RVcmd, comBlue, comRed, comGreen);
+				radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessageTX);
+				//cprintf("TVcmd %d RVcmd %d\n", TVcmd, RVcmd);
 			}
 
 			/*** FINAL STUFF ***/

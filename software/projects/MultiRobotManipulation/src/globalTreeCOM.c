@@ -15,7 +15,7 @@
 
 void creatGlobalTreeCOMList(PosistionCOM * posListPtr){
 	int i;
-	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE; i++){
+	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE + 1; i++){
 		nbrDataCreate16(&posListPtr[i].X_H,&posListPtr[i].X_L,"X_H", "X_L", 0);
 		nbrDataCreate16(&posListPtr[i].Y_H,&posListPtr[i].Y_L,"Y_H", "Y_L", 0);
 	}
@@ -52,12 +52,10 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 				x = nbrDataGetNbr16(&posListPtr[j].X_H,&posListPtr[j].X_L,nbrPtr);
 				y = nbrDataGetNbr16(&posListPtr[j].Y_H,&posListPtr[j].Y_L,nbrPtr);
 
-				//if(printNow){rprintf("ID %d TrID %d J%d - Nbr %d: X%d Y%d\n", roneID, nbrDataGetNbr(&(globalRobotListPtr.list[j].ID),nbrPtr), j, nbrGetID(nbrPtr), x,y);}
-
 				xprime = x*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				x = xprime;
-				switch(roneID){
+				/*switch(roneID){
 				case 53:{
 					switch(nbrGetID(nbrPtr)){
 						case 42:{
@@ -128,13 +126,12 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 					}
 					break;
 				}
-				}
+				}*/
 				y = yprime + Range;
 
 				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 				yprime = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 
-				//if(printNow){rprintf("Nbr %d: O%d B%d X''%d Y''%d XCOM%d YCOM%d\n",nbrGetID(nbrPtr),nbrOrient,nbrBear,x,y, xprime,yprime);}
 				xtot +=  xprime;
 				ytot +=  yprime;
 				wieght++;
@@ -148,7 +145,57 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 			int16 yave = ytot/wieght;
 			nbrDataSet16(&posListPtr[j].X_H,&posListPtr[j].X_L,xave);
 			nbrDataSet16(&posListPtr[j].Y_H,&posListPtr[j].Y_L,yave);
-			//if(printNow){rprintf("TrID %d XA %d YA %d\n", nbrDataGet(&(globalRobotList.list[j].ID)),xave,yave);}
+			//rprintf("TrID %d XA %d YA %d\n", nbrDataGet(&(globalRobotList.list[j].ID)),xave,yave);
+		}
+	}
+
+	//Create Pivot Tree
+
+	uint8 lowestTreeID = nbrDataGet(&globalRobotList.list[0].ID);
+	uint8 lowestPivotHops = 0;
+	uint8 lowestPivotParent = 0;
+	if(lowestTreeID == roneID){
+		nbrDataSet16(&posListPtr[10].X_H,&posListPtr[10].X_L,0);
+		nbrDataSet16(&posListPtr[10].Y_H,&posListPtr[10].Y_L,0);
+	} else{
+		uint8 pivotHops;
+		for (i = 0; i < nbrList.size; i++){
+			nbrPtr = nbrList.nbrs[i];
+			if(lowestTreeID == nbrGetID(nbrPtr)){
+				int32 nbrBear = nbrGetBearing(nbrPtr);
+				int16 pivot_X = Range * sinMilliRad(nbrBear);
+				int16 pivot_Y = Range * cosMilliRad(nbrBear);
+
+				nbrDataSet16(&posListPtr[10].X_H,&posListPtr[10].X_L,pivot_X);
+				nbrDataSet16(&posListPtr[10].Y_H,&posListPtr[10].Y_L,pivot_Y);
+				rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,nbrGetID(nbrPtr),0);
+
+				return;
+			}
+			pivotHops = nbrDataGetNbr(&(globalRobotList.list[0].Hops), nbrPtr);
+			if((lowestPivotHops == 0) || (pivotHops<lowestPivotHops) || ( (pivotHops==lowestPivotHops) && (lowestPivotParent < nbrGetID(nbrPtr)))){
+				int16 x,y,xprime,yprime;
+				nbrPtr = nbrListGetNbr(&nbrList, i);
+				int32 nbrOrient = nbrGetOrientation(nbrPtr);
+				int32 nbrBear = nbrGetBearing(nbrPtr);
+				lowestPivotParent = nbrGetID(nbrPtr);
+				lowestPivotHops = pivotHops;
+				rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,lowestPivotParent,lowestPivotHops);
+				x = nbrDataGetNbr16(&posListPtr[10].X_H,&posListPtr[10].X_L,nbrPtr);
+				y = nbrDataGetNbr16(&posListPtr[10].Y_H,&posListPtr[10].Y_L,nbrPtr);
+
+				xprime = x*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
+				yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
+				x = xprime;
+
+				y = yprime + Range;
+
+				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+				yprime = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+
+				nbrDataSet16(&posListPtr[j].X_H,&posListPtr[j].X_L,xprime);
+				nbrDataSet16(&posListPtr[j].Y_H,&posListPtr[j].Y_L,yprime);
+			}
 		}
 	}
 }
@@ -166,15 +213,15 @@ void orbitGlobalTreePoint(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 	int32 newRv = 0;
 	if(abs(bearing) > 100){
 		if(bearing < 0){
-			newRv = bearing/ 2;
-			behSetTvRv(BehRotate, 0, newRv);
+			newRv = bearing/ 1;
+			behSetTvRv(BehRotate, TV/2, newRv);
 		} else{
-			newRv = bearing/ 2;
-			behSetTvRv(BehRotate, 0, newRv);
+			newRv = bearing/ 1;
+			behSetTvRv(BehRotate, TV/2, newRv);
 		}
 	}else{
 		behSetTvRv(BehRotate, TV, 0);
 	}
-	rprintf("X%d Y%d b%d RV%d\n",COMX,COMY,bearing,newRv);
+	//rprintf("X%d Y%d b%d RV%d\n",COMX,COMY,bearing,newRv);
 
 }
