@@ -103,7 +103,7 @@ void commCommander(void *vargp)
 	char *bufp = buffer;				// Pointer to buffers
 	char *sbufp;
 	struct commInfo *info;				// Information on robot connection
-	struct remoteRobots *rr, *newRR;	// Host info on remote robots
+	struct remoteRobots rr;				// Host info on remote robots
 	struct serialIO sio;				// Robust IO on serial buffer
 
 	/* Get info from argument */
@@ -185,49 +185,30 @@ void commCommander(void *vargp)
 			robots[id].type = HOST;
 			isHost = 1;
 
-			newRR = Malloc(sizeof(struct remoteRobots));
-
 			/* Get Number or robots */
-			if (sscanf(buffer, "rts,%d%s", &newRR->n, rbuffer) < 1) {
-				Free(newRR);
+			if (sscanf(buffer, "rts,%d%s", &rr.n, rbuffer) < 1)
 				continue;
-			}
 
 			/* Handle bad numbers */
-			if (newRR->n > MAXROBOTID || newRR->n < 0) {
-				Free(newRR);
+			if (rr.n > MAXROBOTID || rr.n < 0)
 				continue;
-			}
 
 			/* Get IDs of connected robots */
-			for (i = 0; i < newRR->n; i++) {
-				if (sscanf(rbuffer, ",%d%s", &newRR->ids[i], rbuffer) < 1) {
-					err = 1;
+			for (i = 0; i < rr.n; i++) {
+				if (sscanf(rbuffer, ",%d%s", &rr.ids[i], rbuffer) < 1)
 					break;
-				}
-				if (newRR->ids[i] > MAXROBOTID || newRR->ids[i] < 0) {
-					err = 1;
+
+				if (rr.ids[i] > MAXROBOTID || rr.ids[i] < 0)
 					break;
-				}
-			}
 
-			/* Clean up and ignore if error */
-			if (err) {
-				Free(newRR);
-				continue;
-			}
-
-			/* Mark each robot as active */
-			for (i = 0; i < newRR->n; i++) {
-				rid = newRR->ids[i];
+				rid = rr.ids[i];
 
 				/* Handle bad numbers */
-				if (rid > MAXROBOTID || rid < 0) {
-					err = 1;
+				if (rid > MAXROBOTID || rid < 0)
 					break;
-				}
 
 				mutexLock(&robots[rid].mutex);
+
 				/* Ignore if this is already connected as a local robot */
 				if (robots[rid].hSerial != NULL) {
 					mutexUnlock(&robots[rid].mutex);
@@ -241,18 +222,6 @@ void commCommander(void *vargp)
 
 				mutexUnlock(&robots[rid].mutex);
 			}
-
-			/* Clean up and ignore if error */
-			if (err) {
-				Free(newRR);
-				continue;
-			}
-
-			/* Free old list */
-			if (rr != NULL)
-				Free(rr);
-
-			rr = newRR;
 		}
 
 		/* If we get a data line */
