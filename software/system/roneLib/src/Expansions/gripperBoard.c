@@ -150,7 +150,7 @@ void gripperTask(void* parameters) {
 			break;
 		}
 		}
-		cprintf("State %d Max %d Min %d r %d cs %d gr %d sC %d \n",state, gripper.calibratedMaxAngle,gripper.calibratedMinAngle, gripper.readServo, gripper.currServo, gripper.gripped, servoComplete);
+		//cprintf("State %d Max %d Min %d r %d cs %d gr %d sC %d \n",state, gripper.calibratedMaxAngle,gripper.calibratedMinAngle, gripper.readServo, gripper.currServo, gripper.gripped, servoComplete);
 		/* Update Servo Position */
 		if (!servoComplete)
 			gripperUpdateServo();
