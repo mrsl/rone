@@ -249,7 +249,6 @@ void connectionHandler(void *vargp)
 				break;
 			}
 		}
-
 		/* Extensively use the mutex to prevent all data-races */
 		mutexLock(&robots[id].mutex);
 		/* If there is new data in the robot buffer */
@@ -269,7 +268,11 @@ void connectionHandler(void *vargp)
 			break;
 
 		/* Check if the robot is disconnected. */
-		if (robots[id].blacklisted || !robots[id].up) {
+		if (robots[id].blacklisted) {
+			socketWrite(conn->fd, "Robot ID blacklisted!\r\n", 23);
+			break;
+		}
+		if (!robots[id].up) {
 			socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
 			break;
 		}
