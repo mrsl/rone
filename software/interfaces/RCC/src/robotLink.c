@@ -93,18 +93,15 @@ int initCommCommander(int port)
  */
 void commCommander(void *vargp)
 {
-	int i, j, err;
+	int i, j, n;
 	int id = 0;							// Robot ID
 	int initialized = 0;				// Have we handshaked with the robot?
 	int isHost = 0;						// Is this robot a rprintf host?
 	int rid;							// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
-	char sbuf[BUFFERSIZE + 1];
 	char *bufp = buffer;				// Pointer to buffers
-	char *sbufp;
 	struct commInfo *info;				// Information on robot connection
-	struct remoteRobots rr;				// Host info on remote robots
 	struct serialIO sio;				// Robust IO on serial buffer
 
 	/* Get info from argument */
@@ -119,17 +116,17 @@ void commCommander(void *vargp)
 	/* Manage connection indefinitely */
 	for (;;) {
 		/* Read a line */
-		if ((err = serialReadline(&sio, bufp, BUFFERSIZE)) < 0) {
+		if ((n = serialReadline(&sio, bufp, BUFFERSIZE)) < 0) {
 			if (verbose)
 				fprintf(stderr, "S%02d: Serial read error\n", id);
 			break;
-		} else if (err == 0) {
+		} else if (n == 0) {
 			continue;
 		}
 
 		/* Read in more data if we haven't completed a line */
-		if (bufp[err - 1] != '\n') {
-			bufp += err;
+		if (bufp[n - 1] != '\n') {
+			bufp += n;
 			continue;
 		} else {
 			bufp = buffer;
@@ -139,30 +136,30 @@ void commCommander(void *vargp)
 		if (!initialized) {
 			/* Parse in hex data of reverse endianness from the robots */
 			if (strncmp(buffer, "rr", 2) == 0) {
-				sbufp = buffer + 3;
+				bufp = buffer + 3;
 				/* Get the two arguments */
 				for (i = 0; i < 2; i++) {
 					j = 0;
-					while (*sbufp != ',') {
-						if (*sbufp == '\r' && *(sbufp + 1) == '\n') {
-							sbuf[j] = '\0';
+					while (*bufp != ',') {
+						if (*bufp == '\r' && *(bufp + 1) == '\n') {
+							rbuffer[j] = '\0';
 							break;
 						} else if (j == SBUFSIZE) {
-							sbuf[j] = '\0';
+							rbuffer[j] = '\0';
 							break;
 						}
-						sbuf[j] = *sbufp;
+						rbuffer[j] = *bufp;
 
 						j++;
-						sbufp++;
+						bufp++;
 					}
-					sbufp++;
+					bufp++;
 
 					/* Convert hex number in buffer to usable values */
 					if (i == 0)
-						id = convertASCIIHexWord(sbuf);
+						id = convertASCIIHexWord(rbuffer);
 					else
-						isHost = convertASCIIHexWord(sbuf);
+						isHost = convertASCIIHexWord(rbuffer);
 				}
 
 				if (verbose)
@@ -170,15 +167,15 @@ void commCommander(void *vargp)
 
 				/* Initializing */
 				initialized = 1;
-				activateRobot(id, info, isHost);
+				activateRobot(id, info);
+				if (isHost)
+					robots[id].type = HOST;
 				bufp = buffer;
 			}
 			continue;
 		}
 		/* Insert the read line into robot's buffer. */
 		insertBuffer(id, buffer);
-
-		err = 0;
 
 		/* If we get a status line from a host robot. */
 		if (strncmp(buffer, "rts", 3) == 0) {
@@ -187,22 +184,17 @@ void commCommander(void *vargp)
 			isHost = 1;
 
 			/* Get Number or robots */
-			if (sscanf(buffer, "rts,%d%s", &rr.n, rbuffer) < 1)
+			if (sscanf(buffer, "rts,%d%s", &n, rbuffer) < 1)
 				continue;
 
 			/* Handle bad numbers */
-			if (rr.n > MAXROBOTID || rr.n < 0)
+			if (n > MAXROBOTID || n < 0)
 				continue;
 
 			/* Get IDs of connected robots */
-			for (i = 0; i < rr.n; i++) {
-				if (sscanf(rbuffer, ",%d%s", &rr.ids[i], rbuffer) < 1)
+			for (i = 0; i < n; i++) {
+				if (sscanf(rbuffer, ",%d%s", &rid, rbuffer) < 1)
 					break;
-
-				if (rr.ids[i] > MAXROBOTID || rr.ids[i] < 0)
-					break;
-
-				rid = rr.ids[i];
 
 				/* Handle bad numbers */
 				if (rid > MAXROBOTID || rid < 0)
@@ -232,21 +224,34 @@ void commCommander(void *vargp)
 				bufp = buffer;
 				continue;
 			}
-			*bufp = "\0";
+			*bufp = '\0';
 
 			/* Scan ID and data */
-			if (sscanf(buffer, "rtd,%d", &rid) < 1)
+			if (sscanf(buffer, "rtd,%d", &rid) < 1) {
+				bufp = buffer;
 				continue;
+			}
+
+			if (rid > MAXROBOTID || rid < 0) {
+				bufp = buffer;
+				continue;
+			}
+
+			mutexLock(&robots[rid].mutex);
 
 			/* If we aren't already connected via serial, put data in buffer. */
 			if (robots[rid].hSerial == NULL) {
 				/* Insert parsed line into remote robot's buffer. */
-				insertBuffer(rid, bufp + 1);
 				robots[rid].type = REMOTE;
 				robots[rid].host = id;
 
-				bufp = buffer;
+				mutexUnlock(&robots[rid].mutex);
+
+				insertBuffer(rid, bufp + 1);
+			} else {
+				mutexUnlock(&robots[rid].mutex);
 			}
+			bufp = buffer;
 		}
 	}
 	robots[id].hSerial = NULL;
@@ -273,17 +278,14 @@ void commCommander(void *vargp)
 /**
  * Initialize a robot buffer
  */
-void activateRobot(int robotID, struct commInfo *info, int isHost)
+void activateRobot(int robotID, struct commInfo *info)
 {
 	mutexLock(&robots[robotID].mutex);
 
 	commToNum[info->port] = robotID;
 	robots[robotID].port = info->port;
 
-	if (isHost)
-		robots[robotID].type = HOST;
-	else
-		robots[robotID].type = LOCAL;
+	robots[robotID].type = LOCAL;
 
 	robots[robotID].hSerial = info->hSerial;
 	robots[robotID].up = clock();

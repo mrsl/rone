@@ -198,6 +198,7 @@ void connectionHandler(void *vargp)
 		mutexLock(&robots[id].mutex);
 		err = robots[id].up;
 		bl = robots[id].blacklisted;
+		head = robots[id].head;
 		mutexUnlock(&robots[id].mutex);
 
 		if (err && !bl) {
@@ -222,9 +223,6 @@ void connectionHandler(void *vargp)
 
 	if (verbose)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
-
-	/* Feed new data from the robot to the client until close */
-	head = robots[id].head;
 
 	/* Initialize stuff for select */
 	FD_ZERO(&read_set);

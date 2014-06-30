@@ -42,13 +42,6 @@ struct commCon
 	CRITICAL_SECTION mutex;						// Mutex for this robot
 };
 
-/* Data on the remote robots attached */
-struct remoteRobots
-{
-	int n;					// Number of remote robots
-	int ids[MAXROBOTID];	// IDs of remote robots
-};
-
 /* Array of robot buffers */
 extern struct commCon robots[MAXROBOTID];
 
@@ -56,7 +49,7 @@ void initRobots();
 void commManager(void *vargp);
 int initCommCommander(int port);
 void commCommander(void *vargp);
-void activateRobot(int robotID, struct commInfo *info, int isHost);
+void activateRobot(int robotID, struct commInfo *info);
 void insertBuffer(int robotID, char *buffer);
 
 #endif

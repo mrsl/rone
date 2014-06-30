@@ -491,7 +491,6 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glEnd();
 		glPopMatrix();
 	}
-
 	glPopMatrix();
 }
 
