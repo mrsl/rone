@@ -212,6 +212,9 @@ void connectionHandler(void *vargp)
 
 	/* Close if the connection broke */
 	if (id == 0) {
+		if (verbose)
+			printf("T%02d: [%d] Done!\n", tid, conn->n);
+
 		Close(conn->fd);
 		Free(conn);
 		return;
@@ -256,7 +259,6 @@ void connectionHandler(void *vargp)
 				break;
 			}
 			mutexUnlock(&robots[id].mutex);
-
 			if ((err = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
 				break;
 
@@ -267,11 +269,7 @@ void connectionHandler(void *vargp)
 			break;
 
 		/* Check if the robot is disconnected. */
-		if (robots[id].blacklisted) {
-			socketWrite(conn->fd, "Robot ID blacklisted!\r\n", 23);
-			break;
-		}
-		if (!robots[id].up) {
+		if (robots[id].blacklisted || !robots[id].up) {
 			socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
 			break;
 		}

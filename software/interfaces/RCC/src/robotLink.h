@@ -37,7 +37,7 @@ struct commCon
 		int port;								// If local, the COM port
 		int host;								// If remote, the host robot
 	};
-	char buffer[NUMBUFFER][BUFFERSIZE + 13];	// Rotating buffer array
+	char buffer[NUMBUFFER][BUFFERSIZE + 14];	// Rotating buffer array
 	int head;									// Head of buffer
 	CRITICAL_SECTION mutex;						// Mutex for this robot
 };

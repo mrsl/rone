@@ -137,7 +137,7 @@ void commCommander(void *vargp)
 		/* Loop until ID and host data has been obtained from the robot */
 		if (!initialized) {
 			/* Parse in hex data of reverse endianness from the robots */
-			if (buffer[0] == 'r' && buffer[1] == 'r') {
+			if (strncmp(buffer, "rr", 2) == 0) {
 				sbufp = buffer + 3;
 				/* Get the two arguments */
 				for (i = 0; i < 2; i++) {
@@ -180,7 +180,7 @@ void commCommander(void *vargp)
 		err = 0;
 
 		/* If we get a status line from a host robot. */
-		if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 's') {
+		if (strncmp(buffer, "rts", 3) == 0) {
 			/* This robot is a host robot. */
 			robots[id].type = HOST;
 			isHost = 1;
@@ -225,7 +225,7 @@ void commCommander(void *vargp)
 		}
 
 		/* If we get a data line */
-		if (buffer[0] == 'r' && buffer[1] == 't' && buffer[2] == 'd') {
+		if (strncmp(buffer, "rtd", 3) == 0) {
 			/* Scan ID and data */
 			if (sscanf(buffer, "rtd,%d", &rid) < 1)
 				continue;
@@ -302,7 +302,7 @@ void insertBuffer(int robotID, char *buffer)
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
 
-	sprintf(robots[robotID].buffer[robots[robotID].head], "[%10ld] %s", clock(),
+	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s", clock(),
 		buffer);
 
 	/* Unlock the robot buffer */
