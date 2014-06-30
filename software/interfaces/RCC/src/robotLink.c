@@ -46,7 +46,8 @@ void commManager(void *vargp)
 			mutexLock(&robots[i].mutex);
 
 			/* If a remote robot has been inactive for a while, deactivate. */
-			if (robots[i].up + GRACETIME < clock() && robots[i].type == REMOTE) {
+			if (robots[i].up + GRACETIME < clock() &&
+				robots[i].type == REMOTE) {
 				robots[i].up = 0;
 				robots[i].head = 0;
 			}
