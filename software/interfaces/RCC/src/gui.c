@@ -306,22 +306,18 @@ void drawRobots(GLenum mode)
 		ls = SCALE_LARGE;
 		lx = ROBOT_START_LX;
 		ly = ROBOT_START_LY;
-	}
-	if (numLocal > 12) {
+	} else if (numLocal > 12) {
 		ls = SCALE_MED;
 		lx = ROBOT_START_LX + ROBOT_RADIUS / ls / 2;
 		ly = ROBOT_START_LY + ROBOT_RADIUS / ls / 2;
-	}
-	if (numLocal > 24) {
+	} else if (numLocal > 24) {
 		ls = SCALE_SMALL;
 		lx = ROBOT_START_LX;
 		ly = ROBOT_START_LY + ROBOT_RADIUS;
-	}
-	if (numLocal > 44) {
+	} else if (numLocal > 44) {
 		ls = SCALE_TINY;
 		lx = ROBOT_START_LX;
 		ly = ROBOT_START_LY + ROBOT_RADIUS + ROBOT_RADIUS / ls;
-
 	}
 	sx = lx;
 
@@ -346,22 +342,18 @@ void drawRobots(GLenum mode)
 		rs = SCALE_LARGE;
 		rx = ROBOT_START_RX;
 		ry = ROBOT_START_RY;
-	}
-	if (numRemote > 12) {
+	} else if (numRemote > 12) {
 		rs = SCALE_MED;
 		rx = ROBOT_START_RX + ROBOT_RADIUS / rs / 2;
 		ry = ROBOT_START_RY + ROBOT_RADIUS / rs / 2;
-	}
-	if (numRemote > 24) {
+	} else if (numRemote > 24) {
 		rs = SCALE_SMALL;
 		rx = ROBOT_START_RX;
 		ry = ROBOT_START_RY + ROBOT_RADIUS;
-	}
-	if (numRemote > 44) {
+	} else if (numRemote > 44) {
 		rs = SCALE_TINY;
 		rx = ROBOT_START_RX;
 		ry = ROBOT_START_RY + ROBOT_RADIUS + ROBOT_RADIUS / rs;
-
 	}
 	sx = rx;
 
@@ -469,11 +461,10 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 			glTranslatef(0, ROBOT_RADIUS, 0);
 			textSetSize(TEXT_MED);
-
 		} else if (scale == SCALE_MED) {
 			textSetSize(TEXT_MED);
-			glTranslatef(0, ROBOT_RADIUS * (1. / scale - 1) + 1.2, 0);
 
+			glTranslatef(0, ROBOT_RADIUS * (1. / scale - 1) + 1.2, 0);
 		} else if (scale == SCALE_SMALL) {
 			textSetSize(TEXT_SMALL);
 

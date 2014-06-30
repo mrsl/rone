@@ -42,7 +42,8 @@ uint16 convertASCIIHexWord(char *val)
  */
 void makeThread(void *function, void *args)
 {
-	CloseHandle((HANDLE) _beginthread(function, 0, args));
+	//CloseHandle((HANDLE) _beginthread(function, 0, args));
+	_beginthread(function, 0, args);
 }
 
 /**
