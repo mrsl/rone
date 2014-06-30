@@ -27,7 +27,7 @@
 #include "robotLink.h"
 #include "gui.h"
 
-extern int port;
-extern int verbose;
+extern int port;	// Port we are listening on
+extern int verbose;	// Verbose output?
 
 #endif

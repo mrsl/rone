@@ -5,6 +5,9 @@
  */
 #include "rcc.h"
 
+/**
+ * Convert hex values from the robot into the correct endianness
+ */
 uint8 convertASCIIHexNibble(char val)
 {
 	if (val >= '0' && val <= '9')
@@ -34,10 +37,15 @@ uint16 convertASCIIHexWord(char *val)
 	return (temp);
 }
 
+void makeThread(void *function, void *args)
+{
+	CloseHandle((HANDLE)_beginthread(function, 0, args));
+}
+
 /**
  * Write data to a file handle
  */
-void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
+void hprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 {
 	DWORD dwBytesWritten;
 	char text[BUFFERSIZE];
@@ -47,7 +55,7 @@ void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 		return;
 
 	va_start(ap, fmt);
-	vsprintf(text, fmt, ap);
+		vsprintf(text, fmt, ap);
 	va_end(ap);
 
 	WriteFile(*hSerialPtr, text, strlen(text), &dwBytesWritten, NULL);
@@ -66,7 +74,7 @@ void Error(const char *fmt, ...)
 			return;
 
 		va_start(ap, fmt);
-		vsprintf(text, fmt, ap);
+			vsprintf(text, fmt, ap);
 		va_end(ap);
 
 		fprintf(stderr, "ERROR: %s\n", text);
@@ -109,17 +117,17 @@ void Free(void *p)
 	free(p);
 }
 
-void mutexLock(pthread_mutex_t *m)
+void mutexLock(CRITICAL_SECTION *m)
 {
 	EnterCriticalSection(m);
 }
 
-void mutexUnlock(pthread_mutex_t *m)
+void mutexUnlock(CRITICAL_SECTION *m)
 {
 	LeaveCriticalSection(m);
 }
 
-void mutexInit(pthread_mutex_t *m)
+void mutexInit(CRITICAL_SECTION *m)
 {
 	InitializeCriticalSection(m);
 }

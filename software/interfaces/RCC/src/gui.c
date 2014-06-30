@@ -94,7 +94,7 @@ void processHits(GLint hits, GLuint buffer[])
 	int i;
 	unsigned int j;
 	GLuint names, *ptr;
-	int robotID;
+	int robotID = 0;
 
 	if (hits == 0)
 		return;
@@ -116,6 +116,9 @@ void processHits(GLint hits, GLuint buffer[])
 			ptr++;
 		}
 
+		if (robotID == 0)
+			continue;
+
 		/* Do different things based on which mod keys are being held */
 		switch (glutGetModifiers())
 		{
@@ -136,13 +139,14 @@ void processHits(GLint hits, GLuint buffer[])
 			}
 			break;
 		}
-		/* Alt-click to make robot into a host */
+		/* Alt-Click to make robot into a host */
 		case (4): {
 			if (robots[robotID].type == LOCAL && robots[robotID].hSerial != NULL
 				&& !robots[robotID].blacklisted)
-				fcprintf(robots[robotID].hSerial, "rt\n");
+				hprintf(robots[robotID].hSerial, "rt\n");
 			break;
 		}
+		/* Ctrl-Alt-Click to open a direct connection to secureCRT */
 		case (6): {
 			if (robots[robotID].type != REMOTE &&
 				robots[robotID].hSerial != NULL && !robots[robotID].blacklisted)
@@ -197,7 +201,7 @@ int openClientConnection(int robotID)
 		return (-1);
 
 	/* Output the script to the temporary file */
-	fcprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
+	hprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
 
 	if (!CloseHandle(hTempFile))
 		return (-1);
@@ -264,14 +268,14 @@ void drawRobots(GLenum mode)
 {
 	int i;
 
-	GLfloat lx; /* Local robot x position */
-	GLfloat ly; /* Local robot y position */
-	GLfloat rx; /* Remote robot x position */
-	GLfloat ry; /* Remote robot y position */
-	GLfloat sx; /* Starting x position */
+	GLfloat lx; // Local robot x position
+	GLfloat ly; // Local robot y position
+	GLfloat rx; // Remote robot x position
+	GLfloat ry; // Remote robot y position
+	GLfloat sx; // Starting x position
 
-	GLfloat ls = SCALE_LARGE; /* Local robot scale factor */
-	GLfloat rs = SCALE_LARGE; /* Remote robot scale factor */
+	GLfloat ls = SCALE_LARGE; // Local robot scale factor
+	GLfloat rs = SCALE_LARGE; // Remote robot scale factor
 
 	int numLocal = 0;
 	int numRemote = 0;
@@ -514,10 +518,9 @@ void timerEnableDraw(int value)
 		textPrintf("%s - %s:%d", NAME, ipAddress, port);
 
 		glTranslatef(-TITLE_POS_X, -TEXT_LARGE / 2, 0);
-
 		glBegin(GL_LINES);
-		glVertex2f(-GUI_WIDTH, 0);
-		glVertex2f(GUI_WIDTH, 0);
+			glVertex2f(-GUI_WIDTH, 0);
+			glVertex2f(GUI_WIDTH, 0);
 		glEnd();
 
 		glTranslatef(TITLE_POS_X, -TEXT_MED, 0);
@@ -530,8 +533,8 @@ void timerEnableDraw(int value)
 		glTranslatef(0, -TEXT_LARGE, 0);
 		glColor3fv(color_black);
 		glBegin(GL_LINES);
-		glVertex2f(-GUI_WIDTH, 0);
-		glVertex2f(GUI_WIDTH, 0);
+			glVertex2f(-GUI_WIDTH, 0);
+			glVertex2f(GUI_WIDTH, 0);
 		glEnd();
 
 		glTranslatef(TITLE_POS_X, -TEXT_MED, 0);

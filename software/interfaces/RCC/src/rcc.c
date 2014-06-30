@@ -11,12 +11,11 @@ int verbose = 0;
 /**
  * Main function
  */
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
 	int i;
 	int err = 0;
-	port = 8000; /* Use port 8000 as default */
+	port = 8000; // Use port 8000 as default
 
 	/* Parse command line arguments */
 	for (i = 1; i < argc; i++) {
@@ -24,7 +23,7 @@ main(int argc, char **argv)
 			verbose = 1;
 			continue;
 		}
-	    if (i + 1 != argc)    {
+		if (i + 1 != argc) {
 			if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--port") == 0) {
 				if (sscanf(argv[i + 1], "%d", &port) != 1) {
 					err = 1;
@@ -32,8 +31,8 @@ main(int argc, char **argv)
 				}
 				continue;
 			}
-	    }
-	    err = 1;
+		}
+		err = 1;
 		break;
 	}
 
@@ -47,7 +46,7 @@ main(int argc, char **argv)
 
 	/* Initialize robot buffers */
 	initRobots();
-	initCommWatch();
+	makeThread(&commWatch, 0);
 
 	/* Create web server */
 	if (createServer(port) < 0)

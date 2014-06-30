@@ -16,53 +16,61 @@
  * The integer data types are necessary for proper conversion between
  * signed and unsigned data packets.
  */
-uint8 convertASCIIHexNibble(char val) {
-       if (val >= '0' && val <= '9') {
-               return (val - '0');
-       }
-       else if (val >= 'A' && val <= 'F') {
-               return (val - 'A' + 10);
-       }
-       else if (val >= 'a' && val <= 'f') {
-               return (val - 'a' + 10);
-       }
-       else {
-               return 0;
-       }
+uint8 convertASCIIHexNibble(char val)
+{
+	if (val >= '0' && val <= '9') {
+		return (val - '0');
+	} else if (val >= 'A' && val <= 'F') {
+		return (val - 'A' + 10);
+	} else if (val >= 'a' && val <= 'f') {
+		return (val - 'a' + 10);
+	} else {
+		return 0;
+	}
 }
 
-uint8 convertASCIIHexByte(char *val) {
-       uint8 temp;
-       temp = convertASCIIHexNibble(*val) * 16;
-       temp = temp + convertASCIIHexNibble(*(val + 1));
-       return temp;
+uint8 convertASCIIHexByte(char *val)
+{
+	uint8 temp;
+	temp = convertASCIIHexNibble(*val) * 16;
+	temp = temp + convertASCIIHexNibble(*(val + 1));
+	return temp;
 }
 
-uint16 convertASCIIHexWord(char *val) {
-       uint16 temp;
+uint16 convertASCIIHexWord(char *val)
+{
+	uint16 temp;
 
-       temp = (uint16)(convertASCIIHexByte(val)) * 256;
-       temp = temp + (uint16)(convertASCIIHexByte(val + 2));
-       return temp;
+	temp = (uint16) (convertASCIIHexByte(val)) * 256;
+	temp = temp + (uint16) (convertASCIIHexByte(val + 2));
+	return temp;
 }
 
-uint32 convertASCIIHexLong(char *val) {
-       uint32 temp;
-       temp = (uint32)convertASCIIHexWord(val) * 65536;
-       temp = temp + (uint32)convertASCIIHexWord(val + 4);
-       return temp;
+uint32 convertASCIIHexLong(char *val)
+{
+	uint32 temp;
+	temp = (uint32) convertASCIIHexWord(val) * 65536;
+	temp = temp + (uint32) convertASCIIHexWord(val + 4);
+	return temp;
 }
 
-int convertASCIIBool(char val) {
-	switch (val) {
+int convertASCIIBool(char val)
+{
+	switch (val)
+	{
 	case '0':
-	case ' ': {	return 0; }
-	default: { return 1; }
+	case ' ': {
+		return 0;
+	}
+	default: {
+		return 1;
+	}
 	}
 }
 
 /* Initialize members of the output data to zero values */
-void outputInit(outputData *out) {
+void outputInit(outputData *out)
+{
 	int i;
 	out->id = 0;
 	memset(out->radioMsg, 0, LEN_TXT_RADIO);
@@ -102,7 +110,8 @@ void outputInit(outputData *out) {
 /*
  * Parse a serial message.
  */
-void parseMsg(char *chrPtr, guiCmdData *command, int size) {
+void parseMsg(char *chrPtr, guiCmdData *command, int size)
+{
 	int i, j;
 	/* Check that it's a sensor value command. */
 	if (chrPtr[0] != 's' || chrPtr[1] != 'v') {
@@ -125,7 +134,7 @@ void parseMsg(char *chrPtr, guiCmdData *command, int size) {
 			/* When the end-line termination sequence is reached,
 			 * append a null and quit the function
 			 */
-			if (*chrPtr == '\r' && *(chrPtr+1) == '\n') {
+			if (*chrPtr == '\r' && *(chrPtr + 1) == '\n') {
 				command->arg[i][j] = '\0';
 				return;
 			} else if (j == ARG_SIZE) {
@@ -148,14 +157,16 @@ void parseMsg(char *chrPtr, guiCmdData *command, int size) {
 /*
  * Execute a robot command, updating the values in the corresponding data.
  */
-void executeCmd(guiCmdData *command, outputData *out) {
+void executeCmd(guiCmdData *command, outputData *out)
+{
 	int i;
 	/*
 	 * Clear the IR and radio structures so they don't display the last
 	 * received message even if it wasn't sent this round.
 	 */
 
-	switch (command->cmd) {
+	switch (command->cmd)
+	{
 	case DAT_ID: {
 		out->id = convertASCIIHexWord(command->arg[0]);
 		break;
@@ -169,13 +180,16 @@ void executeCmd(guiCmdData *command, outputData *out) {
 	case DAT_GYRO: {
 		/* Put the new input through a differential so we get a smooth transition.*/
 		if (smoothing) {
-			differential((int16)convertASCIIHexWord(command->arg[0]), &out->gyro.x, ALPHA);
-			differential((int16)convertASCIIHexWord(command->arg[1]), &out->gyro.y, ALPHA);
-			differential((int16)convertASCIIHexWord(command->arg[2]), &out->gyro.z, ALPHA);
+			differential((int16) convertASCIIHexWord(command->arg[0]),
+				&out->gyro.x, ALPHA);
+			differential((int16) convertASCIIHexWord(command->arg[1]),
+				&out->gyro.y, ALPHA);
+			differential((int16) convertASCIIHexWord(command->arg[2]),
+				&out->gyro.z, ALPHA);
 		} else {
-			out->gyro.x = (int16)convertASCIIHexWord(command->arg[0]);
-			out->gyro.y = (int16)convertASCIIHexWord(command->arg[1]);
-			out->gyro.z = (int16)convertASCIIHexWord(command->arg[2]);
+			out->gyro.x = (int16) convertASCIIHexWord(command->arg[0]);
+			out->gyro.y = (int16) convertASCIIHexWord(command->arg[1]);
+			out->gyro.z = (int16) convertASCIIHexWord(command->arg[2]);
 		}
 		break;
 
@@ -183,19 +197,23 @@ void executeCmd(guiCmdData *command, outputData *out) {
 	case DAT_ACCEL: {
 		/* Put the new input through a differential so we get a smooth transition.*/
 		if (smoothing) {
-			differential((int16)convertASCIIHexWord(command->arg[0]), &out->accelerometer.x, ALPHA);
-			differential((int16)convertASCIIHexWord(command->arg[1]), &out->accelerometer.y, ALPHA);
-			differential((int16)convertASCIIHexWord(command->arg[2]), &out->accelerometer.z, ALPHA);
+			differential((int16) convertASCIIHexWord(command->arg[0]),
+				&out->accelerometer.x, ALPHA);
+			differential((int16) convertASCIIHexWord(command->arg[1]),
+				&out->accelerometer.y, ALPHA);
+			differential((int16) convertASCIIHexWord(command->arg[2]),
+				&out->accelerometer.z, ALPHA);
 		} else {
-			out->accelerometer.x = (int16)convertASCIIHexWord(command->arg[0]);
-			out->accelerometer.y = (int16)convertASCIIHexWord(command->arg[1]);
-			out->accelerometer.z = (int16)convertASCIIHexWord(command->arg[2]);
+			out->accelerometer.x = (int16) convertASCIIHexWord(command->arg[0]);
+			out->accelerometer.y = (int16) convertASCIIHexWord(command->arg[1]);
+			out->accelerometer.z = (int16) convertASCIIHexWord(command->arg[2]);
 		}
 		break;
 	}
 	case DAT_LIGHT: {
 		out->lightSensors[LS_FRONT_LEFT] = convertASCIIHexWord(command->arg[0]);
-		out->lightSensors[LS_FRONT_RIGHT] = convertASCIIHexWord(command->arg[1]);
+		out->lightSensors[LS_FRONT_RIGHT] = convertASCIIHexWord(
+			command->arg[1]);
 		out->lightSensors[LS_BACK_RIGHT] = convertASCIIHexWord(command->arg[2]);
 		out->lightSensors[LS_BACK_LEFT] = convertASCIIHexWord(command->arg[3]);
 
@@ -204,7 +222,8 @@ void executeCmd(guiCmdData *command, outputData *out) {
 	case DAT_ENC: {
 		int encoder = (*command->arg[0] == 'r' ? ENC_RIGHT : ENC_LEFT);
 		out->encoders[encoder].ticks = convertASCIIHexWord(command->arg[1]);
-		out->encoders[encoder].velocity = (int32)(int16)convertASCIIHexWord(command->arg[2]);
+		out->encoders[encoder].velocity = (int32) (int16) convertASCIIHexWord(
+			command->arg[2]);
 		break;
 	}
 	case DAT_RADIO: {
@@ -224,17 +243,17 @@ void executeCmd(guiCmdData *command, outputData *out) {
 
 		i = convertASCIIHexByte(command->arg[0]);
 		id = convertASCIIHexByte(command->arg[1]);
-		bearing = 180. / PI * (int16)convertASCIIHexWord(command->arg[2]) *
-			bearingDir / 1000.;
-		orientation = 180. / PI * (int16)convertASCIIHexWord(command->arg[3]) *
-			orientationDir / 1000.;
-		range = (int16)convertASCIIHexWord(command->arg[4]);
+		bearing = 180. / PI * (int16) convertASCIIHexWord(command->arg[2])
+			* bearingDir / 1000.;
+		orientation = 180. / PI * (int16) convertASCIIHexWord(command->arg[3])
+			* orientationDir / 1000.;
+		range = (int16) convertASCIIHexWord(command->arg[4]);
 
 		if (smoothing) {
 			if (id == out->nbrs[i].id) {
 				differentiala(bearing, &out->nbrs[i].bearing);
 				differentiala(orientation, &out->nbrs[i].orientation);
-				differentialf(range, &out->nbrs[i].range,  ALPHA);
+				differentialf(range, &out->nbrs[i].range, ALPHA);
 			}
 		} else {
 			out->nbrs[i].id = id;
@@ -260,16 +279,16 @@ void executeCmd(guiCmdData *command, outputData *out) {
 		out->gripper.gripped = convertASCIIHexByte(command->arg[2]);
 		break;
 	}
-	/*
-	case DAT_BATT: {
-		out->batteryVoltage = convertASCIIHexByte(command->arg[0]);
-		break;
-	}
-	case DAT_EXP: {
-		out->expansionVoltage = convertASCIIHexByte(command->arg[0]);
-		break;
-	}
-	*/
+		/*
+		 case DAT_BATT: {
+		 out->batteryVoltage = convertASCIIHexByte(command->arg[0]);
+		 break;
+		 }
+		 case DAT_EXP: {
+		 out->expansionVoltage = convertASCIIHexByte(command->arg[0]);
+		 break;
+		 }
+		 */
 	default: {
 		break;
 	}
@@ -279,14 +298,15 @@ void executeCmd(guiCmdData *command, outputData *out) {
 /*
  * Update output data from serial messages from the robot.
  */
-int updateOutput(outputData *output) {
-	char message[MSG_SIZE] = {0};
+int updateOutput(outputData *output)
+{
+	char message[MSG_SIZE] = { 0 };
 	int gotNewData = 0;
 
 	int x;
 
-	while((x = serialMessageGet(message, MSG_SIZE)) > 0) {
-		guiCmdData cmd = {0};
+	while ((x = serialMessageGet(message, MSG_SIZE)) > 0) {
+		guiCmdData cmd = { 0 };
 		parseMsg(message, &cmd, x);
 		executeCmd(&cmd, output);
 		gotNewData = 1;

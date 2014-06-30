@@ -1,1 +1,0 @@
-The board is 2 inches by 2 inches. The outline is on mechanical layer 3.

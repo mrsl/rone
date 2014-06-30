@@ -25,7 +25,7 @@ void initRobots()
 		mutexInit(&robots[i].mutex);
 	}
 
-	_beginthread(&commManager, 0, 0);
+	makeThread(&commManager, 0);
 }
 
 /**
@@ -54,7 +54,7 @@ void commManager(void *vargp)
 			/* Ping all host robots for updated remote robots. */
 			if (robots[i].up && robots[i].type == HOST
 				&& !robots[i].blacklisted)
-				fcprintf(robots[i].hSerial, "rt\n");
+				hprintf(robots[i].hSerial, "rt\n");
 
 			mutexUnlock(&robots[i].mutex);
 		}
@@ -82,7 +82,7 @@ int initCommCommander(int port)
 	info->hSerial = hSerial;
 	info->port = port;
 
-	_beginthread(&commCommander, 0, info);
+	makeThread(&commCommander, info);
 
 	return (0);
 }
@@ -99,7 +99,7 @@ void commCommander(void *vargp)
 	int rid;							// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
-	char sbuf[SBUFSIZE];
+	char sbuf[BUFFERSIZE + 1];
 	char *bufp = buffer;				// Pointer to buffers
 	char *sbufp;
 	struct commInfo *info;				// Information on robot connection
@@ -110,15 +110,15 @@ void commCommander(void *vargp)
 	info = ((struct commInfo *) vargp);
 
 	/* Query the robot for its id, and if it is a host */
-	fcprintf(info->hSerial, "rr\n");
+	hprintf(info->hSerial, "rr\n");
 
 	/* Initialize robust IO on the serial */
-	serial_readinitb(&sio, info->hSerial);
+	serialInitIO(&sio, info->hSerial);
 
 	/* Manage connection indefinitely */
 	for (;;) {
 		/* Read a line */
-		if ((err = serial_readlineb(&sio, bufp, BUFFERSIZE)) < 0) {
+		if ((err = serialReadline(&sio, bufp, BUFFERSIZE)) < 0) {
 			if (verbose)
 				fprintf(stderr, "S%02d: Serial read error\n", id);
 			break;
@@ -249,7 +249,7 @@ void commCommander(void *vargp)
 			}
 
 			/* Free old list */
-			if (rr)
+			if (rr != NULL)
 				Free(rr);
 
 			rr = newRR;
@@ -284,7 +284,7 @@ void commCommander(void *vargp)
 	if (robots[id].blacklisted) {
 		if (verbose)
 			printf("S%02d: Blacklisted!\n", id);
-		/* If we exited from something else */
+	/* If we exited from something else */
 	} else {
 		if (verbose)
 			printf("S%02d: Done!\n", id);
