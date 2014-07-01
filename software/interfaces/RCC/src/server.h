@@ -6,7 +6,6 @@
 #ifndef SERVER_H_
 #define SERVER_H_
 
-#define NTHREADS				20
 #define LISTENQ					1024
 #define CONNECTIONBUFFERSIZE	64
 #define BUFFERSIZE				8192

@@ -108,7 +108,7 @@ GLvoid textInit(GLvoid)
 /**
  * Output text onto the GUI
  */
-GLvoid textPrintf(const char *fmt, ...)
+GLfloat textPrintf(const char *fmt, ...)
 {
 	unsigned int i;
 	GLfloat length = 0;
@@ -116,10 +116,10 @@ GLvoid textPrintf(const char *fmt, ...)
 	va_list ap;
 
 	if (fmt == NULL)
-		return;
+		return (-1);
 
 	va_start(ap, fmt);
-	vsprintf(text, fmt, ap);
+		vsprintf(text, fmt, ap);
 	va_end(ap);
 
 	for (i = 0; i < strlen(text); i++)
@@ -163,6 +163,8 @@ GLvoid textPrintf(const char *fmt, ...)
 
 		glPopAttrib();
 	glPopMatrix();
+
+	return (length);
 }
 
 /**

@@ -87,6 +87,21 @@ void mouse(int button, int state, int x, int y)
 }
 
 /**
+ * Handles character input
+ */
+//void keyboard(unsigned char key, int x, int y)
+//{
+//	/* Exit on escape key. */
+//	if (key == 27)
+//		exit (0);
+//	else
+//		readChar(key);
+//
+//	/* Update GUI. */
+//	glutPostRedisplay();
+//}
+
+/**
  * Find out which robot was clicked on the GUI
  */
 void processHits(GLint hits, GLuint buffer[])
@@ -482,12 +497,12 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glColor3fv(color_red);
 			glRotatef(45, 0, 0, 1);
 			glBegin(GL_LINES);
-			glVertex2f(-ROBOT_RADIUS / scale, 0);
-			glVertex2f(ROBOT_RADIUS / scale, 0);
+				glVertex2f(-ROBOT_RADIUS / scale, 0);
+				glVertex2f(ROBOT_RADIUS / scale, 0);
 			glEnd();
 			glBegin(GL_LINES);
-			glVertex2f(0, -ROBOT_RADIUS / scale);
-			glVertex2f(0, ROBOT_RADIUS / scale);
+				glVertex2f(0, -ROBOT_RADIUS / scale);
+				glVertex2f(0, ROBOT_RADIUS / scale);
 			glEnd();
 		glPopMatrix();
 	}
@@ -499,6 +514,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
  */
 void timerEnableDraw(int value)
 {
+	GLfloat length;
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	/* Draw title, IP, port, and dividing bar for local robots */
@@ -507,7 +523,11 @@ void timerEnableDraw(int value)
 		glColor3fv(color_black);
 		textSetAlignment(ALIGN_LEFT);
 		textSetSize(TEXT_LARGE);
-		textPrintf("%s - %s:%d", NAME, ipAddress, port);
+		length = textPrintf("%s", NAME);
+		glTranslatef(length + 2.5, 0, 0);
+		textSetSize(TEXT_MED);
+		textPrintf("[%s:%d]", ipAddress, port);
+		glTranslatef(-length - 2.5, 0, 0);
 
 		glTranslatef(-TITLE_POS_X, -TEXT_LARGE / 2, 0);
 		glBegin(GL_LINES);

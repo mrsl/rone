@@ -18,9 +18,6 @@ int createServer(int port)
 	WSADATA wsaData;	// Things for winsock setup
 	WORD version;
 
-	if (verbose)
-		printf("MAS: Thread buffer initialized\n");
-
 	/* Initialize the Windows socket interface */
 	version = MAKEWORD(2, 0);
 	if (WSAStartup(version, &wsaData) != 0)
@@ -262,16 +259,14 @@ void connectionHandler(void *vargp)
 			head = (head + 1) % NUMBUFFER;
 			mutexLock(&robots[id].mutex);
 		}
-		if (err < 0)
-			break;
-
-		/* Check if the robot is disconnected. */
-		if (robots[id].blacklisted) {
-			socketWrite(conn->fd, "Robot ID blacklisted!\r\n", 23);
+		if (err < 0) {
 			break;
 		}
-		if (!robots[id].up) {
+
+		/* Check if the robot is disconnected. */
+		if (robots[id].blacklisted || !robots[id].up) {
 			socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
+			mutexUnlock(&robots[id].mutex);
 			break;
 		}
 		mutexUnlock(&robots[id].mutex);

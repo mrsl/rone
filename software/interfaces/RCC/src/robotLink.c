@@ -268,6 +268,7 @@ void commCommander(void *vargp)
 		/* Clean up */
 		commToNum[info->port] = 0;
 		robots[id].type = UNKNOWN;
+		robots[id].up = 0;
 		CloseHandle(*info->hSerial);
 	}
 

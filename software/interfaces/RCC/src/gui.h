@@ -93,7 +93,7 @@ void guiInit();
 
 /* Text functions */
 GLvoid textInit(GLvoid);
-GLvoid textPrintf(const char *fmt, ...);
+GLfloat textPrintf(const char *fmt, ...);
 void textSetAlignment(int ta);
 void textSetSize(GLfloat size);
 
