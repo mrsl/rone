@@ -17,6 +17,9 @@ uint8 convertASCIIHexNibble(char val);
 uint8 convertASCIIHexByte(char *val);
 uint16 convertASCIIHexWord(char *val);
 
+void strins(char* str, char c, int index);
+void strdel(char* str, int index);
+
 void makeThread(void *function, void *args);
 
 void hprintf(HANDLE *hSerialPtr, const char *fmt, ...);

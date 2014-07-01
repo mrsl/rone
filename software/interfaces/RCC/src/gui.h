@@ -68,6 +68,18 @@
 
 #define PI					3.14159
 
+/* Textbox defines */
+#define MAX_TEXTBOX_LENGTH	21
+#define TEXTBOX_ID			1000
+
+
+struct textbox {
+	int isActive;
+	int length;
+	int index;
+	char message[MAX_TEXTBOX_LENGTH];
+};
+
 extern GLYPHMETRICSFLOAT gmf[256];
 
 extern GLint drawingListBase;
@@ -82,12 +94,15 @@ extern const char scriptTemplate[256];
 void display();
 void reshape(int w, int h);
 void mouse(int button, int state, int x, int y);
+void keyboard(unsigned char key, int x, int y);
+void readChar(char character);
 void processHits(GLint hits, GLuint buffer[]);
 int openClientConnection(int robotID);
 int directConnect(int robotID);
 void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);
+void drawAprilTagTextbox(GLenum mode);
 void timerEnableDraw(int value);
 void guiInit();
 

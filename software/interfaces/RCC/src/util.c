@@ -37,6 +37,35 @@ uint16 convertASCIIHexWord(char *val)
 	return (temp);
 }
 
+/*
+ * Insert character into the string at the position.
+ * There should be room in the string.
+ */
+void strins(char* str, char c, int index)
+{
+	int i, temp1, temp2;
+	temp1 = str[index];
+	for (i = index + 1; str[i] != '\0'; i++) {
+		temp2 = str[i];
+		str[i] = temp1;
+		temp1 = temp2;
+	}
+	str[i] = temp1;
+	str[i + 1] = '\0';
+	str[index] = c;
+}
+
+/*
+ * Delete the character at index and shift everything to the left.
+ */
+void strdel(char* str, int index)
+{
+	int i;
+	for (i = index; str[i] != '\0'; i++) {
+		str[i] = str[i + 1];
+	}
+}
+
 /**
  * Creates a new native Windows thread that runs detached
  */

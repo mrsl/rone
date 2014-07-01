@@ -9,6 +9,8 @@
 const char scriptTemplate[256] =
 	"#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID you wish to view: \"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\nEnd Sub\r\n";
 
+struct textbox aprilTagURL;
+
 /**
  * Display function, we don't want to do anything here
  */
@@ -69,6 +71,7 @@ void mouse(int button, int state, int x, int y)
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 			drawRobots(GL_SELECT);
+			drawAprilTagTextbox(GL_SELECT);
 		glPopMatrix();
 
 		glMatrixMode(GL_PROJECTION);
@@ -89,17 +92,58 @@ void mouse(int button, int state, int x, int y)
 /**
  * Handles character input
  */
-//void keyboard(unsigned char key, int x, int y)
-//{
-//	/* Exit on escape key. */
-//	if (key == 27)
-//		exit (0);
-//	else
-//		readChar(key);
-//
-//	/* Update GUI. */
-//	glutPostRedisplay();
-//}
+void keyboard(unsigned char key, int x, int y)
+{
+	/* Not using these variables. */
+	x = (int) x;
+	y = (int) y;
+
+	/* Exit on escape key. */
+	if (key == 27)
+		exit (0);
+	else
+		readChar(key);
+
+	/* Update GUI. */
+	glutPostRedisplay();
+}
+
+/**
+ * Handles keyboard input
+ */
+void readChar(char character)
+{
+	if (!aprilTagURL.isActive)
+		return;
+
+	switch (character)
+	{
+	case '\r':
+	case '\n': {
+		//textboxReturn();
+		break;
+	}
+	/* Backspace handler */
+	case '\b': {
+		if (aprilTagURL.index > 0) {
+			strdel(aprilTagURL.message, --aprilTagURL.index);
+		}
+		break;
+	}
+	/* Delete handler */
+	case 127: {
+		strdel(aprilTagURL.message, aprilTagURL.index);
+		break;
+	}
+	/* Default: insert the character */
+	default: {
+		if (strlen(aprilTagURL.message) < aprilTagURL.length) {
+			strins(aprilTagURL.message, character, aprilTagURL.index++);
+		}
+		break;
+	}
+	}
+}
 
 /**
  * Find out which robot was clicked on the GUI
@@ -109,7 +153,7 @@ void processHits(GLint hits, GLuint buffer[])
 	int i;
 	unsigned int j;
 	GLuint names, *ptr;
-	int robotID = 0;
+	int robotID = -1;
 
 	if (hits == 0)
 		return;
@@ -131,9 +175,18 @@ void processHits(GLint hits, GLuint buffer[])
 			ptr++;
 		}
 
-		if (robotID == 0)
+		if (robotID == -1)
 			continue;
 
+		if (robotID == TEXTBOX_ID) {
+			aprilTagURL.isActive = 1;
+			continue;
+		} else {
+			aprilTagURL.isActive = 0;
+		}
+
+
+		mutexLock(&robots[robotID].mutex);
 		/* Do different things based on which mod keys are being held */
 		switch (glutGetModifiers())
 		{
@@ -151,6 +204,9 @@ void processHits(GLint hits, GLuint buffer[])
 					if (robots[robotID].hSerial != NULL)
 						CloseHandle(*robots[robotID].hSerial);
 				}
+			} else if (robots[robotID].type == REMOTE &&
+				robots[robotID].blacklisted) {
+				robots[robotID].blacklisted = 0;
 			}
 			break;
 		}
@@ -176,6 +232,7 @@ void processHits(GLint hits, GLuint buffer[])
 			break;
 		}
 		}
+		mutexUnlock(&robots[robotID].mutex);
 	}
 }
 
@@ -509,6 +566,46 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 	glPopMatrix();
 }
 
+void drawAprilTagTextbox(GLenum mode)
+{
+	GLfloat textWidth = TEXT_MED * gmf[(int) 'm'].gmfCellIncX *
+		aprilTagURL.length;
+
+	glPushMatrix();
+	glTranslatef(-TITLE_POS_X - textWidth, TITLE_POS_Y, 0);
+
+	if (mode == GL_SELECT)
+		glLoadName(TEXTBOX_ID);
+
+	glColor3fv(color_black);
+	glRectf(-LINE_WIDTH_SMALL,
+			-LINE_WIDTH_SMALL,
+			textWidth + LINE_WIDTH_SMALL,
+			TEXT_MED + LINE_WIDTH_SMALL);
+
+	textSetAlignment(ALIGN_LEFT);
+	textSetSize(TEXT_MED);
+	glColor3fv(color_white);
+	textPrintf(aprilTagURL.message);
+
+	if (aprilTagURL.isActive) {
+		float length = 0;
+		int loop;
+		for (loop = 0; loop < (aprilTagURL.index); loop++)
+			length += gmf[(int) aprilTagURL.message[loop]].gmfCellIncX;
+
+		glPushMatrix();
+			glTranslatef(length * TEXT_MED, 0, 0);
+			glBegin(GL_LINES);
+				glVertex2f(0.0, TEXT_MED);
+				glVertex2f(0.0, 0.0);
+			glEnd();
+		glPopMatrix();
+	}
+
+	glPopMatrix();
+}
+
 /**
  * Draw the robots and GUI features on this timed function
  */
@@ -555,6 +652,7 @@ void timerEnableDraw(int value)
 	glPopMatrix();
 
 	drawRobots(GL_RENDER);
+	drawAprilTagTextbox(GL_RENDER);
 
 	/* Update */
 	glutSwapBuffers();
@@ -579,7 +677,13 @@ void guiInit()
 	textInit();
 	drawInit();
 
+	/* Initialize textbox */
+	aprilTagURL.isActive = 0;
+	aprilTagURL.index = 0;
+	aprilTagURL.length = 21;
+
 	glutMouseFunc(mouse);
+	glutKeyboardFunc(keyboard);
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 
