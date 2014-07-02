@@ -297,7 +297,7 @@ void connectionHandler(void *vargp)
 				continue;
 			}
 
-			if (aprilTagData[aid].active) {
+			if (aprilTagData[aid].active || aid == 0) {
 				if (socketWrite(conn->fd, "AprilTag linked!\r\n", 18) < 0)
 					break;
 			} else {
