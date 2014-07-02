@@ -276,15 +276,15 @@ void connectionHandler(void *vargp)
 
 	if (aprilTagConnected && id != 0) {
 		while (aid == -1) {
-			if (socketWrite(conn->fd, "Robot AprilTag (0 for None): ", 29) < 0)
+			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
+				< 0)
 				break;
 
 			if (socketReadline(&socketio, buffer, BUFFERSIZE) == 0)
 				break;
 
 			if (sscanf(buffer, "%d\n", &aid) != 1) {
-					aid = 0;
-					break;
+				aid = -1;
 				break;
 			}
 
@@ -297,7 +297,7 @@ void connectionHandler(void *vargp)
 				continue;
 			}
 
-			if (aprilTagData[aid].active || aid == 0) {
+			if (aprilTagData[aid].active) {
 				if (socketWrite(conn->fd, "AprilTag linked!\r\n", 18) < 0)
 					break;
 			} else {
@@ -341,7 +341,7 @@ void connectionHandler(void *vargp)
 			}
 			mutexUnlock(&robots[id].mutex);
 
-			if (aid > 0) {
+			if (aid != -1) {
 				bufp = buffer + n - 2;
 				mutexLock(&aprilTagData[aid].mutex);
 				if ((n = sprintf(bufp, ", %s\r",
