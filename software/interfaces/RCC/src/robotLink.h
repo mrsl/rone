@@ -32,12 +32,9 @@ struct commCon
 	HANDLE *hSerial;							// Serial handle if connected
 	time_t up;									// Last time we saw the robot
 	int type;									// Type of robot
-	union
-	{
-		int port;								// If local, the COM port
-		int host;								// If remote, the host robot
-	};
-	char buffer[NUMBUFFER][BUFFERSIZE + 14];	// Rotating buffer array
+	int port;									// If local, the COM port
+	int host;									// If remote, the host robot
+	char buffer[NUMBUFFER][BUFFERSIZE + APRILTAG_BUFFERSIZE + 16]; // buffer
 	int head;									// Head of buffer
 	CRITICAL_SECTION mutex;						// Mutex for this robot
 };

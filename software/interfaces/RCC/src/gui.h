@@ -80,6 +80,8 @@ struct textbox {
 	char message[MAX_TEXTBOX_LENGTH];
 };
 
+extern struct textbox aprilTagURL;
+
 extern GLYPHMETRICSFLOAT gmf[256];
 
 extern GLint drawingListBase;

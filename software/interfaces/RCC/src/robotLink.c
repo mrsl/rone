@@ -307,8 +307,8 @@ void insertBuffer(int robotID, char *buffer)
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
 
-	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s", clock(),
-		buffer);
+	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s",
+		clock(), buffer);
 
 	/* Unlock the robot buffer */
 	mutexUnlock(&robots[robotID].mutex);

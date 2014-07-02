@@ -10,6 +10,10 @@
 #define CONNECTIONBUFFERSIZE	64
 #define BUFFERSIZE				8192
 
+#define MAX_APRILTAG			1024
+#define	APRILTAG_BUFFERSIZE		64
+#define NUMBUFFER_APRILTAG		16
+
 /**
  * Connection information struct that is passed to the handlers
  */
@@ -17,6 +21,14 @@ struct Connection
 {
 	int n;		// Request number
 	SOCKET fd;	// File descriptor
+};
+
+struct aprilTag
+{
+	int active;												// Been seen?
+	int head;												// Head of buffer
+	char buffer[NUMBUFFER_APRILTAG][APRILTAG_BUFFERSIZE]; 	// Buffer
+	CRITICAL_SECTION mutex;									// Mutex
 };
 
 /**
@@ -31,14 +43,19 @@ struct socketIO
 };
 
 extern char ipAddress[15];				// String form of local IP address
-extern struct Buffer connectionBuffer;	// Connection buffer
+extern int aprilTagConnected;
+extern struct aprilTag aprilTagData[MAX_APRILTAG];
 
 int createServer(int port);
 void getIPAddress();
-int openListenFD(int port);
+SOCKET openListenFD(int port);
+SOCKET openClientFD(char *hostname, char *port);
 
 void incomingHandler(void *vargp);
 void connectionHandler(void *vargp);
+void initAprilTag();
+int connectAprilTag();
+void aprilTagHandler(void *vargp);
 
 ssize_t socketWrite(int fd, char *usrbuf, size_t n);
 ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n);

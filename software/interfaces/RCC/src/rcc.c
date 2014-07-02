@@ -52,6 +52,7 @@ int main(int argc, char **argv)
 	if (createServer(port) < 0)
 		Error("Failed to create server");
 
+	initAprilTag();
 	guiInit();
 
 	return (0);

@@ -6,6 +6,8 @@
 #ifndef RCC_H_
 #define RCC_H_
 
+#define _WIN32_WINNT 0x0501
+
 /* Standard includes */
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +15,9 @@
 #include <time.h>
 
 /* Windows includes */
-#include <winsock.h>
+//#include <winsock.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <process.h>
 

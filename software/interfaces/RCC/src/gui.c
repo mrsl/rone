@@ -7,7 +7,7 @@
 
 /* The script template */
 const char scriptTemplate[256] =
-	"#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID you wish to view: \"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\nEnd Sub\r\n";
+	"#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID\"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\nEnd Sub\r\n";
 
 struct textbox aprilTagURL;
 
@@ -120,7 +120,8 @@ void readChar(char character)
 	{
 	case '\r':
 	case '\n': {
-		//textboxReturn();
+		if (!aprilTagConnected)
+			connectAprilTag();
 		break;
 	}
 	/* Backspace handler */
@@ -179,12 +180,14 @@ void processHits(GLint hits, GLuint buffer[])
 			continue;
 
 		if (robotID == TEXTBOX_ID) {
-			aprilTagURL.isActive = 1;
+			if (aprilTagConnected)
+				openClientConnection(0);
+			else
+				aprilTagURL.isActive = 1;
 			continue;
 		} else {
 			aprilTagURL.isActive = 0;
 		}
-
 
 		mutexLock(&robots[robotID].mutex);
 		/* Do different things based on which mod keys are being held */
@@ -192,21 +195,16 @@ void processHits(GLint hits, GLuint buffer[])
 		{
 		/* Ctrl-Click to Blacklist local robots */
 		case (2): {
-			if (robots[robotID].type == LOCAL || robots[robotID].type == HOST) {
-				if (robots[robotID].blacklisted) {
-					robots[robotID].blacklisted = 0;
-					if (initCommCommander(robots[robotID].port) < 0) {
-						commToNum[robots[robotID].port] = 0;
-						robots[robotID].type = UNKNOWN;
-					}
-				} else {
-					robots[robotID].blacklisted = 1;
-					if (robots[robotID].hSerial != NULL)
-						CloseHandle(*robots[robotID].hSerial);
-				}
-			} else if (robots[robotID].type == REMOTE &&
-				robots[robotID].blacklisted) {
+			if (robots[robotID].blacklisted) {
 				robots[robotID].blacklisted = 0;
+				if (initCommCommander(robots[robotID].port) < 0) {
+					commToNum[robots[robotID].port] = 0;
+					robots[robotID].type = UNKNOWN;
+				}
+			} else {
+				robots[robotID].blacklisted = 1;
+				if (robots[robotID].hSerial != NULL)
+					CloseHandle(*robots[robotID].hSerial);
 			}
 			break;
 		}
@@ -227,7 +225,7 @@ void processHits(GLint hits, GLuint buffer[])
 		/* Click to open a secureCRT connection */
 		case (0):
 		default: {
-			if (!robots[robotID].blacklisted)
+			if (!robots[robotID].blacklisted || robots[robotID].type == REMOTE)
 				openClientConnection(robotID);
 			break;
 		}
@@ -577,11 +575,21 @@ void drawAprilTagTextbox(GLenum mode)
 	if (mode == GL_SELECT)
 		glLoadName(TEXTBOX_ID);
 
-	glColor3fv(color_black);
+	if (aprilTagConnected)
+		glColor3fv(color_red);
+	else
+		glColor3fv(color_black);
+
 	glRectf(-LINE_WIDTH_SMALL,
 			-LINE_WIDTH_SMALL,
 			textWidth + LINE_WIDTH_SMALL,
 			TEXT_MED + LINE_WIDTH_SMALL);
+
+	glColor3fv(color_black);
+	glRectf(-LINE_WIDTH_SMALL / 2.,
+			-LINE_WIDTH_SMALL / 2.,
+			textWidth + LINE_WIDTH_SMALL / 2.,
+			TEXT_MED + LINE_WIDTH_SMALL / 2.);
 
 	textSetAlignment(ALIGN_LEFT);
 	textSetSize(TEXT_MED);
