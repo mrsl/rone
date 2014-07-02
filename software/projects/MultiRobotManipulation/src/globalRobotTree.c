@@ -21,6 +21,7 @@
 #define ACCEL_DEAD_ZONE					5
 #define ACCEL_IIR_GAIN					50
 #define TV_MIN							15
+#define ACCEL_SCALE						5
 
 #define BUILD_TREE		 0
 #define GUESS_COM		 1
@@ -28,7 +29,7 @@
 
 #define PI				3147
 #define nbrEdgeDis		500				//hardcoded distance
-#define COM_WAIT		3
+#define COM_WAIT		0
 #define NORM_TV			75
 
 #define REST			0
@@ -47,14 +48,13 @@ void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
 	uint8 state = BUILD_TREE;
 	Beh behOutput = behInactive;
-	Beh behRadio;
-	boolean printNow;
+	boolean printNow,seePivotPoint;
 	uint32 neighborRound = 0;
 	NbrList nbrList;
 	uint8 changeCOM = 0;
+	uint8 moveState,i;
 	BroadcastMessage broadcastMessage;
 	broadcastMsgCreate(&broadcastMessage, 20);
-	uint8 moveState = 0;
 	systemPrintStartup();
 	systemPrintMemUsage();
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
@@ -76,9 +76,10 @@ void behaviorTask(void* parameters) {
 	int comRed = 0;
 	int comBlue = 0;
 	int comGreen = 0;
-	int bounceBlue = 0;
-	int bounceRed = 0;
-	int bounceGreen = 0;
+	int comMoveState = 0;
+	boolean bounceBlue = 0;
+	boolean bounceRed = 0;
+	boolean bounceGreen = 0;
 	int32 accX = 0;
 	int32 accY = 0;
 	radioCommandAddQueue(&radioCmdRemoteControl,name, 1);
@@ -89,7 +90,6 @@ void behaviorTask(void* parameters) {
 			continue;
 		}else{
 			/*** INIT STUFF ***/
-			behRadio = behInactive;
 			neighborsGetMutex();
 			printNow = neighborsNewRoundCheck(&neighborRound);
 			//irCommsSetXmitPower(IRXmitPower);
@@ -161,14 +161,9 @@ void behaviorTask(void* parameters) {
 				//Grabing stream and paresing
 				char* RXmsg = radioCommandGetDataPtr(&radioMessageRX);
 				radioMessageTimePrev = osTaskGetTickCount();
-				sscanf(RXmsg,"%d,%d,%d,%d,%d", &TVcmd, &RVcmd, &comBlue, &comRed,&comGreen); //parse the speed and turning rate
-				if(comGreen){
-					moveState++;
-					if(moveState >= 2){
-						moveState = 0;
-					}
-				}
-				if(comBlue){
+				sscanf(RXmsg,"%d,%d,%d,%d,%d,%d", &TVcmd, &RVcmd, &comBlue, &comRed,&comGreen, &comMoveState); //parse the speed and turning rate
+				moveState = comMoveState;
+				if(comBlue && state == BUILD_TREE){
 					state = GUESS_COM;
 				}
 
@@ -177,6 +172,7 @@ void behaviorTask(void* parameters) {
 				if (osTaskGetTickCount() > (radioMessageTimePrev + RADIO_MESSAGE_PERSISTANCE)) {
 					// the previous message is too old.  clear the behRadio
 					TVcmd = 0;
+					RVcmd = 0;
 					comBlue = 0;
 					comRed = 0;
 					comGreen = 0;
@@ -186,7 +182,6 @@ void behaviorTask(void* parameters) {
 			if(state == GUESS_COM){
 
 				updateGlobalTreeCOM(globalRobotList, nbrList, treeGuessCOM, nbrEdgeDis);
-
 				if(changeCOM >= COM_WAIT){
 					changeCOM = 0;
 					if(moveState == 0){				//Transport
@@ -205,10 +200,13 @@ void behaviorTask(void* parameters) {
 						orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  RVcmd);
 					}else if(moveState == 2){		//Pivot
 						int16 COM_Y,COM_X;
-						COM_Y =  nbrDataGet16(&treeGuessCOM[10].Y_H,&treeGuessCOM[10].Y_L);
-						COM_X =  nbrDataGet16(&treeGuessCOM[10].X_H,&treeGuessCOM[10].X_L);
+						COM_Y =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L);
+						COM_X =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L);
 						orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  RVcmd);
+						//rprintf("ID %d COMX %d COMY %d TV %d RV %d RVcmd %d\n",roneID,COM_X,COM_Y ,behOutput.tv, behOutput.rv,RVcmd );
 					}
+					rprintf("ID %d moveState %d TV %d RV %d TVcmd %d RVcmd %d\n",roneID, moveState,behOutput.tv, behOutput.rv, TVcmd,RVcmd );
+
 				}else{
 					changeCOM++;
 				}
@@ -222,9 +220,8 @@ void behaviorTask(void* parameters) {
 				accX = deadzone(accX, ACCEL_DEAD_ZONE);
 				accY = deadzone(accY, ACCEL_DEAD_ZONE);
 
-				int sc = 7;			//How fast we want the TV to be
-				TVcmd = -accX/sc;
-				RVcmd = -accY/sc;
+				TVcmd = -accX/ACCEL_SCALE;
+				RVcmd = -accY/ACCEL_SCALE;
 				if (abs(TVcmd) < TV_MIN) {			//Minimum TV
 					if(TVcmd > 0) {
 						TVcmd = TV_MIN;
@@ -259,8 +256,14 @@ void behaviorTask(void* parameters) {
 					bounceGreen = 1;
 				}
 
+				if(comGreen){
+					comMoveState++;
+					if(comMoveState >= 3){
+						comMoveState = 0;
+					}
+				}
 				//Sends commands over radio
-				sprintf(radioMessageTX.command.data,"%d,%d,%d,%d,%d",TVcmd, RVcmd, comBlue, comRed, comGreen);
+				sprintf(radioMessageTX.command.data,"%d,%d,%d,%d,%d,%d",TVcmd, RVcmd, comBlue, comRed, comGreen, comMoveState);
 				radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessageTX);
 				//cprintf("TVcmd %d RVcmd %d\n", TVcmd, RVcmd);
 			}

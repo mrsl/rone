@@ -155,20 +155,20 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 	uint8 lowestPivotHops = 0;
 	uint8 lowestPivotParent = 0;
 	if(lowestTreeID == roneID){
-		nbrDataSet16(&posListPtr[10].X_H,&posListPtr[10].X_L,0);
-		nbrDataSet16(&posListPtr[10].Y_H,&posListPtr[10].Y_L,0);
+		nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,0);
+		nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,0);
 	} else{
 		uint8 pivotHops;
 		for (i = 0; i < nbrList.size; i++){
 			nbrPtr = nbrList.nbrs[i];
 			if(lowestTreeID == nbrGetID(nbrPtr)){
 				int32 nbrBear = nbrGetBearing(nbrPtr);
-				int16 pivot_X = Range * sinMilliRad(nbrBear);
-				int16 pivot_Y = Range * cosMilliRad(nbrBear);
+				int16 pivot_X = Range * sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+				int16 pivot_Y = Range * cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 
-				nbrDataSet16(&posListPtr[10].X_H,&posListPtr[10].X_L,pivot_X);
-				nbrDataSet16(&posListPtr[10].Y_H,&posListPtr[10].Y_L,pivot_Y);
-				rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,nbrGetID(nbrPtr),0);
+				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,pivot_X);
+				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,pivot_Y);
+				//rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,nbrGetID(nbrPtr),0);
 
 				return;
 			}
@@ -180,9 +180,9 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 				int32 nbrBear = nbrGetBearing(nbrPtr);
 				lowestPivotParent = nbrGetID(nbrPtr);
 				lowestPivotHops = pivotHops;
-				rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,lowestPivotParent,lowestPivotHops);
-				x = nbrDataGetNbr16(&posListPtr[10].X_H,&posListPtr[10].X_L,nbrPtr);
-				y = nbrDataGetNbr16(&posListPtr[10].Y_H,&posListPtr[10].Y_L,nbrPtr);
+				//rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,lowestPivotParent,lowestPivotHops);
+				x = nbrDataGetNbr16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,nbrPtr);
+				y = nbrDataGetNbr16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,nbrPtr);
 
 				xprime = x*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
@@ -210,13 +210,19 @@ void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, Posis
  */
 void orbitGlobalTreePoint(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 	int32 bearing = atan2MilliRad((int32)COMY,(int32)COMX) - 3141;
+	int32 distance = vectorMag((int32)COMY,(int32)COMX);
 	int32 newRv = 0;
+	TV = TV * distance / 100;
+	if(COMX == 0 && COMY == 0){
+		behSetTvRv(BehRotate, 0, 0);
+		return;
+	}
 	if(abs(bearing) > 100){
 		if(bearing < 0){
-			newRv = bearing/ 1;
+			newRv = bearing/ 1.5;
 			behSetTvRv(BehRotate, TV/2, newRv);
 		} else{
-			newRv = bearing/ 1;
+			newRv = bearing/ 1.5;
 			behSetTvRv(BehRotate, TV/2, newRv);
 		}
 	}else{
