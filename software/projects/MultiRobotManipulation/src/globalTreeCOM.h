@@ -16,7 +16,11 @@ typedef struct posCOM {
 } PosistionCOM;
 
 
-void creatGlobalTreeCOMList(PosistionCOM* posListPtr);
-void updateGlobalTreeCOM(GlobalRobotList globalRobotList, NbrList nbrList, PosistionCOM* posListPtr, int Range);
-void orbitGlobalTreePoint(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV);
+void GlobalTreeCOMListCreate(PosistionCOM* posListPtr);
+void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, PosistionCOM* posListPtr, int Range,  NbrData* LeaderHeading_H, NbrData* LeaderHeading_L);
+void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV);
+void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, Beh*behOutput);
+int GlobalTreeCycloidStartPos(int16 COMX, int16 COMY);
+
+int nbrRangeLookUp(uint8 myID, uint8 nbrID);
 #endif /* GLOBALTREECOM_H_ */
