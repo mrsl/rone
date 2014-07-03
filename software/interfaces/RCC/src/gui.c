@@ -489,11 +489,23 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 void drawAprilTagTextbox(GLenum mode)
 {
+	char name[17] = "AprilTag Server: ";
+
+	/* Find the drawn width of the strings. */
 	GLfloat textWidth = TEXT_MED * gmf[(int) 'm'].gmfCellIncX *
 		aprilTagURL.length;
+	GLfloat nameWidth = TEXT_MED * gmf[(int) 'm'].gmfCellIncX * 17;
 
 	glPushMatrix();
-	glTranslatef(-TITLE_POS_X - textWidth, TITLE_POS_Y, 0);
+	glColor3fv(color_black);
+	textSetAlignment(ALIGN_LEFT);
+	textSetSize(TEXT_MED);
+
+	glTranslatef(-TITLE_POS_X - textWidth - nameWidth, TITLE_POS_Y, 0);
+
+	textPrintf(name);
+
+	glTranslatef(nameWidth, 0, 0);
 
 	if (mode == GL_SELECT)
 		glLoadName(TEXTBOX_ID);
@@ -514,8 +526,6 @@ void drawAprilTagTextbox(GLenum mode)
 			textWidth + LINE_WIDTH_SMALL / 2.,
 			TEXT_MED + LINE_WIDTH_SMALL / 2.);
 
-	textSetAlignment(ALIGN_LEFT);
-	textSetSize(TEXT_MED);
 	glColor3fv(color_white);
 	textPrintf(aprilTagURL.message);
 

@@ -96,7 +96,7 @@ int directConnect(int robotID)
  */
 void killSecureCRT()
 {
-	int i;
+	unsigned int i;
 	char name[64] = "SecureCRT.EXE";
 	TCHAR processName[64];
 	DWORD processIDs[MAX_PROCESSES];

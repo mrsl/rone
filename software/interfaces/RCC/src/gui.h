@@ -76,7 +76,7 @@
 
 struct textbox {
 	int isActive;
-	int length;
+	unsigned int length;
 	int index;
 	char message[MAX_TEXTBOX_LENGTH];
 };
