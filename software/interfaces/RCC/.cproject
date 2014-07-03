@@ -44,6 +44,7 @@
 								</option>
 								<option id="gnu.c.link.option.libs.542606594" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="freeglut_static"/>
+									<listOptionValue builtIn="false" value="psapi"/>
 									<listOptionValue builtIn="false" value="mswsock"/>
 									<listOptionValue builtIn="false" value="AdvApi32"/>
 									<listOptionValue builtIn="false" value="ws2_32"/>
@@ -124,6 +125,7 @@
 								</option>
 								<option id="gnu.c.link.option.libs.1952904297" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="freeglut_static"/>
+									<listOptionValue builtIn="false" value="psapi"/>
 									<listOptionValue builtIn="false" value="ws2_32"/>
 									<listOptionValue builtIn="false" value="opengl32"/>
 									<listOptionValue builtIn="false" value="glu32"/>

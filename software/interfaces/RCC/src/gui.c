@@ -151,10 +151,15 @@ void readChar(char character)
  */
 void processHits(GLint hits, GLuint buffer[])
 {
-	int i;
+	int i, mod;
 	unsigned int j;
 	GLuint names, *ptr;
 	int robotID = -1;
+
+	if ((mod = glutGetModifiers()) == 7) {
+		killSecureCRT();
+		return;
+	}
 
 	if (hits == 0)
 		return;
@@ -191,7 +196,7 @@ void processHits(GLint hits, GLuint buffer[])
 
 		mutexLock(&robots[robotID].mutex);
 		/* Do different things based on which mod keys are being held */
-		switch (glutGetModifiers())
+		switch (mod)
 		{
 		/* Ctrl-Click to Blacklist local robots */
 		case (2): {
@@ -313,6 +318,49 @@ int directConnect(int robotID)
 				 SW_SHOW);
 
 	return (0);
+}
+
+/**
+ * Kills all secureCRT instances
+ */
+void killSecureCRT()
+{
+	int i;
+	char name[64] = "SecureCRT.EXE";
+	TCHAR processName[64];
+	DWORD processIDs[MAX_PROCESSES];
+	DWORD pBytesReturned;
+	HANDLE process;
+
+	HMODULE hMod;
+	DWORD cbNeeded;
+
+	if (EnumProcesses(&processIDs,
+					  MAX_PROCESSES,
+					  &pBytesReturned) == 0)
+		return;
+
+	for (i = 0; i < pBytesReturned / sizeof(DWORD); i++) {
+		process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE |
+							  PROCESS_VM_READ,
+							  FALSE,
+							  processIDs[i]);
+		if (process == NULL)
+			continue;
+
+		if (EnumProcessModules(process,
+							   &hMod,
+							   sizeof(hMod),
+							   &cbNeeded)) {
+			GetModuleBaseName(process,
+							  hMod,
+							  processName,
+							  sizeof(processName) / sizeof(TCHAR));
+
+			if (strcmp(name, processName) == 0)
+				TerminateProcess(process, 0);
+		}
+	}
 }
 
 /**

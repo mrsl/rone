@@ -476,14 +476,16 @@ void aprilTagHandler(void *vargp)
 					bufp = buffer;
 					continue;
 				}
+				/* Format end to be CRNL */
 				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n') {
 					buffer[n--] = '\0';
 				}
 				buffer[n] = '\r';
 				buffer[n + 1] = '\n';
 				insertBuffer(0, buffer);
-				*bufp = '\0';
 
+				/* Parse AprilTag ID */
+				*bufp = '\0';
 				if (sscanf(buffer, "%d,", &id) < 1)
 					continue;
 

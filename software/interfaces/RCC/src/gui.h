@@ -67,6 +67,7 @@
 #define DISK_LOOPS			3
 
 #define PI					3.14159
+#define MAX_PROCESSES		1024
 
 /* Textbox defines */
 #define MAX_TEXTBOX_LENGTH	21
@@ -101,6 +102,7 @@ void readChar(char character);
 void processHits(GLint hits, GLuint buffer[]);
 int openClientConnection(int robotID);
 int directConnect(int robotID);
+void killSecureCRT();
 void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);
