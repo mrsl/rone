@@ -248,7 +248,6 @@ void connectionHandler(void *vargp)
 		mutexLock(&robots[id].mutex);
 		err = robots[id].up;
 		bl = robots[id].blacklisted && !(robots[id].type == REMOTE);
-		head = robots[id].head;
 		mutexUnlock(&robots[id].mutex);
 
 		if (err && !bl) {
@@ -300,6 +299,9 @@ void connectionHandler(void *vargp)
 			if (aprilTagData[aid].active) {
 				if (socketWrite(conn->fd, "AprilTag linked!\r\n", 18) < 0)
 					break;
+				if (verbose)
+					printf("T%02d: [%d] Connected to AprilTag %d\n", tid,
+						conn->n, aid);
 			} else {
 				if (socketWrite(conn->fd, "AprilTag not seen!\r\n", 20) < 0)
 					break;
@@ -311,6 +313,10 @@ void connectionHandler(void *vargp)
 	/* Initialize stuff for select */
 	FD_ZERO(&read_set);
 	FD_SET(conn->fd, &read_set);
+
+	mutexLock(&robots[id].mutex);
+	head = robots[id].head;
+	mutexUnlock(&robots[id].mutex);
 
 	for (;;) {
 		ready_set = read_set;
@@ -344,16 +350,17 @@ void connectionHandler(void *vargp)
 			if (aid != -1) {
 				bufp = buffer + n - 2;
 				mutexLock(&aprilTagData[aid].mutex);
-				if ((n = sprintf(bufp, ", %s\r",
+				if ((n = sprintf(bufp, ", %s",
 					aprilTagData[aid].buffer[aprilTagData[aid].head])) < 0) {
 					mutexUnlock(&aprilTagData[aid].mutex);
 					break;
 				}
 				mutexUnlock(&aprilTagData[aid].mutex);
 
-				if (n == 3)
+				if (n == 2) {
 					if (sprintf(bufp, "\r\n") < 0)
 						break;
+				}
 			}
 
 			if ((err = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
@@ -362,9 +369,8 @@ void connectionHandler(void *vargp)
 			head = (head + 1) % NUMBUFFER;
 			mutexLock(&robots[id].mutex);
 		}
-		if (err < 0) {
+		if (err < 0)
 			break;
-		}
 
 		/* Check if the robot is disconnected. */
 		if ((robots[id].blacklisted && !(robots[id].type == REMOTE)) ||
@@ -420,6 +426,7 @@ int connectAprilTag()
 	conn->n = 0;
 
 	aprilTagConnected = 1;
+	robots[0].type = UNKNOWN;
 	aprilTagURL.isActive = 0;
 	makeThread(&aprilTagHandler, conn);
 
@@ -432,7 +439,7 @@ void aprilTagHandler(void *vargp)
 	int tid;						// Thread ID
 	struct Connection *conn;		// Connection information
 	struct socketIO socketio;		// Robust IO buffer for socket
-	char buffer[BUFFERSIZE], *bufp;
+	char buffer[APRILTAG_BUFFERSIZE], *bufp;
 	fd_set read_set, ready_set;		// Read set for select
 	struct timeval tv = { 0, 1 };	// Timeout for select
 
@@ -453,6 +460,7 @@ void aprilTagHandler(void *vargp)
 	FD_SET(conn->fd, &read_set);
 
 	for (;;) {
+		memset(buffer, 0, APRILTAG_BUFFERSIZE);
 		ready_set = read_set;
 
 		/* Check if there is data available from the client. */
@@ -468,9 +476,11 @@ void aprilTagHandler(void *vargp)
 					bufp = buffer;
 					continue;
 				}
-				buffer[n - 1] = '\r';
-				buffer[n] = '\n';
-				buffer[n + 1] = '\0';
+				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n') {
+					buffer[n--] = '\0';
+				}
+				buffer[n] = '\r';
+				buffer[n + 1] = '\n';
 				insertBuffer(0, buffer);
 				*bufp = '\0';
 
