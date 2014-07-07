@@ -5,6 +5,7 @@
  */
 #include "rcc.h"
 
+int clickMode;
 struct textbox aprilTagURL;
 
 /**
@@ -68,6 +69,7 @@ void mouse(int button, int state, int x, int y)
 		glPushMatrix();
 			drawRobots(GL_SELECT);
 			drawAprilTagTextbox(GL_SELECT);
+			drawToolbar(GL_SELECT);
 		glPopMatrix();
 
 		glMatrixMode(GL_PROJECTION);
@@ -194,45 +196,81 @@ void processHits(GLint hits, GLuint buffer[])
 			aprilTagURL.isActive = 0;
 		}
 
+		if (robotID == CONNECT_BUTTON) {
+			clickMode = CONNECT;
+			continue;
+		} else if (robotID == HOST_BUTTON) {
+			clickMode = HOSTBOT;
+			continue;
+		} else if (robotID == BLACKLIST_BUTTON) {
+			clickMode = BLACKLIST;
+			continue;
+		} else if (robotID == SCONNECT_BUTTON) {
+			clickMode = SCONNECT;
+			continue;
+		} else if (robotID == ATLINK_BUTTON) {
+			clickMode = ATLINK;
+			continue;
+		} else if (robotID == OPENLOCAL_BUTTON) {
+			for (i = 0; i < MAXROBOTID; i++) {
+				mutexLock(&robots[i].mutex);
+				/* If the robot is active */
+				if (robots[i].up != 0 && !robots[i].blacklisted) {
+					if (robots[i].type == LOCAL || robots[i].type == HOST)
+						openClientConnection(i);
+				}
+				mutexUnlock(&robots[i].mutex);
+			}
+			continue;
+		} else if (robotID == OPENREMOTE_BUTTON) {
+			for (i = 0; i < MAXROBOTID; i++) {
+				mutexLock(&robots[i].mutex);
+				/* If the robot is active */
+				if (robots[i].up != 0) {
+					if (robots[i].type == REMOTE)
+						openClientConnection(i);
+				}
+				mutexUnlock(&robots[i].mutex);
+			}
+			continue;
+		} else if (robotID == KILLALL_BUTTON) {
+			killSecureCRT();
+			continue;
+		}
+
 		mutexLock(&robots[robotID].mutex);
 		/* Do different things based on which mod keys are being held */
 		switch (glutGetModifiers())
 		{
 		/* Ctrl-Click to Blacklist local robots */
 		case (2): {
-			if (robots[robotID].blacklisted) {
-				robots[robotID].blacklisted = 0;
-				if (initCommCommander(robots[robotID].port) < 0) {
-					commToNum[robots[robotID].port] = 0;
-					robots[robotID].type = UNKNOWN;
-				}
-			} else {
-				robots[robotID].blacklisted = 1;
-				if (robots[robotID].hSerial != NULL)
-					CloseHandle(*robots[robotID].hSerial);
-			}
+			blacklist(robotID);
 			break;
 		}
 		/* Alt-Click to make robot into a host */
 		case (4): {
-			if (robots[robotID].type == LOCAL && robots[robotID].hSerial != NULL
-				&& !robots[robotID].blacklisted)
-				hprintf(robots[robotID].hSerial, "rt\n");
+			hostRobot(robotID);
 			break;
 		}
 		/* Ctrl-Alt-Click to open a direct connection to secureCRT */
 		case (6): {
-			if (robots[robotID].type != REMOTE
-				&& robots[robotID].hSerial != NULL
-				&& !robots[robotID].blacklisted)
-				directConnect(robotID);
+			commConnect(robotID);
 			break;
 		}
 		/* Click to open a secureCRT connection */
 		case (0):
 		default: {
-			if (!robots[robotID].blacklisted || robots[robotID].type == REMOTE)
-				openClientConnection(robotID);
+			if (clickMode == CONNECT) {
+				if (!robots[robotID].blacklisted
+					|| robots[robotID].type == REMOTE)
+					openClientConnection(robotID);
+			} else if (clickMode == HOSTBOT) {
+				hostRobot(robotID);
+			} else if (clickMode == BLACKLIST) {
+				blacklist(robotID);
+			} else if (clickMode == SCONNECT) {
+				commConnect(robotID);
+			}
 			break;
 		}
 		}
@@ -265,18 +303,13 @@ void drawRobots(GLenum mode)
 {
 	int i;
 
-	GLfloat lx; // Local robot x position
-	GLfloat ly; // Local robot y position
-	GLfloat rx; // Remote robot x position
-	GLfloat ry; // Remote robot y position
-	GLfloat sx; // Starting x position
-
-	GLfloat ls = SCALE_LARGE; // Local robot scale factor
-	GLfloat rs = SCALE_LARGE; // Remote robot scale factor
+	GLfloat x;		// Robot x position
+	GLfloat y;		// Robot y position
+	GLfloat scale;	// Robot scale factor
 
 	int numLocal = 0;
 	int numRemote = 0;
-
+	int numRobots;
 	struct commCon *local[MAXROBOTID];
 	struct commCon *remote[MAXROBOTID];
 
@@ -285,34 +318,32 @@ void drawRobots(GLenum mode)
 		mutexLock(&robots[i].mutex);
 		/* If the robot is active */
 		if (robots[i].up != 0) {
-			if (robots[i].type == LOCAL || robots[i].type == HOST) {
+			if (robots[i].type == LOCAL || robots[i].type == HOST)
 				local[numLocal++] = &robots[i];
-			} else if (robots[i].type == REMOTE) {
+			else if (robots[i].type == REMOTE)
 				remote[numRemote++] = &robots[i];
-			}
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
 
 	/* Figure scale for local robot pane */
-	if (numLocal <= 12) {
-		ls = SCALE_LARGE;
-		lx = ROBOT_START_LOCAL_X;
-		ly = ROBOT_START_LOCAL_Y;
-	} else if (numLocal > 12) {
-		ls = SCALE_MED;
-		lx = ROBOT_START_LOCAL_X + ROBOT_RADIUS / ls / 2;
-		ly = ROBOT_START_LOCAL_Y + ROBOT_RADIUS / ls / 2;
-	} else if (numLocal > 24) {
-		ls = SCALE_SMALL;
-		lx = ROBOT_START_LOCAL_X;
-		ly = ROBOT_START_LOCAL_Y + ROBOT_RADIUS;
-	} else if (numLocal > 44) {
-		ls = SCALE_TINY;
-		lx = ROBOT_START_LOCAL_X;
-		ly = ROBOT_START_LOCAL_Y + ROBOT_RADIUS + ROBOT_RADIUS / ls;
+	if ((numRobots = numLocal + numRemote) <= 30) {
+		scale = SCALE_LARGE;
+		x = ROBOT_START_X;
+		y = ROBOT_START_Y;
+	} else if (numRobots > 110) {
+		scale = SCALE_TINY;
+		x = ROBOT_START_X;
+		y = ROBOT_START_Y + ROBOT_RADIUS - ROBOT_RADIUS / scale;
+	} else if (numRobots > 64) {
+		scale = SCALE_SMALL;
+		x = ROBOT_START_X;
+		y = ROBOT_START_Y + ROBOT_RADIUS / scale;
+	} else if (numRobots > 30) {
+		scale = SCALE_MED;
+		x = ROBOT_START_X + ROBOT_RADIUS / scale / 2;
+		y = ROBOT_START_Y + ROBOT_RADIUS / scale / 2;
 	}
-	sx = lx;
 
 	/* Draw local robots */
 	for (i = 0; i < numLocal; i++) {
@@ -320,49 +351,27 @@ void drawRobots(GLenum mode)
 		if (mode == GL_SELECT)
 			glLoadName(local[i]->id);
 
-		drawRobot(lx, ly, local[i], ls);
+		drawRobot(x, y, local[i], scale);
 		mutexUnlock(&local[i]->mutex);
 
-		lx += ROBOT_STEP_X / ls;
-		if (lx > -sx) {
-			lx = sx;
-			ly -= ROBOT_STEP_Y / ls;
+		x += ROBOT_STEP_X / scale;
+		if (x > ROBOT_END_X) {
+			x = scale;
+			y -= ROBOT_STEP_Y / scale;
 		}
 	}
-
-	/* Figure scale for remote robots */
-	if (numRemote <= 12) {
-		rs = SCALE_LARGE;
-		rx = ROBOT_START_REMOTE_X;
-		ry = ROBOT_START_REMOTE_Y;
-	} else if (numRemote > 12) {
-		rs = SCALE_MED;
-		rx = ROBOT_START_REMOTE_X + ROBOT_RADIUS / rs / 2;
-		ry = ROBOT_START_REMOTE_Y + ROBOT_RADIUS / rs / 2;
-	} else if (numRemote > 24) {
-		rs = SCALE_SMALL;
-		rx = ROBOT_START_REMOTE_X;
-		ry = ROBOT_START_REMOTE_Y + ROBOT_RADIUS;
-	} else if (numRemote > 44) {
-		rs = SCALE_TINY;
-		rx = ROBOT_START_REMOTE_X;
-		ry = ROBOT_START_REMOTE_Y + ROBOT_RADIUS + ROBOT_RADIUS / rs;
-	}
-	sx = rx;
-
-	/* Draw remote robots */
 	for (i = 0; i < numRemote; i++) {
 		mutexLock(&remote[i]->mutex);
 		if (mode == GL_SELECT)
 			glLoadName(remote[i]->id);
 
-		drawRobot(rx, ry, remote[i], rs);
+		drawRobot(x, y, remote[i], scale);
 		mutexUnlock(&remote[i]->mutex);
 
-		rx += ROBOT_STEP_X / rs;
-		if (rx > -sx) {
-			rx = sx;
-			ry -= ROBOT_STEP_Y / rs;
+		x += ROBOT_STEP_X / scale;
+		if (x > ROBOT_END_X) {
+			x = scale;
+			y -= ROBOT_STEP_Y / scale;
 		}
 	}
 }
@@ -547,6 +556,153 @@ void drawAprilTagTextbox(GLenum mode)
 	glPopMatrix();
 }
 
+void drawToolbar(GLenum mode)
+{
+	GLfloat textWidth = TEXT_LARGE * gmf[(int) 'm'].gmfCellIncX * 2;
+
+	glPushMatrix();
+		/* CT Button */
+		glTranslatef(TITLE_POS_X, ROBOT_START_Y + ROBOT_RADIUS - TEXT_LARGE, 0);
+		if (mode == GL_SELECT)
+			glLoadName(CONNECT_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == CONNECT)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("CT");
+
+		/* RT Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		if (mode == GL_SELECT)
+			glLoadName(HOST_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == HOSTBOT)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("RT");
+
+		/* BL Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		if (mode == GL_SELECT)
+			glLoadName(BLACKLIST_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == BLACKLIST)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("BL");
+
+		/* CT Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		if (mode == GL_SELECT)
+			glLoadName(SCONNECT_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == SCONNECT)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("ST");
+
+		/* CT Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(OPENLOCAL_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("OL");
+
+		/* CT Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(OPENREMOTE_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("OR");
+
+		/* CT Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(ATLINK_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == ATLINK)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("AL");
+
+		/* CT Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(KILLALL_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("KO");
+
+	glPopMatrix();
+}
+
 /**
  * Draw the robots and GUI features on this timed function
  */
@@ -572,25 +728,18 @@ void timerEnableDraw(int value)
 			glVertex2f(-GUI_WIDTH, 0);
 			glVertex2f(GUI_WIDTH, 0);
 		glEnd();
-
-		glTranslatef(TITLE_POS_X, -TEXT_MED, 0);
-		textSetSize(TEXT_MED);
-		textPrintf("Local Robots");
 	glPopMatrix();
 
-	/* Draw dividing bar for remote robots */
 	glPushMatrix();
-		glTranslatef(0, -TEXT_LARGE, 0);
-		glColor3fv(color_black);
+		glTranslatef(TOOLBAR_DIVIDE_X, 0, 0);
+		glRotatef(90, 0, 0, 1);
 		glBegin(GL_LINES);
-			glVertex2f(-GUI_WIDTH, 0);
-			glVertex2f(GUI_WIDTH, 0);
+			glVertex2f(-GUI_HEIGHT, 0);
+			glVertex2f(GUI_HEIGHT / 2 - TEXT_LARGE * 2, 0);
 		glEnd();
-
-		glTranslatef(TITLE_POS_X, -TEXT_MED, 0);
-		textSetSize(TEXT_MED);
-		textPrintf("Remote Robots");
 	glPopMatrix();
+
+	drawToolbar(GL_RENDER);
 
 	drawRobots(GL_RENDER);
 	drawAprilTagTextbox(GL_RENDER);
@@ -627,6 +776,8 @@ void guiInit()
 	glutKeyboardFunc(keyboard);
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
+
+	clickMode = CONNECT;
 
 	glutTimerFunc(DRAW_DELAY, timerEnableDraw, 0);
 

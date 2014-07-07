@@ -132,3 +132,32 @@ void killSecureCRT()
 		}
 	}
 }
+
+void hostRobot(int robotID)
+{
+	if (robots[robotID].type == LOCAL && robots[robotID].hSerial != NULL
+		&& !robots[robotID].blacklisted)
+		hprintf(robots[robotID].hSerial, "rt\n");
+}
+
+void blacklist(int robotID)
+{
+	if (robots[robotID].blacklisted) {
+		robots[robotID].blacklisted = 0;
+		if (initCommCommander(robots[robotID].port) < 0) {
+			commToNum[robots[robotID].port] = 0;
+			robots[robotID].type = UNKNOWN;
+		}
+	} else {
+		robots[robotID].blacklisted = 1;
+		if (robots[robotID].hSerial != NULL)
+			CloseHandle(*robots[robotID].hSerial);
+	}
+}
+
+void commConnect(int robotID)
+{
+	if (robots[robotID].type != REMOTE && robots[robotID].hSerial != NULL
+		&& !robots[robotID].blacklisted)
+		directConnect(robotID);
+}
