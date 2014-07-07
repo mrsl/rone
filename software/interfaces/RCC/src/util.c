@@ -61,9 +61,8 @@ void strins(char* str, char c, int index)
 void strdel(char* str, int index)
 {
 	int i;
-	for (i = index; str[i] != '\0'; i++) {
+	for (i = index; str[i] != '\0'; i++)
 		str[i] = str[i + 1];
-	}
 }
 
 /**

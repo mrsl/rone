@@ -35,25 +35,21 @@ void commManager(void *vargp)
 {
 	int i;
 
-	/* Get rid of annoying unused variable compiler errors */
-	vargp = (void *) vargp;
-
-	/* Run in detached mode */
-	//Pthread_detach(pthread_self());
 	/* Iterate through robot list indefinitely */
 	for (;;) {
 		for (i = 0; i < MAXROBOTID; i++) {
 			mutexLock(&robots[i].mutex);
 
 			/* If a remote robot has been inactive for a while, deactivate. */
-			if (robots[i].up + GRACETIME < clock() &&
-				robots[i].type == REMOTE) {
+			if (robots[i].up + GRACETIME < clock()
+				&& robots[i].type == REMOTE) {
 				robots[i].up = 0;
 				robots[i].head = 0;
 			}
 
 			/* Ping all host robots for updated remote robots. */
-			if (robots[i].up && robots[i].type == HOST
+			if (robots[i].up
+				&& robots[i].type == HOST
 				&& !robots[i].blacklisted)
 				hprintf(robots[i].hSerial, "rt\n");
 
