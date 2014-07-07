@@ -42,7 +42,7 @@ void endianSwap(uint8* data) {
 }
 
 void I2CInit(void) {
-	I2C_PORT_SEL |= I2C_PIN_BITMASK;               // Assign I2C pins to USCI_B0
+	I2C_PORT_SEL |= I2C_PIN_BITMASK;        // Assign I2C pins to USCI_B0
 	
 	UCB0CTL1 = UCSWRST;                    	// Enable SW reset
 	UCB0CTL0 = (UCMST | UCMODE_3 | UCSYNC);	// I2C Master, synchronous mode

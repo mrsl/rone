@@ -24,16 +24,16 @@
 
 #define RFID_TAG_DATA_LEN 		7
 
-#ifdef RONE_V12_TILETRACK
-
-void RFIDReaderInit();
-void RFIDReaderUpdate();
-uint8 RFIDReaderGet();
-void RFIDInterruptEnable();
-void RFIDInterruptDisable();
-void RFIDReaderInterupt();
-
-#else
+//#ifdef RONE_V12_TILETRACK
+//
+//void RFIDReaderInit();
+//void RFIDReaderUpdate();
+//uint8 RFIDReaderGet();
+//void RFIDInterruptEnable();
+//void RFIDInterruptDisable();
+//void RFIDReaderInterupt();
+//
+//#else
 
 #define RFIDReaderInit()	{}
 #define RFIDReaderUpdate() 	{}
@@ -41,6 +41,6 @@ void RFIDReaderInterupt();
 #define RFIDInterruptEnable() 	{}
 #define RFIDInterruptDisable() 	{}
 
-#endif //#ifndef RONE_V12_TILETRACK
+//#endif //#ifndef RONE_V12_TILETRACK
 
 #endif /* RFIDREADER_H_*/
