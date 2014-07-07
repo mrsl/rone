@@ -25,16 +25,19 @@
 #define TITLE_POS_X			-19.5
 #define TITLE_POS_Y			13.5
 
+#define TOOLBAR_DIVIDE_X	(TITLE_POS_X + 2)
+#define MAP_DIVIDE_X		0
+
 /* Robot drawing defines */
 #define ROBOT_RADIUS		2.
 #define OUTER_RADIUS		2.1
 #define INNER_RADIUS		1.9
 #define HOST_RADIUS			2.3
 
-#define ROBOT_START_LX		-15.
-#define ROBOT_START_LY		8.
-#define ROBOT_START_RX		ROBOT_START_LX
-#define ROBOT_START_RY		-6.
+#define ROBOT_START_X		(TOOLBAR_DIVIDE_X + ROBOT_RADIUS + 1)
+#define ROBOT_START_Y		10.
+
+#define ROBOT_END_X			(-ROBOT_START_X + 1)
 
 #define ROBOT_STEP_X		6.
 #define ROBOT_STEP_Y		5.
@@ -71,27 +74,45 @@
 
 /* Textbox defines */
 #define MAX_TEXTBOX_LENGTH	21
-#define TEXTBOX_ID			1000
+#define TEXTBOX_ID			10000
 
+/* Click modes */
+#define CONNECT		0
+#define BLACKLIST	1
+#define SCONNECT	2
+#define ATLINK		3
+#define HOSTBOT		4
 
+#define CONNECT_BUTTON		1001
+#define BLACKLIST_BUTTON	1002
+#define SCONNECT_BUTTON		1003
+#define ATLINK_BUTTON		1004
+#define OPENLOCAL_BUTTON	1005
+#define OPENREMOTE_BUTTON	1006
+#define KILLALL_BUTTON		1007
+#define HOST_BUTTON			1008
+
+/**
+ * Textbox buffer and state information
+ */
 struct textbox {
 	int isActive;
-	int length;
+	unsigned int length;
 	int index;
 	char message[MAX_TEXTBOX_LENGTH];
 };
 
-extern struct textbox aprilTagURL;
+extern struct textbox aprilTagURL;	// AprilTag IP textbox
 
-extern GLYPHMETRICSFLOAT gmf[256];
+extern GLYPHMETRICSFLOAT gmf[256];	// Character information
+extern GLint drawingListBase;		// Drawing primitives
 
-extern GLint drawingListBase;
-
+/* Drawing colors */
 extern const float color_red[COLOR_SIZE];
 extern const float color_black[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
 
-extern const char scriptTemplate[256];
+extern const char scriptTemplate[256];	// secureCRT script
 
 /* GUI functions and drawing functions */
 void display();
@@ -107,6 +128,7 @@ void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);
 void drawAprilTagTextbox(GLenum mode);
+void drawToolbar(GLenum mode);
 void timerEnableDraw(int value);
 void guiInit();
 
@@ -118,5 +140,9 @@ void textSetSize(GLfloat size);
 
 /* Resource functions */
 void drawInit();
+
+void hostRobot(int robotID);
+void blacklist(int robotID);
+void commConnect(int robotID);
 
 #endif

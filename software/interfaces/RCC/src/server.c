@@ -15,8 +15,7 @@ struct aprilTag aprilTagData[MAX_APRILTAG];
  */
 int createServer(int port)
 {
-	int listenfd;		// The fd we are listening on
-	int *ti;
+	int *listenfd;		// The fd we are listening on
 	WSADATA wsaData;	// Things for winsock setup
 	WORD version;
 
@@ -33,14 +32,14 @@ int createServer(int port)
 	/* Get and store the local IP address */
 	getIPAddress();
 
+	listenfd = Malloc(sizeof(int));
+
 	/* Open a port to listen on */
-	if ((listenfd = openListenFD(port)) < 0)
+	if ((*listenfd = openListenFD(port)) < 0)
 		return (-1);
 
 	/* Create incoming connection handler */
-	ti = Malloc(sizeof(int));
-	*ti = listenfd;
-	makeThread(&incomingHandler, ti);
+	makeThread(&incomingHandler, listenfd);
 
 	if (verbose)
 		printf("T00: Server initialized on port %d\n", port);
@@ -112,8 +111,11 @@ SOCKET openClientFD(char *hostname, char *port)
 	struct addrinfo *result = NULL, *ptr = NULL;
 
 	// Resolve the server address and port
-	if (getaddrinfo(hostname, port, NULL, &result) != 0)
-		Error("getaddrinfo failure");
+	if (getaddrinfo(hostname, port, NULL, &result) != 0) {
+		if (verbose)
+			fprintf(stderr, "MAS: Bad AprilTag Address!\n");
+		return (INVALID_SOCKET);
+	}
 
 	/* Attempt to connect to an address until one succeeds */
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
@@ -132,9 +134,6 @@ SOCKET openClientFD(char *hostname, char *port)
 	}
 
 	freeaddrinfo(result);
-
-	if (client == INVALID_SOCKET)
-		return (INVALID_SOCKET);
 
 	return (client);
 }
@@ -166,12 +165,10 @@ void incomingHandler(void *vargp)
 		if (verbose)
 			printf("T00: New client connection, request number %d\n", count);
 
-		conn->n = count;
+		conn->n = count++;
 
 		/* Spawn a thread to handle the connection */
 		makeThread(&connectionHandler, conn);
-
-		count++;
 	}
 }
 
@@ -183,16 +180,16 @@ void connectionHandler(void *vargp)
 	int tid;						// Thread ID
 	int id;							// Requested robot ID
 	int n;
-	int aid = -1;					// Apriltag ID
+	int aid;						// AprilTag ID
 	int head;						// Last location of robot buffer viewed
-	int err, bl;					// Flag
+	int up, bl;						// Flag
 	struct Connection *conn;		// Connection information
 	char *bufp;						// Buffer pointer
 	char buffer[BUFFERSIZE];		// General use buffer
+	char inBuffer[BUFFERSIZE];		// Input buffer from client
 	struct socketIO socketio;		// Robust IO buffer for socket
 	fd_set read_set, ready_set;		// Read set for select
 	struct timeval tv = { 0, 1 };	// Timeout for select
-	char inBuffer[BUFFERSIZE];		// Input buffer from client
 
 	conn = (struct Connection *) vargp;
 	tid = conn->n;
@@ -208,7 +205,6 @@ void connectionHandler(void *vargp)
 
 	/* Query user for robot ID */
 	id = -1;
-	err = 0;
 	while (id == -1) {
 		if (aprilTagConnected) {
 			if (socketWrite(conn->fd,
@@ -246,11 +242,11 @@ void connectionHandler(void *vargp)
 		}
 
 		mutexLock(&robots[id].mutex);
-		err = robots[id].up;
+		up = robots[id].up;
 		bl = robots[id].blacklisted && !(robots[id].type == REMOTE);
 		mutexUnlock(&robots[id].mutex);
 
-		if (err && !bl) {
+		if (up && !bl) {
 			if (socketWrite(conn->fd, "Connected!\r\n", 12) < 0)
 				break;
 		} else {
@@ -273,6 +269,7 @@ void connectionHandler(void *vargp)
 	if (verbose)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
+	aid = -1;
 	if (aprilTagConnected && id != 0) {
 		while (aid == -1) {
 			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
@@ -299,6 +296,7 @@ void connectionHandler(void *vargp)
 			if (aprilTagData[aid].active) {
 				if (socketWrite(conn->fd, "AprilTag linked!\r\n", 18) < 0)
 					break;
+
 				if (verbose)
 					printf("T%02d: [%d] Connected to AprilTag %d\n", tid,
 						conn->n, aid);
@@ -347,6 +345,7 @@ void connectionHandler(void *vargp)
 			}
 			mutexUnlock(&robots[id].mutex);
 
+			/* Append AprilTag data to end of message if available */
 			if (aid != -1) {
 				bufp = buffer + n - 2;
 				mutexLock(&aprilTagData[aid].mutex);
@@ -357,24 +356,27 @@ void connectionHandler(void *vargp)
 				}
 				mutexUnlock(&aprilTagData[aid].mutex);
 
+				/* If there was no data, rewrite the CRLF */
 				if (n == 2) {
 					if (sprintf(bufp, "\r\n") < 0)
 						break;
 				}
 			}
 
-			if ((err = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
+			if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
 				break;
 
 			head = (head + 1) % NUMBUFFER;
 			mutexLock(&robots[id].mutex);
 		}
-		if (err < 0)
+		/* If true, connection is broken so exit out. */
+		if (n < 0)
 			break;
 
 		/* Check if the robot is disconnected. */
-		if ((robots[id].blacklisted && !(robots[id].type == REMOTE)) ||
-			!robots[id].up) {
+		if ((robots[id].blacklisted
+			&& !(robots[id].type == REMOTE))
+			|| !robots[id].up) {
 			socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
 			mutexUnlock(&robots[id].mutex);
 			break;
@@ -385,7 +387,7 @@ void connectionHandler(void *vargp)
 	if (verbose)
 		printf("T%02d: [%d] Done!\n", tid, conn->n);
 
-	/* Clean up */
+	/* Clean up. */
 	Close(conn->fd);
 	Free(conn);
 }
@@ -409,14 +411,11 @@ int connectAprilTag()
 
 	strcpy(hostname, aprilTagURL.message);
 
-	if ((port = strpbrk(hostname, ":")) == NULL) {
+	/* Parse out port from hostname */
+	if ((port = strpbrk(hostname, ":")) != NULL)
+		*(port++) = '\0';
+	else
 		port = "2001";
-	} else {
-		*port = '\0';
-	}
-
-	if (strlen(hostname) < 7)
-		return (-1);
 
 	if ((fd = openClientFD(hostname, port)) == INVALID_SOCKET)
 		return (-1);
@@ -427,6 +426,7 @@ int connectAprilTag()
 
 	aprilTagConnected = 1;
 	robots[0].type = UNKNOWN;
+	robots[0].up = 1;
 	aprilTagURL.isActive = 0;
 	makeThread(&aprilTagHandler, conn);
 
@@ -476,7 +476,7 @@ void aprilTagHandler(void *vargp)
 					bufp = buffer;
 					continue;
 				}
-				/* Format end to be CRNL */
+				/* Format end to be CRLF */
 				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n') {
 					buffer[n--] = '\0';
 				}

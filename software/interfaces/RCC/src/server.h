@@ -23,6 +23,9 @@ struct Connection
 	SOCKET fd;	// File descriptor
 };
 
+/**
+ * AprilTag data buffer
+ */
 struct aprilTag
 {
 	int active;												// Been seen?
@@ -43,8 +46,8 @@ struct socketIO
 };
 
 extern char ipAddress[15];				// String form of local IP address
-extern int aprilTagConnected;
-extern struct aprilTag aprilTagData[MAX_APRILTAG];
+extern int aprilTagConnected;			// Connected to the AprilTag server?
+extern struct aprilTag aprilTagData[MAX_APRILTAG];	// AprilTag data
 
 int createServer(int port);
 void getIPAddress();

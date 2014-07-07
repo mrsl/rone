@@ -10,15 +10,16 @@
 #define PORTSIZE		64
 #define REGISTRYWATCH	500
 
-/* Struct to hold registry data over serial ports */
+/**
+ * Data from registry
+ */
 struct regData
 {
 	int n;				// Number of registry entries found
 	int ports[MAXPORT];	// Array of ports that are connected
 };
 
-/* Array that maps COM number to robot ID */
-extern int commToNum[MAXPORT];
+extern int commToNum[MAXPORT]; // Array that maps COM number to robot ID
 
 void commWatch(void *vargp);
 void enumCommNames(struct regData *data);
