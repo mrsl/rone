@@ -57,8 +57,8 @@ void mouse(int button, int state, int x, int y)
 	glPushMatrix();
 		glLoadIdentity();
 
-		gluPickMatrix((GLdouble) x, (GLdouble) (h - y),
-		PICK_DELTA, PICK_DELTA, viewport);
+		gluPickMatrix((GLdouble) x, (GLdouble) (h - y), PICK_DELTA, PICK_DELTA,
+			viewport);
 
 		/* Handle skewed aspect ratios. */
 		aspectHandle(w, h);
@@ -112,6 +112,7 @@ void readChar(char character)
 	int mod;
 	mod = glutGetModifiers();
 
+	/* Ctrl-w to close all open secureCRT windows */
 	if (mod == 2 && character == 23) {
 		killSecureCRT();
 		return;
@@ -221,8 +222,9 @@ void processHits(GLint hits, GLuint buffer[])
 		}
 		/* Ctrl-Alt-Click to open a direct connection to secureCRT */
 		case (6): {
-			if (robots[robotID].type != REMOTE &&
-				robots[robotID].hSerial != NULL && !robots[robotID].blacklisted)
+			if (robots[robotID].type != REMOTE
+				&& robots[robotID].hSerial != NULL
+				&& !robots[robotID].blacklisted)
 				directConnect(robotID);
 			break;
 		}
@@ -497,6 +499,9 @@ void drawAprilTagTextbox(GLenum mode)
 	GLfloat nameWidth = TEXT_MED * gmf[(int) 'm'].gmfCellIncX * 17;
 
 	glPushMatrix();
+	if (mode == GL_SELECT)
+		glLoadName(TEXTBOX_ID);
+
 	glColor3fv(color_black);
 	textSetAlignment(ALIGN_LEFT);
 	textSetSize(TEXT_MED);
@@ -506,9 +511,6 @@ void drawAprilTagTextbox(GLenum mode)
 	textPrintf(name);
 
 	glTranslatef(nameWidth, 0, 0);
-
-	if (mode == GL_SELECT)
-		glLoadName(TEXTBOX_ID);
 
 	if (aprilTagConnected)
 		glColor3fv(color_red);

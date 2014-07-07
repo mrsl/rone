@@ -12,19 +12,24 @@
 #define SLEEPTIME 3000
 #define GRACETIME 10000
 
+/* Robot states */
 #define LOCAL 		0
 #define REMOTE		1
 #define HOST		2
 #define UNKNOWN		3
 
-/* Contains info needed to be passed to the managing thread */
+/**
+ * Connection information
+ */
 struct commInfo
 {
 	HANDLE *hSerial;	// Serial handle
 	int port;			// COM port
 };
 
-/* Robot buffer */
+/**
+ * Robot data buffer and state information holder
+ */
 struct commCon
 {
 	int id; 									// Robot ID
@@ -39,8 +44,7 @@ struct commCon
 	CRITICAL_SECTION mutex;						// Mutex for this robot
 };
 
-/* Array of robot buffers */
-extern struct commCon robots[MAXROBOTID];
+extern struct commCon robots[MAXROBOTID];	// Robot data
 
 void initRobots();
 void commManager(void *vargp);

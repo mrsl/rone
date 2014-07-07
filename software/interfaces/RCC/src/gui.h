@@ -73,7 +73,9 @@
 #define MAX_TEXTBOX_LENGTH	21
 #define TEXTBOX_ID			1000
 
-
+/**
+ * Textbox buffer and state information
+ */
 struct textbox {
 	int isActive;
 	unsigned int length;
@@ -81,17 +83,17 @@ struct textbox {
 	char message[MAX_TEXTBOX_LENGTH];
 };
 
-extern struct textbox aprilTagURL;
+extern struct textbox aprilTagURL;	// AprilTag IP textbox
 
-extern GLYPHMETRICSFLOAT gmf[256];
+extern GLYPHMETRICSFLOAT gmf[256];	// Character information
+extern GLint drawingListBase;		// Drawing primitives
 
-extern GLint drawingListBase;
-
+/* Drawing colors */
 extern const float color_red[COLOR_SIZE];
 extern const float color_black[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
 
-extern const char scriptTemplate[256];
+extern const char scriptTemplate[256];	// secureCRT script
 
 /* GUI functions and drawing functions */
 void display();

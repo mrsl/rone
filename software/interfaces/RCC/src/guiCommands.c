@@ -3,7 +3,6 @@
  *
  * Functions for various commands on the GUI
  */
-
 #include "rcc.h"
 
 /* The script template */

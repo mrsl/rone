@@ -183,7 +183,7 @@ void connectionHandler(void *vargp)
 	int tid;						// Thread ID
 	int id;							// Requested robot ID
 	int n;
-	int aid = -1;					// Apriltag ID
+	int aid = -1;					// AprilTag ID
 	int head;						// Last location of robot buffer viewed
 	int err, bl;					// Flag
 	struct Connection *conn;		// Connection information
@@ -413,6 +413,7 @@ int connectAprilTag()
 		port = "2001";
 	} else {
 		*port = '\0';
+		port = port + 1;
 	}
 
 	if (strlen(hostname) < 7)
