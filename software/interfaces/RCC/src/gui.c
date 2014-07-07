@@ -283,7 +283,6 @@ void drawRobots(GLenum mode)
 	/* Iterate through robot list and find all active robots */
 	for (i = 0; i < MAXROBOTID; i++) {
 		mutexLock(&robots[i].mutex);
-
 		/* If the robot is active */
 		if (robots[i].up != 0) {
 			if (robots[i].type == LOCAL || robots[i].type == HOST) {
@@ -292,27 +291,26 @@ void drawRobots(GLenum mode)
 				remote[numRemote++] = &robots[i];
 			}
 		}
-
 		mutexUnlock(&robots[i].mutex);
 	}
 
 	/* Figure scale for local robot pane */
 	if (numLocal <= 12) {
 		ls = SCALE_LARGE;
-		lx = ROBOT_START_LX;
-		ly = ROBOT_START_LY;
+		lx = ROBOT_START_LOCAL_X;
+		ly = ROBOT_START_LOCAL_Y;
 	} else if (numLocal > 12) {
 		ls = SCALE_MED;
-		lx = ROBOT_START_LX + ROBOT_RADIUS / ls / 2;
-		ly = ROBOT_START_LY + ROBOT_RADIUS / ls / 2;
+		lx = ROBOT_START_LOCAL_X + ROBOT_RADIUS / ls / 2;
+		ly = ROBOT_START_LOCAL_Y + ROBOT_RADIUS / ls / 2;
 	} else if (numLocal > 24) {
 		ls = SCALE_SMALL;
-		lx = ROBOT_START_LX;
-		ly = ROBOT_START_LY + ROBOT_RADIUS;
+		lx = ROBOT_START_LOCAL_X;
+		ly = ROBOT_START_LOCAL_Y + ROBOT_RADIUS;
 	} else if (numLocal > 44) {
 		ls = SCALE_TINY;
-		lx = ROBOT_START_LX;
-		ly = ROBOT_START_LY + ROBOT_RADIUS + ROBOT_RADIUS / ls;
+		lx = ROBOT_START_LOCAL_X;
+		ly = ROBOT_START_LOCAL_Y + ROBOT_RADIUS + ROBOT_RADIUS / ls;
 	}
 	sx = lx;
 
@@ -335,20 +333,20 @@ void drawRobots(GLenum mode)
 	/* Figure scale for remote robots */
 	if (numRemote <= 12) {
 		rs = SCALE_LARGE;
-		rx = ROBOT_START_RX;
-		ry = ROBOT_START_RY;
+		rx = ROBOT_START_REMOTE_X;
+		ry = ROBOT_START_REMOTE_Y;
 	} else if (numRemote > 12) {
 		rs = SCALE_MED;
-		rx = ROBOT_START_RX + ROBOT_RADIUS / rs / 2;
-		ry = ROBOT_START_RY + ROBOT_RADIUS / rs / 2;
+		rx = ROBOT_START_REMOTE_X + ROBOT_RADIUS / rs / 2;
+		ry = ROBOT_START_REMOTE_Y + ROBOT_RADIUS / rs / 2;
 	} else if (numRemote > 24) {
 		rs = SCALE_SMALL;
-		rx = ROBOT_START_RX;
-		ry = ROBOT_START_RY + ROBOT_RADIUS;
+		rx = ROBOT_START_REMOTE_X;
+		ry = ROBOT_START_REMOTE_Y + ROBOT_RADIUS;
 	} else if (numRemote > 44) {
 		rs = SCALE_TINY;
-		rx = ROBOT_START_RX;
-		ry = ROBOT_START_RY + ROBOT_RADIUS + ROBOT_RADIUS / rs;
+		rx = ROBOT_START_REMOTE_X;
+		ry = ROBOT_START_REMOTE_Y + ROBOT_RADIUS + ROBOT_RADIUS / rs;
 	}
 	sx = rx;
 

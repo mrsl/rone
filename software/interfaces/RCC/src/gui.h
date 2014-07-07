@@ -31,10 +31,10 @@
 #define INNER_RADIUS		1.9
 #define HOST_RADIUS			2.3
 
-#define ROBOT_START_LX		-15.
-#define ROBOT_START_LY		8.
-#define ROBOT_START_RX		ROBOT_START_LX
-#define ROBOT_START_RY		-6.
+#define ROBOT_START_LOCAL_X			-15.
+#define ROBOT_START_LOCAL_Y			8.
+#define ROBOT_START_REMOTE_X		ROBOT_START_LOCAL_X
+#define ROBOT_START_REMOTE_Y		-6.
 
 #define ROBOT_STEP_X		6.
 #define ROBOT_STEP_Y		5.
