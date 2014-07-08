@@ -33,6 +33,7 @@ struct commInfo
 struct commCon
 {
 	int id; 									// Robot ID
+	int aid;									// AprilTag ID
 	int blacklisted;							// Is this robot ID blacklisted?
 	HANDLE *hSerial;							// Serial handle if connected
 	time_t up;									// Last time we saw the robot

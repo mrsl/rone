@@ -55,6 +55,16 @@ void commManager(void *vargp)
 
 			mutexUnlock(&robots[i].mutex);
 		}
+
+		for (i = 0; i < maxAprilTag; i++) {
+			mutexLock(&aprilTagData[i].mutex);
+			if ((aprilTagData[i].up + GRACETIME < clock())
+				&& aprilTagData[i].active) {
+				aprilTagData[i].active = 0;
+				aprilTagData[i].up = 0;
+			}
+			mutexUnlock(&aprilTagData[i].mutex);
+		}
 		/* Sleep for a while. */
 		Sleep(SLEEPTIME);
 	}

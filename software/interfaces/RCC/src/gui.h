@@ -21,6 +21,7 @@
 #define PICK_DELTA			3.0
 
 #define DRAW_DELAY			16
+#define AT_DRAW_DELAY		32
 
 #define TITLE_POS_X			-19.5
 #define TITLE_POS_Y			13.5
@@ -46,6 +47,13 @@
 #define SCALE_MED			1.5
 #define SCALE_SMALL			2.
 #define SCALE_TINY			3.
+
+/* AprilTag drawing defines */
+#define APRILTAG_X			10
+#define APRILTAG_Y			0
+
+#define AT_SCALE_X			9
+#define AT_SCALE_Y			9
 
 /* Text defines */
 #define TEXT_SMALL			0.65
@@ -127,6 +135,7 @@ void killSecureCRT();
 void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);
+void drawAprilTags(GLenum mode);
 void drawAprilTagTextbox(GLenum mode);
 void drawToolbar(GLenum mode);
 void timerEnableDraw(int value);
