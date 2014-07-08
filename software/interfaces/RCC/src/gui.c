@@ -6,6 +6,7 @@
 #include "rcc.h"
 
 int clickMode;
+int prevClick;
 struct textbox aprilTagURL;
 
 /**
@@ -279,12 +280,28 @@ void processHits(GLint hits, GLuint buffer[])
 					blacklist(robotID);
 				} else if (clickMode == SCONNECT) {
 					commConnect(robotID);
+				} else if (clickMode == ATLINK) {
+					if (prevClick >= 2000 && prevClick < MAX_APRILTAG + 2000) {
+						if (aprilTagData[prevClick - 2000].active)
+							robots[robotID].aid = prevClick - 2000;
+					}
 				}
 				break;
 			}
 			}
 			mutexUnlock(&robots[robotID].mutex);
 		}
+
+		if (robotID >= 2000 && robotID < MAX_APRILTAG + 2000) {
+			if (clickMode == ATLINK) {
+				if (prevClick > 0 && prevClick < MAXROBOTID) {
+					if (robots[prevClick].up)
+						robots[prevClick].aid = robotID - 2000;
+				}
+			}
+		}
+
+		prevClick = robotID;
 	}
 }
 
@@ -511,6 +528,20 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 				glVertex2f(0, -ROBOT_RADIUS / scale);
 				glVertex2f(0, ROBOT_RADIUS / scale);
 			glEnd();
+		glPopMatrix();
+	}
+
+	if (robot->aid != -1) {
+		glPushMatrix();
+			glTranslatef(ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
+			glPushMatrix();
+				glScalef(0.5, 0.5, 0);
+				glColor3fv(color_black);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glTranslatef(0, -0.25, 0);
+			glColor3fv(color_white);
+			textPrintf("%d", robot->aid);
 		glPopMatrix();
 	}
 	glPopMatrix();

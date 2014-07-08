@@ -17,6 +17,7 @@ void initRobots()
 	/* Initialize values in the struct */
 	for (i = 0; i < MAXROBOTID; i++) {
 		robots[i].id = i;
+		robots[i].aid = -1;
 		robots[i].blacklisted = 0;
 		robots[i].hSerial = NULL;
 		robots[i].up = 0;

@@ -270,7 +270,7 @@ void connectionHandler(void *vargp)
 	if (verbose)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
-	aid = -1;
+	aid = robots[id].aid;
 	if (aprilTagConnected && id != 0) {
 		while (aid == -1) {
 			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
