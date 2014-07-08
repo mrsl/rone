@@ -7,6 +7,8 @@
 
 int port;
 int verbose = 0;
+GLfloat aprilTagX = 650.;
+GLfloat aprilTagY = 500.;
 
 /**
  * Main function
@@ -29,6 +31,25 @@ int main(int argc, char **argv)
 					err = 1;
 					break;
 				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--height") == 0) {
+				if (sscanf(argv[i + 1], "%f", &aprilTagY) != 1) {
+					err = 1;
+					break;
+				}
+				i++;
+				aprilTagY /= 2.;
+				continue;
+			}
+			if (strcmp(argv[i], "-w") == 0 || strcmp(argv[i], "--width") == 0) {
+				if (sscanf(argv[i + 1], "%f", &aprilTagX) != 1) {
+					err = 1;
+					break;
+				}
+				i++;
+				aprilTagX /= 2.;
 				continue;
 			}
 		}
@@ -37,7 +58,7 @@ int main(int argc, char **argv)
 	}
 
 	if (err) {
-		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum]\n", argv[0]);
+		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum] <-h|--height> [AprilTag max Y] <-w|--width> [AprilTag max X]\n", argv[0]);
 		return (-1);
 	}
 

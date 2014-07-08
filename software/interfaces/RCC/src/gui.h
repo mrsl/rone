@@ -52,8 +52,7 @@
 #define APRILTAG_X			10
 #define APRILTAG_Y			0
 
-#define AT_SCALE_X			9
-#define AT_SCALE_Y			9
+#define AT_SCALE_X			9.
 
 /* Text defines */
 #define TEXT_SMALL			0.65
@@ -118,6 +117,8 @@ extern GLint drawingListBase;		// Drawing primitives
 /* Drawing colors */
 extern const float color_red[COLOR_SIZE];
 extern const float color_black[COLOR_SIZE];
+extern const float color_grey[COLOR_SIZE];
+extern const float color_darkgrey[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
 
 extern const char scriptTemplate[256];	// secureCRT script

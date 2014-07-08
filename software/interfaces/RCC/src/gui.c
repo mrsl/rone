@@ -557,6 +557,59 @@ void drawAprilTags(GLenum mode)
 	glPushMatrix();
 	glTranslatef(APRILTAG_X, APRILTAG_Y, 0);
 
+	glPushMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < AT_SCALE_X; i++) {
+				glTranslatef(1, 0, 0);
+				glBegin(GL_LINES);
+					glVertex2f(0, -GUI_HEIGHT / 2);
+					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+				glEnd();
+			}
+		glPopMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < AT_SCALE_X; i++) {
+				glTranslatef(-1, 0, 0);
+				glBegin(GL_LINES);
+					glVertex2f(0, -GUI_HEIGHT / 2);
+					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+				glEnd();
+			}
+		glPopMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < (GUI_HEIGHT / 2 - 3); i++) {
+				glTranslatef(0, 1, 0);
+				glBegin(GL_LINES);
+					glVertex2f(-AT_SCALE_X - 1, 0);
+					glVertex2f(AT_SCALE_X + 1, 0);
+				glEnd();
+			}
+		glPopMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < (GUI_HEIGHT / 2); i++) {
+				glTranslatef(0, -1, 0);
+				glBegin(GL_LINES);
+					glVertex2f(-AT_SCALE_X - 1, 0);
+					glVertex2f(AT_SCALE_X + 1, 0);
+				glEnd();
+			}
+		glPopMatrix();
+
+		glColor3fv(color_darkgrey);
+		glBegin(GL_LINES);
+			glVertex2f(0, -GUI_HEIGHT / 2);
+			glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+		glEnd();
+		glBegin(GL_LINES);
+			glVertex2f(-AT_SCALE_X - 1, 0);
+			glVertex2f(AT_SCALE_X + 1, 0);
+		glEnd();
+	glPopMatrix();
+
 	for (i = 0; i < maxAprilTag + 1; i++) {
 		mutexLock(&aprilTagData[i].mutex);
 		if (aprilTagData[i].active)
@@ -570,8 +623,11 @@ void drawAprilTags(GLenum mode)
 			if (mode == GL_SELECT)
 				glLoadName(2000 + activeTags[i]->id);
 
-			xi = AT_SCALE_X * ((activeTags[i]->x - 600) / 1200);
-			yi = -AT_SCALE_Y * ((activeTags[i]->y - 450) / 900);
+			xi = (activeTags[i]->x - aprilTagX) / aprilTagX;
+			yi = (activeTags[i]->y - aprilTagY) / aprilTagY;
+
+			xi *= AT_SCALE_X;
+			yi *= -AT_SCALE_X * (aprilTagY / aprilTagX);
 
 			glTranslatef(xi, yi, 0);
 			glPushMatrix();
@@ -856,6 +912,8 @@ void timerEnableDraw(int value)
 	drawToolbar(GL_RENDER);
 
 	if (aprilTagConnected) {
+		drawAprilTags(GL_RENDER);
+
 		glPushMatrix();
 			glTranslatef(MAP_DIVIDE_X, 0, 0);
 			glRotatef(90, 0, 0, 1);
@@ -864,8 +922,6 @@ void timerEnableDraw(int value)
 				glVertex2f(GUI_HEIGHT / 2 - TEXT_LARGE * 2, 0);
 			glEnd();
 		glPopMatrix();
-
-		drawAprilTags(GL_RENDER);
 	}
 
 	drawRobots(GL_RENDER);
