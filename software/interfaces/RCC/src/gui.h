@@ -89,6 +89,7 @@
 #define SCONNECT	2
 #define ATLINK		3
 #define HOSTBOT		4
+#define LOG			5
 
 #define CONNECT_BUTTON		1001
 #define BLACKLIST_BUTTON	1002
@@ -98,6 +99,7 @@
 #define OPENREMOTE_BUTTON	1006
 #define KILLALL_BUTTON		1007
 #define HOST_BUTTON			1008
+#define LOG_BUTTON			1009
 
 /**
  * Textbox buffer and state information

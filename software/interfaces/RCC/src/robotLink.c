@@ -19,6 +19,7 @@ void initRobots()
 		robots[i].id = i;
 		robots[i].aid = -1;
 		robots[i].blacklisted = 0;
+		robots[i].log = 0;
 		robots[i].hSerial = NULL;
 		robots[i].up = 0;
 		robots[i].head = 0;
@@ -57,14 +58,16 @@ void commManager(void *vargp)
 			mutexUnlock(&robots[i].mutex);
 		}
 
-		for (i = 0; i < maxAprilTag; i++) {
-			mutexLock(&aprilTagData[i].mutex);
-			if ((aprilTagData[i].up + GRACETIME < clock())
-				&& aprilTagData[i].active) {
-				aprilTagData[i].active = 0;
-				aprilTagData[i].up = 0;
+		if (aprilTagConnected) {
+			for (i = 0; i < MAX_APRILTAG; i++) {
+				mutexLock(&aprilTagData[i].mutex);
+				if ((aprilTagData[i].up + GRACETIME < clock())
+					&& aprilTagData[i].active) {
+					aprilTagData[i].active = 0;
+					aprilTagData[i].up = 0;
+				}
+				mutexUnlock(&aprilTagData[i].mutex);
 			}
-			mutexUnlock(&aprilTagData[i].mutex);
 		}
 		/* Sleep for a while. */
 		Sleep(SLEEPTIME);
@@ -106,8 +109,10 @@ void commCommander(void *vargp)
 	int isHost = 0;						// Is this robot a rprintf host?
 	int rid;							// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
+	char lbuffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
 	char *bufp = buffer;				// Pointer to buffers
+	char *lbufp;
 	struct commInfo *info;				// Information on robot connection
 	struct serialIO sio;				// Robust IO on serial buffer
 
@@ -183,6 +188,30 @@ void commCommander(void *vargp)
 		}
 		/* Insert the read line into robot's buffer. */
 		insertBuffer(id, buffer);
+
+		/* Log data */
+		if (robots[id].log) {
+			strcpy(lbuffer, buffer);
+
+			if (robots[id].aid != -1) {
+				lbufp = lbuffer + strlen(lbuffer) - 2;
+				mutexLock(&aprilTagData[robots[id].aid].mutex);
+				if ((n = sprintf(lbufp, ", %s",
+					aprilTagData[robots[id].aid].buffer[aprilTagData[robots[id].aid].head])) < 0) {
+					mutexUnlock(&aprilTagData[robots[id].aid].mutex);
+					break;
+				}
+				mutexUnlock(&aprilTagData[robots[id].aid].mutex);
+
+				/* If there was no data, rewrite the CRLF */
+				if (n == 2) {
+					if (sprintf(lbufp, "\r\n") < 0)
+						break;
+				}
+			}
+
+			hprintf(&robots[id].logH, "[%11d] %s", clock(), lbuffer);
+		}
 
 		/* If we get a status line from a host robot. */
 		if (strncmp(buffer, "rts", 3) == 0) {

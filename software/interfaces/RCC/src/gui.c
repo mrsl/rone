@@ -163,6 +163,7 @@ void processHits(GLint hits, GLuint buffer[])
 	int i;
 	unsigned int j;
 	GLuint names, *ptr;
+	TCHAR fileName[MAX_PATH];
 	int robotID = -1;
 
 	if (hits == 0)
@@ -212,6 +213,9 @@ void processHits(GLint hits, GLuint buffer[])
 			continue;
 		} else if (robotID == ATLINK_BUTTON) {
 			clickMode = ATLINK;
+			continue;
+		} else if (robotID == LOG_BUTTON) {
+			clickMode = LOG;
 			continue;
 		} else if (robotID == OPENLOCAL_BUTTON) {
 			for (i = 0; i < MAXROBOTID; i++) {
@@ -284,6 +288,24 @@ void processHits(GLint hits, GLuint buffer[])
 					if (prevClick >= 2000 && prevClick < MAX_APRILTAG + 2000) {
 						if (aprilTagData[prevClick - 2000].active)
 							robots[robotID].aid = prevClick - 2000;
+					}
+				} else if (clickMode == LOG) {
+					if (!robots[robotID].log) {
+						robots[robotID].log = 1;
+						sprintf(fileName, ".\\logs\\%d_%ld.log", robotID,
+							clock());
+						robots[robotID].logH = CreateFile((LPTSTR) fileName,
+														  GENERIC_WRITE,
+														  0,
+														  NULL,
+														  CREATE_ALWAYS,
+														  FILE_ATTRIBUTE_NORMAL,
+														  NULL);
+						if (robots[robotID].logH == INVALID_HANDLE_VALUE)
+							robots[robotID].log = 0;
+					} else {
+						robots[robotID].log = 0;
+						CloseHandle(robots[robotID].logH);
 					}
 				}
 				break;
@@ -535,13 +557,37 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 		glPushMatrix();
 			glTranslatef(ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
+				glScalef(0.55, 0.55, 0);
+				glColor3fv(color_white);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glPushMatrix();
 				glScalef(0.5, 0.5, 0);
 				glColor3fv(color_black);
 				glRectf(-1, -1, 1, 1);
 			glPopMatrix();
-			glTranslatef(0, -0.25, 0);
+			glTranslatef(0, -0.3, 0);
 			glColor3fv(color_white);
 			textPrintf("%d", robot->aid);
+		glPopMatrix();
+	}
+
+	if (robot->log) {
+		glPushMatrix();
+			glTranslatef(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
+			glPushMatrix();
+				glScalef(0.55, 0.55, 0);
+				glColor3fv(color_black);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glPushMatrix();
+				glScalef(0.5, 0.5, 0);
+				glColor3fv(color_white);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glTranslatef(0, -0.3, 0);
+			glColor3fv(color_black);
+			textPrintf("L", robot->aid);
 		glPopMatrix();
 	}
 	glPopMatrix();
@@ -785,7 +831,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("BL");
 
-		/* CT Button */
+		/* ST Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 		if (mode == GL_SELECT)
 			glLoadName(SCONNECT_BUTTON);
@@ -803,7 +849,25 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("ST");
 
-		/* CT Button */
+		/* LG Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		if (mode == GL_SELECT)
+			glLoadName(LOG_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == LOG)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("LG");
+
+		/* OL Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
@@ -819,7 +883,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("OL");
 
-		/* CT Button */
+		/* OR Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
@@ -835,7 +899,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("OR");
 
-		/* CT Button */
+		/* AL Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
@@ -854,7 +918,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
-		/* CT Button */
+		/* KO Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
