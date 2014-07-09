@@ -440,7 +440,7 @@ int connectAprilTag()
 
 void aprilTagHandler(void *vargp)
 {
-	int id, n;
+	int i, id, n;
 	int tid;						// Thread ID
 	struct Connection *conn;		// Connection information
 	struct socketIO socketio;		// Robust IO buffer for socket
@@ -513,7 +513,7 @@ void aprilTagHandler(void *vargp)
 				}
 
 				if (aprilTagData[id].log) {
-					hprintf(&aprilTagData[id].logH,
+					hprintf(&aprilTagData[id].logH, "[%11d] %s", clock(),
 						aprilTagData[id].buffer[aprilTagData[id].head]);
 				}
 
@@ -530,6 +530,17 @@ void aprilTagHandler(void *vargp)
 
 	if (verbose)
 		printf("A%02d: AprilTag connection closed!\n", tid);
+
+	for (i = 0; i < MAX_APRILTAG; i++) {
+		mutexLock(&aprilTagData[i].mutex);
+		aprilTagData[i].active = 0;
+		aprilTagData[i].up = 0;
+		if (aprilTagData[i].log) {
+			aprilTagData[i].log = 0;
+			CloseHandle(aprilTagData[i].logH);
+		}
+		mutexUnlock(&aprilTagData[i].mutex);
+	}
 
 	/* Clean up */
 	aprilTagConnected = 0;

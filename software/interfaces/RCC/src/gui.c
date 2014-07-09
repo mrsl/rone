@@ -325,6 +325,8 @@ void processHits(GLint hits, GLuint buffer[])
 					if (prevClick >= 2000 && prevClick < MAX_APRILTAG + 2000) {
 						if (aprilTagData[prevClick - 2000].active)
 							robots[robotID].aid = prevClick - 2000;
+					} else {
+						robots[robotID].aid = -1;
 					}
 					break;
 				}
@@ -604,7 +606,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 		glPopMatrix();
 	}
 
-	if (robot->aid != -1) {
+	if (robot->aid != -1 && aprilTagConnected) {
 		glPushMatrix();
 			glTranslatef(ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
@@ -705,6 +707,28 @@ void drawAprilTags(GLenum mode)
 			glVertex2f(-AT_SCALE_X - 1, 0);
 			glVertex2f(AT_SCALE_X + 1, 0);
 		glEnd();
+		glPushMatrix();
+			glTranslatef(-AT_SCALE_X, -AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glBegin(GL_LINES);
+				glVertex2f(0, 0);
+				glVertex2f(1, 0);
+			glEnd();
+			glBegin(GL_LINES);
+				glVertex2f(0, 0);
+				glVertex2f(0, 1);
+			glEnd();
+		glPopMatrix();
+		glPushMatrix();
+			glTranslatef(AT_SCALE_X, AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glBegin(GL_LINES);
+				glVertex2f(0, 0);
+				glVertex2f(-1, 0);
+			glEnd();
+			glBegin(GL_LINES);
+				glVertex2f(0, 0);
+				glVertex2f(0, -1);
+			glEnd();
+		glPopMatrix();
 	glPopMatrix();
 
 	for (i = 0; i < maxAprilTag + 1; i++) {
@@ -830,7 +854,8 @@ void drawToolbar(GLenum mode)
 
 	glPushMatrix();
 		/* CT Button */
-		glTranslatef(TITLE_POS_X, ROBOT_START_Y + ROBOT_RADIUS - TEXT_LARGE, 0);
+		glTranslatef(TITLE_POS_X - 0.1,
+			ROBOT_START_Y + ROBOT_RADIUS - 0.75, 0);
 		if (mode == GL_SELECT)
 			glLoadName(CONNECT_BUTTON);
 
@@ -848,7 +873,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("CT");
 
 		/* RT Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
 		if (mode == GL_SELECT)
 			glLoadName(HOST_BUTTON);
 
@@ -866,7 +891,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("RT");
 
 		/* BL Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
 		if (mode == GL_SELECT)
 			glLoadName(BLACKLIST_BUTTON);
 
@@ -884,7 +909,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("BL");
 
 		/* ST Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
 		if (mode == GL_SELECT)
 			glLoadName(SCONNECT_BUTTON);
 
@@ -902,7 +927,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("ST");
 
 		/* LG Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
 		if (mode == GL_SELECT)
 			glLoadName(LOG_BUTTON);
 
@@ -919,40 +944,8 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("LG");
 
-		/* OL Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
-
-		if (mode == GL_SELECT)
-			glLoadName(OPENLOCAL_BUTTON);
-
-		glColor3fv(color_white);
-		glRectf(0,
-				0.,
-				textWidth,
-				TEXT_LARGE);
-
-		glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("OL");
-
-		/* OR Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
-
-		if (mode == GL_SELECT)
-			glLoadName(OPENREMOTE_BUTTON);
-
-		glColor3fv(color_white);
-		glRectf(0,
-				0.,
-				textWidth,
-				TEXT_LARGE);
-
-		glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("OR");
-
 		/* AL Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(ATLINK_BUTTON);
@@ -970,8 +963,42 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
+		glTranslatef(0, -12, 0);
+
+		/* OL Button */
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(OPENLOCAL_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("OL");
+
+		/* OR Button */
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(OPENREMOTE_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("OR");
+
 		/* KO Button */
-		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(KILLALL_BUTTON);

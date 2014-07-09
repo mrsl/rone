@@ -80,7 +80,7 @@ void makeThread(void *function, void *args)
 void hprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 {
 	DWORD dwBytesWritten;
-	char text[BUFFERSIZE];
+	char text[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
 	va_list ap;
 
 	if (fmt == NULL)

@@ -55,6 +55,10 @@ void commManager(void *vargp)
 				&& !robots[i].blacklisted)
 				hprintf(robots[i].hSerial, "rt\n");
 
+			if (robots[i].aid != -1 && !aprilTagConnected) {
+				robots[i].aid = -1;
+			}
+
 			mutexUnlock(&robots[i].mutex);
 		}
 
@@ -279,6 +283,11 @@ void commCommander(void *vargp)
 		commToNum[info->port] = 0;
 		robots[id].type = UNKNOWN;
 		robots[id].up = 0;
+		if (robots[id].log) {
+			robots[id].log = 0;
+			CloseHandle(robots[id].logH);
+		}
+		robots[id].aid = -1;
 		CloseHandle(*info->hSerial);
 	}
 
@@ -310,7 +319,7 @@ void activateRobot(int robotID, struct commInfo *info)
 void insertBuffer(int robotID, char *buffer)
 {
 	int n, aid;
-	char *lbufp, lbuffer[BUFFERSIZE];
+	char *lbufp, lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
 
 	/* Lock the robot buffer */
 	mutexLock(&robots[robotID].mutex);
@@ -340,7 +349,7 @@ void insertBuffer(int robotID, char *buffer)
 	robots[robotID].up = clock();
 
 	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s",
-		clock(), lbuffer);
+		robots[robotID].up, lbuffer);
 
 	/* Log data */
 	if (robots[robotID].log) {
