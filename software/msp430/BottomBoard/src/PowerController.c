@@ -172,7 +172,9 @@ uint8 powerVBatGet(void){
 }
 
 void ADC10Init(void){
-	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 	// 16 x clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
+//	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 	// 16 x clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
+	ADC10CTL0 = SREF_0 | ADC10SHT_2 | ADC10ON; 					// Default ref, 16 x clk, ADC10 on
+	// TODO make sure the power supply ADC follow the same convention
 }
 
 void powerVBatInit(void) {
