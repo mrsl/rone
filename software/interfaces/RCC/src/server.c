@@ -182,6 +182,7 @@ void connectionHandler(void *vargp)
 	int id;							// Requested robot ID
 	int n;
 	int aid;						// AprilTag ID
+	int linked;						// Is this robot AprilTag linked?
 	int head;						// Last location of robot buffer viewed
 	int up, bl;						// Flag
 	struct Connection *conn;		// Connection information
@@ -271,6 +272,7 @@ void connectionHandler(void *vargp)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
 	aid = robots[id].aid;
+	linked = aid != -1;
 	if (aprilTagConnected && id != 0) {
 		while (aid == -1) {
 			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
@@ -347,7 +349,7 @@ void connectionHandler(void *vargp)
 			mutexUnlock(&robots[id].mutex);
 
 			/* Append AprilTag data to end of message if available */
-			if (aid != -1) {
+			if (aid != -1 && !linked) {
 				bufp = buffer + n - 2;
 				mutexLock(&aprilTagData[aid].mutex);
 				if ((n = sprintf(bufp, ", %s",
@@ -508,6 +510,11 @@ void aprilTagHandler(void *vargp)
 					aprilTagData[id].x = x;
 					aprilTagData[id].y = y;
 					aprilTagData[id].t = t;
+				}
+
+				if (aprilTagData[id].log) {
+					hprintf(&aprilTagData[id].logH,
+						aprilTagData[id].buffer[aprilTagData[id].head]);
 				}
 
 				aprilTagData[id].up = clock();

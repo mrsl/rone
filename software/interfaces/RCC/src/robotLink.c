@@ -109,10 +109,8 @@ void commCommander(void *vargp)
 	int isHost = 0;						// Is this robot a rprintf host?
 	int rid;							// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
-	char lbuffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
 	char *bufp = buffer;				// Pointer to buffers
-	char *lbufp;
 	struct commInfo *info;				// Information on robot connection
 	struct serialIO sio;				// Robust IO on serial buffer
 
@@ -188,30 +186,6 @@ void commCommander(void *vargp)
 		}
 		/* Insert the read line into robot's buffer. */
 		insertBuffer(id, buffer);
-
-		/* Log data */
-		if (robots[id].log) {
-			strcpy(lbuffer, buffer);
-
-			if (robots[id].aid != -1) {
-				lbufp = lbuffer + strlen(lbuffer) - 2;
-				mutexLock(&aprilTagData[robots[id].aid].mutex);
-				if ((n = sprintf(lbufp, ", %s",
-					aprilTagData[robots[id].aid].buffer[aprilTagData[robots[id].aid].head])) < 0) {
-					mutexUnlock(&aprilTagData[robots[id].aid].mutex);
-					break;
-				}
-				mutexUnlock(&aprilTagData[robots[id].aid].mutex);
-
-				/* If there was no data, rewrite the CRLF */
-				if (n == 2) {
-					if (sprintf(lbufp, "\r\n") < 0)
-						break;
-				}
-			}
-
-			hprintf(&robots[id].logH, "[%11d] %s", clock(), lbuffer);
-		}
 
 		/* If we get a status line from a host robot. */
 		if (strncmp(buffer, "rts", 3) == 0) {
@@ -335,13 +309,44 @@ void activateRobot(int robotID, struct commInfo *info)
  */
 void insertBuffer(int robotID, char *buffer)
 {
+	int n, aid;
+	char *lbufp, lbuffer[BUFFERSIZE];
+
 	/* Lock the robot buffer */
 	mutexLock(&robots[robotID].mutex);
+
+	strcpy(lbuffer, buffer);
+
+	if ((aid = robots[robotID].aid) != -1) {
+		lbufp = lbuffer + strlen(lbuffer) - 2;
+		mutexLock(&aprilTagData[aid].mutex);
+		if ((n = sprintf(lbufp, ", %s",
+			aprilTagData[aid].buffer[aprilTagData[aid].head])) < 0) {
+			mutexUnlock(&aprilTagData[aid].mutex);
+			mutexUnlock(&robots[robotID].mutex);
+			return;
+		}
+		mutexUnlock(&aprilTagData[aid].mutex);
+
+		/* If there was no data, rewrite the CRLF */
+		if (n == 2) {
+			if (sprintf(lbufp, "\r\n") < 0) {
+				mutexUnlock(&robots[robotID].mutex);
+				return;
+			}
+		}
+	}
 
 	robots[robotID].up = clock();
 
 	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s",
-		clock(), buffer);
+		clock(), lbuffer);
+
+	/* Log data */
+	if (robots[robotID].log) {
+		hprintf(&robots[robotID].logH,
+			robots[robotID].buffer[robots[robotID].head]);
+	}
 
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;

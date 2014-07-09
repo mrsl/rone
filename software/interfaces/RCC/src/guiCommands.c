@@ -161,3 +161,77 @@ void commConnect(int robotID)
 		&& !robots[robotID].blacklisted)
 		directConnect(robotID);
 }
+
+void beginLog(int robotID)
+{
+	char fileName[MAX_PATH];
+
+	if (!robots[robotID].log) {
+		robots[robotID].log = 1;
+		sprintf(fileName, "%s\\%d_%ld.log", logDir, robotID, clock());
+		robots[robotID].logH = CreateFile((LPTSTR) fileName,
+										  GENERIC_WRITE,
+										  0,
+										  NULL,
+										  CREATE_ALWAYS,
+										  FILE_ATTRIBUTE_NORMAL,
+										  NULL);
+		if (robots[robotID].logH == INVALID_HANDLE_VALUE)
+			robots[robotID].log = 0;
+	} else {
+		robots[robotID].log = 0;
+		CloseHandle(robots[robotID].logH);
+	}
+}
+
+void beginAprilTagLog(int aprilTagID)
+{
+	char fileName[MAX_PATH];
+
+	if (!aprilTagData[aprilTagID].log) {
+		aprilTagData[aprilTagID].log = 1;
+		sprintf(fileName, "%s\\AT%d_%ld.log", logDir, aprilTagID, clock());
+		aprilTagData[aprilTagID].logH = CreateFile((LPTSTR) fileName,
+												   GENERIC_WRITE,
+											 	   0,
+											       NULL,
+												   CREATE_ALWAYS,
+												   FILE_ATTRIBUTE_NORMAL,
+												   NULL);
+		if (aprilTagData[aprilTagID].logH == INVALID_HANDLE_VALUE)
+			aprilTagData[aprilTagID].log = 0;
+	} else {
+		aprilTagData[aprilTagID].log = 0;
+		CloseHandle(aprilTagData[aprilTagID].logH);
+	}
+}
+
+void openLocalConnections()
+{
+	int i;
+
+	for (i = 0; i < MAXROBOTID; i++) {
+		mutexLock(&robots[i].mutex);
+		/* If the robot is active */
+		if (robots[i].up != 0 && !robots[i].blacklisted) {
+			if (robots[i].type == LOCAL || robots[i].type == HOST)
+				openClientConnection(i);
+		}
+		mutexUnlock(&robots[i].mutex);
+	}
+}
+
+void openRemoteConnections()
+{
+	int i;
+
+	for (i = 0; i < MAXROBOTID; i++) {
+		mutexLock(&robots[i].mutex);
+		/* If the robot is active */
+		if (robots[i].up != 0) {
+			if (robots[i].type == REMOTE)
+				openClientConnection(i);
+		}
+		mutexUnlock(&robots[i].mutex);
+	}
+}

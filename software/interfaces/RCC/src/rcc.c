@@ -5,10 +5,11 @@
  */
 #include "rcc.h"
 
-int port;
+int port = 8000;
 int verbose = 0;
 GLfloat aprilTagX = 650.;
 GLfloat aprilTagY = 500.;
+char logDir[MAX_PATH] = ".\\logs";
 
 /**
  * Main function
@@ -17,7 +18,6 @@ int main(int argc, char **argv)
 {
 	int i;
 	int err = 0;
-	port = 8000; // Use port 8000 as default
 
 	/* Parse command line arguments */
 	for (i = 1; i < argc; i++) {
@@ -52,6 +52,15 @@ int main(int argc, char **argv)
 				aprilTagX /= 2.;
 				continue;
 			}
+			if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--log") == 0) {
+				if (sscanf(argv[i + 1], "%s", logDir) != 1) {
+					err = 1;
+					break;
+				}
+				i++;
+				aprilTagX /= 2.;
+				continue;
+			}
 		}
 		err = 1;
 		break;
@@ -70,7 +79,7 @@ int main(int argc, char **argv)
 	makeThread(&commWatch, 0);
 
 	/* Make the logfile directory */
-	CreateDirectory (".\\logs", NULL);
+	CreateDirectory(logDir, NULL);
 
 	/* Create web server */
 	if (createServer(port) < 0)

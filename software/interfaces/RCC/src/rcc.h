@@ -36,5 +36,6 @@ extern int port;	// Port we are listening on
 extern int verbose;	// Verbose output?
 extern GLfloat aprilTagX;
 extern GLfloat aprilTagY;
+extern char logDir[MAX_PATH];
 
 #endif

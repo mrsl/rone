@@ -156,5 +156,9 @@ void drawInit();
 void hostRobot(int robotID);
 void blacklist(int robotID);
 void commConnect(int robotID);
+void beginLog(int robotID);
+void beginAprilTagLog(int aprilTagID);
+void openLocalConnections();
+void openRemoteConnections();
 
 #endif

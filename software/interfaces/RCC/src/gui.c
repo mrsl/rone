@@ -82,6 +82,7 @@ void mouse(int button, int state, int x, int y)
 	glFlush();
 
 	/* Process clicked elements. */
+	aprilTagURL.isActive = 0;
 	hits = glRenderMode(GL_RENDER);
 	processHits(hits, selectBuf);
 
@@ -113,13 +114,32 @@ void keyboard(unsigned char key, int x, int y)
  */
 void readChar(char character)
 {
-	int mod;
-	mod = glutGetModifiers();
-
-	/* Ctrl-w to close all open secureCRT windows */
-	if (mod == 2 && character == 23) {
-		killSecureCRT();
+	switch (glutGetModifiers())
+	{
+	case (2): {
+		switch (character)
+		{
+		case (12): {
+			openLocalConnections();
+			return;
+		}
+		case (18): {
+			openRemoteConnections();
+			return;
+		}
+		case (23): {
+			killSecureCRT();
+			return;
+		}
+		default: {
+			break;
+		}
+		}
 		return;
+	}
+	default: {
+		break;
+	}
 	}
 
 	if (!aprilTagURL.isActive)
@@ -127,21 +147,21 @@ void readChar(char character)
 
 	switch (character)
 	{
-	case '\r':
-	case '\n': {
+	case ('\r'):
+	case ('\n'): {
 		if (!aprilTagConnected)
 			connectAprilTag();
 		break;
 	}
 	/* Backspace handler */
-	case '\b': {
+	case ('\b'): {
 		if (aprilTagURL.index > 0) {
 			strdel(aprilTagURL.message, --aprilTagURL.index);
 		}
 		break;
 	}
 	/* Delete handler */
-	case 127: {
+	case (127): {
 		strdel(aprilTagURL.message, aprilTagURL.index);
 		break;
 	}
@@ -163,7 +183,6 @@ void processHits(GLint hits, GLuint buffer[])
 	int i;
 	unsigned int j;
 	GLuint names, *ptr;
-	TCHAR fileName[MAX_PATH];
 	int robotID = -1;
 
 	if (hits == 0)
@@ -189,65 +208,68 @@ void processHits(GLint hits, GLuint buffer[])
 		if (robotID == -1)
 			continue;
 
-		if (robotID == TEXTBOX_ID) {
+		switch (robotID)
+		{
+		case (-1): {
+			continue;
+		}
+		/* Textbox */
+		case (TEXTBOX_ID): {
 			if (aprilTagConnected)
 				openClientConnection(0);
 			else
 				aprilTagURL.isActive = 1;
 			continue;
-		} else {
-			aprilTagURL.isActive = 0;
 		}
-
-		if (robotID == CONNECT_BUTTON) {
+		/* Toolbar buttons */
+		case (CONNECT_BUTTON): {
 			clickMode = CONNECT;
 			continue;
-		} else if (robotID == HOST_BUTTON) {
+		}
+		case (HOST_BUTTON): {
 			clickMode = HOSTBOT;
 			continue;
-		} else if (robotID == BLACKLIST_BUTTON) {
+		}
+		case (BLACKLIST_BUTTON): {
 			clickMode = BLACKLIST;
 			continue;
-		} else if (robotID == SCONNECT_BUTTON) {
+		}
+		case (SCONNECT_BUTTON): {
 			clickMode = SCONNECT;
 			continue;
-		} else if (robotID == ATLINK_BUTTON) {
+		}
+		case (ATLINK_BUTTON): {
 			clickMode = ATLINK;
 			continue;
-		} else if (robotID == LOG_BUTTON) {
+		}
+		case (LOG_BUTTON): {
 			clickMode = LOG;
 			continue;
-		} else if (robotID == OPENLOCAL_BUTTON) {
-			for (i = 0; i < MAXROBOTID; i++) {
-				mutexLock(&robots[i].mutex);
-				/* If the robot is active */
-				if (robots[i].up != 0 && !robots[i].blacklisted) {
-					if (robots[i].type == LOCAL || robots[i].type == HOST)
-						openClientConnection(i);
-				}
-				mutexUnlock(&robots[i].mutex);
-			}
+		}
+		case (OPENLOCAL_BUTTON): {
+			openLocalConnections();
 			continue;
-		} else if (robotID == OPENREMOTE_BUTTON) {
-			for (i = 0; i < MAXROBOTID; i++) {
-				mutexLock(&robots[i].mutex);
-				/* If the robot is active */
-				if (robots[i].up != 0) {
-					if (robots[i].type == REMOTE)
-						openClientConnection(i);
-				}
-				mutexUnlock(&robots[i].mutex);
-			}
+		}
+		case (OPENREMOTE_BUTTON): {
+			openRemoteConnections();
 			continue;
-		} else if (robotID == KILLALL_BUTTON) {
+		}
+		case (KILLALL_BUTTON): {
 			killSecureCRT();
 			continue;
 		}
+		default: {
+			break;
+		}
+		}
 
+		int mod = glutGetModifiers();
+
+		/* Clicked robots */
 		if (robotID < MAXROBOTID) {
 			mutexLock(&robots[robotID].mutex);
 			/* Do different things based on which mod keys are being held */
-			switch (glutGetModifiers())
+			switch (mod)
 			{
 			/* Shift-Click to Open a connection to a robot */
 			case (1): {
@@ -256,9 +278,14 @@ void processHits(GLint hits, GLuint buffer[])
 					openClientConnection(robotID);
 				break;
 			}
-			/* Ctrl-Click to Blacklist local robots */
+			/* Ctrl-Click to blacklist robots */
 			case (2): {
 				blacklist(robotID);
+				break;
+			}
+			/* Shift-Ctrl-Click to Log robots */
+			case (3): {
+				beginLog(robotID);
 				break;
 			}
 			/* Alt-Click to make robot into a host */
@@ -271,42 +298,43 @@ void processHits(GLint hits, GLuint buffer[])
 				commConnect(robotID);
 				break;
 			}
-			/* Click to open a secureCRT connection */
+			/* Do whatever tool is selected */
 			case (0):
 			default: {
-				if (clickMode == CONNECT) {
+				switch (clickMode)
+				{
+				case (CONNECT): {
 					if (!robots[robotID].blacklisted
 						|| robots[robotID].type == REMOTE)
 						openClientConnection(robotID);
-				} else if (clickMode == HOSTBOT) {
+					break;
+				}
+				case (HOSTBOT): {
 					hostRobot(robotID);
-				} else if (clickMode == BLACKLIST) {
+					break;
+				}
+				case (BLACKLIST): {
 					blacklist(robotID);
-				} else if (clickMode == SCONNECT) {
+					break;
+				}
+				case (SCONNECT): {
 					commConnect(robotID);
-				} else if (clickMode == ATLINK) {
+					break;
+				}
+				case (ATLINK): {
 					if (prevClick >= 2000 && prevClick < MAX_APRILTAG + 2000) {
 						if (aprilTagData[prevClick - 2000].active)
 							robots[robotID].aid = prevClick - 2000;
 					}
-				} else if (clickMode == LOG) {
-					if (!robots[robotID].log) {
-						robots[robotID].log = 1;
-						sprintf(fileName, ".\\logs\\%d_%ld.log", robotID,
-							clock());
-						robots[robotID].logH = CreateFile((LPTSTR) fileName,
-														  GENERIC_WRITE,
-														  0,
-														  NULL,
-														  CREATE_ALWAYS,
-														  FILE_ATTRIBUTE_NORMAL,
-														  NULL);
-						if (robots[robotID].logH == INVALID_HANDLE_VALUE)
-							robots[robotID].log = 0;
-					} else {
-						robots[robotID].log = 0;
-						CloseHandle(robots[robotID].logH);
-					}
+					break;
+				}
+				case (LOG): {
+					beginLog(robotID);
+					break;
+				}
+				default: {
+					break;
+				}
 				}
 				break;
 			}
@@ -314,15 +342,38 @@ void processHits(GLint hits, GLuint buffer[])
 			mutexUnlock(&robots[robotID].mutex);
 		}
 
+		/* Clicked AprilTags */
 		if (robotID >= 2000 && robotID < MAX_APRILTAG + 2000) {
-			if (clickMode == ATLINK) {
-				if (prevClick > 0 && prevClick < MAXROBOTID) {
-					if (robots[prevClick].up)
-						robots[prevClick].aid = robotID - 2000;
+			switch (mod)
+			{
+			/* Shift-Ctrl-Click to Log AprilTags */
+			case (3): {
+				beginAprilTagLog(robotID - 2000);
+				break;
+			}
+			case (0):
+			default: {
+				switch (clickMode)
+				{
+				case (ATLINK): {
+					if (prevClick > 0 && prevClick < MAXROBOTID) {
+						if (robots[prevClick].up)
+							robots[prevClick].aid = robotID - 2000;
+					}
+					break;
 				}
+				case (LOG): {
+					beginAprilTagLog(robotID - 2000);
+					break;
+				}
+				default: {
+					break;
+				}
+				}
+				break;
+			}
 			}
 		}
-
 		prevClick = robotID;
 	}
 }
@@ -704,7 +755,8 @@ void drawAprilTags(GLenum mode)
 			glColor3fv(color_black);
 			textSetSize(TEXT_SMALL);
 
-			textPrintf("%d", activeTags[i]->id);
+			textPrintf("%d%s", activeTags[i]->id,
+				activeTags[i]->log ? "L" : "");
 		glPopMatrix();
 		mutexUnlock(&activeTags[i]->mutex);
 	}
