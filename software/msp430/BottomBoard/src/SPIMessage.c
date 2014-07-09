@@ -26,8 +26,6 @@ void msp430CheckAndUpdate(void) {
 	uint8 SPIMessageOut[MSP430_MSG_LENGTH];
 	uint8 SPIMessageIn[MSP430_MSG_LENGTH];
 
-	reflectiveSensorsUpdate();
-
 	if (SPI8962GetMessage(SPIMessageIn)) {
 		// Build the next outgoing message as soon as possibe so that
 		// there will be data available for the interrupt to send
@@ -41,7 +39,7 @@ void msp430CheckAndUpdate(void) {
 		}
 
 		// Pack payload
-		#ifdef RONE_V12_TILETRACK
+#ifdef RONE_V12_TILETRACK
 		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = RFIDReaderGet();
 		for (i = 0; i < MAG_DATA_LENGTH; i++) {
 			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = magGetDataLeft(i);
@@ -49,18 +47,15 @@ void msp430CheckAndUpdate(void) {
 		for (i = 0; i < MAG_DATA_LENGTH; i++) {
 			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = magGetDataRight(i);
 		}
-		#else
-
+#else
 		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = bumpSensorGet();
-
 		for (i = 0; i < ACCEL_DATA_LENGTH; i++) {
 			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = accelGetData(i);
 		}
-
 		for (i = 0; i < GYRO_DATA_LENGTH; i++) {
 			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = gyroGetData(i);
 		}
-		#endif //RONE_V12_TILETRACK
+#endif //RONE_V12_TILETRACK
 
 		SPIMessageOut[MSP430_MSG_VBAT_IDX] = powerVBatGet();
 		SPIMessageOut[MSP430_MSG_VUSB_IDX] = powerUSBGetState();

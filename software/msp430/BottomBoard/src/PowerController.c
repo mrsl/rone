@@ -194,9 +194,11 @@ void powerVBatInit(void) {
 	vBatRunAvgCount = 0;
 }
 
+
 void ADC10Shutdown(void){
 	ADC10CTL0 = 0; // ~ADC10ON
 }
+
 
 #define ADC_MAX_DELAY_TIME		500
 #define VBAT_CONV_NUMER			(2.5 * 10)
@@ -206,18 +208,24 @@ void ADC10Shutdown(void){
 void powerVBatReadADC(void){
 	volatile uint16 i;
 	
-	ADC10AE0 |= BIT7; // A7
-	ADC10CTL1 = INCH_7 | ADC10DIV_7 | CONSEQ_0;			// input channel 7, single sequence 
-   	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
+	// Reconfigure ADC10 for power sense
+	ADC10AE0 |= BIT7; 													// A7
+	ADC10CTL1 = INCH_7 | ADC10DIV_7 | CONSEQ_0;							// input channel 7, single sequence
+	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 		// 16 x clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
+   	ADC10CTL0 |= ENC + ADC10SC;             							// Sampling and conversion start
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
 		if(!(ADC10CTL1 & ADC10BUSY)){
 			//Add the current read to the sliding average if there was a sucsessful read
 			vBatRunAvg[vBatRunAvgCount] = (uint8)(ADC10MEM * VBAT_CONV_NUMER / VBAT_CONV_DENOM);
-			vBatRunAvgCount = (vBatRunAvgCount+1)%VBAT_RUN_AVG_LEN;
+			vBatRunAvgCount = (vBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
 			break;
 		} 
 	}
+
+	// Change back to original ADC10 settings
+	ADC10Init();
 }
+
 
 void powerEnSet(uint8 val) {
 	if (val) {
