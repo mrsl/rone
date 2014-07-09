@@ -509,6 +509,6 @@ void rprintfInit(void) {
 	rprintfSetHostMode(RPRINTF_REMOTE);
 
 	// Create the host task, which will run if the robot is in host mode.
-	osTaskCreate(rprintfHostTask, "rprintfRemote", 1536, NULL, RPRINTFTERMINAL_TASK_PRIORITY);
+	osTaskCreate(rprintfHostTask, "rprintfRemote", 2048, NULL, RPRINTFTERMINAL_TASK_PRIORITY);
 }
 

@@ -6,31 +6,35 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
-
 #include "roneos.h"
 #include "ronelib.h"
 #include "globalTreeCOM.h"
 
 
-#define NEIGHBOR_ROUND_PERIOD			300
+#define NEIGHBOR_ROUND_PERIOD			600
 #define RADIO_MESSAGE_PERSISTANCE		200
 #define BEHAVIOR_TASK_PERIOD			50
-#define FLOCK_RV_GAIN_MOVEOBJ			150
-
+#define NAV_TOWER						127
+#define PI								3147
 #define ACCEL_DEAD_ZONE					5
 #define ACCEL_IIR_GAIN					50
 #define TV_MIN							15
 #define ACCEL_SCALE						5
 
+#define FLOCK_RV_GAIN_MOVEOBJ			70
+#define MAX_CYCLIOD_SPEED				200
+#define	RADIUS							250
+#define nbrEdgeDis						250				//hardcoded distance
+#define COM_WAIT						0
+#define NORM_TV							75
+#define cycloidPeriod					5000
+#define	TOWER_WAIT_TIME					200
+#define	cyldoidSpeed					200
+
+
 #define BUILD_TREE		 0
 #define GUESS_COM		 1
 #define REMOTE			 2
-
-#define PI				3147
-#define nbrEdgeDis		500				//hardcoded distance
-#define COM_WAIT		0
-#define NORM_TV			75
 
 #define REST			0
 #define CNTCLK			1
@@ -43,25 +47,33 @@ RadioCmd radioCmdRemoteControl;
 char* name = "RCwifi";
 
 void behaviorTask(void* parameters) {
-	//rprintfSetSleepTime(500);
+	rprintfSetSleepTime(NEIGHBOR_ROUND_PERIOD);
 
 	uint32 lastWakeTime = osTaskGetTickCount();
 	uint8 state = BUILD_TREE;
 	Beh behOutput = behInactive;
-	boolean printNow,seePivotPoint;
+	boolean printNow;
 	uint32 neighborRound = 0;
 	NbrList nbrList;
 	uint8 changeCOM = 0;
-	uint8 moveState,i;
+	uint8 moveState;
 	BroadcastMessage broadcastMessage;
 	broadcastMsgCreate(&broadcastMessage, 20);
 	systemPrintStartup();
 	systemPrintMemUsage();
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 	radioCommandSetSubnet(1);
+	int cycloidOffSet = 0;
+	uint16 distCOM = 0;
+	int16 COM_Y,COM_X, cylciodModifier;
 
 	PosistionCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1];
-	creatGlobalTreeCOMList(treeGuessCOM);
+	GlobalTreeCOMListCreate(treeGuessCOM);
+
+	NbrData LeaderHeading_H;
+	NbrData LeaderHeading_L;
+	nbrDataCreate16(&LeaderHeading_H,&LeaderHeading_L,"LeaderHeading_H", "LeaderHeading_L", 0);
+
 
 	//uint16 IRXmitPower = IR_COMMS_POWER_MAX/4;
 	GlobalRobotList globalRobotList;
@@ -83,6 +95,13 @@ void behaviorTask(void* parameters) {
 	int32 accX = 0;
 	int32 accY = 0;
 	radioCommandAddQueue(&radioCmdRemoteControl,name, 1);
+
+	//Cylciod Stuff
+	boolean cycliodStart = 0;
+
+	//Nav Tower
+	Nbr* nbrNavTowerPtr;
+	uint32 navTowerTime;
 
 	for (;;) {
 		if (rprintfIsHost()) {
@@ -124,15 +143,23 @@ void behaviorTask(void* parameters) {
 			case GUESS_COM:{
 				switch (moveState){
 				case 0:{
-					ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 					break;
 				}
 				case 1:{
-					ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 					break;
 				}
 				case 2:{
-					ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					break;
+				}
+				case 3:{
+					if(!cycliodStart){
+						ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					}else if(cycliodStart){
+						ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+					}
 					break;
 				}
 				}
@@ -157,11 +184,20 @@ void behaviorTask(void* parameters) {
 				}
 			}
 
+			nbrNavTowerPtr = nbrListGetNbrWithID(&nbrList, NAV_TOWER);
+			if(nbrNavTowerPtr) {
+				cylciodModifier = abs(nbrNavTowerPtr->bearing) * cyldoidSpeed / PI;
+				navTowerTime = osTaskGetTickCount();
+				rprintf("cm %d\n",cylciodModifier);
+				//Todo: Assumes that 127 is highest ID that will be seen, need to be changed if v15 are used
+				nbrList.size--;
+			}
+
 			if( radioCommandReceive(&radioCmdRemoteControl, &radioMessageRX,0) ) {
 				//Grabing stream and paresing
 				char* RXmsg = radioCommandGetDataPtr(&radioMessageRX);
 				radioMessageTimePrev = osTaskGetTickCount();
-				sscanf(RXmsg,"%d,%d,%d,%d,%d,%d", &TVcmd, &RVcmd, &comBlue, &comRed,&comGreen, &comMoveState); //parse the speed and turning rate
+				sscanf(RXmsg,"%d,%d,%d,%d,%d,%d,%d", &TVcmd, &RVcmd, &comBlue, &comRed,&comGreen, &comMoveState); //parse the speed and turning rate
 				moveState = comMoveState;
 				if(comBlue && state == BUILD_TREE){
 					state = GUESS_COM;
@@ -181,14 +217,16 @@ void behaviorTask(void* parameters) {
 
 			if(state == GUESS_COM){
 
-				updateGlobalTreeCOM(globalRobotList, nbrList, treeGuessCOM, nbrEdgeDis);
+				GlobalTreeCOMUpdate(globalRobotList, nbrList, treeGuessCOM, nbrEdgeDis, &LeaderHeading_H,&LeaderHeading_L);
 				if(changeCOM >= COM_WAIT){
 					changeCOM = 0;
 					if(moveState == 0){				//Transport
+						cycliodStart = 0;
 						behFlock_gain(&behOutput, &nbrList, TVcmd, FLOCK_RV_GAIN_MOVEOBJ);
 						behOutput.rv  = behOutput.rv + (RVcmd*10);
+						rprintf("tv %d Rv %d \n",behOutput.tv,behOutput.rv);
 					}else if(moveState == 1){		//Rotate
-						int16 COM_Y,COM_X;
+						cycliodStart = 0;
 						int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
 						if(selfIdx == -1){
 							COM_Y = 0;
@@ -197,15 +235,29 @@ void behaviorTask(void* parameters) {
 							COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
 							COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
 						}
-						orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  RVcmd);
+						behOutput = behInactive;
+						//cprintf("%d , %d\n",COM_X,COM_Y);
+						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
 					}else if(moveState == 2){		//Pivot
-						int16 COM_Y,COM_X;
+						cycliodStart = 0;
 						COM_Y =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L);
 						COM_X =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L);
-						orbitGlobalTreePoint(COM_X, COM_Y, &behOutput,  RVcmd);
-						//rprintf("ID %d COMX %d COMY %d TV %d RV %d RVcmd %d\n",roneID,COM_X,COM_Y ,behOutput.tv, behOutput.rv,RVcmd );
+						//GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
+					}else if(moveState == 3){		//Cycloid Motion
+						int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
+						if(selfIdx == -1){
+							COM_Y = 0;
+							COM_X = 0;
+						}else{
+							COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
+							COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
+						}
+						if(osTaskGetTickCount() >= (navTowerTime + TOWER_WAIT_TIME)){
+							cylciodModifier = 0;
+						}
+						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier);
+
 					}
-					rprintf("ID %d moveState %d TV %d RV %d TVcmd %d RVcmd %d\n",roneID, moveState,behOutput.tv, behOutput.rv, TVcmd,RVcmd );
 
 				}else{
 					changeCOM++;
@@ -256,20 +308,24 @@ void behaviorTask(void* parameters) {
 					bounceGreen = 1;
 				}
 
-				if(comGreen){
+				if(comRed){
 					comMoveState++;
-					if(comMoveState >= 3){
+					if(comMoveState >= 4){
 						comMoveState = 0;
 					}
 				}
+				if(comGreen){
+					cycliodStart = 1;
+				}
 				//Sends commands over radio
-				sprintf(radioMessageTX.command.data,"%d,%d,%d,%d,%d,%d",TVcmd, RVcmd, comBlue, comRed, comGreen, comMoveState);
+				sprintf(radioMessageTX.command.data,"%d,%d,%d,%d,%d,%d,%d",TVcmd, RVcmd, comBlue, comRed, comGreen, comMoveState);
 				radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessageTX);
-				//cprintf("TVcmd %d RVcmd %d\n", TVcmd, RVcmd);
 			}
 
 			/*** FINAL STUFF ***/
-			motorSetBeh(&behOutput);
+			if(!cycliodStart ||  !(moveState == 3)){
+				motorSetBeh(&behOutput);
+			}
 			neighborsPutMutex();
 
 			// delay until the next behavior period
@@ -295,5 +351,3 @@ int main(void) {
 	// should never get here.  If so, you have a bad memory problem in the scheduler
 	return 0;
 }
-
-
