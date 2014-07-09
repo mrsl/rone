@@ -5,6 +5,7 @@
  */
 #include "rcc.h"
 
+int showHelp = 0;
 int clickMode;
 int prevClick;
 struct textbox aprilTagURL;
@@ -82,6 +83,7 @@ void mouse(int button, int state, int x, int y)
 	glFlush();
 
 	/* Process clicked elements. */
+	showHelp = 0;
 	aprilTagURL.isActive = 0;
 	hits = glRenderMode(GL_RENDER);
 	processHits(hits, selectBuf);
@@ -256,6 +258,10 @@ void processHits(GLint hits, GLuint buffer[])
 		}
 		case (KILLALL_BUTTON): {
 			killSecureCRT();
+			continue;
+		}
+		case (HELP_BUTTON): {
+			showHelp = 1;
 			continue;
 		}
 		default: {
@@ -785,7 +791,7 @@ void drawAprilTags(GLenum mode)
 				textSetSize(TEXT_SMALL);
 
 				textPrintf("%d%s", activeTags[i]->id,
-					activeTags[i]->log ? "L" : "");
+					activeTags[i]->log ? "LG" : "");
 			glPopMatrix();
 			if (activeTags[i]->display) {
 				glPushMatrix();
@@ -981,7 +987,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
-		glTranslatef(0, -12, 0);
+		glTranslatef(0, -5, 0);
 
 		/* OL Button */
 		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
@@ -1031,9 +1037,96 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("KO");
 
+		glTranslatef(0, -6, 0);
+
+		/* ? Button */
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(HELP_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("??");
+
 	glPopMatrix();
 }
 
+void drawHelp()
+{
+	glPushMatrix();
+		glColor3fv(color_black);
+		glRectf(-GUI_WIDTH / 2 + 3,
+				-GUI_HEIGHT / 2 + 3,
+				GUI_WIDTH / 2 - 3,
+				GUI_HEIGHT / 2 - 3);
+		glColor3fv(color_white);
+		glRectf(-GUI_WIDTH / 2 + 3.2,
+				-GUI_HEIGHT / 2 + 3.2,
+				GUI_WIDTH / 2 - 3.2,
+				GUI_HEIGHT / 2 - 3.2);
+		glColor3fv(color_black);
+		glRectf(-GUI_WIDTH / 2 + 3.5,
+				-GUI_HEIGHT / 2 + 3.5,
+				GUI_WIDTH / 2 - 3.5,
+				GUI_HEIGHT / 2 - 3.5);
+
+		glTranslatef(-GUI_WIDTH / 2 + 4.5, GUI_HEIGHT / 2 - 5.5, 0);
+		glColor3fv(color_white);
+		textSetSize(TEXT_LARGE);
+		textPrintf("RCC HELP");
+		glTranslatef(0, -TEXT_LARGE / 2, 0);
+		glBegin(GL_LINES);
+			glVertex2f(0, 0);
+			glVertex2f(GUI_WIDTH - 9, 0);
+		glEnd();
+		glTranslatef(0, -TEXT_LARGE, 0);
+		textSetSize(TEXT_MED);
+		textPrintf("Command List:");
+		glTranslatef(TEXT_MED, -TEXT_MED, 0);
+		textPrintf("CT - Connect to robot. Click on a robot to open a Secure");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     CRT connection to it.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("RT - Make robot a radio host. Click on a robot to make it");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     a radio host.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("BL - Blacklist a robot. Click on a robot to prevent the");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     RCC from connecting to it. Click again to reconnect.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("ST - Connect to a robot via serial. Click on a robot to");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     blacklist it and open a Secure CRT window using serial.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("LG - Log robot data. Begins to log all data to a file. If");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     linked to AprilTag, records that data too. Can also");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     log individual AprilTags by clicking on them.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("AL - Link AprilTag. Click a robot and then an AprilTag to");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     link AprilTag data to robot data. Double-click robot");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     to unlink AprilTag.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("OL - Opens a connection to all local robots.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("OR - Opens a connection to all remote robots.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("KO - Kills all open Secure CRT windows.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("?? - Shows this help.");
+	glPopMatrix();
+}
 /**
  * Draw the robots and GUI features on this timed function
  */
@@ -1087,6 +1180,10 @@ void timerEnableDraw(int value)
 
 	drawRobots(GL_RENDER);
 	drawAprilTagTextbox(GL_RENDER);
+
+	if (showHelp) {
+		drawHelp();
+	}
 
 	/* Update */
 	glutSwapBuffers();

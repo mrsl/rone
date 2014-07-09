@@ -32,11 +32,11 @@
 #include "robotLink.h"
 #include "gui.h"
 
-extern int port;				// Port we are listening on
-extern int verbose;				// Verbose output?
-extern GLfloat aprilTagX;		// AprilTag window parameters
+extern int port;					// Port we are listening on
+extern int verbose;					// Verbose output?
+extern GLfloat aprilTagX;			// AprilTag window parameters
 extern GLfloat aprilTagY;
-extern char logDir[MAX_PATH];	// Logfile directory
-extern char defaultATServerIP[15];
+extern char logDir[MAX_PATH];		// Logfile directory
+extern char defaultATServerIP[15];	// Default AprilTag server IP
 
 #endif
