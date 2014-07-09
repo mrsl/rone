@@ -5,6 +5,7 @@
  */
 #include "rcc.h"
 
+int showHelp = 0;
 int clickMode;
 int prevClick;
 struct textbox aprilTagURL;
@@ -82,6 +83,7 @@ void mouse(int button, int state, int x, int y)
 	glFlush();
 
 	/* Process clicked elements. */
+	showHelp = 0;
 	aprilTagURL.isActive = 0;
 	hits = glRenderMode(GL_RENDER);
 	processHits(hits, selectBuf);
@@ -258,6 +260,10 @@ void processHits(GLint hits, GLuint buffer[])
 			killSecureCRT();
 			continue;
 		}
+		case (HELP_BUTTON): {
+			showHelp = 1;
+			continue;
+		}
 		default: {
 			break;
 		}
@@ -369,6 +375,10 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				default: {
+					if (aprilTagData[robotID - 2000].display)
+						aprilTagData[robotID - 2000].display = 0;
+					else
+						aprilTagData[robotID - 2000].display = 1;
 					break;
 				}
 				}
@@ -659,12 +669,12 @@ void drawAprilTags(GLenum mode)
 	glPushMatrix();
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i < AT_SCALE_X; i++) {
-				glTranslatef(1, 0, 0);
+			for (i = 0; i <= AT_SCALE_X; i++) {
 				glBegin(GL_LINES);
 					glVertex2f(0, -GUI_HEIGHT / 2);
 					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
 				glEnd();
+				glTranslatef(1, 0, 0);
 			}
 		glPopMatrix();
 		glPushMatrix();
@@ -679,12 +689,12 @@ void drawAprilTags(GLenum mode)
 		glPopMatrix();
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i < (GUI_HEIGHT / 2 - 3); i++) {
-				glTranslatef(0, 1, 0);
+			for (i = 0; i <= (GUI_HEIGHT / 2 - 3); i++) {
 				glBegin(GL_LINES);
 					glVertex2f(-AT_SCALE_X - 1, 0);
 					glVertex2f(AT_SCALE_X + 1, 0);
 				glEnd();
+				glTranslatef(0, 1, 0);
 			}
 		glPopMatrix();
 		glPushMatrix();
@@ -699,35 +709,35 @@ void drawAprilTags(GLenum mode)
 		glPopMatrix();
 
 		glColor3fv(color_darkgrey);
-		glBegin(GL_LINES);
-			glVertex2f(0, -GUI_HEIGHT / 2);
-			glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
-		glEnd();
-		glBegin(GL_LINES);
-			glVertex2f(-AT_SCALE_X - 1, 0);
-			glVertex2f(AT_SCALE_X + 1, 0);
-		glEnd();
 		glPushMatrix();
-			glTranslatef(-AT_SCALE_X, -AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glTranslatef(-AT_SCALE_X, AT_SCALE_X * (aprilTagY / aprilTagX), 0);
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
 				glVertex2f(1, 0);
 			glEnd();
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
-				glVertex2f(0, 1);
+				glVertex2f(0, -1);
 			glEnd();
+			glTranslatef(0, TEXT_SMALL - 0.4, 0);
+			textSetSize(TEXT_SMALL);
+			textPrintf("(0, 0)");
 		glPopMatrix();
 		glPushMatrix();
-			glTranslatef(AT_SCALE_X, AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glTranslatef(AT_SCALE_X, -AT_SCALE_X * (aprilTagY / aprilTagX), 0);
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
 				glVertex2f(-1, 0);
 			glEnd();
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
-				glVertex2f(0, -1);
+				glVertex2f(0, 1);
 			glEnd();
+			textSetAlignment(ALIGN_RIGHT);
+			glTranslatef(0, -2 * TEXT_SMALL + 0.6, 0);
+			textSetSize(TEXT_SMALL);
+			textPrintf("(%.0f, %.0f)", 2 * aprilTagX, 2 * aprilTagY);
+			textSetAlignment(ALIGN_LEFT);
 		glPopMatrix();
 	glPopMatrix();
 
@@ -775,12 +785,26 @@ void drawAprilTags(GLenum mode)
 					glEnd();
 				glPopMatrix();
 			glPopMatrix();
-			glTranslatef(0.6, -0.6, 0);
-			glColor3fv(color_black);
-			textSetSize(TEXT_SMALL);
+			glPushMatrix();
+				glTranslatef(0.6, -0.6, 0);
+				glColor3fv(color_black);
+				textSetSize(TEXT_SMALL);
 
-			textPrintf("%d%s", activeTags[i]->id,
-				activeTags[i]->log ? "L" : "");
+				textPrintf("%d%s", activeTags[i]->id,
+					activeTags[i]->log ? "LG" : "");
+			glPopMatrix();
+			if (activeTags[i]->display) {
+				glPushMatrix();
+					glTranslatef(-1.8, -0.6 - TEXT_SMALL, 0);
+					glColor3fv(color_black);
+					textSetSize(TEXT_SMALL);
+					textPrintf("X: %.2f", activeTags[i]->x);
+					glTranslatef(0, -TEXT_SMALL, 0);
+					textPrintf("Y: %.2f", activeTags[i]->y);
+					glTranslatef(0, -TEXT_SMALL, 0);
+					textPrintf("T: %.2f", activeTags[i]->t);
+				glPopMatrix();
+			}
 		glPopMatrix();
 		mutexUnlock(&activeTags[i]->mutex);
 	}
@@ -963,7 +987,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
-		glTranslatef(0, -12, 0);
+		glTranslatef(0, -5, 0);
 
 		/* OL Button */
 		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
@@ -1012,6 +1036,24 @@ void drawToolbar(GLenum mode)
 		glColor3fv(color_black);
 		textSetSize(TEXT_LARGE);
 		textPrintf("KO");
+
+		glTranslatef(0, -6, 0);
+
+		/* ? Button */
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(HELP_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("??");
 
 	glPopMatrix();
 }
@@ -1070,6 +1112,75 @@ void timerEnableDraw(int value)
 	drawRobots(GL_RENDER);
 	drawAprilTagTextbox(GL_RENDER);
 
+	if (showHelp) {
+		glPushMatrix();
+			glColor3fv(color_black);
+			glRectf(-GUI_WIDTH / 2 + 3,
+					-GUI_HEIGHT / 2 + 3,
+					GUI_WIDTH / 2 - 3,
+					GUI_HEIGHT / 2 - 3);
+			glColor3fv(color_white);
+			glRectf(-GUI_WIDTH / 2 + 3.2,
+					-GUI_HEIGHT / 2 + 3.2,
+					GUI_WIDTH / 2 - 3.2,
+					GUI_HEIGHT / 2 - 3.2);
+			glColor3fv(color_black);
+			glRectf(-GUI_WIDTH / 2 + 3.5,
+					-GUI_HEIGHT / 2 + 3.5,
+					GUI_WIDTH / 2 - 3.5,
+					GUI_HEIGHT / 2 - 3.5);
+
+			glTranslatef(-GUI_WIDTH / 2 + 4.5, GUI_HEIGHT / 2 - 5.5, 0);
+			glColor3fv(color_white);
+			textSetSize(TEXT_LARGE);
+			textPrintf("RCC HELP");
+			glTranslatef(0, -TEXT_LARGE / 2, 0);
+			glBegin(GL_LINES);
+				glVertex2f(0, 0);
+				glVertex2f(GUI_WIDTH - 9, 0);
+			glEnd();
+			glTranslatef(0, -TEXT_LARGE, 0);
+			textSetSize(TEXT_MED);
+			textPrintf("Command List:");
+			glTranslatef(TEXT_MED, -TEXT_MED, 0);
+			textPrintf("CT - Connect to robot. Click on a robot to open a Secure");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     CRT connection to it.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("RT - Make robot a radio host. Click on a robot to make it");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     a radio host.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("BL - Blacklist a robot. Click on a robot to prevent the");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     RCC from connecting to it. Click again to reconnect.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("ST - Connect to a robot via serial. Click on a robot to");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     blacklist it and open a Secure CRT window using serial.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("LG - Log robot data. Begins to log all data to a file. If");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     linked to AprilTag, records that data too. Can also");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     log individual AprilTags by clicking on them.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("AL - Link AprilTag. Click a robot and then an AprilTag to");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     link AprilTag data to robot data. Double-click robot");
+			glTranslatef(0, -TEXT_MED, 0);
+			textPrintf("     to unlink AprilTag.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("OL - Opens a connection to all local robots.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("OR - Opens a connection to all remote robots.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("KO - Kills all open Secure CRT windows.");
+			glTranslatef(0, -TEXT_MED - 0.25, 0);
+			textPrintf("?? - Shows this help.");
+		glPopMatrix();
+	}
+
 	/* Update */
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -1095,8 +1206,9 @@ void guiInit()
 
 	/* Initialize textbox */
 	aprilTagURL.isActive = 0;
-	aprilTagURL.index = 0;
+	aprilTagURL.index = strlen(defaultATServerIP);
 	aprilTagURL.length = 21;
+	sprintf(aprilTagURL.message, defaultATServerIP);
 
 	glutMouseFunc(mouse);
 	glutKeyboardFunc(keyboard);

@@ -35,6 +35,7 @@ struct aprilTag
 	char buffer[NUMBUFFER_APRILTAG][APRILTAG_BUFFERSIZE]; 	// Buffer
 	int log;												// Log this tag
 	HANDLE logH;											// Logfile
+	int display;											// Show data
 	GLfloat x;												// X Coordinate
 	GLfloat y;												// Y Coordinate
 	GLfloat t;												// Theta

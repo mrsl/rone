@@ -402,6 +402,7 @@ void initAprilTag()
 	for (i = 0; i < MAX_APRILTAG; i++) {
 		aprilTagData[i].id = i;
 		aprilTagData[i].up = 0;
+		aprilTagData[i].display = 0;
 		aprilTagData[i].head = 0;
 		aprilTagData[i].active = 0;
 		mutexInit(&aprilTagData[i].mutex);
