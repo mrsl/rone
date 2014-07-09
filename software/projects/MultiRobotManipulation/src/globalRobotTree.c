@@ -14,22 +14,27 @@
 #define NEIGHBOR_ROUND_PERIOD			600
 #define RADIO_MESSAGE_PERSISTANCE		200
 #define BEHAVIOR_TASK_PERIOD			50
-#define FLOCK_RV_GAIN_MOVEOBJ			150
-
+#define NAV_TOWER						127
+#define PI								3147
 #define ACCEL_DEAD_ZONE					5
 #define ACCEL_IIR_GAIN					50
 #define TV_MIN							15
 #define ACCEL_SCALE						5
 
+#define FLOCK_RV_GAIN_MOVEOBJ			70
+#define MAX_CYCLIOD_SPEED				200
+#define	RADIUS							250
+#define nbrEdgeDis						250				//hardcoded distance
+#define COM_WAIT						0
+#define NORM_TV							75
+#define cycloidPeriod					5000
+#define	TOWER_WAIT_TIME					200
+#define	cyldoidSpeed					250
+
+
 #define BUILD_TREE		 0
 #define GUESS_COM		 1
 #define REMOTE			 2
-
-#define PI				3147
-#define nbrEdgeDis		500				//hardcoded distance
-#define COM_WAIT		0
-#define NORM_TV			75
-#define cycloidPeriod	5000
 
 #define REST			0
 #define CNTCLK			1
@@ -59,6 +64,8 @@ void behaviorTask(void* parameters) {
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 	radioCommandSetSubnet(1);
 	int cycloidOffSet = 0;
+	uint16 distCOM = 0;
+	int16 COM_Y,COM_X, cylciodModifier;
 
 	PosistionCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1];
 	GlobalTreeCOMListCreate(treeGuessCOM);
@@ -92,6 +99,11 @@ void behaviorTask(void* parameters) {
 	//Cylciod Stuff
 	uint cycliodTime = 0;
 	boolean cycliodStart = 0;
+
+	//Nav Tower
+	Nbr* nbrNavTowerPtr;
+	uint32 navTowerTime;
+
 	for (;;) {
 		if (rprintfIsHost()) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
@@ -173,6 +185,15 @@ void behaviorTask(void* parameters) {
 				}
 			}
 
+			nbrNavTowerPtr = nbrListGetNbrWithID(&nbrList, NAV_TOWER);
+			if(nbrNavTowerPtr) {
+				cylciodModifier = abs(nbrNavTowerPtr->bearing) * cyldoidSpeed / PI;
+				navTowerTime = osTaskGetTickCount();
+				rprintf("cm %d\n",cylciodModifier);
+				//Todo: Assumes that 127 is highest ID that will be seen, need to be changed if v15 are used
+				nbrList.size--;
+			}
+
 			if( radioCommandReceive(&radioCmdRemoteControl, &radioMessageRX,0) ) {
 				//Grabing stream and paresing
 				char* RXmsg = radioCommandGetDataPtr(&radioMessageRX);
@@ -201,10 +222,12 @@ void behaviorTask(void* parameters) {
 				if(changeCOM >= COM_WAIT){
 					changeCOM = 0;
 					if(moveState == 0){				//Transport
+						cycliodStart = 0;
 						behFlock_gain(&behOutput, &nbrList, TVcmd, FLOCK_RV_GAIN_MOVEOBJ);
 						behOutput.rv  = behOutput.rv + (RVcmd*10);
+						rprintf("tv %d Rv %d \n",behOutput.tv,behOutput.rv);
 					}else if(moveState == 1){		//Rotate
-						int16 COM_Y,COM_X;
+						cycliodStart = 0;
 						int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
 						if(selfIdx == -1){
 							COM_Y = 0;
@@ -217,17 +240,33 @@ void behaviorTask(void* parameters) {
 						//cprintf("%d , %d\n",COM_X,COM_Y);
 						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
 					}else if(moveState == 2){		//Pivot
-						int16 COM_Y,COM_X;
+						cycliodStart = 0;
+						cycliodTime = 0;
 						COM_Y =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L);
 						COM_X =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L);
-						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
+						//GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
 					}else if(moveState == 3){		//Cycloid Motion
-						if(!cycliodStart){
+						int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
+						if(selfIdx == -1){
+							COM_Y = 0;
+							COM_X = 0;
+						}else{
+							COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
+							COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
+						}
+						if(osTaskGetTickCount() >= (navTowerTime + TOWER_WAIT_TIME)){
+							cylciodModifier = 0;
+						}
+						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier);
+
+						/*if(!cycliodStart){
 							int16 LeaderingHeadingAngle = nbrDataGet16(&LeaderHeading_H,&LeaderHeading_L);
 							behBearingController(&behOutput,LeaderingHeadingAngle);
-							rprintf("Heading %d\n",LeaderingHeadingAngle);
-							if(abs(LeaderingHeadingAngle) < 250){
-								int16 COM_Y,COM_X;
+							if(abs(LeaderingHeadingAngle) < 450){
+								cycloidOffSet  = GlobalTreeCycloidStartPos(COM_X, COM_Y);
+								cycliodStart = 1;
+								behOutput = behInactive;
+								motorSetBeh(&behOutput);
 								int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
 								if(selfIdx == -1){
 									COM_Y = 0;
@@ -236,14 +275,20 @@ void behaviorTask(void* parameters) {
 									COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
 									COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
 								}
-								cycloidOffSet  = GlobalTreeCycloidStartPos(COM_X, COM_Y);
-								cycliodStart = 1;
-								behOutput = behInactive;
-								motorSetBeh(&behOutput);
 							}
 						}else if(cycliodStart && cycliodTime){
-							GlobalTreeCycloidMotrion(cycliodTime + cycloidOffSet, cycloidPeriod + cycloidOffSet, &behOutput);
-						}
+							int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
+							if(selfIdx == -1){
+								COM_Y = 0;
+								COM_X = 0;
+							}else{
+								COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
+								COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
+							}
+
+							GlobalTreeCycloidMotrion(cycliodTime + cycloidOffSet,  cycloidPeriod,vectorMag((int32)COM_X,(int32)COM_Y),MAX_CYCLIOD_SPEED, RADIUS, &behOutput);
+							//GlobalTreeCycloidMotrion(cycliodTime + cycloidOffSet, COM_X,COM_Y,MAX_CYCLIOD_SPEED, RADIUS, &behOutput);
+						}*/
 					}
 
 				}else{
@@ -316,7 +361,7 @@ void behaviorTask(void* parameters) {
 			}
 
 			/*** FINAL STUFF ***/
-			if(!cycliodStart ){
+			if(!cycliodStart ||  !(moveState == 3)){
 				motorSetBeh(&behOutput);
 			}
 			neighborsPutMutex();

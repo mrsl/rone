@@ -13,6 +13,7 @@
 #include "globalTreeCOM.h"
 
 #define PI				3147
+#define ROTATE_STEPS	PI/20
 
 
 void GlobalTreeCOMListCreate(PosistionCOM * posListPtr){
@@ -95,13 +96,17 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 			nbrPtr = nbrList.nbrs[i];
 			if(lowestTreeID == nbrGetID(nbrPtr)){
 				int32 nbrBear = nbrGetBearing(nbrPtr);
-				int16 pivot_X = Range * sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
-				int16 pivot_Y = Range * cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+				int16 x,y,xprime,yprime;
+				x = xprime;
+				y = yprime + Range;
+				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+				yprime = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 
-				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,pivot_X);
-				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,pivot_Y);
+				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,xprime);
+				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,yprime);
 				//rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,nbrGetID(nbrPtr),0);
 				nbrDataSet16(LeaderHeading_H,LeaderHeading_L,normalizeAngleMilliRad((int32)nbrPtr->bearing + (int32)MILLIRAD_PI - (int32)nbrPtr->orientation));
+				rprintf("Pivot SEEN X %d Y %d\n",xprime,yprime);
 				return;
 			}
 			pivotHops = nbrDataGetNbr(&(globalRobotList.list[0].Hops), nbrPtr);
@@ -126,6 +131,9 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 
 				nbrDataSet16(&posListPtr[j].X_H,&posListPtr[j].X_L,xprime);
 				nbrDataSet16(&posListPtr[j].Y_H,&posListPtr[j].Y_L,yprime);
+				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,xprime);
+				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,yprime);
+
 				nbrDataSet16(LeaderHeading_H,LeaderHeading_L,normalizeAngleMilliRad((int32)nbrPtr->bearing + (int32)MILLIRAD_PI - (int32)nbrPtr->orientation)+nbrDataGetNbr16(LeaderHeading_H,LeaderHeading_L,nbrPtr));
 			}
 		}
@@ -165,23 +173,25 @@ void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 }
 
 
-void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, Beh*behOutput ){
+void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, uint16 distCOM ,int32 maxSpeed, int32 radius, Beh*behOutput){
 	int32 angleT = 0;
 	int32 theta = 0;
-	int32 maxSpeed = 200;
-	int32 r = 250; //radius of imaginary rotating circle - play with this
 	int32 curX = 0;
 	int32 curY = 0;
-
+	cycloidTime = cycloidTime%cycloidPeriod;
+	distCOM = distCOM / 100;
 	if(cycloidTime % 10 == 0){ //only sample certain times
 		//calculate angleT based on time and period
 		angleT = 10*MILLIRAD_2PI * cycloidTime / cycloidPeriod; //time-dependent variable in cycloid eqns (the angle the circle has rotated through)
 		//calculate desired angle to axis of translation
 		theta = atan2MilliRad(sinMilliRad(angleT), MILLIRAD_TRIG_SCALER - cosMilliRad(angleT)); //arctan(vy/vx) = arctan(sint/1-cost)
 		theta = normalizeAngleMilliRad(theta);
+
 		//calculate new x and y from cylcoid equations
-		curX =r*(angleT*MILLIRAD_TRIG_SCALER/1000 - sinMilliRad(angleT))/MILLIRAD_TRIG_SCALER;
-		curY = r*(MILLIRAD_TRIG_SCALER - cosMilliRad(angleT))/MILLIRAD_TRIG_SCALER;
+		curX =radius*(angleT*MILLIRAD_TRIG_SCALER/1000 - distCOM * sinMilliRad(angleT))/MILLIRAD_TRIG_SCALER;
+		curY = radius*(MILLIRAD_TRIG_SCALER - distCOM * cosMilliRad(angleT))/MILLIRAD_TRIG_SCALER;
+		//curX =radius*(angleT*MILLIRAD_TRIG_SCALER/1000 - sinMilliRad(angleT))/MILLIRAD_TRIG_SCALER;
+		//curY = radius*(MILLIRAD_TRIG_SCALER - cosMilliRad(angleT))/MILLIRAD_TRIG_SCALER;
 
 		//create goal Pose to use for setting tv and rv via waypoint
 		Pose waypointGoalPose;
@@ -189,23 +199,31 @@ void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, Beh*behOut
 		waypointGoalPose.y = curY;
 		waypointGoalPose.theta = theta;
 		waypointMove(&waypointGoalPose, maxSpeed); //set goal pose
+		//rprintf("T %d D %d MS%d R %d\n",cycloidTime,distCOM,maxSpeed,radius);
 	}
-	if (cycloidTime < cycloidPeriod) {
-		//perform cycloid motion during the cycloid period
-		encoderPoseUpdate();
-		waypointMoveUpdate(); //use waypoint to set tv and rv
+	encoderPoseUpdate();
+	waypointMoveUpdate(); //use waypoint to set tv and rv
 
-	} else {
-		//stop moving when cycloid period has ended
-		int32 tv = 0;
-		int32 rv = 0;
-		behOutput->tv = tv;
-		behOutput->rv = rv;
-		motorSetTVRV_NonCmd(tv, rv);
-		cycloidTime = cycloidTime + 1; //time variable
-	}
 }
 
+/*void GlobalTreeCycloidMotrion(uint cycloidTime, int16 COMX, int16 COMY ,int32 maxSpeed, int32 radius, Beh*behOutput){
+	if(cycloidTime % 10 == 0){ //only sample certain times
+		int16 newRotatePos = ROTATE_STEPS * cycloidTime / 10;
+		int16 newX =  (((-COMX)* (cosMilliRad(newRotatePos))) + ((-COMY) * (-sinMilliRad(newRotatePos))))/MILLIRAD_TRIG_SCALER;
+		int16 newY =  (((-COMX)* (sinMilliRad(newRotatePos))) + ((-COMY) * (cosMilliRad(newRotatePos))))/MILLIRAD_TRIG_SCALER;
+		Pose waypointGoalPose;
+		waypointGoalPose.x = newX;
+		waypointGoalPose.y = newY;
+		waypointGoalPose.theta = 0;
+		waypointMove(&waypointGoalPose, maxSpeed); //set goal pose
+		rprintf("T %d RP %d RS%d C %d %d N %d %d\n",(uint32)cycloidTime, newRotatePos,ROTATE_STEPS,COMX,COMY,newX,newY);
+	}
+	//perform cycloid motion during the cycloid period
+	encoderPoseUpdate();
+	waypointMoveUpdate(); //use waypoint to set tv and rv
+}*/
+
+//TODO
 int GlobalTreeCycloidStartPos(int16 COMX, int16 COMY){
 
 	return 0;

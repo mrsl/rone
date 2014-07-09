@@ -34,6 +34,8 @@ void behaviorTask(void* parameters) {
 	uint32 neighborRound = 0;
 	int i;
 	uint32 nbrBearing;
+	Nbr* nbrPtr;
+	uint32 tempWakeTime;
 
 
 	// Init nbr system
@@ -61,7 +63,7 @@ void behaviorTask(void* parameters) {
 				state = STATE_IDLE;
 			} else if (buttonsGet (BUTTON_BLUE)) {
 				state = STATE_BOUNCE;
-			//	movementState = MOVE_FORWARD;
+				movementState = MOVE_FORWARD;
 			}
 		}
 
@@ -70,14 +72,14 @@ void behaviorTask(void* parameters) {
 		case STATE_BOUNCE: {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
 			uint8* bitMatrix = irObstaclesGetBitMatrix();
-			for(i = 0; i < 8; i++){
+			/*for(i = 0; i < 8; i++){
 				rprintf("%d", bitMatrix[i]);
 
 				if (i != 7)
 					rprintf(",");
 			}
 			rprintf("\n");
-			movementState = MOVE_IDLE;
+			*/
 			break;
 		}
 		case STATE_IDLE:
@@ -130,7 +132,16 @@ void behaviorTask(void* parameters) {
 
 		motorSetBeh(&behOutput);
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
+		tempWakeTime = lastWakeTime;
 		lastWakeTime = osTaskGetTickCount();
+
+		for (i = 0; i < nbrList.size; i++){
+				nbrPtr = nbrList.nbrs[i];
+				nbrBearing = nbrGetBearing(nbrPtr);
+				if (behOutput.tv != 0 || behOutput.rv != 0)
+					if (lastWakeTime - tempWakeTime > 190)
+						rprintf("%d %d %d\n",nbrBearing, behOutput.tv, behOutput.rv);
+			}
 	}
 }
 
