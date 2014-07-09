@@ -57,7 +57,7 @@ void backgroundTask(void* parameters)
 		// delay to let other tasks run at same priority
 		osTaskDelay(5000);
 		systemBatteryVoltageGet2(&ones, &tenths);
-		//cprintf("battery voltage: %1d.%1d\n", ones, tenths);
+		//rprintf("battery voltage: %1d.%1d\n", ones, tenths);
 		//systemPrintMemUsage();
 	}//Infinite for loop
 }//backgroundTask()
@@ -110,7 +110,7 @@ void behaviorTask(void* parameters)
 			startBeh = 0;
 		}
 		splitBearingGroup(bearGroups);
-		cprintf("1 %d 2 %d 3 %d 4 %d\n",bearGroups[0],bearGroups[1],bearGroups[2],bearGroups[3]);
+		//rprintf("1 %d 2 %d 3 %d 4 %d\n",bearGroups[0],bearGroups[1],bearGroups[2],bearGroups[3]);
 		behOutput = behInactive;
 		// if red button pressed Start behavior
 		if (startBeh){
@@ -124,7 +124,7 @@ void behaviorTask(void* parameters)
 							//if wall is to the right
 							if(bearing >= 0){
 								newRV = (bearing - 1571)/ 1.5;
-								cprintf(" rv = %d\n",newRV);
+								rprintf(" rv = %d\n",newRV);
 								behSetRv(&behOutput,newRV);
 								//ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 								//if wall is normal to robot (within 10 degrees), stop rotating
@@ -136,7 +136,7 @@ void behaviorTask(void* parameters)
 							//if wall is to the left
 							else{
 								newRV = (bearing + 1571) / 1.5;
-								cprintf(" rv = %d\n",newRV);
+								rprintf(" rv = %d\n",newRV);
 								behSetTvRv(&behOutput, 0, newRV);
 								//ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 								//if wall is normal to robot, stop rotating
@@ -151,19 +151,19 @@ void behaviorTask(void* parameters)
 							behSetTvRv(&behOutput, 0, 0);
 							//ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 						} //End else no wall
-						cprintf("RV: %d active: %d\n",newRV,1);
+						rprintf("RV: %d active: %d\n",newRV,1);
 						/*
 			bearing = irObstaclesGetBearing();
 
 			//if wall is sensed
 			if(bearing != 0){
 				bearing = bearing - 3141;
-				//cprintf(" bearing = %d",bearing);
+				//rprintf(" bearing = %d",bearing);
 
 				//if wall is to the right
 				if(bearing >= 0){
 					newRV = (bearing - 1571)/ 1.5;
-					//cprintf(" rv = %d\n",newRV);
+					//rprintf(" rv = %d\n",newRV);
 					behSetTvRv(&behOutput, 50, newRV);
 					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 					//if wall is apporzimatly 90 degrees
@@ -175,7 +175,7 @@ void behaviorTask(void* parameters)
 				//if wall is to the left
 				else{
 					newRV = (bearing + 1571) / 1.5;
-					//cprintf(" rv = %d\n",newRV);
+					//rprintf(" rv = %d\n",newRV);
 					behSetTvRv(&behOutput, 50, newRV);
 					ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 					//if wall is apporzimatly 90 degrees
