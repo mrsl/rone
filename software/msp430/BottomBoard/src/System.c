@@ -336,7 +336,7 @@ void main(void) {
 	
 	//Initalize the power controller module	
 	resetInit();
-//	ADC10Init();
+	ADC10Init();
 
 #ifdef RONE_V12
 //	ftdiResetInit();
@@ -368,13 +368,13 @@ void main(void) {
 			irBeaconDisable();
 #endif
 			RFIDInterruptDisable();
-			reflectiveSensorPowerDisble();
+			reflectiveSensorPowerDisable();
 			watchdogPet();
 			watchdogDisable();
 //			timerDisable();
 			SPI8962Shutdown();
 //			I2CShutdown();
-//			ADC10Shutdown();
+			ADC10Shutdown();
 			
 			// wait for I2C to finish
 //			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
@@ -389,7 +389,7 @@ void main(void) {
 			#endif
 			//msp430SetRobotMode(MSP430_MODE_PYTHON);
 //			powerUSBSetEnable(FALSE); // Turn off the USB Power Sense Line comparator
-//			powerEnSet(FALSE);
+			powerEnSet(FALSE);
 			for (i = 0; i < POWER_OFF_DELAY; ++i) {}
 
 			// enable power button interrupt
@@ -458,10 +458,10 @@ void main(void) {
 //			gyroInit();
 //			ledInit();
 //			magInit();
-//			reflectiveSensorPowerEnable();
 //			RFIDInterruptEnable();
 //			bumpSensorInit();
-//			ADC10Init();
+
+			ADC10Init();
 			powerVBatInit();
 			/*#ifdef RONE_V12
 				Usb5vSenseInit();
@@ -480,7 +480,7 @@ void main(void) {
 		if (!powerButtonLEDOveride) {
 			//TODO: RFID debug
 #ifndef RFID_DEBUG
-//			msp430CheckAndUpdate();
+			msp430CheckAndUpdate();
 #endif
 //			if (systemLEDRampBrightness != systemLEDRampBrightnessOld) {
 //				if (systemLEDRampBrightness >= 0) {

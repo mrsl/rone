@@ -26,6 +26,8 @@ void msp430CheckAndUpdate(void) {
 	uint8 SPIMessageOut[MSP430_MSG_LENGTH];
 	uint8 SPIMessageIn[MSP430_MSG_LENGTH];
 
+	reflectiveSensorsUpdate();
+
 	if (SPI8962GetMessage(SPIMessageIn)) {
 		// Build the next outgoing message as soon as possibe so that
 		// there will be data available for the interrupt to send
@@ -75,7 +77,7 @@ void msp430CheckAndUpdate(void) {
 		bumpSensorUpdate();
 		accelUpdate();
 		gyroUpdate();
-		magUpdate();
+//		magUpdate();
 
 
 		// Process the received message
