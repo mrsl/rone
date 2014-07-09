@@ -7,8 +7,8 @@
 
 int port = 8000;
 int verbose = 0;
-GLfloat aprilTagX = 650.;
-GLfloat aprilTagY = 500.;
+GLfloat aprilTagX = 0.;
+GLfloat aprilTagY = 0.;
 char logDir[MAX_PATH] = ".\\logs";
 char defaultATServerIP[15] = "192.168.1.155";
 

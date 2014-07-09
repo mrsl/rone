@@ -511,6 +511,12 @@ void aprilTagHandler(void *vargp)
 					aprilTagData[id].x = x;
 					aprilTagData[id].y = y;
 					aprilTagData[id].t = t;
+
+					if (x > 2 * aprilTagX)
+						aprilTagX = x / 2. + 25;
+
+					if (y > 2 * aprilTagY)
+						aprilTagY = y / 2. + 25;
 				}
 
 				if (aprilTagData[id].log) {

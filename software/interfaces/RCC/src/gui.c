@@ -144,8 +144,39 @@ void readChar(char character)
 	}
 	}
 
-	if (!aprilTagURL.isActive)
+	if (!aprilTagURL.isActive) {
+		switch (character)
+		{
+		case ('1'): {
+			clickMode = CONNECT;
+			break;
+		}
+		case ('2'): {
+			clickMode = HOSTBOT;
+			break;
+		}
+		case ('3'): {
+			clickMode = BLACKLIST;
+			break;
+		}
+		case ('4'): {
+			clickMode = SCONNECT;
+			break;
+		}
+		case ('5'): {
+			clickMode = LOG;
+			break;
+		}
+		case ('6'): {
+			clickMode = ATLINK;
+			break;
+		}
+		default: {
+			break;
+		}
+		}
 		return;
+	}
 
 	switch (character)
 	{
@@ -618,38 +649,40 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 	if (robot->aid != -1 && aprilTagConnected) {
 		glPushMatrix();
-			glTranslatef(ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
+			glTranslatef(ROBOT_RADIUS / scale - 1, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
-				glScalef(0.55, 0.55, 0);
+				glScalef(0.6, 0.6, 0);
 				glColor3fv(color_white);
 				glRectf(-1, -1, 1, 1);
 			glPopMatrix();
 			glPushMatrix();
-				glScalef(0.5, 0.5, 0);
+				glScalef(0.55, 0.55, 0);
 				glColor3fv(color_black);
 				glRectf(-1, -1, 1, 1);
 			glPopMatrix();
 			glTranslatef(0, -0.3, 0);
 			glColor3fv(color_white);
+			textSetSize(TEXT_MED);
 			textPrintf("%d", robot->aid);
 		glPopMatrix();
 	}
 
 	if (robot->log) {
 		glPushMatrix();
-			glTranslatef(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
+			glTranslatef(-ROBOT_RADIUS / scale + 1, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
-				glScalef(0.55, 0.55, 0);
+				glScalef(0.6, 0.6, 0);
 				glColor3fv(color_black);
 				glRectf(-1, -1, 1, 1);
 			glPopMatrix();
 			glPushMatrix();
-				glScalef(0.5, 0.5, 0);
+				glScalef(0.55, 0.55, 0);
 				glColor3fv(color_white);
 				glRectf(-1, -1, 1, 1);
 			glPopMatrix();
 			glTranslatef(0, -0.3, 0);
 			glColor3fv(color_black);
+			textSetSize(TEXT_MED);
 			textPrintf("L", robot->aid);
 		glPopMatrix();
 	}
@@ -770,7 +803,7 @@ void drawAprilTags(GLenum mode)
 
 				glPushMatrix();
 					glColor3fv(color_white);
-					glScalef(0.5, 0.5, 0);
+					glScalef(0.52, 0.52, 0);
 					glRectf(-1, -1, 1, 1);
 				glPopMatrix();
 				glPushMatrix();
@@ -793,26 +826,41 @@ void drawAprilTags(GLenum mode)
 				glColor3fv(color_black);
 				textSetSize(TEXT_SMALL);
 
-				textPrintf("%d%s", activeTags[i]->id,
-					activeTags[i]->log ? "LG" : "");
+				textPrintf("%d", activeTags[i]->id);
+
+				if (activeTags[i]->log) {
+					glTranslatef(0, TEXT_SMALL, 0);
+					textPrintf("L");
+				}
 			glPopMatrix();
 			if (activeTags[i]->display) {
 				glPushMatrix();
-					glTranslatef(-1.8, -0.6 - TEXT_SMALL, 0);
+					glTranslatef(-1.2, -0.6 - TEXT_SMALL, 0);
 					glColor3fv(color_black);
+					glScalef(0.8, 0.8, 0);
 					textSetSize(TEXT_SMALL);
-					textPrintf("X: %.2f", activeTags[i]->x);
+					textPrintf("X:%.2f", activeTags[i]->x);
 					glTranslatef(0, -TEXT_SMALL, 0);
-					textPrintf("Y: %.2f", activeTags[i]->y);
+					textPrintf("Y:%.2f", activeTags[i]->y);
 					glTranslatef(0, -TEXT_SMALL, 0);
-					textPrintf("T: %.2f", activeTags[i]->t);
+					textPrintf("T:%.2f", activeTags[i]->t);
 				glPopMatrix();
 			}
 		glPopMatrix();
 		mutexUnlock(&activeTags[i]->mutex);
 	}
-
 	glPopMatrix();
+
+	/* Draw dividing bar */
+	glPushMatrix();
+		glTranslatef(MAP_DIVIDE_X, 0, 0);
+		glRotatef(90, 0, 0, 1);
+		glBegin(GL_LINES);
+			glVertex2f(-GUI_HEIGHT, 0);
+			glVertex2f(GUI_HEIGHT / 2 - TEXT_LARGE * 2, 0);
+		glEnd();
+	glPopMatrix();
+
 }
 
 void drawAprilTagTextbox(GLenum mode)
@@ -1063,6 +1111,7 @@ void drawToolbar(GLenum mode)
 void drawHelp()
 {
 	glPushMatrix();
+		/* Draw bounding box */
 		glColor3fv(color_black);
 		glRectf(-GUI_WIDTH / 2 + 3,
 				-GUI_HEIGHT / 2 + 3,
@@ -1080,6 +1129,7 @@ void drawHelp()
 				GUI_HEIGHT / 2 - 3.5);
 
 		glTranslatef(-GUI_WIDTH / 2 + 4.5, GUI_HEIGHT / 2 - 5.5, 0);
+		/* Draw help text */
 		glColor3fv(color_white);
 		textSetSize(TEXT_LARGE);
 		textPrintf("RCC HELP");
@@ -1165,18 +1215,8 @@ void timerEnableDraw(int value)
 		glEnd();
 	glPopMatrix();
 
-	if (aprilTagConnected) {
+	if (aprilTagConnected)
 		drawAprilTags(GL_RENDER);
-
-		glPushMatrix();
-			glTranslatef(MAP_DIVIDE_X, 0, 0);
-			glRotatef(90, 0, 0, 1);
-			glBegin(GL_LINES);
-				glVertex2f(-GUI_HEIGHT, 0);
-				glVertex2f(GUI_HEIGHT / 2 - TEXT_LARGE * 2, 0);
-			glEnd();
-		glPopMatrix();
-	}
 
 	drawRobots(GL_RENDER);
 	drawAprilTagTextbox(GL_RENDER);
