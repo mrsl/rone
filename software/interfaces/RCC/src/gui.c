@@ -369,6 +369,10 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				default: {
+					if (aprilTagData[robotID - 2000].display)
+						aprilTagData[robotID - 2000].display = 0;
+					else
+						aprilTagData[robotID - 2000].display = 1;
 					break;
 				}
 				}
@@ -775,12 +779,28 @@ void drawAprilTags(GLenum mode)
 					glEnd();
 				glPopMatrix();
 			glPopMatrix();
-			glTranslatef(0.6, -0.6, 0);
-			glColor3fv(color_black);
-			textSetSize(TEXT_SMALL);
+			glPushMatrix();
+				glTranslatef(0.6, -0.6, 0);
+				glColor3fv(color_black);
+				textSetSize(TEXT_SMALL);
 
-			textPrintf("%d%s", activeTags[i]->id,
-				activeTags[i]->log ? "L" : "");
+				textPrintf("%d%s", activeTags[i]->id,
+					activeTags[i]->log ? "L" : "");
+			glPopMatrix();
+			if (activeTags[i]->display) {
+				textSetAlignment(ALIGN_CENTER);
+				glPushMatrix();
+					glTranslatef(0, -0.6 - TEXT_SMALL, 0);
+					glColor3fv(color_black);
+					textSetSize(TEXT_SMALL);
+					textPrintf("%.2f", activeTags[i]->x);
+					glTranslatef(0, -TEXT_SMALL, 0);
+					textPrintf("%.2f", activeTags[i]->y);
+					glTranslatef(0, -TEXT_SMALL, 0);
+					textPrintf("%.2f", activeTags[i]->t);
+				glPopMatrix();
+				textSetAlignment(ALIGN_LEFT);
+			}
 		glPopMatrix();
 		mutexUnlock(&activeTags[i]->mutex);
 	}
@@ -1095,8 +1115,9 @@ void guiInit()
 
 	/* Initialize textbox */
 	aprilTagURL.isActive = 0;
-	aprilTagURL.index = 0;
+	aprilTagURL.index = strlen(defaultATServerIP);
 	aprilTagURL.length = 21;
+	sprintf(aprilTagURL.message, defaultATServerIP);
 
 	glutMouseFunc(mouse);
 	glutKeyboardFunc(keyboard);
