@@ -339,18 +339,18 @@ void main(void) {
 	ADC10Init();
 
 #ifdef RONE_V12
-//	ftdiResetInit();
-//	ledResetInit();
-//	motSleepInit();
-//	chargeLimitInit();
+	ftdiResetInit();
+	ledResetInit();
+	motSleepInit();
+	chargeLimitInit();
 #endif
+	// Tiletrack functions
 	reflectiveSensorsInit();
 	RFIDReaderInit();
 
 	powerButtonInit();
 	powerEnInit();
-//	powerUSBInit();
-	
+	powerUSBInit();
 #ifdef RONE_V11
 	ir_beacon_init();
 #endif
@@ -359,6 +359,7 @@ void main(void) {
 		//Pet the watchdog so that we don't get reset
 		watchdogPet();
 		
+		// Power-off: Disable all modules and go to LPM4 until woken up by power button press
 		if (powerOffRequest) {
 			// clear the flag
 			powerOffRequest = FALSE;
@@ -382,13 +383,13 @@ void main(void) {
 			// reset the robot and shut down the main supply
 			resetSet(TRUE);
 			#ifdef RONE_V12
-//				ftdiResetSet(TRUE);
-//				ledResetSet(TRUE);
-//				motSleepSet(TRUE);
-//				chargeLimitSet(FALSE);
+				ftdiResetSet(TRUE);
+				ledResetSet(TRUE);
+				motSleepSet(TRUE);
+				chargeLimitSet(FALSE);
 			#endif
 			//msp430SetRobotMode(MSP430_MODE_PYTHON);
-//			powerUSBSetEnable(FALSE); // Turn off the USB Power Sense Line comparator
+			powerUSBSetEnable(FALSE); // Turn off the USB Power Sense Line comparator
 			powerEnSet(FALSE);
 			for (i = 0; i < POWER_OFF_DELAY; ++i) {}
 
@@ -407,7 +408,7 @@ void main(void) {
 			}
 		}
 					
-		// check for a power-on reset
+		// Power-on/reset and initialize all components
 		if (powerOnReset) {
 			// disable interrupts
 			__bic_SR_register(GIE);
@@ -418,14 +419,14 @@ void main(void) {
 			airplaneMode = FALSE;	
 			
 			#ifdef RONE_V12
-				// set Charge Limit to high to force initial charge at 500mA
-//				chargeLimitSet(TRUE);
+				// Set Charge Limit to high to force initial charge at 500mA
+				chargeLimitSet(TRUE);
 			#endif
 			
 			// Turn on the USB Power Sense Line comparator
-//			powerUSBSetEnable(TRUE);
+			powerUSBSetEnable(TRUE);
 			
-			//turn on the main power supply and wait for it to stabilize
+			// Turn on the main power supply and wait for it to stabilize
 			powerEnSet(TRUE);
 			for (i = 0; i < POWER_ON_DELAY; i++) {}
 
@@ -443,9 +444,9 @@ void main(void) {
 			// take the 8962 out of reset
 			resetSet(FALSE);
 			#ifdef RONE_V12
-//				ftdiResetSet(FALSE);
-//				ledResetSet(FALSE);
-//				motSleepSet(FALSE);
+				ftdiResetSet(FALSE);
+				ledResetSet(FALSE);
+				motSleepSet(FALSE);
 			#endif
 			
 			airplaneStartTicks = 0;
@@ -492,23 +493,23 @@ void main(void) {
 //			}
 		}
 
-		// Update the VBAT value and the USB 5V Line ADC (V-12 Only)
-//		if (timerADCUpdate == 0) {
-//			// Disable almost all of the interrupts so that these are atomic
-//			__bic_SR_register(GIE);
-//			watchdogDisable();
-//
-//			// Update the values
-//			powerVBatReadADC();
-//			/*#ifdef RONE_V12
-//				Usb5vReadADC();
-//			#endif*/
-//			timerADCUpdate = TIMER_ADC_PERIOD;
-//
-//			// Re-enable inturupts
-//			__bis_SR_register(GIE);
-//			watchdogInit();
-//		}
+		// Update the VBAT value and the USB 5V Line ADC (V12 Only)
+		if (timerADCUpdate == 0) {
+			// Disable almost all of the interrupts so that these are atomic
+			__bic_SR_register(GIE);
+			watchdogDisable();
+
+			// Update the values
+			powerVBatReadADC();
+			/*#ifdef RONE_V12
+				Usb5vReadADC();
+			#endif*/
+			timerADCUpdate = TIMER_ADC_PERIOD;
+
+			// Re-enable inturupts
+			__bis_SR_register(GIE);
+			watchdogInit();
+		}
 		/*
 		#ifdef RONE_V12
 			if(powerEnGet()){
