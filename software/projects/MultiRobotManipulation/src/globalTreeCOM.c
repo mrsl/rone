@@ -97,8 +97,8 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 			if(lowestTreeID == nbrGetID(nbrPtr)){
 				int32 nbrBear = nbrGetBearing(nbrPtr);
 				int16 x,y,xprime,yprime;
-				x = xprime;
-				y = yprime + Range;
+				x = 0;
+				y = Range;
 				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 				yprime = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 
@@ -106,7 +106,6 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 				nbrDataSet16(&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&posListPtr[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,yprime);
 				//rprintf("TrID %d NbrID %d Hops %d\n",lowestTreeID,nbrGetID(nbrPtr),0);
 				nbrDataSet16(LeaderHeading_H,LeaderHeading_L,normalizeAngleMilliRad((int32)nbrPtr->bearing + (int32)MILLIRAD_PI - (int32)nbrPtr->orientation));
-				rprintf("Pivot SEEN X %d Y %d\n",xprime,yprime);
 				return;
 			}
 			pivotHops = nbrDataGetNbr(&(globalRobotList.list[0].Hops), nbrPtr);
