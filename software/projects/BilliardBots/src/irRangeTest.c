@@ -35,7 +35,7 @@ void behaviorTask(void* parameters) {
 	int i;
 	uint32 nbrBearing;
 	Nbr* nbrPtr;
-	uint32 tempWakeTime;
+	uint32 tempWakeTime = 0;
 
 
 	// Init nbr system
@@ -50,6 +50,12 @@ void behaviorTask(void* parameters) {
 	systemPrintStartup();
 	systemPrintMemUsage();
 
+	NbrData TV_H;
+	NbrData TV_L;
+	NbrData RV_H;
+	NbrData RV_L;
+	nbrDataCreate16(&TV_H,&TV_L,"TV_H","TV_L",0);
+	nbrDataCreate16(&RV_H,&RV_L,"RV_H","RV_L",0);
 
 	for (;;) {
 		behOutput = behInactive;
@@ -57,7 +63,7 @@ void behaviorTask(void* parameters) {
 		nbrListCreate(&nbrList);
 		broadcastMsgUpdate(&broadcastMessage, &nbrList);
 		// Determine state from buttons
-		if (state == STATE_IDLE) {
+		//if (state == STATE_IDLE) {
 			if (buttonsGet(BUTTON_RED)) {
 			} else if (buttonsGet (BUTTON_GREEN)) {
 				state = STATE_IDLE;
@@ -65,7 +71,7 @@ void behaviorTask(void* parameters) {
 				state = STATE_BOUNCE;
 				movementState = MOVE_FORWARD;
 			}
-		}
+		//}
 
 		// Set LEDs for each state
 		switch (state) {
@@ -129,20 +135,17 @@ void behaviorTask(void* parameters) {
 			}
 		}
 
-
+		nbrDataSet16(&TV_H,&TV_L,(int16)behOutput.tv);
+		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
 		motorSetBeh(&behOutput);
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
-		tempWakeTime = lastWakeTime;
 		lastWakeTime = osTaskGetTickCount();
-
 		for (i = 0; i < nbrList.size; i++){
 			nbrPtr = nbrList.nbrs[i];
 			nbrBearing = nbrGetBearing(nbrPtr);
-			if (behOutput.tv != 0 || behOutput.rv != 0){
-				if (lastWakeTime - tempWakeTime > 190){
-					rprintf("%d %d %d\n",nbrBearing, behOutput.tv, behOutput.rv);
+				if (printNow){
+					rprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
 				}
-			}
 		}
 	}
 }
