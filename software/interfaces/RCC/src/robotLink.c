@@ -143,6 +143,13 @@ void commCommander(void *vargp)
 			bufp += n;
 			continue;
 		} else {
+			/* Format end to be CRLF */
+			while (bufp[n - 1] == '\r' || bufp[n - 1] == '\n') {
+				bufp[n--] = '\0';
+			}
+			bufp[n] = '\r';
+			bufp[n + 1] = '\n';
+
 			bufp = buffer;
 		}
 
@@ -346,10 +353,7 @@ void insertBuffer(int robotID, char *buffer)
 		}
 	}
 
-	robots[robotID].up = clock();
-
-	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s",
-		robots[robotID].up, lbuffer);
+	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s", clock(), lbuffer);
 
 	/* Log data */
 	if (robots[robotID].log) {
@@ -359,6 +363,8 @@ void insertBuffer(int robotID, char *buffer)
 
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
+
+	robots[robotID].up = clock();
 
 	/* Unlock the robot buffer */
 	mutexUnlock(&robots[robotID].mutex);
