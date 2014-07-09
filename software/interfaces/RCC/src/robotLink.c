@@ -17,7 +17,9 @@ void initRobots()
 	/* Initialize values in the struct */
 	for (i = 0; i < MAXROBOTID; i++) {
 		robots[i].id = i;
+		robots[i].aid = -1;
 		robots[i].blacklisted = 0;
+		robots[i].log = 0;
 		robots[i].hSerial = NULL;
 		robots[i].up = 0;
 		robots[i].head = 0;
@@ -54,6 +56,18 @@ void commManager(void *vargp)
 				hprintf(robots[i].hSerial, "rt\n");
 
 			mutexUnlock(&robots[i].mutex);
+		}
+
+		if (aprilTagConnected) {
+			for (i = 0; i < MAX_APRILTAG; i++) {
+				mutexLock(&aprilTagData[i].mutex);
+				if ((aprilTagData[i].up + GRACETIME < clock())
+					&& aprilTagData[i].active) {
+					aprilTagData[i].active = 0;
+					aprilTagData[i].up = 0;
+				}
+				mutexUnlock(&aprilTagData[i].mutex);
+			}
 		}
 		/* Sleep for a while. */
 		Sleep(SLEEPTIME);
@@ -295,13 +309,44 @@ void activateRobot(int robotID, struct commInfo *info)
  */
 void insertBuffer(int robotID, char *buffer)
 {
+	int n, aid;
+	char *lbufp, lbuffer[BUFFERSIZE];
+
 	/* Lock the robot buffer */
 	mutexLock(&robots[robotID].mutex);
+
+	strcpy(lbuffer, buffer);
+
+	if ((aid = robots[robotID].aid) != -1) {
+		lbufp = lbuffer + strlen(lbuffer) - 2;
+		mutexLock(&aprilTagData[aid].mutex);
+		if ((n = sprintf(lbufp, ", %s",
+			aprilTagData[aid].buffer[aprilTagData[aid].head])) < 0) {
+			mutexUnlock(&aprilTagData[aid].mutex);
+			mutexUnlock(&robots[robotID].mutex);
+			return;
+		}
+		mutexUnlock(&aprilTagData[aid].mutex);
+
+		/* If there was no data, rewrite the CRLF */
+		if (n == 2) {
+			if (sprintf(lbufp, "\r\n") < 0) {
+				mutexUnlock(&robots[robotID].mutex);
+				return;
+			}
+		}
+	}
 
 	robots[robotID].up = clock();
 
 	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s",
-		clock(), buffer);
+		clock(), lbuffer);
+
+	/* Log data */
+	if (robots[robotID].log) {
+		hprintf(&robots[robotID].logH,
+			robots[robotID].buffer[robots[robotID].head]);
+	}
 
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;

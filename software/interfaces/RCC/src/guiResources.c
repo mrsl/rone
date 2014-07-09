@@ -7,6 +7,8 @@
 
 const GLfloat color_red[COLOR_SIZE] = { 1.0, 0.0, 0.0 };
 const GLfloat color_black[COLOR_SIZE] = { 0.0, 0.0, 0.0 };
+const GLfloat color_grey[COLOR_SIZE] = { 0.8, 0.8, 0.8 };
+const GLfloat color_darkgrey[COLOR_SIZE] = { 0.5, 0.5, 0.5 };
 const GLfloat color_white[COLOR_SIZE] = { 1.0, 1.0, 1.0 };
 
 GLint drawingListBase;

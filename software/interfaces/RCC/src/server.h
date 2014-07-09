@@ -28,9 +28,16 @@ struct Connection
  */
 struct aprilTag
 {
+	int id;
+	time_t up;
 	int active;												// Been seen?
 	int head;												// Head of buffer
 	char buffer[NUMBUFFER_APRILTAG][APRILTAG_BUFFERSIZE]; 	// Buffer
+	int log;												// Log this tag
+	HANDLE logH;											// Logfile
+	GLfloat x;												// X Coordinate
+	GLfloat y;												// Y Coordinate
+	GLfloat t;												// Theta
 	CRITICAL_SECTION mutex;									// Mutex
 };
 
@@ -47,6 +54,7 @@ struct socketIO
 
 extern char ipAddress[15];				// String form of local IP address
 extern int aprilTagConnected;			// Connected to the AprilTag server?
+extern int maxAprilTag;					// Highest AprilTag seen
 extern struct aprilTag aprilTagData[MAX_APRILTAG];	// AprilTag data
 
 int createServer(int port);

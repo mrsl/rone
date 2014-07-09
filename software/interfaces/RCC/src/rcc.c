@@ -5,8 +5,11 @@
  */
 #include "rcc.h"
 
-int port;
+int port = 8000;
 int verbose = 0;
+GLfloat aprilTagX = 650.;
+GLfloat aprilTagY = 500.;
+char logDir[MAX_PATH] = ".\\logs";
 
 /**
  * Main function
@@ -15,7 +18,6 @@ int main(int argc, char **argv)
 {
 	int i;
 	int err = 0;
-	port = 8000; // Use port 8000 as default
 
 	/* Parse command line arguments */
 	for (i = 1; i < argc; i++) {
@@ -29,6 +31,34 @@ int main(int argc, char **argv)
 					err = 1;
 					break;
 				}
+				i++;
+				continue;
+			}
+			if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--height") == 0) {
+				if (sscanf(argv[i + 1], "%f", &aprilTagY) != 1) {
+					err = 1;
+					break;
+				}
+				i++;
+				aprilTagY /= 2.;
+				continue;
+			}
+			if (strcmp(argv[i], "-w") == 0 || strcmp(argv[i], "--width") == 0) {
+				if (sscanf(argv[i + 1], "%f", &aprilTagX) != 1) {
+					err = 1;
+					break;
+				}
+				i++;
+				aprilTagX /= 2.;
+				continue;
+			}
+			if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--log") == 0) {
+				if (sscanf(argv[i + 1], "%s", logDir) != 1) {
+					err = 1;
+					break;
+				}
+				i++;
+				aprilTagX /= 2.;
 				continue;
 			}
 		}
@@ -37,7 +67,7 @@ int main(int argc, char **argv)
 	}
 
 	if (err) {
-		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum]\n", argv[0]);
+		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum] <-h|--height> [AprilTag max Y] <-w|--width> [AprilTag max X]\n", argv[0]);
 		return (-1);
 	}
 
@@ -47,6 +77,9 @@ int main(int argc, char **argv)
 	/* Initialize robot buffers */
 	initRobots();
 	makeThread(&commWatch, 0);
+
+	/* Make the logfile directory */
+	CreateDirectory(logDir, NULL);
 
 	/* Create web server */
 	if (createServer(port) < 0)

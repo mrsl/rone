@@ -21,6 +21,7 @@
 #define PICK_DELTA			3.0
 
 #define DRAW_DELAY			16
+#define AT_DRAW_DELAY		32
 
 #define TITLE_POS_X			-19.5
 #define TITLE_POS_Y			13.5
@@ -46,6 +47,12 @@
 #define SCALE_MED			1.5
 #define SCALE_SMALL			2.
 #define SCALE_TINY			3.
+
+/* AprilTag drawing defines */
+#define APRILTAG_X			10
+#define APRILTAG_Y			0
+
+#define AT_SCALE_X			9.
 
 /* Text defines */
 #define TEXT_SMALL			0.65
@@ -82,6 +89,7 @@
 #define SCONNECT	2
 #define ATLINK		3
 #define HOSTBOT		4
+#define LOG			5
 
 #define CONNECT_BUTTON		1001
 #define BLACKLIST_BUTTON	1002
@@ -91,6 +99,7 @@
 #define OPENREMOTE_BUTTON	1006
 #define KILLALL_BUTTON		1007
 #define HOST_BUTTON			1008
+#define LOG_BUTTON			1009
 
 /**
  * Textbox buffer and state information
@@ -110,6 +119,8 @@ extern GLint drawingListBase;		// Drawing primitives
 /* Drawing colors */
 extern const float color_red[COLOR_SIZE];
 extern const float color_black[COLOR_SIZE];
+extern const float color_grey[COLOR_SIZE];
+extern const float color_darkgrey[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
 
 extern const char scriptTemplate[256];	// secureCRT script
@@ -127,6 +138,7 @@ void killSecureCRT();
 void aspectHandle(int w, int h);
 void drawRobots(GLenum mode);
 void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);
+void drawAprilTags(GLenum mode);
 void drawAprilTagTextbox(GLenum mode);
 void drawToolbar(GLenum mode);
 void timerEnableDraw(int value);
@@ -144,5 +156,9 @@ void drawInit();
 void hostRobot(int robotID);
 void blacklist(int robotID);
 void commConnect(int robotID);
+void beginLog(int robotID);
+void beginAprilTagLog(int aprilTagID);
+void openLocalConnections();
+void openRemoteConnections();
 
 #endif

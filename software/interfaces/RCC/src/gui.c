@@ -6,6 +6,7 @@
 #include "rcc.h"
 
 int clickMode;
+int prevClick;
 struct textbox aprilTagURL;
 
 /**
@@ -70,6 +71,7 @@ void mouse(int button, int state, int x, int y)
 			drawRobots(GL_SELECT);
 			drawAprilTagTextbox(GL_SELECT);
 			drawToolbar(GL_SELECT);
+			drawAprilTags(GL_SELECT);
 		glPopMatrix();
 
 		glMatrixMode(GL_PROJECTION);
@@ -80,6 +82,7 @@ void mouse(int button, int state, int x, int y)
 	glFlush();
 
 	/* Process clicked elements. */
+	aprilTagURL.isActive = 0;
 	hits = glRenderMode(GL_RENDER);
 	processHits(hits, selectBuf);
 
@@ -111,13 +114,32 @@ void keyboard(unsigned char key, int x, int y)
  */
 void readChar(char character)
 {
-	int mod;
-	mod = glutGetModifiers();
-
-	/* Ctrl-w to close all open secureCRT windows */
-	if (mod == 2 && character == 23) {
-		killSecureCRT();
+	switch (glutGetModifiers())
+	{
+	case (2): {
+		switch (character)
+		{
+		case (12): {
+			openLocalConnections();
+			return;
+		}
+		case (18): {
+			openRemoteConnections();
+			return;
+		}
+		case (23): {
+			killSecureCRT();
+			return;
+		}
+		default: {
+			break;
+		}
+		}
 		return;
+	}
+	default: {
+		break;
+	}
 	}
 
 	if (!aprilTagURL.isActive)
@@ -125,21 +147,21 @@ void readChar(char character)
 
 	switch (character)
 	{
-	case '\r':
-	case '\n': {
+	case ('\r'):
+	case ('\n'): {
 		if (!aprilTagConnected)
 			connectAprilTag();
 		break;
 	}
 	/* Backspace handler */
-	case '\b': {
+	case ('\b'): {
 		if (aprilTagURL.index > 0) {
 			strdel(aprilTagURL.message, --aprilTagURL.index);
 		}
 		break;
 	}
 	/* Delete handler */
-	case 127: {
+	case (127): {
 		strdel(aprilTagURL.message, aprilTagURL.index);
 		break;
 	}
@@ -186,95 +208,173 @@ void processHits(GLint hits, GLuint buffer[])
 		if (robotID == -1)
 			continue;
 
-		if (robotID == TEXTBOX_ID) {
+		switch (robotID)
+		{
+		case (-1): {
+			continue;
+		}
+		/* Textbox */
+		case (TEXTBOX_ID): {
 			if (aprilTagConnected)
 				openClientConnection(0);
 			else
 				aprilTagURL.isActive = 1;
 			continue;
-		} else {
-			aprilTagURL.isActive = 0;
 		}
-
-		if (robotID == CONNECT_BUTTON) {
+		/* Toolbar buttons */
+		case (CONNECT_BUTTON): {
 			clickMode = CONNECT;
 			continue;
-		} else if (robotID == HOST_BUTTON) {
+		}
+		case (HOST_BUTTON): {
 			clickMode = HOSTBOT;
 			continue;
-		} else if (robotID == BLACKLIST_BUTTON) {
+		}
+		case (BLACKLIST_BUTTON): {
 			clickMode = BLACKLIST;
 			continue;
-		} else if (robotID == SCONNECT_BUTTON) {
+		}
+		case (SCONNECT_BUTTON): {
 			clickMode = SCONNECT;
 			continue;
-		} else if (robotID == ATLINK_BUTTON) {
+		}
+		case (ATLINK_BUTTON): {
 			clickMode = ATLINK;
 			continue;
-		} else if (robotID == OPENLOCAL_BUTTON) {
-			for (i = 0; i < MAXROBOTID; i++) {
-				mutexLock(&robots[i].mutex);
-				/* If the robot is active */
-				if (robots[i].up != 0 && !robots[i].blacklisted) {
-					if (robots[i].type == LOCAL || robots[i].type == HOST)
-						openClientConnection(i);
-				}
-				mutexUnlock(&robots[i].mutex);
-			}
+		}
+		case (LOG_BUTTON): {
+			clickMode = LOG;
 			continue;
-		} else if (robotID == OPENREMOTE_BUTTON) {
-			for (i = 0; i < MAXROBOTID; i++) {
-				mutexLock(&robots[i].mutex);
-				/* If the robot is active */
-				if (robots[i].up != 0) {
-					if (robots[i].type == REMOTE)
-						openClientConnection(i);
-				}
-				mutexUnlock(&robots[i].mutex);
-			}
+		}
+		case (OPENLOCAL_BUTTON): {
+			openLocalConnections();
 			continue;
-		} else if (robotID == KILLALL_BUTTON) {
+		}
+		case (OPENREMOTE_BUTTON): {
+			openRemoteConnections();
+			continue;
+		}
+		case (KILLALL_BUTTON): {
 			killSecureCRT();
 			continue;
 		}
-
-		mutexLock(&robots[robotID].mutex);
-		/* Do different things based on which mod keys are being held */
-		switch (glutGetModifiers())
-		{
-		/* Ctrl-Click to Blacklist local robots */
-		case (2): {
-			blacklist(robotID);
-			break;
-		}
-		/* Alt-Click to make robot into a host */
-		case (4): {
-			hostRobot(robotID);
-			break;
-		}
-		/* Ctrl-Alt-Click to open a direct connection to secureCRT */
-		case (6): {
-			commConnect(robotID);
-			break;
-		}
-		/* Click to open a secureCRT connection */
-		case (0):
 		default: {
-			if (clickMode == CONNECT) {
+			break;
+		}
+		}
+
+		int mod = glutGetModifiers();
+
+		/* Clicked robots */
+		if (robotID < MAXROBOTID) {
+			mutexLock(&robots[robotID].mutex);
+			/* Do different things based on which mod keys are being held */
+			switch (mod)
+			{
+			/* Shift-Click to Open a connection to a robot */
+			case (1): {
 				if (!robots[robotID].blacklisted
 					|| robots[robotID].type == REMOTE)
 					openClientConnection(robotID);
-			} else if (clickMode == HOSTBOT) {
-				hostRobot(robotID);
-			} else if (clickMode == BLACKLIST) {
-				blacklist(robotID);
-			} else if (clickMode == SCONNECT) {
-				commConnect(robotID);
+				break;
 			}
-			break;
+			/* Ctrl-Click to blacklist robots */
+			case (2): {
+				blacklist(robotID);
+				break;
+			}
+			/* Shift-Ctrl-Click to Log robots */
+			case (3): {
+				beginLog(robotID);
+				break;
+			}
+			/* Alt-Click to make robot into a host */
+			case (4): {
+				hostRobot(robotID);
+				break;
+			}
+			/* Ctrl-Alt-Click to open a direct connection to secureCRT */
+			case (6): {
+				commConnect(robotID);
+				break;
+			}
+			/* Do whatever tool is selected */
+			case (0):
+			default: {
+				switch (clickMode)
+				{
+				case (CONNECT): {
+					if (!robots[robotID].blacklisted
+						|| robots[robotID].type == REMOTE)
+						openClientConnection(robotID);
+					break;
+				}
+				case (HOSTBOT): {
+					hostRobot(robotID);
+					break;
+				}
+				case (BLACKLIST): {
+					blacklist(robotID);
+					break;
+				}
+				case (SCONNECT): {
+					commConnect(robotID);
+					break;
+				}
+				case (ATLINK): {
+					if (prevClick >= 2000 && prevClick < MAX_APRILTAG + 2000) {
+						if (aprilTagData[prevClick - 2000].active)
+							robots[robotID].aid = prevClick - 2000;
+					}
+					break;
+				}
+				case (LOG): {
+					beginLog(robotID);
+					break;
+				}
+				default: {
+					break;
+				}
+				}
+				break;
+			}
+			}
+			mutexUnlock(&robots[robotID].mutex);
 		}
+
+		/* Clicked AprilTags */
+		if (robotID >= 2000 && robotID < MAX_APRILTAG + 2000) {
+			switch (mod)
+			{
+			/* Shift-Ctrl-Click to Log AprilTags */
+			case (3): {
+				beginAprilTagLog(robotID - 2000);
+				break;
+			}
+			case (0):
+			default: {
+				switch (clickMode)
+				{
+				case (ATLINK): {
+					if (prevClick > 0 && prevClick < MAXROBOTID) {
+						if (robots[prevClick].up)
+							robots[prevClick].aid = robotID - 2000;
+					}
+					break;
+				}
+				case (LOG): {
+					beginAprilTagLog(robotID - 2000);
+					break;
+				}
+				default: {
+					break;
+				}
+				}
+				break;
+			}
+			}
 		}
-		mutexUnlock(&robots[robotID].mutex);
+		prevClick = robotID;
 	}
 }
 
@@ -306,6 +406,7 @@ void drawRobots(GLenum mode)
 	GLfloat x;		// Robot x position
 	GLfloat y;		// Robot y position
 	GLfloat scale;	// Robot scale factor
+	GLfloat start;	// Robot starting x
 
 	int numLocal = 0;
 	int numRemote = 0;
@@ -327,23 +428,32 @@ void drawRobots(GLenum mode)
 	}
 
 	/* Figure scale for local robot pane */
-	if ((numRobots = numLocal + numRemote) <= 30) {
+	numRobots = numLocal + numRemote;
+	int maxScale = 1;
+	GLfloat end = ROBOT_END_X;
+	if (aprilTagConnected) {
+		maxScale = 2;
+		end = MAP_DIVIDE_X;
+	}
+
+	if (numRobots <= (30 / maxScale)) {
 		scale = SCALE_LARGE;
 		x = ROBOT_START_X;
 		y = ROBOT_START_Y;
-	} else if (numRobots > 110) {
+	} else if (numRobots > (110 / maxScale)) {
 		scale = SCALE_TINY;
 		x = ROBOT_START_X;
 		y = ROBOT_START_Y + ROBOT_RADIUS - ROBOT_RADIUS / scale;
-	} else if (numRobots > 64) {
+	} else if (numRobots > (64 / maxScale)) {
 		scale = SCALE_SMALL;
 		x = ROBOT_START_X;
 		y = ROBOT_START_Y + ROBOT_RADIUS / scale;
-	} else if (numRobots > 30) {
+	} else if (numRobots > (30 / maxScale)) {
 		scale = SCALE_MED;
 		x = ROBOT_START_X + ROBOT_RADIUS / scale / 2;
 		y = ROBOT_START_Y + ROBOT_RADIUS / scale / 2;
 	}
+	start = x;
 
 	/* Draw local robots */
 	for (i = 0; i < numLocal; i++) {
@@ -355,8 +465,8 @@ void drawRobots(GLenum mode)
 		mutexUnlock(&local[i]->mutex);
 
 		x += ROBOT_STEP_X / scale;
-		if (x > ROBOT_END_X) {
-			x = scale;
+		if (x > end) {
+			x = start;
 			y -= ROBOT_STEP_Y / scale;
 		}
 	}
@@ -369,8 +479,8 @@ void drawRobots(GLenum mode)
 		mutexUnlock(&remote[i]->mutex);
 
 		x += ROBOT_STEP_X / scale;
-		if (x > ROBOT_END_X) {
-			x = scale;
+		if (x > end) {
+			x = start;
 			y -= ROBOT_STEP_Y / scale;
 		}
 	}
@@ -493,6 +603,164 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glEnd();
 		glPopMatrix();
 	}
+
+	if (robot->aid != -1) {
+		glPushMatrix();
+			glTranslatef(ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
+			glPushMatrix();
+				glScalef(0.55, 0.55, 0);
+				glColor3fv(color_white);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glPushMatrix();
+				glScalef(0.5, 0.5, 0);
+				glColor3fv(color_black);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glTranslatef(0, -0.3, 0);
+			glColor3fv(color_white);
+			textPrintf("%d", robot->aid);
+		glPopMatrix();
+	}
+
+	if (robot->log) {
+		glPushMatrix();
+			glTranslatef(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale, 0);
+			glPushMatrix();
+				glScalef(0.55, 0.55, 0);
+				glColor3fv(color_black);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glPushMatrix();
+				glScalef(0.5, 0.5, 0);
+				glColor3fv(color_white);
+				glRectf(-1, -1, 1, 1);
+			glPopMatrix();
+			glTranslatef(0, -0.3, 0);
+			glColor3fv(color_black);
+			textPrintf("L", robot->aid);
+		glPopMatrix();
+	}
+	glPopMatrix();
+}
+
+void drawAprilTags(GLenum mode)
+{
+	int i;
+	int numAprilTags = 0;
+	struct aprilTag *activeTags[MAX_APRILTAG];
+	GLfloat xi, yi;
+
+	glPushMatrix();
+	glTranslatef(APRILTAG_X, APRILTAG_Y, 0);
+
+	glPushMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < AT_SCALE_X; i++) {
+				glTranslatef(1, 0, 0);
+				glBegin(GL_LINES);
+					glVertex2f(0, -GUI_HEIGHT / 2);
+					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+				glEnd();
+			}
+		glPopMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < AT_SCALE_X; i++) {
+				glTranslatef(-1, 0, 0);
+				glBegin(GL_LINES);
+					glVertex2f(0, -GUI_HEIGHT / 2);
+					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+				glEnd();
+			}
+		glPopMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < (GUI_HEIGHT / 2 - 3); i++) {
+				glTranslatef(0, 1, 0);
+				glBegin(GL_LINES);
+					glVertex2f(-AT_SCALE_X - 1, 0);
+					glVertex2f(AT_SCALE_X + 1, 0);
+				glEnd();
+			}
+		glPopMatrix();
+		glPushMatrix();
+			glColor3fv(color_grey);
+			for (i = 0; i < (GUI_HEIGHT / 2); i++) {
+				glTranslatef(0, -1, 0);
+				glBegin(GL_LINES);
+					glVertex2f(-AT_SCALE_X - 1, 0);
+					glVertex2f(AT_SCALE_X + 1, 0);
+				glEnd();
+			}
+		glPopMatrix();
+
+		glColor3fv(color_darkgrey);
+		glBegin(GL_LINES);
+			glVertex2f(0, -GUI_HEIGHT / 2);
+			glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+		glEnd();
+		glBegin(GL_LINES);
+			glVertex2f(-AT_SCALE_X - 1, 0);
+			glVertex2f(AT_SCALE_X + 1, 0);
+		glEnd();
+	glPopMatrix();
+
+	for (i = 0; i < maxAprilTag + 1; i++) {
+		mutexLock(&aprilTagData[i].mutex);
+		if (aprilTagData[i].active)
+			activeTags[numAprilTags++] = &aprilTagData[i];
+		else
+			mutexUnlock(&aprilTagData[i].mutex);
+	}
+
+	for (i = 0; i < numAprilTags; i++) {
+		glPushMatrix();
+			if (mode == GL_SELECT)
+				glLoadName(2000 + activeTags[i]->id);
+
+			xi = (activeTags[i]->x - aprilTagX) / aprilTagX;
+			yi = (activeTags[i]->y - aprilTagY) / aprilTagY;
+
+			xi *= AT_SCALE_X;
+			yi *= -AT_SCALE_X * (aprilTagY / aprilTagX);
+
+			glTranslatef(xi, yi, 0);
+			glPushMatrix();
+				glRotatef(activeTags[i]->t, 0, 0, 1);
+				glRotatef(-90, 0, 0, 1);
+
+				glPushMatrix();
+					glColor3fv(color_white);
+					glScalef(0.5, 0.5, 0);
+					glRectf(-1, -1, 1, 1);
+				glPopMatrix();
+				glPushMatrix();
+					glColor3fv(color_black);
+					glScalef(0.45, 0.45, 0);
+					glRectf(-1, -1, 1, 1);
+					glRectf(-1, -1, 1, 1);
+				glPopMatrix();
+				glPushMatrix();
+					glColor3fv(color_white);
+					glScalef(0.45, 0.45, 0);
+					glBegin(GL_LINES);
+						glVertex2f(0, 0);
+						glVertex2f(0, -1);
+					glEnd();
+				glPopMatrix();
+			glPopMatrix();
+			glTranslatef(0.6, -0.6, 0);
+			glColor3fv(color_black);
+			textSetSize(TEXT_SMALL);
+
+			textPrintf("%d%s", activeTags[i]->id,
+				activeTags[i]->log ? "L" : "");
+		glPopMatrix();
+		mutexUnlock(&activeTags[i]->mutex);
+	}
+
 	glPopMatrix();
 }
 
@@ -615,7 +883,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("BL");
 
-		/* CT Button */
+		/* ST Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 		if (mode == GL_SELECT)
 			glLoadName(SCONNECT_BUTTON);
@@ -633,7 +901,25 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("ST");
 
-		/* CT Button */
+		/* LG Button */
+		glTranslatef(0, -TEXT_LARGE * 2, 0);
+		if (mode == GL_SELECT)
+			glLoadName(LOG_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == LOG)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("LG");
+
+		/* OL Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
@@ -649,7 +935,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("OL");
 
-		/* CT Button */
+		/* OR Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
@@ -665,7 +951,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("OR");
 
-		/* CT Button */
+		/* AL Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
@@ -684,7 +970,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
-		/* CT Button */
+		/* KO Button */
 		glTranslatef(0, -TEXT_LARGE * 2, 0);
 
 		if (mode == GL_SELECT)
@@ -740,6 +1026,19 @@ void timerEnableDraw(int value)
 	glPopMatrix();
 
 	drawToolbar(GL_RENDER);
+
+	if (aprilTagConnected) {
+		drawAprilTags(GL_RENDER);
+
+		glPushMatrix();
+			glTranslatef(MAP_DIVIDE_X, 0, 0);
+			glRotatef(90, 0, 0, 1);
+			glBegin(GL_LINES);
+				glVertex2f(-GUI_HEIGHT, 0);
+				glVertex2f(GUI_HEIGHT / 2 - TEXT_LARGE * 2, 0);
+			glEnd();
+		glPopMatrix();
+	}
 
 	drawRobots(GL_RENDER);
 	drawAprilTagTextbox(GL_RENDER);

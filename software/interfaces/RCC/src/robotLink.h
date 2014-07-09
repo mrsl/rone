@@ -33,8 +33,11 @@ struct commInfo
 struct commCon
 {
 	int id; 									// Robot ID
+	int aid;									// AprilTag ID
 	int blacklisted;							// Is this robot ID blacklisted?
+	int log;									// Log this robots data?
 	HANDLE *hSerial;							// Serial handle if connected
+	HANDLE logH;								// Logfile
 	time_t up;									// Last time we saw the robot
 	int type;									// Type of robot
 	int port;									// If local, the COM port

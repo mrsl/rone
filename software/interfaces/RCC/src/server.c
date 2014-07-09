@@ -7,6 +7,7 @@
 
 char ipAddress[15];
 int aprilTagConnected = 0;
+int maxAprilTag = 0;
 struct aprilTag aprilTagData[MAX_APRILTAG];
 
 /**
@@ -181,6 +182,7 @@ void connectionHandler(void *vargp)
 	int id;							// Requested robot ID
 	int n;
 	int aid;						// AprilTag ID
+	int linked;						// Is this robot AprilTag linked?
 	int head;						// Last location of robot buffer viewed
 	int up, bl;						// Flag
 	struct Connection *conn;		// Connection information
@@ -269,7 +271,8 @@ void connectionHandler(void *vargp)
 	if (verbose)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
-	aid = -1;
+	aid = robots[id].aid;
+	linked = aid != -1;
 	if (aprilTagConnected && id != 0) {
 		while (aid == -1) {
 			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
@@ -346,7 +349,7 @@ void connectionHandler(void *vargp)
 			mutexUnlock(&robots[id].mutex);
 
 			/* Append AprilTag data to end of message if available */
-			if (aid != -1) {
+			if (aid != -1 && !linked) {
 				bufp = buffer + n - 2;
 				mutexLock(&aprilTagData[aid].mutex);
 				if ((n = sprintf(bufp, ", %s",
@@ -397,6 +400,8 @@ void initAprilTag()
 {
 	int i;
 	for (i = 0; i < MAX_APRILTAG; i++) {
+		aprilTagData[i].id = i;
+		aprilTagData[i].up = 0;
 		aprilTagData[i].head = 0;
 		aprilTagData[i].active = 0;
 		mutexInit(&aprilTagData[i].mutex);
@@ -442,6 +447,8 @@ void aprilTagHandler(void *vargp)
 	char buffer[APRILTAG_BUFFERSIZE], *bufp;
 	fd_set read_set, ready_set;		// Read set for select
 	struct timeval tv = { 0, 1 };	// Timeout for select
+	GLfloat x, y, t;				// Data from server
+	int ts;							// Timestamp from server
 
 	conn = (struct Connection *) vargp;
 	tid = conn->n;
@@ -485,17 +492,33 @@ void aprilTagHandler(void *vargp)
 				insertBuffer(0, buffer);
 
 				/* Parse AprilTag ID */
-				*bufp = '\0';
+				*(bufp++) = '\0';
 				if (sscanf(buffer, "%d,", &id) < 1)
 					continue;
 
 				if (id < 0 || id >= MAX_APRILTAG)
 					continue;
 
+				if (id > maxAprilTag)
+					maxAprilTag = id;
+
 				mutexLock(&aprilTagData[id].mutex);
 				aprilTagData[id].active = 1;
-				strcpy(aprilTagData[id].buffer[aprilTagData[id].head],
-					bufp + 1);
+				strcpy(aprilTagData[id].buffer[aprilTagData[id].head], bufp);
+
+				if (sscanf(bufp, "%f, %f, %f, %d", &x, &y, &t, &ts) == 4) {
+					aprilTagData[id].x = x;
+					aprilTagData[id].y = y;
+					aprilTagData[id].t = t;
+				}
+
+				if (aprilTagData[id].log) {
+					hprintf(&aprilTagData[id].logH,
+						aprilTagData[id].buffer[aprilTagData[id].head]);
+				}
+
+				aprilTagData[id].up = clock();
+
 				aprilTagData[id].head = (aprilTagData[id].head + 1)
 					% NUMBUFFER_APRILTAG;
 				mutexUnlock(&aprilTagData[id].mutex);
