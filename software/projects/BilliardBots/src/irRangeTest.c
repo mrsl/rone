@@ -136,12 +136,14 @@ void behaviorTask(void* parameters) {
 		lastWakeTime = osTaskGetTickCount();
 
 		for (i = 0; i < nbrList.size; i++){
-				nbrPtr = nbrList.nbrs[i];
-				nbrBearing = nbrGetBearing(nbrPtr);
-				if (behOutput.tv != 0 || behOutput.rv != 0)
-					if (lastWakeTime - tempWakeTime > 190)
-						rprintf("%d %d %d\n",nbrBearing, behOutput.tv, behOutput.rv);
+			nbrPtr = nbrList.nbrs[i];
+			nbrBearing = nbrGetBearing(nbrPtr);
+			if (behOutput.tv != 0 || behOutput.rv != 0){
+				if (lastWakeTime - tempWakeTime > 190){
+					rprintf("%d %d %d\n",nbrBearing, behOutput.tv, behOutput.rv);
+				}
 			}
+		}
 	}
 }
 
