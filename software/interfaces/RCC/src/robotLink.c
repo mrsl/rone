@@ -349,7 +349,7 @@ void insertBuffer(int robotID, char *buffer)
 	robots[robotID].up = clock();
 
 	sprintf(robots[robotID].buffer[robots[robotID].head], "[%11ld] %s",
-		clock(), lbuffer);
+		robots[robotID].up, lbuffer);
 
 	/* Log data */
 	if (robots[robotID].log) {
