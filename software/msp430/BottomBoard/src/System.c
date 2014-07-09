@@ -374,11 +374,11 @@ void main(void) {
 			watchdogDisable();
 //			timerDisable();
 			SPI8962Shutdown();
-//			I2CShutdown();
+			I2CShutdown();
 			ADC10Shutdown();
 			
 			// wait for I2C to finish
-//			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
+			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
 			
 			// reset the robot and shut down the main supply
 			resetSet(TRUE);
@@ -431,7 +431,7 @@ void main(void) {
 			for (i = 0; i < POWER_ON_DELAY; i++) {}
 
 			// Initialize i/o and timer
-//			I2CInit();
+			I2CInit();
 			SPI8962Init();
 //			timerInit();
 
@@ -452,7 +452,7 @@ void main(void) {
 			airplaneStartTicks = 0;
 
 			// wait for I2C to finish
-//			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
+			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
 
 			// init the on-chip I/O
 //			accelInit();
@@ -483,14 +483,14 @@ void main(void) {
 #ifndef RFID_DEBUG
 			msp430CheckAndUpdate();
 #endif
-//			if (systemLEDRampBrightness != systemLEDRampBrightnessOld) {
-//				if (systemLEDRampBrightness >= 0) {
-//					blinkyLEDSet(systemLEDRampBrightness);
-//				} else {
-//					blinkyLEDSet(0);
-//				}
-//				systemLEDRampBrightnessOld = systemLEDRampBrightness;
-//			}
+			if (systemLEDRampBrightness != systemLEDRampBrightnessOld) {
+				if (systemLEDRampBrightness >= 0) {
+					blinkyLEDSet(systemLEDRampBrightness);
+				} else {
+					blinkyLEDSet(0);
+				}
+				systemLEDRampBrightnessOld = systemLEDRampBrightness;
+			}
 		}
 
 		// Update the VBAT value and the USB 5V Line ADC (V12 Only)
@@ -523,138 +523,138 @@ void main(void) {
 		
 		//TODO RFID debug
 //#ifndef RFID_DEBUG
-//		// check for a power off request
-//		currentTicks = systemTicks();
-// 		if (powerButtonGetValue()) {
-//			if (powerButtonFSMState == 1) { //Reset Mode
-//				powerButtonLEDOveride = FALSE;
-//				// power button is depressed and the state is still in reset
-//				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_OFF) {
-//					// it was held long enough to turn off - display the battery and time-to-airplane
-//					powerButtonFSMState = 2;
-//					powerButtonLEDOveride = TRUE;
-//					batteryLEDFadeIn = 0;
-//					//Turn off the system LED so that it is not left stuck on
-//					blinkyLEDSet(0);
-//				}
-//			}
-//			else if (powerButtonFSMState == 2) { //Off mode
-//				powerButtonLEDOveride = TRUE;
-//				//Display the time until airplane on lights in addition to
-//				//the battery meter in this mode
-//				setAllLEDData(powerButtonLEDOverideData, 0);
-//				setBatteryLEDData(powerButtonLEDOverideData);
-//				setTimeToAirplaneLEDData(powerButtonLEDOverideData, POWER_BUTTON_HOLD_DELAY_AIRPLANE - timerDiff(powerButtonStartTicks, currentTicks));
-//
-//				ledUpdate(powerButtonLEDOverideData);
-//				ledTimeoutReset();
-//
-//				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_AIRPLANE) {
-//					// It was held long enough to go into airplane mode - turn the robot off
-//					// and put the rone in airplane mode
-//					powerButtonFSMState = 3;
-//					powerOffRequest = TRUE;
-//					airplaneMode = TRUE;
-//					powerButtonFSMState = 0; //idle again
-//					powerButtonLEDOveride = TRUE;
-//				}
-//			}
-//			else if (powerButtonFSMState == 3) {
-//				//This shoudln't happen, because the robot should be off
-//				powerButtonLEDOveride = TRUE;
-//				//turn off all the lights in preparation for airplane mode
-//				ledSetAll(0);
-//			} else {
-//				// power button is first pressed.  record the ticks
-//				powerButtonStartTicks = currentTicks;
-//				powerButtonFSMState = 1;
-//				powerButtonLEDOveride = FALSE;
-//			}
-//		} else {
-//			//Release the overide on the LEDs
-//			powerButtonLEDOveride = FALSE;
-//
-//			if (powerButtonFSMState == 1) {
-//				//debounce
-//				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_RESET) {
-//					// the power button is released after a short delay - reset the rone
-//					resetSet(TRUE);
-//					#ifdef RONE_V12
-//						if(resetFTDIWithButton){
-//							ftdiResetSet(TRUE);
-//						}
-//						ledResetSet(TRUE);
-//						motSleepSet(TRUE);
-//					#endif
-//					//msp430SetRobotMode(MSP430_MODE_PYTHON);
-//					for (i = 0; i < RESET_DELAY; i++) {}
-//				    resetSet(FALSE);
-//				    #ifdef RONE_V12
-//						if(resetFTDIWithButton){
-//							ftdiResetSet(FALSE);
-//						}
-//						ledResetSet(FALSE);
-//						motSleepSet(FALSE);
-//					#endif
-//					//for (i = 0; i < RESET_DELAY; i++) {}
-//					ledInit();
-//					powerButtonFSMState = 0; //idle again
-//				}
-//			}
-//			else if (powerButtonFSMState == 2){
-//				// The power button was released while in the off state - turn the robot off
-//				// Do not put the rone in airplane mode
-//				powerOffRequest = TRUE;
-//				airplaneMode = FALSE;
-//				powerButtonFSMState = 0; //idle again
-//			}
-//		}
-//
-//		//Turn off the robot as soon as possible if the VBat drops below a threshold
-//		if(powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD){
-//			if(!powerUSBGetState()) {
-//				resetSet(TRUE);
-//				#ifdef RONE_V12
-//					ftdiResetSet(TRUE);
-//					motSleepSet(TRUE);
-//				#endif
-//
-//				// Turn the robot off officially this time
-//				powerOffRequest = TRUE;
-//				airplaneMode = FALSE;
-//
-//				// Go into airplane mode if the battery is beyond dead
-//				if(powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)){
-//					airplaneMode = TRUE;
-//				}
-//
-//				// Disable some interupts
-//				watchdogPet();
-//				watchdogDisable();
-//
-//				// Make sure the LED's don't turn off
-//				ledTimeoutReset();
-//
-//				// Turn off the bliky led so it isn't stuck on
-//				blinkyLEDSet(0);
-//
-//				// Blink the red light 3 times so that the user knows there is no battery
-//				uint8 blinkCount;
-//				setAllLEDData(powerButtonLEDOverideData, 0);
-//				for (blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
-//					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
-//					ledUpdate(powerButtonLEDOverideData);
-//
-//					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
-//
-//					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
-//					ledUpdate(powerButtonLEDOverideData);
-//
-//					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
-//				}
-//				watchdogEnable();
-//			}
-//		}
+		// check for a power off request
+		currentTicks = systemTicks();
+ 		if (powerButtonGetValue()) {
+			if (powerButtonFSMState == 1) { //Reset Mode
+				powerButtonLEDOveride = FALSE;
+				// power button is depressed and the state is still in reset
+				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_OFF) {
+					// it was held long enough to turn off - display the battery and time-to-airplane
+					powerButtonFSMState = 2;
+					powerButtonLEDOveride = TRUE;
+					batteryLEDFadeIn = 0;
+					//Turn off the system LED so that it is not left stuck on
+					blinkyLEDSet(0);
+				}
+			}
+			else if (powerButtonFSMState == 2) { //Off mode
+				powerButtonLEDOveride = TRUE;
+				//Display the time until airplane on lights in addition to
+				//the battery meter in this mode
+				setAllLEDData(powerButtonLEDOverideData, 0);
+				setBatteryLEDData(powerButtonLEDOverideData);
+				setTimeToAirplaneLEDData(powerButtonLEDOverideData, POWER_BUTTON_HOLD_DELAY_AIRPLANE - timerDiff(powerButtonStartTicks, currentTicks));
+
+				ledUpdate(powerButtonLEDOverideData);
+				ledTimeoutReset();
+
+				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_AIRPLANE) {
+					// It was held long enough to go into airplane mode - turn the robot off
+					// and put the rone in airplane mode
+					powerButtonFSMState = 3;
+					powerOffRequest = TRUE;
+					airplaneMode = TRUE;
+					powerButtonFSMState = 0; //idle again
+					powerButtonLEDOveride = TRUE;
+				}
+			}
+			else if (powerButtonFSMState == 3) {
+				//This shoudln't happen, because the robot should be off
+				powerButtonLEDOveride = TRUE;
+				//turn off all the lights in preparation for airplane mode
+				ledSetAll(0);
+			} else {
+				// power button is first pressed.  record the ticks
+				powerButtonStartTicks = currentTicks;
+				powerButtonFSMState = 1;
+				powerButtonLEDOveride = FALSE;
+			}
+		} else {
+			//Release the overide on the LEDs
+			powerButtonLEDOveride = FALSE;
+
+			if (powerButtonFSMState == 1) {
+				//debounce
+				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_RESET) {
+					// the power button is released after a short delay - reset the rone
+					resetSet(TRUE);
+					#ifdef RONE_V12
+						if(resetFTDIWithButton){
+							ftdiResetSet(TRUE);
+						}
+						ledResetSet(TRUE);
+						motSleepSet(TRUE);
+					#endif
+					//msp430SetRobotMode(MSP430_MODE_PYTHON);
+					for (i = 0; i < RESET_DELAY; i++) {}
+				    resetSet(FALSE);
+				    #ifdef RONE_V12
+						if(resetFTDIWithButton){
+							ftdiResetSet(FALSE);
+						}
+						ledResetSet(FALSE);
+						motSleepSet(FALSE);
+					#endif
+					//for (i = 0; i < RESET_DELAY; i++) {}
+					ledInit();
+					powerButtonFSMState = 0; //idle again
+				}
+			}
+			else if (powerButtonFSMState == 2){
+				// The power button was released while in the off state - turn the robot off
+				// Do not put the rone in airplane mode
+				powerOffRequest = TRUE;
+				airplaneMode = FALSE;
+				powerButtonFSMState = 0; //idle again
+			}
+		}
+
+		//Turn off the robot as soon as possible if the VBat drops below a threshold
+		if(powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD){
+			if(!powerUSBGetState()) {
+				resetSet(TRUE);
+				#ifdef RONE_V12
+					ftdiResetSet(TRUE);
+					motSleepSet(TRUE);
+				#endif
+
+				// Turn the robot off officially this time
+				powerOffRequest = TRUE;
+				airplaneMode = FALSE;
+
+				// Go into airplane mode if the battery is beyond dead
+				if(powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)){
+					airplaneMode = TRUE;
+				}
+
+				// Disable some interupts
+				watchdogPet();
+				watchdogDisable();
+
+				// Make sure the LED's don't turn off
+				ledTimeoutReset();
+
+				// Turn off the bliky led so it isn't stuck on
+				blinkyLEDSet(0);
+
+				// Blink the red light 3 times so that the user knows there is no battery
+				uint8 blinkCount;
+				setAllLEDData(powerButtonLEDOverideData, 0);
+				for (blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
+					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
+					ledUpdate(powerButtonLEDOverideData);
+
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
+
+					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
+					ledUpdate(powerButtonLEDOverideData);
+
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
+				}
+				watchdogEnable();
+			}
+		}
 //#endif
 	} // while
 }
@@ -739,6 +739,7 @@ __interrupt void Timer_A0 (void)
 //SPI and I2C RX interrupt vector handler
 #pragma vector=USCIAB0RX_VECTOR
 __interrupt void USCI0RX_ISR(void) {
+	// SPI CPU board ISR
 	if(IFG2 & UCA0RXIFG) {
 		SPI8962RX_ISR();
 	}

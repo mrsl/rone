@@ -58,7 +58,7 @@ void SPI8962Init(void) {
 	// put all pins under SPI control for slave mode with select line
 	P3SEL |= (SPI_A0_CLK_BIT | SPI_A0_SEL_BIT | SPI_A0_MISO_BIT | SPI_A0_MOSI_BIT);
 	
-	SPI8962InterruptEnable();                          // Enable USCI0 RX interrupt
+	SPI8962InterruptEnable();                 // Enable USCI0 RX interrupt
 	UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
 	
 	SPI8962MessageDone = FALSE;
@@ -131,7 +131,7 @@ void SPI8962RX_ISR() {
 		UCA0TXBUF = 0;
 
 	if (!sync) {
-		// when out of sync, find the first appearance of code to sync up
+		// When out of sync, find the first appearance of code to sync up
 		for (i = 0; i < MSP430_CODE_LENGTH; i++) {
 			if (SPI8962MessageIn[i] != MSP430Code[i])
 				break;
@@ -169,7 +169,6 @@ void SPI8962RX_ISR() {
 			sync = 0;
 		}
 		SPI8962MessageIdx = 0;						// Reset index counter for sync or next message
-
 	} else {
 		// In sync and no special event, carry on
 		SPI8962MessageIdx++;
