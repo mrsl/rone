@@ -100,6 +100,7 @@
 #define KILLALL_BUTTON		1007
 #define HOST_BUTTON			1008
 #define LOG_BUTTON			1009
+#define HELP_BUTTON			1010
 
 /**
  * Textbox buffer and state information
