@@ -29,6 +29,7 @@ struct Connection
 struct aprilTag
 {
 	int id;
+	int rid;												// Robot ID linked
 	time_t up;
 	int active;												// Been seen?
 	int head;												// Head of buffer

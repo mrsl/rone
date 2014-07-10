@@ -68,10 +68,14 @@ void commManager(void *vargp)
 		if (aprilTagConnected) {
 			for (i = 0; i < MAX_APRILTAG; i++) {
 				mutexLock(&aprilTagData[i].mutex);
+				if (!robots[aprilTagData[i].rid].up)
+					aprilTagData[i].rid = -1;
+
 				if ((aprilTagData[i].up + GRACETIME < clock())
 					&& aprilTagData[i].active) {
 					aprilTagData[i].active = 0;
 					aprilTagData[i].up = 0;
+					aprilTagData[i].rid = -1;
 				}
 				mutexUnlock(&aprilTagData[i].mutex);
 			}
@@ -204,7 +208,7 @@ void commCommander(void *vargp)
 			continue;
 		}
 		/* Insert the read line into robot's buffer. */
-		insertBuffer(id, buffer);
+		insertBuffer(id, buffer, 0);
 
 		/* If we get a status line from a host robot. */
 		if (strncmp(buffer, "rts", 3) == 0) {
@@ -280,7 +284,7 @@ void commCommander(void *vargp)
 
 				mutexUnlock(&robots[rid].mutex);
 
-				insertBuffer(rid, bufp + 1);
+				insertBuffer(rid, bufp + 1, strlen(buffer));
 			} else {
 				mutexUnlock(&robots[rid].mutex);
 			}
@@ -337,22 +341,22 @@ void activateRobot(int robotID, struct commInfo *info)
 /**
  * Insert a line in a robot's buffer
  */
-void insertBuffer(int robotID, char *buffer)
+void insertBuffer(int robotID, char *buffer, int extraBytes)
 {
-	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
+	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16], *bufp;
 
 	/* Lock the robot buffer */
 	mutexLock(&robots[robotID].mutex);
 
 	strcpy(lbuffer, buffer);
 
-	if (robots[robotID].aid != -1) {
-		if (appendAprilTagData(lbuffer, strlen(lbuffer),
-			robots[robotID].aid) == -1) {
-			mutexUnlock(&robots[robotID].mutex);
-			return;
-		}
-	}
+//	if (robots[robotID].aid != -1) {
+//		if (appendAprilTagData(lbuffer, strlen(lbuffer),
+//			robots[robotID].aid) == -1) {
+//			mutexUnlock(&robots[robotID].mutex);
+//			return;
+//		}
+//	}
 
 	robots[robotID].lup = robots[robotID].up;
 	robots[robotID].up = clock();
@@ -361,11 +365,19 @@ void insertBuffer(int robotID, char *buffer)
 
 	/* Log data */
 	if (robots[robotID].log) {
-		hprintf(&robots[robotID].logH,
-			robots[robotID].buffer[robots[robotID].head]);
+		strcpy(lbuffer, robots[robotID].buffer[robots[robotID].head]);
+
+		if (robots[robotID].aid != -1) {
+			bufp = lbuffer + strlen(lbuffer) - 2;
+			strcpy(bufp,
+				aprilTagData[robots[robotID].aid].buffer[aprilTagData[robots[robotID].aid].head]);
+		}
+
+		hprintf(&robots[robotID].logH, lbuffer);
 	}
 
-	robots[robotID].bps[robots[robotID].head] = (float) strlen(buffer)
+	robots[robotID].bps[robots[robotID].head] =
+		((float) strlen(buffer) + extraBytes)
 		/ ((float) (robots[robotID].up - robots[robotID].lup) / 1000.);
 
 	/* Add new message to rotating buffer */

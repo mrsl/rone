@@ -271,7 +271,6 @@ void connectionHandler(void *vargp)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
 	aid = robots[id].aid;
-	linked = aid != -1;
 	if (aprilTagConnected && id != 0) {
 		while (aid == -1) {
 			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
@@ -348,7 +347,7 @@ void connectionHandler(void *vargp)
 			mutexUnlock(&robots[id].mutex);
 
 			/* Append AprilTag data to end of message if available */
-			if (aid != -1 && !linked)
+			if (aid != -1)
 				appendAprilTagData(buffer, n, aid);
 
 			if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
@@ -387,6 +386,7 @@ void initAprilTag()
 	for (i = 0; i < MAX_APRILTAG; i++) {
 		aprilTagData[i].id = i;
 		aprilTagData[i].up = 0;
+		aprilTagData[i].rid = -1;
 		aprilTagData[i].display = 0;
 		aprilTagData[i].head = 0;
 		aprilTagData[i].active = 0;
@@ -426,11 +426,12 @@ int connectAprilTag()
 
 void aprilTagHandler(void *vargp)
 {
-	int i, id, n;
+	int i, id, rid, n;
 	int tid;						// Thread ID
 	struct Connection *conn;		// Connection information
 	struct socketIO socketio;		// Robust IO buffer for socket
 	char buffer[APRILTAG_BUFFERSIZE], *bufp;
+	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
 	fd_set read_set, ready_set;		// Read set for select
 	struct timeval tv = { 0, 1 };	// Timeout for select
 	GLfloat x, y, t;				// Data from server
@@ -475,7 +476,7 @@ void aprilTagHandler(void *vargp)
 				}
 				buffer[n] = '\r';
 				buffer[n + 1] = '\n';
-				insertBuffer(0, buffer);
+				insertBuffer(0, buffer, 0);
 
 				/* Parse AprilTag ID */
 				*(bufp++) = '\0';
@@ -505,8 +506,18 @@ void aprilTagHandler(void *vargp)
 				}
 
 				if (aprilTagData[id].log) {
-					hprintf(&aprilTagData[id].logH, "%11d, %s", clock(),
-						aprilTagData[id].buffer[aprilTagData[id].head]);
+					if ((rid = aprilTagData[id].rid) != -1) {
+						int head = ((robots[rid].head - 1) % NUMBUFFER + NUMBUFFER) % NUMBUFFER;
+						strcpy(lbuffer, robots[rid].buffer[head]);
+						bufp = lbuffer + strlen(lbuffer) - 2;
+						strcpy(bufp,
+							aprilTagData[id].buffer[aprilTagData[id].head]);
+
+						hprintf(&aprilTagData[id].logH, lbuffer);
+					} else {
+						hprintf(&aprilTagData[id].logH, "%11d, %s", clock(),
+							aprilTagData[id].buffer[aprilTagData[id].head]);
+					}
 				}
 
 				aprilTagData[id].up = clock();

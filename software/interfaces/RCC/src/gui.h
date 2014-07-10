@@ -20,6 +20,8 @@
 
 #define PICK_DELTA			3.0
 
+#define DROPSHADOW_DIST		0.03
+
 #define DRAW_DELAY			16
 #define AT_DRAW_DELAY		32
 

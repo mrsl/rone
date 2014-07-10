@@ -59,6 +59,6 @@ void commManager(void *vargp);
 int initCommCommander(int port);
 void commCommander(void *vargp);
 void activateRobot(int robotID, struct commInfo *info);
-void insertBuffer(int robotID, char *buffer);
+void insertBuffer(int robotID, char *buffer, int extraBytes);
 
 #endif
