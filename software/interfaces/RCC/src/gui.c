@@ -369,6 +369,10 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				default: {
+					if (aprilTagData[robotID - 2000].display)
+						aprilTagData[robotID - 2000].display = 0;
+					else
+						aprilTagData[robotID - 2000].display = 1;
 					break;
 				}
 				}
@@ -659,12 +663,12 @@ void drawAprilTags(GLenum mode)
 	glPushMatrix();
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i < AT_SCALE_X; i++) {
-				glTranslatef(1, 0, 0);
+			for (i = 0; i <= AT_SCALE_X; i++) {
 				glBegin(GL_LINES);
 					glVertex2f(0, -GUI_HEIGHT / 2);
 					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
 				glEnd();
+				glTranslatef(1, 0, 0);
 			}
 		glPopMatrix();
 		glPushMatrix();
@@ -679,12 +683,12 @@ void drawAprilTags(GLenum mode)
 		glPopMatrix();
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i < (GUI_HEIGHT / 2 - 3); i++) {
-				glTranslatef(0, 1, 0);
+			for (i = 0; i <= (GUI_HEIGHT / 2 - 3); i++) {
 				glBegin(GL_LINES);
 					glVertex2f(-AT_SCALE_X - 1, 0);
 					glVertex2f(AT_SCALE_X + 1, 0);
 				glEnd();
+				glTranslatef(0, 1, 0);
 			}
 		glPopMatrix();
 		glPushMatrix();
@@ -699,35 +703,35 @@ void drawAprilTags(GLenum mode)
 		glPopMatrix();
 
 		glColor3fv(color_darkgrey);
-		glBegin(GL_LINES);
-			glVertex2f(0, -GUI_HEIGHT / 2);
-			glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
-		glEnd();
-		glBegin(GL_LINES);
-			glVertex2f(-AT_SCALE_X - 1, 0);
-			glVertex2f(AT_SCALE_X + 1, 0);
-		glEnd();
 		glPushMatrix();
-			glTranslatef(-AT_SCALE_X, -AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glTranslatef(-AT_SCALE_X, AT_SCALE_X * (aprilTagY / aprilTagX), 0);
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
 				glVertex2f(1, 0);
 			glEnd();
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
-				glVertex2f(0, 1);
+				glVertex2f(0, -1);
 			glEnd();
+			glTranslatef(0, TEXT_SMALL - 0.4, 0);
+			textSetSize(TEXT_SMALL);
+			textPrintf("(0, 0)");
 		glPopMatrix();
 		glPushMatrix();
-			glTranslatef(AT_SCALE_X, AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glTranslatef(AT_SCALE_X, -AT_SCALE_X * (aprilTagY / aprilTagX), 0);
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
 				glVertex2f(-1, 0);
 			glEnd();
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
-				glVertex2f(0, -1);
+				glVertex2f(0, 1);
 			glEnd();
+			textSetAlignment(ALIGN_RIGHT);
+			glTranslatef(0, -2 * TEXT_SMALL + 0.6, 0);
+			textSetSize(TEXT_SMALL);
+			textPrintf("(%.0f, %.0f)", 2 * aprilTagX, 2 * aprilTagY);
+			textSetAlignment(ALIGN_LEFT);
 		glPopMatrix();
 	glPopMatrix();
 
@@ -775,12 +779,26 @@ void drawAprilTags(GLenum mode)
 					glEnd();
 				glPopMatrix();
 			glPopMatrix();
-			glTranslatef(0.6, -0.6, 0);
-			glColor3fv(color_black);
-			textSetSize(TEXT_SMALL);
+			glPushMatrix();
+				glTranslatef(0.6, -0.6, 0);
+				glColor3fv(color_black);
+				textSetSize(TEXT_SMALL);
 
-			textPrintf("%d%s", activeTags[i]->id,
-				activeTags[i]->log ? "L" : "");
+				textPrintf("%d%s", activeTags[i]->id,
+					activeTags[i]->log ? "L" : "");
+			glPopMatrix();
+			if (activeTags[i]->display) {
+				glPushMatrix();
+					glTranslatef(-1.8, -0.6 - TEXT_SMALL, 0);
+					glColor3fv(color_black);
+					textSetSize(TEXT_SMALL);
+					textPrintf("X: %.2f", activeTags[i]->x);
+					glTranslatef(0, -TEXT_SMALL, 0);
+					textPrintf("Y: %.2f", activeTags[i]->y);
+					glTranslatef(0, -TEXT_SMALL, 0);
+					textPrintf("T: %.2f", activeTags[i]->t);
+				glPopMatrix();
+			}
 		glPopMatrix();
 		mutexUnlock(&activeTags[i]->mutex);
 	}
@@ -1095,8 +1113,9 @@ void guiInit()
 
 	/* Initialize textbox */
 	aprilTagURL.isActive = 0;
-	aprilTagURL.index = 0;
+	aprilTagURL.index = strlen(defaultATServerIP);
 	aprilTagURL.length = 21;
+	sprintf(aprilTagURL.message, defaultATServerIP);
 
 	glutMouseFunc(mouse);
 	glutKeyboardFunc(keyboard);

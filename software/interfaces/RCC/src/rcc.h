@@ -37,5 +37,6 @@ extern int verbose;				// Verbose output?
 extern GLfloat aprilTagX;		// AprilTag window parameters
 extern GLfloat aprilTagY;
 extern char logDir[MAX_PATH];	// Logfile directory
+extern char defaultATServerIP[15];
 
 #endif
