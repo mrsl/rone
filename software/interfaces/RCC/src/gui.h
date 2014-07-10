@@ -142,6 +142,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale);
 void drawAprilTags(GLenum mode);
 void drawAprilTagTextbox(GLenum mode);
 void drawToolbar(GLenum mode);
+void drawHelp();
 void timerEnableDraw(int value);
 void guiInit();
 

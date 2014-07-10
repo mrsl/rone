@@ -26,6 +26,7 @@
 #define DEMOTEST_TV_MAX  				120
 #define DEMOTEST_TV_STEP				20
 
+#define DEMOMODE_TEST					-1
 #define DEMOMODE_IDLE					0
 #define DEMOMODE_FOLLOW					1
 #define DEMOMODE_FLOCK					2
@@ -236,12 +237,12 @@ void behaviorTask(void* parameters) {
 		buttonRed = buttonsGet(BUTTON_RED);
 		buttonGreen = buttonsGet(BUTTON_GREEN);
 		buttonBlue = buttonsGet(BUTTON_BLUE);
-		//if(buttonRed && buttonGreen && buttonBlue) {
-		//	demoModeXmit = DEMOMODE_TEST;
-		//	demotest_tv = 0;
-		if (demoMode == DEMOMODE_IDLE && !buttonGreenOld && buttonGreen) {	//### green button for slower
+		if(buttonRed && buttonGreen && buttonBlue) {
+			demoModeXmit = DEMOMODE_TEST;
+			demotest_tv = 0;
+		} else if (demoMode == DEMOMODE_TEST && !buttonGreenOld && buttonGreen) {	//### green button for slower
 			demotest_tv -= DEMOTEST_TV_STEP;
-		} else if (demoMode == DEMOMODE_IDLE && !buttonBlueOld && buttonBlue) {	//### blue button for faster
+		} else if (demoMode == DEMOMODE_TEST && !buttonBlueOld && buttonBlue) {	//### blue button for faster
 			demotest_tv += DEMOTEST_TV_STEP;
 		} else if ((buttonRed & !buttonRedOld) || (buttonGreen & !buttonGreenOld) || (buttonBlue & !buttonBlueOld)) {
 			demoModeXmit++;
@@ -440,9 +441,7 @@ void behaviorTask(void* parameters) {
 			cprintf("<MAX\tID=%d\tHop=%d\tRout=%d\tTime=%d\t(%d,%d,%d)\n",maxID,maxHop,(maxRouter?maxRouter->ID:0),maxNonce,maxLastID,maxLastNonce,maxLastRound);
 			break;
 		}
-		default:
-		case DEMOMODE_IDLE: {
-			//ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+		case DEMOMODE_TEST: {
 			demotest_tv = bound(demotest_tv, DEMOTEST_TV_MIN, DEMOTEST_TV_MAX);
 			behMoveForward(&behOutput, demotest_tv);
 			demotest_counter++;
@@ -477,17 +476,19 @@ void behaviorTask(void* parameters) {
 				rprintf("%s\n", rprintbuffer);
 				rprintoffset = 0;
 			}
+			break;
+		}
+		default:
+		case DEMOMODE_IDLE: {
+			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 			// disable the bump behavior
 			behBump = behInactive;
 			break;
 		}
 		}
 
-		if(demoMode != DEMOMODE_IDLE && demoMode != DEMOMODE_BUBBLESORT) {
+		if(demoMode != DEMOMODE_IDLE && demoMode != DEMOMODE_BUBBLESORT && demoMode != DEMOMODE_TEST) {
 			behSubsume(&behOutput, &behIRObstacle, &behBump);
-		}
-		if(demoMode != DEMOMODE_IDLE) {
-			demotest_tv=0;
 		}
 
 		if (rprintfIsHost()) {	//###
