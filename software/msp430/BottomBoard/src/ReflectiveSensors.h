@@ -2,7 +2,7 @@
 #define REFLECTIVE_H_
 #ifdef RONE_V12_TILETRACK
 
-#define REFLECTIVE_SENSORS_ENABLE_DELAY 50000
+#define REFLECTIVE_SENSORS_ENABLE_DELAY 500000
 
 #define REFLECTIVE_POWER_EN_DIR P1DIR
 #define REFLECTIVE_POWER_EN_SEL P1DIR
@@ -21,6 +21,7 @@ void reflectiveSensorsInit();
 void reflectiveSensorPowerEnable();
 void reflectiveSensorPowerDisable();
 void reflectiveSensorsUpdate();
+uint8 reflectiveGetData(int i);
 
 #else
 
@@ -28,6 +29,8 @@ void reflectiveSensorsInit() {}
 void reflectiveSensorPowerEnable() {}
 void reflectiveSensorPowerDisable() {}
 void reflectiveSensorsUpdate() {}
+uint8 reflectiveGetData(int i) {}
+
 #endif
 
 #endif /* REFLECTIVE_H_ */
