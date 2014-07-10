@@ -125,10 +125,11 @@ void SPI8962RX_ISR() {
 
 	// Send a byte
 	while (!(IFG2 & UCA0TXIFG));              // USCI_A0 TX buffer ready?
-	if (sync)
+	if (sync) {
 		UCA0TXBUF = SPI8962MessageOut[SPI8962MessageIdx];
-	else
+	} else {
 		UCA0TXBUF = 0;
+	}
 
 	if (!sync) {
 		// When out of sync, find the first appearance of code to sync up
