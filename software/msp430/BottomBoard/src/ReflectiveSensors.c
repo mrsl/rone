@@ -62,7 +62,7 @@ void reflectiveSensorsUpdate() {
    	reflectiveSensorVal[2] = ADC10MEM;
 
    	ADC10CTL0 &= ~ENC;             						// Turn off ADC10 to switch channel
-	ADC10CTL1 = INCH_3 | ADC10DIV_0 | CONSEQ_0;			// Input A3, single sequence
+	ADC10CTL1 = INCH_4 | ADC10DIV_0 | CONSEQ_0;			// Input A3, single sequence
    	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
    	while (ADC10CTL1 & BUSY); 							// Wait until sample ends
    	reflectiveSensorVal[3] = ADC10MEM;
@@ -74,8 +74,12 @@ void reflectiveSensorsUpdate() {
    	reflectiveSensorVal[4] = ADC10MEM;
 
 	// Disable the reflective sensor LED output
-   	reflectiveSensorPowerDisable();
+//   	reflectiveSensorPowerDisable();
 }
 
 
+uint8 reflectiveGetData(int i) {
+	// Normalize to uint8 range
+	return ((uint32)reflectiveSensorVal[i] * 255 / 1023);
+}
 #endif //#ifdef RONE_V12_TILETRACK
