@@ -634,7 +634,10 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 	if (robot->blacklisted) {
 		glPushMatrix();
-			glColor3fv(color_red);
+			if (robot->type == REMOTE)
+				glColor3fv(color_lightred);
+			else
+				glColor3fv(color_red);
 			glRotatef(45, 0, 0, 1);
 			glBegin(GL_LINES);
 				glVertex2f(-ROBOT_RADIUS / scale, 0);
@@ -695,6 +698,15 @@ void drawAprilTags(GLenum mode)
 	int numAprilTags = 0;
 	struct aprilTag *activeTags[MAX_APRILTAG];
 	GLfloat xi, yi;
+	GLfloat xs, ys;
+
+	if (aprilTagY <= aprilTagX) {
+		xs = AT_SCALE_X;
+		ys = AT_SCALE_X * (aprilTagY / aprilTagX);
+	} else {
+		xs = AT_SCALE_Y * (aprilTagX / aprilTagY);
+		ys = AT_SCALE_Y;
+	}
 
 	glPushMatrix();
 	glTranslatef(APRILTAG_X, APRILTAG_Y, 0);
@@ -705,27 +717,27 @@ void drawAprilTags(GLenum mode)
 
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i <= AT_SCALE_X; i++) {
+			for (i = 0; i <= AT_SCALE_X + 1; i++) {
 				glBegin(GL_LINES);
-					glVertex2f(0, -GUI_HEIGHT / 2);
-					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+					glVertex2f(0, -AT_SCALE_Y - 1);
+					glVertex2f(0, AT_SCALE_Y + 1);
 				glEnd();
 				glTranslatef(1, 0, 0);
 			}
 		glPopMatrix();
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i < AT_SCALE_X; i++) {
+			for (i = 0; i < AT_SCALE_X + 1; i++) {
 				glTranslatef(-1, 0, 0);
 				glBegin(GL_LINES);
-					glVertex2f(0, -GUI_HEIGHT / 2);
-					glVertex2f(0, GUI_HEIGHT / 2 - 2.75);
+					glVertex2f(0, -AT_SCALE_Y - 1);
+					glVertex2f(0, AT_SCALE_Y + 1);
 				glEnd();
 			}
 		glPopMatrix();
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i <= (GUI_HEIGHT / 2 - 3); i++) {
+			for (i = 0; i <= AT_SCALE_Y + 1; i++) {
 				glBegin(GL_LINES);
 					glVertex2f(-AT_SCALE_X - 1, 0);
 					glVertex2f(AT_SCALE_X + 1, 0);
@@ -735,7 +747,7 @@ void drawAprilTags(GLenum mode)
 		glPopMatrix();
 		glPushMatrix();
 			glColor3fv(color_grey);
-			for (i = 0; i < (GUI_HEIGHT / 2); i++) {
+			for (i = 0; i < AT_SCALE_Y + 1; i++) {
 				glTranslatef(0, -1, 0);
 				glBegin(GL_LINES);
 					glVertex2f(-AT_SCALE_X - 1, 0);
@@ -746,7 +758,7 @@ void drawAprilTags(GLenum mode)
 
 		glColor3fv(color_darkgrey);
 		glPushMatrix();
-			glTranslatef(-AT_SCALE_X, AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glTranslatef(-xs, ys, 0);
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
 				glVertex2f(1, 0);
@@ -760,7 +772,7 @@ void drawAprilTags(GLenum mode)
 			textPrintf("(0, 0)");
 		glPopMatrix();
 		glPushMatrix();
-			glTranslatef(AT_SCALE_X, -AT_SCALE_X * (aprilTagY / aprilTagX), 0);
+			glTranslatef(xs, -ys, 0);
 			glBegin(GL_LINES);
 				glVertex2f(0, 0);
 				glVertex2f(-1, 0);
@@ -793,8 +805,8 @@ void drawAprilTags(GLenum mode)
 			xi = (activeTags[i]->x - aprilTagX) / aprilTagX;
 			yi = (activeTags[i]->y - aprilTagY) / aprilTagY;
 
-			xi *= AT_SCALE_X;
-			yi *= -AT_SCALE_X * (aprilTagY / aprilTagX);
+			xi *= xs;
+			yi *= -ys;
 
 			glTranslatef(xi, yi, 0);
 			glPushMatrix();
@@ -835,14 +847,14 @@ void drawAprilTags(GLenum mode)
 			glPopMatrix();
 			if (activeTags[i]->display) {
 				glPushMatrix();
-					glTranslatef(-1.2, -0.6 - TEXT_SMALL, 0);
+					glTranslatef(-1.2, -0.6 - TEXT_TINY, 0);
 					glColor3fv(color_black);
-					glScalef(0.8, 0.8, 0);
-					textSetSize(TEXT_SMALL);
+					//glScalef(0.8, 0.8, 0);
+					textSetSize(TEXT_TINY);
 					textPrintf("X:%.2f", activeTags[i]->x);
-					glTranslatef(0, -TEXT_SMALL, 0);
+					glTranslatef(0, -TEXT_TINY, 0);
 					textPrintf("Y:%.2f", activeTags[i]->y);
-					glTranslatef(0, -TEXT_SMALL, 0);
+					glTranslatef(0, -TEXT_TINY, 0);
 					textPrintf("T:%.2f", activeTags[i]->t);
 				glPopMatrix();
 			}
@@ -1186,6 +1198,7 @@ void timerEnableDraw(int value)
 {
 	GLfloat length;
 	glClear(GL_COLOR_BUFFER_BIT);
+	glClearColor(color_white[0], color_white[1], color_white[2], 1.);
 
 	/* Draw title, IP, port, and dividing bar for local robots */
 	glPushMatrix();
