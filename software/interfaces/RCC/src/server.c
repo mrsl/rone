@@ -349,22 +349,8 @@ void connectionHandler(void *vargp)
 			mutexUnlock(&robots[id].mutex);
 
 			/* Append AprilTag data to end of message if available */
-			if (aid != -1 && !linked) {
-				bufp = buffer + n - 2;
-				mutexLock(&aprilTagData[aid].mutex);
-				if ((n = sprintf(bufp, ", %s",
-					aprilTagData[aid].buffer[aprilTagData[aid].head])) < 0) {
-					mutexUnlock(&aprilTagData[aid].mutex);
-					break;
-				}
-				mutexUnlock(&aprilTagData[aid].mutex);
-
-				/* If there was no data, rewrite the CRLF */
-				if (n == 2) {
-					if (sprintf(bufp, "\r\n") < 0)
-						break;
-				}
-			}
+			if (aid != -1 && !linked)
+				appendAprilTagData(buffer, n, aid);
 
 			if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
 				break;
@@ -520,7 +506,7 @@ void aprilTagHandler(void *vargp)
 				}
 
 				if (aprilTagData[id].log) {
-					hprintf(&aprilTagData[id].logH, "[%11d] %s", clock(),
+					hprintf(&aprilTagData[id].logH, "%11d, %s", clock(),
 						aprilTagData[id].buffer[aprilTagData[id].head]);
 				}
 
@@ -553,6 +539,30 @@ void aprilTagHandler(void *vargp)
 	aprilTagConnected = 0;
 	Close(conn->fd);
 	Free(conn);
+}
+
+/**
+ * Inserts AprilTag data at the end of a CRLF-ended buffer
+ */
+int appendAprilTagData(char *buffer, int n, int aid)
+{
+	char *bufp;
+	bufp = buffer + n - 2;
+	mutexLock(&aprilTagData[aid].mutex);
+	if ((n = sprintf(bufp, ", %s",
+		aprilTagData[aid].buffer[aprilTagData[aid].head])) < 0) {
+		mutexUnlock(&aprilTagData[aid].mutex);
+		return (-1);
+	}
+	mutexUnlock(&aprilTagData[aid].mutex);
+
+	/* If there was no data, rewrite the CRLF */
+	if (n == 2) {
+		if (sprintf(bufp, "\r\n") < 0)
+			return (-1);
+	}
+
+	return (0);
 }
 
 /**

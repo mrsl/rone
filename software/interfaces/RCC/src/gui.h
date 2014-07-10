@@ -50,11 +50,13 @@
 
 /* AprilTag drawing defines */
 #define APRILTAG_X			10
-#define APRILTAG_Y			0
+#define APRILTAG_Y			-1
 
 #define AT_SCALE_X			9.
+#define AT_SCALE_Y			12.
 
 /* Text defines */
+#define TEXT_TINY			0.5
 #define TEXT_SMALL			0.65
 #define TEXT_MED 			0.85
 #define TEXT_LARGE			1.35
@@ -121,6 +123,7 @@ extern GLint drawingListBase;		// Drawing primitives
 
 /* Drawing colors */
 extern const float color_red[COLOR_SIZE];
+extern const float color_lightred[COLOR_SIZE];
 extern const float color_black[COLOR_SIZE];
 extern const float color_grey[COLOR_SIZE];
 extern const float color_darkgrey[COLOR_SIZE];

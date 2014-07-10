@@ -325,31 +325,18 @@ void activateRobot(int robotID, struct commInfo *info)
  */
 void insertBuffer(int robotID, char *buffer)
 {
-	int n, aid;
-	char *lbufp, lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
+	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
 
 	/* Lock the robot buffer */
 	mutexLock(&robots[robotID].mutex);
 
 	strcpy(lbuffer, buffer);
 
-	if ((aid = robots[robotID].aid) != -1) {
-		lbufp = lbuffer + strlen(lbuffer) - 2;
-		mutexLock(&aprilTagData[aid].mutex);
-		if ((n = sprintf(lbufp, ", %s",
-			aprilTagData[aid].buffer[aprilTagData[aid].head])) < 0) {
-			mutexUnlock(&aprilTagData[aid].mutex);
+	if (robots[robotID].aid != -1) {
+		if (appendAprilTagData(lbuffer, strlen(lbuffer),
+			robots[robotID].aid) == -1) {
 			mutexUnlock(&robots[robotID].mutex);
 			return;
-		}
-		mutexUnlock(&aprilTagData[aid].mutex);
-
-		/* If there was no data, rewrite the CRLF */
-		if (n == 2) {
-			if (sprintf(lbufp, "\r\n") < 0) {
-				mutexUnlock(&robots[robotID].mutex);
-				return;
-			}
 		}
 	}
 

@@ -68,6 +68,7 @@ void connectionHandler(void *vargp);
 void initAprilTag();
 int connectAprilTag();
 void aprilTagHandler(void *vargp);
+int appendAprilTagData(char *buffer, int n, int aid);
 
 ssize_t socketWrite(int fd, char *usrbuf, size_t n);
 ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n);

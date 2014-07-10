@@ -68,7 +68,7 @@ int main(int argc, char **argv)
 	}
 
 	if (err) {
-		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum] <-h|--height> [AprilTag max Y] <-w|--width> [AprilTag max X]\n", argv[0]);
+		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum]\n    <-h|--height> [AprilTag max Y] <-w|--width> [AprilTag max X]\n", argv[0]);
 		return (-1);
 	}
 
