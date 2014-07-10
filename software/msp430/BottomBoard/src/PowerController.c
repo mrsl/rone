@@ -416,13 +416,13 @@ __interrupt void Port_1(void) {
 		for (i = 0; i < BUTTON_DEBOUNCE_COUNT; ++i) {}
 		// Is the button still down?
 		if (powerButtonGetValue()) {
-//			if (airplaneModeGetState()) {
-//				if (powerUSBGetState()) {
-//					powerOn = TRUE;
-//				}
-//			} else {
+			if (airplaneModeGetState()) {
+				if (powerUSBGetState()) {
+					powerOn = TRUE;
+				}
+			} else {
 				powerOn = TRUE;
-//			}
+			}
 		}
 	}
 	if (powerOn) {

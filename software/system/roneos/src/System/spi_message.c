@@ -402,7 +402,6 @@ uint8 bottomBoardISR() {
 			for (i = 0; i < MSP430_CODE_LENGTH; i++) {
 				MSP430MessageOut[i] = MSP430Code[i];
 			}
-
 			// Build and pack payload
 			switch (msp430SystemGetCommandMessage()) {
 				case MSP430_CMD_COMMAND_NORMAL:
@@ -471,8 +470,9 @@ uint8 bottomBoardISR() {
 				if (showError) {cprintf("Bcod ");}
 			}
 			// Toggle MSP boards, regardless of result
-			if(expand0En)
+			if (expand0En) {
 				MSPSelect = MSP_EXPAND0_BOARD_SEL;
+			}
 		}
 
 		// Increment index, wrap back to 0 if it exceeds the range
