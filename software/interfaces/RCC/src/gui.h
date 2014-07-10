@@ -102,6 +102,8 @@
 #define LOG_BUTTON			1009
 #define HELP_BUTTON			1010
 
+#define APRILTAG_GRID		1501
+
 /**
  * Textbox buffer and state information
  */

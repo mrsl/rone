@@ -37,7 +37,20 @@ uint16 convertASCIIHexWord(char *val)
 	return (temp);
 }
 
-/*
+/**
+ *
+ */
+void datestr(char *buffer)
+{
+	SYSTEMTIME st;
+
+    GetLocalTime(&st);
+
+    sprintf(buffer, "%02d%02d%02d_%02d%02d%02d",
+    	st.wHour, st.wMinute, st.wSecond, st.wDay, st.wMonth, st.wYear);
+}
+
+/**
  * Insert character into the string at the position.
  * There should be room in the string.
  */
@@ -55,7 +68,7 @@ void strins(char* str, char c, int index)
 	str[index] = c;
 }
 
-/*
+/**
  * Delete the character at index and shift everything to the left.
  */
 void strdel(char* str, int index)

@@ -17,6 +17,7 @@ uint8 convertASCIIHexNibble(char val);
 uint8 convertASCIIHexByte(char *val);
 uint16 convertASCIIHexWord(char *val);
 
+void datestr(char *buffer);
 void strins(char* str, char c, int index);
 void strdel(char* str, int index);
 

@@ -164,11 +164,12 @@ void commConnect(int robotID)
 
 void beginLog(int robotID)
 {
-	char fileName[MAX_PATH];
+	char fileName[MAX_PATH], date[BUFFERSIZE];
+	datestr(date);
 
 	if (!robots[robotID].log) {
 		robots[robotID].log = 1;
-		sprintf(fileName, "%s\\%d_%ld.log", logDir, robotID, clock());
+		sprintf(fileName, "%s\\%d_%s.log", logDir, robotID, date);
 		robots[robotID].logH = CreateFile((LPTSTR) fileName,
 										  GENERIC_WRITE,
 										  0,
@@ -186,11 +187,12 @@ void beginLog(int robotID)
 
 void beginAprilTagLog(int aprilTagID)
 {
-	char fileName[MAX_PATH];
+	char fileName[MAX_PATH], date[BUFFERSIZE];
+	datestr(date);
 
 	if (!aprilTagData[aprilTagID].log) {
 		aprilTagData[aprilTagID].log = 1;
-		sprintf(fileName, "%s\\AT%d_%ld.log", logDir, aprilTagID, clock());
+		sprintf(fileName, "%s\\AT%d_%s.log", logDir, aprilTagID, date);
 		aprilTagData[aprilTagID].logH = CreateFile((LPTSTR) fileName,
 												   GENERIC_WRITE,
 											 	   0,

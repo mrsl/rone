@@ -667,6 +667,9 @@ void drawAprilTags(GLenum mode)
 	glTranslatef(APRILTAG_X, APRILTAG_Y, 0);
 
 	glPushMatrix();
+		if (mode == GL_SELECT)
+			glLoadName(APRILTAG_GRID);
+
 		glPushMatrix();
 			glColor3fv(color_grey);
 			for (i = 0; i <= AT_SCALE_X; i++) {
@@ -1054,7 +1057,6 @@ void drawToolbar(GLenum mode)
 		glColor3fv(color_black);
 		textSetSize(TEXT_LARGE);
 		textPrintf("??");
-
 	glPopMatrix();
 }
 
@@ -1163,8 +1165,6 @@ void timerEnableDraw(int value)
 		glEnd();
 	glPopMatrix();
 
-	drawToolbar(GL_RENDER);
-
 	if (aprilTagConnected) {
 		drawAprilTags(GL_RENDER);
 
@@ -1180,10 +1180,10 @@ void timerEnableDraw(int value)
 
 	drawRobots(GL_RENDER);
 	drawAprilTagTextbox(GL_RENDER);
+	drawToolbar(GL_RENDER);
 
-	if (showHelp) {
+	if (showHelp)
 		drawHelp();
-	}
 
 	/* Update */
 	glutSwapBuffers();
