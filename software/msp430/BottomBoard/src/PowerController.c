@@ -174,7 +174,6 @@ uint8 powerVBatGet(void){
 void ADC10Init(void){
 //	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 	// 16 x clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
 	ADC10CTL0 = SREF_0 | ADC10SHT_2 | ADC10ON; 					// Default ref, 16 x clk, ADC10 on
-	// TODO make sure the power supply ADC follow the same convention
 }
 
 void powerVBatInit(void) {
@@ -214,8 +213,8 @@ void powerVBatReadADC(void){
 	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 		// 16 x clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
    	ADC10CTL0 |= ENC + ADC10SC;             							// Sampling and conversion start
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
-		if(!(ADC10CTL1 & ADC10BUSY)){
-			//Add the current read to the sliding average if there was a sucsessful read
+		if (!(ADC10CTL1 & ADC10BUSY)) {
+			// Add the current read to the sliding average if there was a sucsessful read
 			vBatRunAvg[vBatRunAvgCount] = (uint8)(ADC10MEM * VBAT_CONV_NUMER / VBAT_CONV_DENOM);
 			vBatRunAvgCount = (vBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
 			break;
