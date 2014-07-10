@@ -16,6 +16,9 @@ void reflectiveSensorsInit() {
 
 	// Setup sensor pins to ADC10
 	ADC10AE0 |= REFLECTIVE_ADC_PORTS;
+
+	// Get initial values
+	reflectiveSensorsUpdate();
 }
 
 

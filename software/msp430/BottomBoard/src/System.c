@@ -372,7 +372,7 @@ void main(void) {
 			reflectiveSensorPowerDisable();
 			watchdogPet();
 			watchdogDisable();
-//			timerDisable();
+			timerDisable();
 			SPI8962Shutdown();
 			I2CShutdown();
 			ADC10Shutdown();
@@ -433,7 +433,7 @@ void main(void) {
 			// Initialize i/o and timer
 			I2CInit();
 			SPI8962Init();
-//			timerInit();
+			timerInit();
 
 			//Start the watchdog back up
 			watchdogInit();
@@ -455,12 +455,13 @@ void main(void) {
 			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
 
 			// init the on-chip I/O
-//			accelInit();
-//			gyroInit();
-//			ledInit();
+			accelInit();
+			gyroInit();
+			ledInit();
 //			magInit();
-//			RFIDInterruptEnable();
-//			bumpSensorInit();
+			RFIDInterruptEnable();
+			bumpSensorInit();
+			reflectiveSensorsInit();
 
 			ADC10Init();
 			powerVBatInit();
@@ -580,7 +581,7 @@ void main(void) {
 					// the power button is released after a short delay - reset the rone
 					resetSet(TRUE);
 					#ifdef RONE_V12
-						if(resetFTDIWithButton){
+						if (resetFTDIWithButton) {
 							ftdiResetSet(TRUE);
 						}
 						ledResetSet(TRUE);
@@ -590,7 +591,7 @@ void main(void) {
 					for (i = 0; i < RESET_DELAY; i++) {}
 				    resetSet(FALSE);
 				    #ifdef RONE_V12
-						if(resetFTDIWithButton){
+						if (resetFTDIWithButton) {
 							ftdiResetSet(FALSE);
 						}
 						ledResetSet(FALSE);
@@ -611,7 +612,7 @@ void main(void) {
 		}
 
 		//Turn off the robot as soon as possible if the VBat drops below a threshold
-		if(powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD){
+		if (powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD) {
 			if(!powerUSBGetState()) {
 				resetSet(TRUE);
 				#ifdef RONE_V12
@@ -624,7 +625,7 @@ void main(void) {
 				airplaneMode = FALSE;
 
 				// Go into airplane mode if the battery is beyond dead
-				if(powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)){
+				if (powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
 					airplaneMode = TRUE;
 				}
 
@@ -645,12 +646,12 @@ void main(void) {
 					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
 					ledUpdate(powerButtonLEDOverideData);
 
-					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
 
 					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
 					ledUpdate(powerButtonLEDOverideData);
 
-					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
 				}
 				watchdogEnable();
 			}

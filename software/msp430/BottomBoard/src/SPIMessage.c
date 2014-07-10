@@ -74,7 +74,6 @@ void msp430CheckAndUpdate(void) {
 		gyroUpdate();
 //		magUpdate();
 
-
 		// Process the received message
 		if (messageChecksum(SPIMessageIn, MSP430_CODE_LENGTH, MSP430_MSG_LENGTH) == SPIMessageIn[MSP430_CMD_C_CHECKSUM_IDX]) {
 			switch(SPIMessageIn[MSP430_CMD_COMMAND_IDX]){
