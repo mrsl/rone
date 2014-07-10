@@ -171,6 +171,10 @@ void readChar(char character)
 			clickMode = ATLINK;
 			break;
 		}
+		case ('7'): {
+			clickMode = DISPLAY;
+			break;
+		}
 		default: {
 			break;
 		}
@@ -279,6 +283,10 @@ void processHits(GLint hits, GLuint buffer[])
 			clickMode = LOG;
 			continue;
 		}
+		case (INFO_BUTTON): {
+			clickMode = DISPLAY;
+			continue;
+		}
 		case (OPENLOCAL_BUTTON): {
 			openLocalConnections();
 			continue;
@@ -295,6 +303,7 @@ void processHits(GLint hits, GLuint buffer[])
 			showHelp = 1;
 			continue;
 		}
+
 		default: {
 			break;
 		}
@@ -371,6 +380,13 @@ void processHits(GLint hits, GLuint buffer[])
 					beginLog(robotID);
 					break;
 				}
+				case (DISPLAY): {
+					if (robots[robotID].display)
+						robots[robotID].display = 0;
+					else
+						robots[robotID].display = 1;
+					break;
+				}
 				default: {
 					break;
 				}
@@ -405,11 +421,14 @@ void processHits(GLint hits, GLuint buffer[])
 					beginAprilTagLog(robotID - 2000);
 					break;
 				}
-				default: {
+				case (DISPLAY): {
 					if (aprilTagData[robotID - 2000].display)
 						aprilTagData[robotID - 2000].display = 0;
 					else
 						aprilTagData[robotID - 2000].display = 1;
+					break;
+				}
+				default: {
 					break;
 				}
 				}
@@ -632,6 +651,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 		glPopMatrix();
 	}
 
+	/* Draw a red X over a robot if it is blacklisted */
 	if (robot->blacklisted) {
 		glPushMatrix();
 			if (robot->type == REMOTE)
@@ -650,13 +670,14 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 		glPopMatrix();
 	}
 
+	/* Draw a small box with linked aprilTag ID if linked */
 	if (robot->aid != -1 && aprilTagConnected) {
 		glPushMatrix();
 			glTranslatef(ROBOT_RADIUS / scale - 1, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
 				glScalef(0.6, 0.6, 0);
 				glColor3fv(color_white);
-				glRectf(-1, -1, 1, 1);
+				glRectf(-1, -1, 1.1, 1);
 			glPopMatrix();
 			glPushMatrix();
 				glScalef(0.55, 0.55, 0);
@@ -670,13 +691,14 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 		glPopMatrix();
 	}
 
+	/* Draw a L to designate that this robot is being logged */
 	if (robot->log) {
 		glPushMatrix();
 			glTranslatef(-ROBOT_RADIUS / scale + 1, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
 				glScalef(0.6, 0.6, 0);
 				glColor3fv(color_black);
-				glRectf(-1, -1, 1, 1);
+				glRectf(-1, -1, 1.1, 1);
 			glPopMatrix();
 			glPushMatrix();
 				glScalef(0.55, 0.55, 0);
@@ -687,6 +709,49 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glColor3fv(color_black);
 			textSetSize(TEXT_MED);
 			textPrintf("L", robot->aid);
+		glPopMatrix();
+	}
+
+	if (robot->display && (!robot->blacklisted || robot->type == REMOTE)) {
+		glPushMatrix();
+			glTranslatef(-ROBOT_RADIUS / scale / 2,
+				-ROBOT_RADIUS / scale / 3, 0);
+			glPushMatrix();
+				glColor3fv(color_black);
+				glRectf(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale,
+					2 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale);
+			glPopMatrix();
+			glPushMatrix();
+				glScalef(0.95, 0.95, 0);
+				glColor3fv(color_white);
+				glRectf(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale,
+					2 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale);
+			glPopMatrix();
+			glTranslatef(-ROBOT_RADIUS / scale + TEXT_MED / 2,
+				ROBOT_RADIUS / scale - TEXT_MED, 0);
+			glColor3fv(color_black);
+			textSetSize(TEXT_SMALL);
+			textSetAlignment(ALIGN_LEFT);
+			if (robot->type != REMOTE)
+				textPrintf("ID:%02d COM%d", robot->id, robot->port);
+			else
+				textPrintf("ID:%02d Host:%d", robot->id, robot->host);
+			glTranslatef(0, -TEXT_SMALL, 0);
+			textPrintf("Log:%s", (robot->log) ? "Yes" : "No");
+			glTranslatef(0, -TEXT_SMALL, 0);
+			if (robot->aid != -1)
+				textPrintf("AprilTag:%d", robot->aid);
+			else
+				textPrintf("AprilTag:None");
+			glTranslatef(0, -TEXT_SMALL, 0);
+			textPrintf("Subnet:%d", robot->subnet);
+			glTranslatef(0, -TEXT_SMALL, 0);
+			float avg = 0;
+			int i;
+			for (i = 0; i < robot->count; i++) {
+				avg += robot->bps[i] / (float) robot->count;
+			}
+			textPrintf("B/s:%.3f", avg);
 		glPopMatrix();
 	}
 	glPopMatrix();
@@ -711,6 +776,7 @@ void drawAprilTags(GLenum mode)
 	glPushMatrix();
 	glTranslatef(APRILTAG_X, APRILTAG_Y, 0);
 
+	/* Draw the grid */
 	glPushMatrix();
 		if (mode == GL_SELECT)
 			glLoadName(APRILTAG_GRID);
@@ -756,6 +822,7 @@ void drawAprilTags(GLenum mode)
 			}
 		glPopMatrix();
 
+		/* Draw the bounding corners */
 		glColor3fv(color_darkgrey);
 		glPushMatrix();
 			glTranslatef(-xs, ys, 0);
@@ -789,6 +856,7 @@ void drawAprilTags(GLenum mode)
 		glPopMatrix();
 	glPopMatrix();
 
+	/* Find all active aprilTags */
 	for (i = 0; i < maxAprilTag + 1; i++) {
 		mutexLock(&aprilTagData[i].mutex);
 		if (aprilTagData[i].active)
@@ -797,6 +865,7 @@ void drawAprilTags(GLenum mode)
 			mutexUnlock(&aprilTagData[i].mutex);
 	}
 
+	/* Draw each aprilTag */
 	for (i = 0; i < numAprilTags; i++) {
 		glPushMatrix();
 			if (mode == GL_SELECT)
@@ -833,6 +902,7 @@ void drawAprilTags(GLenum mode)
 					glEnd();
 				glPopMatrix();
 			glPopMatrix();
+			/* Draw the ID in the corner */
 			glPushMatrix();
 				glTranslatef(0.6, -0.6, 0);
 				glColor3fv(color_black);
@@ -840,16 +910,17 @@ void drawAprilTags(GLenum mode)
 
 				textPrintf("%d", activeTags[i]->id);
 
+				/* Draw an L to show if it is being logged */
 				if (activeTags[i]->log) {
 					glTranslatef(0, TEXT_SMALL, 0);
 					textPrintf("L");
 				}
 			glPopMatrix();
+			/* Draw coordinate data if activated */
 			if (activeTags[i]->display) {
 				glPushMatrix();
 					glTranslatef(-1.2, -0.6 - TEXT_TINY, 0);
 					glColor3fv(color_black);
-					//glScalef(0.8, 0.8, 0);
 					textSetSize(TEXT_TINY);
 					textPrintf("X:%.2f", activeTags[i]->x);
 					glTranslatef(0, -TEXT_TINY, 0);
@@ -975,7 +1046,7 @@ void drawToolbar(GLenum mode)
 		else
 			glColor3fv(color_black);
 		textSetSize(TEXT_LARGE);
-		textPrintf("RT");
+		textPrintf("RH");
 
 		/* BL Button */
 		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
@@ -1011,7 +1082,7 @@ void drawToolbar(GLenum mode)
 		else
 			glColor3fv(color_black);
 		textSetSize(TEXT_LARGE);
-		textPrintf("ST");
+		textPrintf("SC");
 
 		/* LG Button */
 		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
@@ -1050,7 +1121,26 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
-		glTranslatef(0, -5, 0);
+		/* AL Button */
+		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(INFO_BUTTON);
+
+		glColor3fv(color_white);
+		glRectf(0,
+				0.,
+				textWidth,
+				TEXT_LARGE);
+
+		if (clickMode == DISPLAY)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("IN");
+
+		glTranslatef(0, -4, 0);
 
 		/* OL Button */
 		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
@@ -1100,7 +1190,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("KO");
 
-		glTranslatef(0, -6, 0);
+		glTranslatef(0, -5, 0);
 
 		/* ? Button */
 		glTranslatef(0, -TEXT_LARGE - 0.25, 0);
@@ -1158,7 +1248,7 @@ void drawHelp()
 		glTranslatef(0, -TEXT_MED, 0);
 		textPrintf("     CRT connection to it.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("RT - Make robot a radio host. Click on a robot to make it");
+		textPrintf("RH - Make robot a radio host. Click on a robot to make it");
 		glTranslatef(0, -TEXT_MED, 0);
 		textPrintf("     a radio host.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
@@ -1166,7 +1256,7 @@ void drawHelp()
 		glTranslatef(0, -TEXT_MED, 0);
 		textPrintf("     RCC from connecting to it. Click again to reconnect.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("ST - Connect to a robot via serial. Click on a robot to");
+		textPrintf("SC - Connect to a robot via serial. Click on a robot to");
 		glTranslatef(0, -TEXT_MED, 0);
 		textPrintf("     blacklist it and open a Secure CRT window using serial.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
@@ -1182,13 +1272,15 @@ void drawHelp()
 		glTranslatef(0, -TEXT_MED, 0);
 		textPrintf("     to unlink AprilTag.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("IN - Displays additional robot data. Click on a robot or");
+		glTranslatef(0, -TEXT_MED, 0);
+		textPrintf("     AprilTag to show extra information.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OL - Opens a connection to all local robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OR - Opens a connection to all remote robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("KO - Kills all open Secure CRT windows.");
-		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("?? - Shows this help.");
 	glPopMatrix();
 }
 /**

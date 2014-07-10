@@ -38,12 +38,17 @@ struct commCon
 	int log;									// Log this robots data?
 	HANDLE *hSerial;							// Serial handle if connected
 	HANDLE logH;								// Logfile
-	time_t up;									// Last time we saw the robot
+	unsigned long up;							// Last time we saw the robot
+	unsigned long lup;							// Prev time we saw the robot
 	int type;									// Type of robot
 	int port;									// If local, the COM port
 	int host;									// If remote, the host robot
+	int subnet;									// Radio subnet of robot
+	int display;								// Show extra data?
 	char buffer[NUMBUFFER][BUFFERSIZE + APRILTAG_BUFFERSIZE + 16]; // buffer
+	float bps[NUMBUFFER]; 						// transfer speeds buffer
 	int head;									// Head of buffer
+	int count;									// Items in buffer
 	CRITICAL_SECTION mutex;						// Mutex for this robot
 };
 

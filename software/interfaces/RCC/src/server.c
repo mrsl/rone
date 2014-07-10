@@ -186,7 +186,6 @@ void connectionHandler(void *vargp)
 	int head;						// Last location of robot buffer viewed
 	int up, bl;						// Flag
 	struct Connection *conn;		// Connection information
-	char *bufp;						// Buffer pointer
 	char buffer[BUFFERSIZE];		// General use buffer
 	char inBuffer[BUFFERSIZE];		// Input buffer from client
 	struct socketIO socketio;		// Robust IO buffer for socket

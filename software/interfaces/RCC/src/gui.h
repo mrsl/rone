@@ -92,6 +92,7 @@
 #define ATLINK		3
 #define HOSTBOT		4
 #define LOG			5
+#define DISPLAY		6
 
 #define CONNECT_BUTTON		1001
 #define BLACKLIST_BUTTON	1002
@@ -103,6 +104,7 @@
 #define HOST_BUTTON			1008
 #define LOG_BUTTON			1009
 #define HELP_BUTTON			1010
+#define INFO_BUTTON			1011
 
 #define APRILTAG_GRID		1501
 
