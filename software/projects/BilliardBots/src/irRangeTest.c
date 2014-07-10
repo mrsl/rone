@@ -144,7 +144,7 @@ void behaviorTask(void* parameters) {
 			nbrPtr = nbrList.nbrs[i];
 			nbrBearing = nbrGetBearing(nbrPtr);
 				if (printNow){
-					rprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
+					rprintf("%d, %d, %d,\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
 				}
 		}
 	}
