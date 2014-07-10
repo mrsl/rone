@@ -381,10 +381,13 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (DISPLAY): {
-					if (robots[robotID].display)
+					if (robots[robotID].display) {
 						robots[robotID].display = 0;
-					else
-						robots[robotID].display = 1;
+					} else {
+						if (!robots[robotID].blacklisted
+							|| robots[robotID].type == REMOTE)
+							robots[robotID].display = 1;
+					}
 					break;
 				}
 				default: {
@@ -713,6 +716,9 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 	}
 
 	if (robot->display && (!robot->blacklisted || robot->type == REMOTE)) {
+		int i;
+		float avg = 0;
+
 		glPushMatrix();
 			glTranslatef(-ROBOT_RADIUS / scale / 2,
 				-ROBOT_RADIUS / scale / 3, 0);
@@ -746,10 +752,9 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glTranslatef(0, -TEXT_SMALL, 0);
 			textPrintf("Subnet:%d", robot->subnet);
 			glTranslatef(0, -TEXT_SMALL, 0);
-			float avg = 0;
-			int i;
-			for (i = 0; i < robot->count; i++) {
-				avg += robot->bps[i] / (float) robot->count;
+			if (robot->up + GRACETIME >= clock()) {
+				for (i = 0; i < robot->count; i++)
+					avg += robot->bps[i] / (float) robot->count;
 			}
 			textPrintf("B/s:%.3f", avg);
 		glPopMatrix();
@@ -765,7 +770,7 @@ void drawAprilTags(GLenum mode)
 	GLfloat xi, yi;
 	GLfloat xs, ys;
 
-	if (aprilTagY <= aprilTagX) {
+	if ((aprilTagX / aprilTagY) >= (AT_SCALE_X / AT_SCALE_Y)) {
 		xs = AT_SCALE_X;
 		ys = AT_SCALE_X * (aprilTagY / aprilTagX);
 	} else {

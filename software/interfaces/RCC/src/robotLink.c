@@ -302,6 +302,7 @@ void commCommander(void *vargp)
 		commToNum[info->port] = 0;
 		robots[id].type = UNKNOWN;
 		robots[id].up = 0;
+		robots[id].display = 0;
 		if (robots[id].log) {
 			robots[id].log = 0;
 			CloseHandle(robots[id].logH);
