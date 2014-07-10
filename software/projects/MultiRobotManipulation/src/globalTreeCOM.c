@@ -137,6 +137,7 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 			}
 		}
 	}
+
 }
 
 /*
