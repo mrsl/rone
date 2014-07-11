@@ -137,6 +137,7 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 			}
 		}
 	}
+
 }
 
 /*
@@ -222,11 +223,6 @@ void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, uint16 dis
 	waypointMoveUpdate(); //use waypoint to set tv and rv
 }*/
 
-//TODO
-int GlobalTreeCycloidStartPos(int16 COMX, int16 COMY){
-
-	return 0;
-}
 
 int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 	int Range = 500;

@@ -5,12 +5,12 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1899052064" moduleId="org.eclipse.cdt.core.settings" name="bin_rone_v09">
 				<externalSettings/>
 				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
@@ -43,30 +43,14 @@
 							<builder buildPath="${workspace_loc:/SuperDemo}/Debug" id="ilg.gnuarmeclipse.managedbuild.cross.builder.530796960" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.718342606" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.736906120" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
-								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths.1980451431" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneos}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneLib}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/driverlib}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/driverlib/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneos/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneLib/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/inc}&quot;"/>
-								</option>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input.1364625942" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input"/>
 							</tool>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.163112552" name="Cross ARM C Compiler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths.1314479792" name="Include paths (-I)" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.c.compiler.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneos}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneLib}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/driverlib}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/driverlib/inc}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneos/inc}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/roneLib/inc}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/FreeRTOS/inc}&quot;"/>
 								</option>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input.967288790" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.c.compiler.input"/>
 							</tool>
@@ -113,11 +97,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-<<<<<<< HEAD
-						<entry excluding="src/globalTreeCOM.c|src/globalRobotTree.c|src/objManipDemo.c|src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-=======
-						<entry excluding="src/wallFollow_test.c|src/SingleRobotCycloidMotion.c|src/objManipDemo.c|src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
->>>>>>> 3c12d0a70a8177538ef60cc328c0dc58a5165647
+						<entry excluding="src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/guideMotionTest.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMTransportPath.c|src/MRMTranslateRotate.c|src/MRMRotate.c|src/MRMPathGeneration.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/MRMCOM.c|src/robotList.c|src/objManipDemo.c|src/objectSwarm.c|src/networkSize.c|src/wallFollow_test.c|src/test_TranPos.c|src/test_RV_Gripper.c|src/test_RotObj_Trig_Cons.c|src/test_IRObsRange.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/exp0b.c|src/exp0a.c|src/demo_MassiveManipulate3Controllers.c|src/CentroidEstimateTreeBasedMethod.c|src/Bug0_test.c|src/billiardbots.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -127,12 +107,12 @@
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="ilg.gnuarmeclipse.managedbuild.cross.config.elf.debug.1899052064.483522667" moduleId="org.eclipse.cdt.core.settings" name="bin_rone_v12">
 				<externalSettings/>
 				<extensions>
+					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 					<extension id="org.eclipse.cdt.core.GmakeErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.CWDLocator" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GCCErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GASErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
 					<extension id="org.eclipse.cdt.core.GLDErrorParser" point="org.eclipse.cdt.core.ErrorParser"/>
-					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
@@ -219,11 +199,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-<<<<<<< HEAD
-						<entry excluding="src/globalTreeCOM.c|src/globalRobotTree.c|src/objManipDemo.c|src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
-=======
-						<entry excluding="src/wallFollow_test.c|src/SingleRobotCycloidMotion.c|src/objManipDemo.c|src/test_TranPos.c|src/test_RotObj_Trig_Cons.c|src/test_RotObj.c|src/test_IRObsRange.c|src/test_RV_Gripper.c|src/MRMTranslateRotate.c|src/guideMotionTest.c|src/objectSwarm.c|src/CentroidEstimateTreeBasedMethod.c|src/MRMPathGeneration.c|src/robotList.c|src/networkSize.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMCOM.c|src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/exp0b.c|src/exp0a.c|src/SimpleDemo.c|src/rotatelight.c|src/MRMTransportPath.c|src/MRMRotate.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/demo_MassiveManipulate3Controllers.c|src/Bug0_test.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
->>>>>>> 3c12d0a70a8177538ef60cc328c0dc58a5165647
+						<entry excluding="src/MRMBehaviors.c|src/mrm.c|src/lightsensor_calibration.c|src/guideMotionTest.c|src/nbrDataCoM.c|src/MRMTreeConverge.c|src/MRMTransportPath.c|src/MRMTranslateRotate.c|src/MRMRotate.c|src/MRMPathGeneration.c|src/MRMObstacleAvoidance.c|src/MRMMotionControl.c|src/MRMExperiment.c|src/MRMCycloidMotion.c|src/MRMCoMestimate.c|src/MRMCOM.c|src/robotList.c|src/objManipDemo.c|src/objectSwarm.c|src/networkSize.c|src/wallFollow_test.c|src/test_TranPos.c|src/test_RV_Gripper.c|src/test_RotObj_Trig_Cons.c|src/test_IRObsRange.c|src/SingleRobotCycloidMotion.c|src/SimpleDemo.c|src/rotatelight.c|src/exp0b.c|src/exp0a.c|src/demo_MassiveManipulate3Controllers.c|src/CentroidEstimateTreeBasedMethod.c|src/Bug0_test.c|src/billiardbots.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -231,7 +207,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="MultiRobotManipulation.com.codesourcery.arm_none_eabi.cdt.managedbuild.target.exe.84841817" name="Executable (Sourcery G++ for ARM EABI)"/>
+		<project id="SuperDemo.ilg.gnuarmeclipse.managedbuild.cross.target.elf.656936070" name="Executable" projectType="ilg.gnuarmeclipse.managedbuild.cross.target.elf"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
@@ -241,12 +217,9 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
-		<configuration configurationName="bin_rone_v09"/>
-		<configuration configurationName="bin_rone_v12"/>
 		<configuration configurationName="Debug">
 			<resource resourceType="PROJECT" workspacePath="/SuperDemo"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 </cproject>

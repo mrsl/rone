@@ -8,7 +8,7 @@
 #ifndef ROBOTLIST_H_
 #define ROBOTLIST_H_
 
-#define GLOBAL_ROBOTLIST_MAX_SIZE 				10
+#define GLOBAL_ROBOTLIST_MAX_SIZE 				8
 #define GLOBAL_ROBOTLIST_ROUND_WAIT_TIME		10
 
 typedef struct GlobalRobotListElement {
