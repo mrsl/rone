@@ -755,11 +755,11 @@ __interrupt void USCI0RX_ISR(void) {
 }
 
 /* Handle the Port2 Interrupts */
-//#pragma vector = PORT2_VECTOR
-//__interrupt void port2Interupt(void) {
-////#ifdef RONE_V12_TILETRACK
-////	if (RFID_PORT_IFLG & RFID_INTERUPT_BITS) {
-////		RFIDReaderInterupt();
-////	}
-////#endif
-//}
+#pragma vector = PORT2_VECTOR
+__interrupt void port2Interupt(void) {
+#ifdef RONE_V12_TILETRACK
+	if (RFID_PORT_IFLG & RFID_INTERUPT_BITS) {
+		RFIDReaderInterupt();
+	}
+#endif
+}
