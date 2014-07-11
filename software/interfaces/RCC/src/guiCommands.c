@@ -7,12 +7,20 @@
 
 /* The script template */
 const char scriptTemplate[256] =
-	"#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID\"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\nEnd Sub\r\n";
+	"#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID\"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\n";
+
+const char scriptEnd[16] = "End Sub\r\n";
+
+const char scriptAT[300] = "\tcrt.Screen.WaitForString \"Robot AprilTag\"\r\n\tcrt.Screen.Send ";
+
+const char scriptATSend[203] = "\"%d\" & ";
+
+const char scriptEnter[232] = "Chr(13)\r\n";
 
 /**
  * Opens a secureCRT window and connects to the server to the requested ID
  */
-int openClientConnection(int robotID)
+int openClientConnection(int robotID, int aprilTagID)
 {
 	HANDLE hTempFile = INVALID_HANDLE_VALUE;
 
@@ -45,8 +53,19 @@ int openClientConnection(int robotID)
 	if (hTempFile == INVALID_HANDLE_VALUE)
 		return (-1);
 
+	if (robotID == 0) {
+		hprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
+		hprintf(&hTempFile, scriptAT);
+		if (aprilTagID != -1)
+			hprintf(&hTempFile, scriptATSend, aprilTagID);
+		hprintf(&hTempFile, scriptEnter);
+		hprintf(&hTempFile, scriptEnd);
 	/* Output the script to the temporary file */
-	hprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
+	} else {
+		hprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
+		hprintf(&hTempFile, scriptEnd);
+	}
+
 
 	if (!CloseHandle(hTempFile))
 		return (-1);
@@ -217,7 +236,7 @@ void openLocalConnections()
 		/* If the robot is active */
 		if (robots[i].up != 0 && !robots[i].blacklisted) {
 			if (robots[i].type == LOCAL || robots[i].type == HOST)
-				openClientConnection(i);
+				openClientConnection(i, -1);
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
@@ -232,8 +251,28 @@ void openRemoteConnections()
 		/* If the robot is active */
 		if (robots[i].up != 0) {
 			if (robots[i].type == REMOTE)
-				openClientConnection(i);
+				openClientConnection(i, -1);
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
+}
+
+void showRobotInfo(int robotID)
+{
+	if (robots[robotID].display) {
+		robots[robotID].display = 0;
+	} else {
+		if (!robots[robotID].blacklisted
+			|| robots[robotID].type == REMOTE)
+			robots[robotID].display = 1;
+	}
+}
+
+void showAprilTagInfo(int robotID)
+{
+	robotID -= 2000;
+	if (aprilTagData[robotID].display)
+		aprilTagData[robotID].display = 0;
+	else
+		aprilTagData[robotID].display = 1;
 }

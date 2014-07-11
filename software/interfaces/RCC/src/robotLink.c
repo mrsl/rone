@@ -22,8 +22,11 @@ void initRobots()
 		robots[i].log = 0;
 		robots[i].hSerial = NULL;
 		robots[i].up = 0;
+		robots[i].lup = 0;
 		robots[i].head = 0;
+		robots[i].count = 0;
 		robots[i].type = UNKNOWN;
+		robots[i].subnet = -1;
 		mutexInit(&robots[i].mutex);
 	}
 
@@ -65,10 +68,14 @@ void commManager(void *vargp)
 		if (aprilTagConnected) {
 			for (i = 0; i < MAX_APRILTAG; i++) {
 				mutexLock(&aprilTagData[i].mutex);
+				if (!robots[aprilTagData[i].rid].up)
+					aprilTagData[i].rid = -1;
+
 				if ((aprilTagData[i].up + GRACETIME < clock())
 					&& aprilTagData[i].active) {
 					aprilTagData[i].active = 0;
 					aprilTagData[i].up = 0;
+					aprilTagData[i].rid = -1;
 				}
 				mutexUnlock(&aprilTagData[i].mutex);
 			}
@@ -111,6 +118,7 @@ void commCommander(void *vargp)
 	int id = 0;							// Robot ID
 	int initialized = 0;				// Have we handshaked with the robot?
 	int isHost = 0;						// Is this robot a rprintf host?
+	int subnet = -1;					// What is this robot's subnet?
 	int rid;							// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
@@ -159,7 +167,7 @@ void commCommander(void *vargp)
 			if (strncmp(buffer, "rr", 2) == 0) {
 				bufp = buffer + 3;
 				/* Get the two arguments */
-				for (i = 0; i < 2; i++) {
+				for (i = 0; i < 3; i++) {
 					j = 0;
 					while (*bufp != ',') {
 						if (*bufp == '\r' && *(bufp + 1) == '\n') {
@@ -179,8 +187,10 @@ void commCommander(void *vargp)
 					/* Convert hex number in buffer to usable values */
 					if (i == 0)
 						id = convertASCIIHexWord(rbuffer);
-					else
+					else if (i == 1)
 						isHost = convertASCIIHexWord(rbuffer);
+					else if (j != SBUFSIZE)
+						subnet = convertASCIIHexWord(rbuffer);
 				}
 
 				if (verbose)
@@ -191,12 +201,14 @@ void commCommander(void *vargp)
 				activateRobot(id, info);
 				if (isHost)
 					robots[id].type = HOST;
+				if (subnet != -1)
+					robots[id].subnet = subnet;
 				bufp = buffer;
 			}
 			continue;
 		}
 		/* Insert the read line into robot's buffer. */
-		insertBuffer(id, buffer);
+		insertBuffer(id, buffer, 0);
 
 		/* If we get a status line from a host robot. */
 		if (strncmp(buffer, "rts", 3) == 0) {
@@ -233,6 +245,8 @@ void commCommander(void *vargp)
 				robots[rid].type = REMOTE;
 				robots[rid].up = clock();
 				robots[rid].host = id;
+				if (subnet != -1)
+					robots[rid].subnet = subnet;
 
 				mutexUnlock(&robots[rid].mutex);
 			}
@@ -265,10 +279,12 @@ void commCommander(void *vargp)
 				/* Insert parsed line into remote robot's buffer. */
 				robots[rid].type = REMOTE;
 				robots[rid].host = id;
+				if (subnet != -1)
+					robots[rid].subnet = subnet;
 
 				mutexUnlock(&robots[rid].mutex);
 
-				insertBuffer(rid, bufp + 1);
+				insertBuffer(rid, bufp + 1, strlen(buffer));
 			} else {
 				mutexUnlock(&robots[rid].mutex);
 			}
@@ -290,6 +306,7 @@ void commCommander(void *vargp)
 		commToNum[info->port] = 0;
 		robots[id].type = UNKNOWN;
 		robots[id].up = 0;
+		robots[id].display = 0;
 		if (robots[id].log) {
 			robots[id].log = 0;
 			CloseHandle(robots[id].logH);
@@ -316,6 +333,7 @@ void activateRobot(int robotID, struct commInfo *info)
 
 	robots[robotID].hSerial = info->hSerial;
 	robots[robotID].up = clock();
+	robots[robotID].lup = robots[robotID].up;
 
 	mutexUnlock(&robots[robotID].mutex);
 }
@@ -323,7 +341,7 @@ void activateRobot(int robotID, struct commInfo *info)
 /**
  * Insert a line in a robot's buffer
  */
-void insertBuffer(int robotID, char *buffer)
+void insertBuffer(int robotID, char *buffer, int extraBytes)
 {
 	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
 
@@ -332,26 +350,28 @@ void insertBuffer(int robotID, char *buffer)
 
 	strcpy(lbuffer, buffer);
 
-	if (robots[robotID].aid != -1) {
-		if (appendAprilTagData(lbuffer, strlen(lbuffer),
-			robots[robotID].aid) == -1) {
-			mutexUnlock(&robots[robotID].mutex);
-			return;
-		}
-	}
-
+	robots[robotID].lup = robots[robotID].up;
+	robots[robotID].up = clock();
 	sprintf(robots[robotID].buffer[robots[robotID].head], "%11ld, %s",
-		clock(), lbuffer);
+		robots[robotID].up, lbuffer);
 
 	/* Log data */
 	if (robots[robotID].log) {
-		hprintf(&robots[robotID].logH,
-			robots[robotID].buffer[robots[robotID].head]);
+		mutexUnlock(&robots[robotID].mutex);
+		fetchData(lbuffer, robotID, robots[robotID].head, robots[robotID].aid, -1);
+		mutexLock(&robots[robotID].mutex);
+
+		hprintf(&robots[robotID].logH, lbuffer);
 	}
+
+	robots[robotID].bps[robots[robotID].head] =
+		((float) strlen(buffer) + extraBytes)
+		/ ((float) (robots[robotID].up - robots[robotID].lup) / 1000.);
 
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
-	robots[robotID].up = clock();
+	if (robots[robotID].count < NUMBUFFER)
+		robots[robotID].count++;
 
 	/* Unlock the robot buffer */
 	mutexUnlock(&robots[robotID].mutex);
