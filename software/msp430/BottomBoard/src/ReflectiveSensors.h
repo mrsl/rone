@@ -25,11 +25,11 @@ uint8 reflectiveGetData(int i);
 
 #else
 
-void reflectiveSensorsInit() {}
-void reflectiveSensorPowerEnable() {}
-void reflectiveSensorPowerDisable() {}
-void reflectiveSensorsUpdate() {}
-uint8 reflectiveGetData(int i) {}
+#define reflectiveSensorsInit() {}
+#define reflectiveSensorPowerEnable() {}
+#define reflectiveSensorPowerDisable() {}
+#define reflectiveSensorsUpdate() {}
+#define reflectiveGetData(i) 0
 
 #endif
 

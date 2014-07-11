@@ -40,15 +40,23 @@ void msp430CheckAndUpdate(void) {
 
 		// Pack payload
 #ifdef RONE_V12_TILETRACK
-		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = RFIDReaderGet();
-		for (i = 0; i < MAG_DATA_LENGTH; i++) {
-			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = magGetDataLeft(i);
+//		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = RFIDReaderGet();
+//		for (i = 0; i < MAG_DATA_LENGTH; i++) {
+//			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = magGetDataLeft(i);
+//		}
+//		for (i = 0; i < MAG_DATA_LENGTH; i++) {
+//			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = magGetDataRight(i);
+//		}
+//		for (i = 0; i < NUM_REFLECTIVE_PORTS; i++) {
+//			SPIMessageOut[MSP430_MSG_REFLECT_START_IDX + i] = reflectiveGetData(i);
+
+//		}
+		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = bumpSensorGet();
+		for (i = 0; i < ACCEL_DATA_LENGTH; i++) {
+			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = accelGetData(i);
 		}
-		for (i = 0; i < MAG_DATA_LENGTH; i++) {
-			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = magGetDataRight(i);
-		}
-		for (i = 0; i < NUM_REFLECTIVE_PORTS; i++) {
-			SPIMessageOut[MSP430_MSG_REFLECT_START_IDX + i] = reflectiveGetData(i);
+		for (i = 0; i < GYRO_DATA_LENGTH; i++) {
+			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = gyroGetData(i);
 		}
 #else
 		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = bumpSensorGet();
