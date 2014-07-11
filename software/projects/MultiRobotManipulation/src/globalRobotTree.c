@@ -260,10 +260,10 @@ void behaviorTask(void* parameters) {
 					COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
 					COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
 				}
-
+				rprintf("%d %d\n",COM_X,COM_Y);
 				if(moveState == 0){				//Transport
 					behFlock_gain(&behOutput, &nbrList, TVcmd, FLOCK_RV_GAIN_MOVEOBJ);
-					behOutput.rv  = behOutput.rv + (RVcmd*10);
+					//behOutput.rv  = behOutput.rv + (RVcmd*10);
 				}else if(moveState == 1){		//Rotate
 					behOutput = behInactive;
 					//cprintf("%d , %d\n",COM_X,COM_Y);
@@ -368,7 +368,7 @@ int main(void) {
 	systemInit();
 
 	// init the behavior system and start the behavior thread
-	behaviorSystemInit(behaviorTask, 4096);
+	behaviorSystemInit(behaviorTask, 8192);
 
 	// Start the scheduler
 	osTaskStartScheduler();
