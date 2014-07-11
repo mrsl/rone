@@ -343,20 +343,12 @@ void activateRobot(int robotID, struct commInfo *info)
  */
 void insertBuffer(int robotID, char *buffer, int extraBytes)
 {
-	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16], *bufp;
+	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
 
 	/* Lock the robot buffer */
 	mutexLock(&robots[robotID].mutex);
 
 	strcpy(lbuffer, buffer);
-
-//	if (robots[robotID].aid != -1) {
-//		if (appendAprilTagData(lbuffer, strlen(lbuffer),
-//			robots[robotID].aid) == -1) {
-//			mutexUnlock(&robots[robotID].mutex);
-//			return;
-//		}
-//	}
 
 	robots[robotID].lup = robots[robotID].up;
 	robots[robotID].up = clock();
@@ -365,13 +357,9 @@ void insertBuffer(int robotID, char *buffer, int extraBytes)
 
 	/* Log data */
 	if (robots[robotID].log) {
-		strcpy(lbuffer, robots[robotID].buffer[robots[robotID].head]);
-
-		if (robots[robotID].aid != -1) {
-			bufp = lbuffer + strlen(lbuffer) - 2;
-			strcpy(bufp,
-				aprilTagData[robots[robotID].aid].buffer[aprilTagData[robots[robotID].aid].head]);
-		}
+		mutexUnlock(&robots[robotID].mutex);
+		fetchData(lbuffer, robotID, robots[robotID].head, robots[robotID].aid, -1);
+		mutexLock(&robots[robotID].mutex);
 
 		hprintf(&robots[robotID].logH, lbuffer);
 	}

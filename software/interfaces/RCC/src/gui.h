@@ -20,7 +20,7 @@
 
 #define PICK_DELTA			3.0
 
-#define DROPSHADOW_DIST		0.03
+#define DROPSHADOW_DIST		0.04
 
 #define DRAW_DELAY			16
 #define AT_DRAW_DELAY		32
@@ -73,8 +73,9 @@
 
 /* Resource defines */
 #define COLOR_SIZE			3
-#define NUM_DRAWING_LISTS	1
+#define NUM_DRAWING_LISTS	2
 #define LIST_CIRCLE_FILLED	(drawingListBase + 0)
+#define LIST_SQUARE			(drawingListBase + 1)
 
 #define POINT_SIZE 			10
 #define DISK_SLICES			60
@@ -142,7 +143,7 @@ void mouse(int button, int state, int x, int y);
 void keyboard(unsigned char key, int x, int y);
 void readChar(char character);
 void processHits(GLint hits, GLuint buffer[]);
-int openClientConnection(int robotID);
+int openClientConnection(int robotID, int aprilTagID);
 int directConnect(int robotID);
 void killSecureCRT();
 void aspectHandle(int w, int h);
@@ -171,5 +172,7 @@ void beginLog(int robotID);
 void beginAprilTagLog(int aprilTagID);
 void openLocalConnections();
 void openRemoteConnections();
+void showRobotInfo(int robotID);
+void showAprilTagInfo(int robotID);
 
 #endif

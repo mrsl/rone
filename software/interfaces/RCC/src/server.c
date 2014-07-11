@@ -182,7 +182,6 @@ void connectionHandler(void *vargp)
 	int id;							// Requested robot ID
 	int n;
 	int aid;						// AprilTag ID
-	int linked;						// Is this robot AprilTag linked?
 	int head;						// Last location of robot buffer viewed
 	int up, bl;						// Flag
 	struct Connection *conn;		// Connection information
@@ -271,7 +270,7 @@ void connectionHandler(void *vargp)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
 	aid = robots[id].aid;
-	if (aprilTagConnected && id != 0) {
+	if (aprilTagConnected) {
 		while (aid == -1) {
 			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
 				< 0)
@@ -309,66 +308,92 @@ void connectionHandler(void *vargp)
 		}
 	}
 
-	/* Initialize stuff for select */
-	FD_ZERO(&read_set);
-	FD_SET(conn->fd, &read_set);
-
-	mutexLock(&robots[id].mutex);
-	head = robots[id].head;
-	mutexUnlock(&robots[id].mutex);
-
-	for (;;) {
-		ready_set = read_set;
-
-		/* Check if there is data available from the client. */
-		if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0)
-			break;
-
-		/* Is there is data to be read? */
-		if (FD_ISSET(conn->fd, &ready_set)) {
-			if (socketRead(&socketio, inBuffer, BUFFERSIZE) != 0) {
-				/* Write data out to serial port if the robot is local */
-				mutexLock(&robots[id].mutex);
-				if (robots[id].type == LOCAL || robots[id].type == HOST)
-					hprintf(robots[id].hSerial, inBuffer);
-				mutexUnlock(&robots[id].mutex);
-			} else {
-				break;
-			}
-		}
-		/* Extensively use the mutex to prevent all data-races */
+	/* Connected to a robot / main AprilTag feed */
+	if (id != 0 || (id == 0 && aid == -1)) {
 		mutexLock(&robots[id].mutex);
-		/* If there is new data in the robot buffer */
-		while (head != robots[id].head) {
-			if ((n = sprintf(buffer, "%s", robots[id].buffer[head])) < 0) {
+		head = robots[id].head;
+		mutexUnlock(&robots[id].mutex);
+
+		/* Initialize stuff for select */
+		FD_ZERO(&read_set);
+		FD_SET(conn->fd, &read_set);
+
+		for (;;) {
+			ready_set = read_set;
+
+			/* Check if there is data available from the client. */
+			if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0)
+				break;
+
+			/* Is there is data to be read? */
+			if (FD_ISSET(conn->fd, &ready_set)) {
+				if (socketRead(&socketio, inBuffer, BUFFERSIZE) != 0) {
+					/* Write data out to serial port if the robot is local */
+					mutexLock(&robots[id].mutex);
+					if (robots[id].type == LOCAL || robots[id].type == HOST)
+						hprintf(robots[id].hSerial, inBuffer);
+					mutexUnlock(&robots[id].mutex);
+				} else {
+					break;
+				}
+			}
+			/* Extensively use the mutex to prevent all data-races */
+			mutexLock(&robots[id].mutex);
+			/* If there is new data in the robot buffer */
+			while (head != robots[id].head) {
+				mutexUnlock(&robots[id].mutex);
+
+				fetchData(buffer, id, head, aid, -1);
+
+				if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
+					break;
+
+				head = (head + 1) % NUMBUFFER;
+				mutexLock(&robots[id].mutex);
+			}
+
+			/* If true, connection is broken so exit out. */
+			if (n < 0)
+				break;
+
+			/* Check if the robot is disconnected. */
+			if ((robots[id].blacklisted
+				&& !(robots[id].type == REMOTE))
+				|| !robots[id].up) {
+				socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
 				mutexUnlock(&robots[id].mutex);
 				break;
 			}
 			mutexUnlock(&robots[id].mutex);
+		}
+	/* Connected to an AprilTag */
+	} else {
+		int rid;
 
-			/* Append AprilTag data to end of message if available */
-			if (aid != -1)
-				appendAprilTagData(buffer, n, aid);
+		mutexLock(&aprilTagData[aid].mutex);
+		head = aprilTagData[aid].head;
+		mutexUnlock(&aprilTagData[aid].mutex);
 
-			if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
+		for (;;) {
+			mutexLock(&aprilTagData[aid].mutex);
+			/* If there is new data in the robot buffer */
+			while (head != aprilTagData[aid].head) {
+				rid = aprilTagData[aid].rid;
+				mutexUnlock(&aprilTagData[aid].mutex);
+				fetchData(buffer, rid, -1, aid, -1);
+
+				if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
+					break;
+
+				head = (head + 1) % NUMBUFFER_APRILTAG;
+				mutexLock(&aprilTagData[aid].mutex);
+			}
+			mutexUnlock(&aprilTagData[aid].mutex);
+
+			/* If true, connection is broken so exit out. */
+			if (n < 0)
 				break;
-
-			head = (head + 1) % NUMBUFFER;
-			mutexLock(&robots[id].mutex);
 		}
-		/* If true, connection is broken so exit out. */
-		if (n < 0)
-			break;
-
-		/* Check if the robot is disconnected. */
-		if ((robots[id].blacklisted
-			&& !(robots[id].type == REMOTE))
-			|| !robots[id].up) {
-			socketWrite(conn->fd, "Robot ID disconnected!\r\n", 24);
-			mutexUnlock(&robots[id].mutex);
-			break;
-		}
-		mutexUnlock(&robots[id].mutex);
 	}
 
 	if (verbose)
@@ -377,8 +402,8 @@ void connectionHandler(void *vargp)
 	/* Clean up. */
 	Close(conn->fd);
 	Free(conn);
-}
 
+}
 
 void initAprilTag()
 {
@@ -426,7 +451,7 @@ int connectAprilTag()
 
 void aprilTagHandler(void *vargp)
 {
-	int i, id, rid, n;
+	int i, id, rid, n, oldhead;
 	int tid;						// Thread ID
 	struct Connection *conn;		// Connection information
 	struct socketIO socketio;		// Robust IO buffer for socket
@@ -505,25 +530,23 @@ void aprilTagHandler(void *vargp)
 						aprilTagY = y / 2. + 25;
 				}
 
+				aprilTagData[id].up = clock();
+
+				oldhead = aprilTagData[id].head;
+				aprilTagData[id].head = (aprilTagData[id].head + 1)
+					% NUMBUFFER_APRILTAG;
+
 				if (aprilTagData[id].log) {
 					if ((rid = aprilTagData[id].rid) != -1) {
-						int head = ((robots[rid].head - 1) % NUMBUFFER + NUMBUFFER) % NUMBUFFER;
-						strcpy(lbuffer, robots[rid].buffer[head]);
-						bufp = lbuffer + strlen(lbuffer) - 2;
-						strcpy(bufp,
-							aprilTagData[id].buffer[aprilTagData[id].head]);
-
+						mutexUnlock(&aprilTagData[id].mutex);
+						fetchData(lbuffer, rid, -1, id, -1);
+						mutexLock(&aprilTagData[id].mutex);
 						hprintf(&aprilTagData[id].logH, lbuffer);
 					} else {
 						hprintf(&aprilTagData[id].logH, "%11d, %s", clock(),
-							aprilTagData[id].buffer[aprilTagData[id].head]);
+							aprilTagData[id].buffer[oldhead]);
 					}
 				}
-
-				aprilTagData[id].up = clock();
-
-				aprilTagData[id].head = (aprilTagData[id].head + 1)
-					% NUMBUFFER_APRILTAG;
 				mutexUnlock(&aprilTagData[id].mutex);
 			} else {
 				break;
@@ -552,24 +575,49 @@ void aprilTagHandler(void *vargp)
 }
 
 /**
- * Inserts AprilTag data at the end of a CRLF-ended buffer
+ * Creates a combination of robot and AprilTag data
  */
-int appendAprilTagData(char *buffer, int n, int aid)
+int fetchData(char *buffer, int rid, int rhead, int aid, int ahead)
 {
+	int n = 2;
 	char *bufp;
-	bufp = buffer + n - 2;
-	mutexLock(&aprilTagData[aid].mutex);
-	if ((n = sprintf(bufp, ", %s",
-		aprilTagData[aid].buffer[aprilTagData[aid].head])) < 0) {
-		mutexUnlock(&aprilTagData[aid].mutex);
-		return (-1);
-	}
-	mutexUnlock(&aprilTagData[aid].mutex);
 
-	/* If there was no data, rewrite the CRLF */
-	if (n == 2) {
-		if (sprintf(bufp, "\r\n") < 0)
+	if (rid != -1) {
+		mutexLock(&robots[rid].mutex);
+		if (rhead == -1) {
+			rhead = ((robots[rid].head - 1) % NUMBUFFER
+					+ NUMBUFFER) % NUMBUFFER;
+		}
+
+		n = sprintf(buffer, "%s", robots[rid].buffer[rhead]);
+		mutexUnlock(&robots[rid].mutex);
+
+		if (n < 0)
 			return (-1);
+	}
+
+	if (aid != -1) {
+		bufp = buffer + n - 2;
+
+		mutexLock(&aprilTagData[aid].mutex);
+		if (ahead == -1) {
+			ahead = ((aprilTagData[aid].head - 1) % NUMBUFFER_APRILTAG
+					+ NUMBUFFER_APRILTAG) % NUMBUFFER_APRILTAG;
+		}
+
+		if (rid != -1)
+			n = sprintf(bufp, ", %s", aprilTagData[aid].buffer[ahead]);
+		else
+			n = sprintf(bufp, "%s", aprilTagData[aid].buffer[ahead]);
+		mutexUnlock(&aprilTagData[aid].mutex);
+
+		if (n < 0) {
+			return (-1);
+		/* If there was no data, rewrite the CRLF */
+		} else if (n == 2) {
+			if (sprintf(bufp, "\r\n") < 0)
+				return (-1);
+		}
 	}
 
 	return (0);

@@ -253,7 +253,7 @@ void processHits(GLint hits, GLuint buffer[])
 		/* Textbox */
 		case (TEXTBOX_ID): {
 			if (aprilTagConnected)
-				openClientConnection(0);
+				openClientConnection(0, -1);
 			else
 				aprilTagURL.isActive = 1;
 			continue;
@@ -321,7 +321,7 @@ void processHits(GLint hits, GLuint buffer[])
 			case (1): {
 				if (!robots[robotID].blacklisted
 					|| robots[robotID].type == REMOTE)
-					openClientConnection(robotID);
+					openClientConnection(robotID, -1);
 				break;
 			}
 			/* Ctrl-Click to blacklist robots */
@@ -339,6 +339,11 @@ void processHits(GLint hits, GLuint buffer[])
 				hostRobot(robotID);
 				break;
 			}
+			/* Shift-Alt-Click to show info */
+			case (5): {
+				showRobotInfo(robotID);
+				break;
+			}
 			/* Ctrl-Alt-Click to open a direct connection to secureCRT */
 			case (6): {
 				commConnect(robotID);
@@ -352,7 +357,7 @@ void processHits(GLint hits, GLuint buffer[])
 				case (CONNECT): {
 					if (!robots[robotID].blacklisted
 						|| robots[robotID].type == REMOTE)
-						openClientConnection(robotID);
+						openClientConnection(robotID, -1);
 					break;
 				}
 				case (HOSTBOT): {
@@ -383,13 +388,7 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (DISPLAY): {
-					if (robots[robotID].display) {
-						robots[robotID].display = 0;
-					} else {
-						if (!robots[robotID].blacklisted
-							|| robots[robotID].type == REMOTE)
-							robots[robotID].display = 1;
-					}
+					showRobotInfo(robotID);
 					break;
 				}
 				default: {
@@ -411,10 +410,18 @@ void processHits(GLint hits, GLuint buffer[])
 				beginAprilTagLog(robotID - 2000);
 				break;
 			}
+			/* Shift-Alt-Click to show info */
+			case (5): {
+				showAprilTagInfo(robotID);
+				break;
+			}
 			case (0):
 			default: {
 				switch (clickMode)
 				{
+				case (CONNECT): {
+					openClientConnection(0, robotID - 2000);
+				}
 				case (ATLINK): {
 					if (prevClick > 0 && prevClick < MAXROBOTID) {
 						if (robots[prevClick].up) {
@@ -429,10 +436,7 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (DISPLAY): {
-					if (aprilTagData[robotID - 2000].display)
-						aprilTagData[robotID - 2000].display = 0;
-					else
-						aprilTagData[robotID - 2000].display = 1;
+					showAprilTagInfo(robotID);
 					break;
 				}
 				default: {
@@ -685,12 +689,12 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 				glColor3fv(color_red);
 			glRotatef(45, 0, 0, 1);
 			glBegin(GL_LINES);
-				glVertex2f(-ROBOT_RADIUS / scale - DROPSHADOW_DIST, 0);
-				glVertex2f(ROBOT_RADIUS / scale + DROPSHADOW_DIST, 0);
+				glVertex2f(-ROBOT_RADIUS / scale + DROPSHADOW_DIST, 0);
+				glVertex2f(ROBOT_RADIUS / scale - DROPSHADOW_DIST, 0);
 			glEnd();
 			glBegin(GL_LINES);
-				glVertex2f(0, -ROBOT_RADIUS / scale - DROPSHADOW_DIST);
-				glVertex2f(0, ROBOT_RADIUS / scale + DROPSHADOW_DIST);
+				glVertex2f(0, -ROBOT_RADIUS / scale + DROPSHADOW_DIST);
+				glVertex2f(0, ROBOT_RADIUS / scale - DROPSHADOW_DIST);
 			glEnd();
 		glPopMatrix();
 	}
@@ -701,19 +705,19 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glTranslatef(ROBOT_RADIUS / scale - 1, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
 				glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
-				glScalef(0.6, 0.6, 0);
+				glScalef(0.606, 0.6, 0);
 				glColor3fv(color_darkgrey);
-				glRectf(-1, -1, 1.1, 1);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glPushMatrix();
-				glScalef(0.6, 0.6, 0);
+				glScalef(0.606, 0.6, 0);
 				glColor3fv(color_white);
-				glRectf(-1, -1, 1.1, 1);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glPushMatrix();
 				glScalef(0.55, 0.55, 0);
 				glColor3fv(color_black);
-				glRectf(-1, -1, 1, 1);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glTranslatef(0, -0.3, 0);
 			glColor3fv(color_white);
@@ -728,19 +732,19 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glTranslatef(-ROBOT_RADIUS / scale + 1, -ROBOT_RADIUS / scale, 0);
 			glPushMatrix();
 				glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
-				glScalef(0.6, 0.6, 0);
+				glScalef(0.606, 0.6, 0);
 				glColor3fv(color_darkgrey);
-				glRectf(-1, -1, 1.1, 1);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glPushMatrix();
-				glScalef(0.6, 0.6, 0);
+				glScalef(0.606, 0.6, 0);
 				glColor3fv(color_black);
-				glRectf(-1, -1, 1.1, 1);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glPushMatrix();
 				glScalef(0.55, 0.55, 0);
 				glColor3fv(color_white);
-				glRectf(-1, -1, 1, 1);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glTranslatef(0, -0.3, 0);
 			glColor3fv(color_black);
@@ -754,26 +758,25 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 		float avg = 0;
 
 		glPushMatrix();
-			glTranslatef(-ROBOT_RADIUS / scale / 1.8,
-				-ROBOT_RADIUS / scale / 3, 0);
+			glTranslatef(0, -ROBOT_RADIUS / scale / 3, 0);
 			glPushMatrix();
 				glTranslatef(0.05, -0.05, 0);
 				glColor3fv(color_darkgrey);
-				glRectf(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale,
-					1.8 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale);
+				glScalef(1.4 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale, 0);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glPushMatrix();
 				glColor3fv(color_black);
-				glRectf(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale,
-					1.8 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale);
+				glScalef(1.4 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale, 0);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glPushMatrix();
-				glScalef(0.95, 0.95, 0);
 				glColor3fv(color_white);
-				glRectf(-ROBOT_RADIUS / scale, -ROBOT_RADIUS / scale,
-					1.8 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale);
+				glScalef(1.4 * ROBOT_RADIUS / scale, ROBOT_RADIUS / scale, 0);
+				glScalef(0.95, 0.95, 0);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
-			glTranslatef(-ROBOT_RADIUS / scale + TEXT_MED / 2,
+			glTranslatef(-1.6 * ROBOT_RADIUS / scale + TEXT_MED,
 				ROBOT_RADIUS / scale - TEXT_MED, 0);
 			glColor3fv(color_black);
 			textSetSize(TEXT_SMALL);
@@ -932,7 +935,8 @@ void drawAprilTags(GLenum mode)
 				glRotatef(-90, 0, 0, 1);
 				glScalef(0.45, 0.45, 0);
 				glColor3fv(color_darkgrey);
-				glRectf(-1, -1, 1, 1);
+				glCallList(LIST_SQUARE);
+				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glPushMatrix();
 				glRotatef(activeTags[i]->t, 0, 0, 1);
@@ -940,8 +944,8 @@ void drawAprilTags(GLenum mode)
 				glPushMatrix();
 					glColor3fv(color_black);
 					glScalef(0.45, 0.45, 0);
-					glRectf(-1, -1, 1, 1);
-					glRectf(-1, -1, 1, 1);
+					glCallList(LIST_SQUARE);
+					glCallList(LIST_SQUARE);
 				glPopMatrix();
 				glPushMatrix();
 					glColor3fv(color_white);

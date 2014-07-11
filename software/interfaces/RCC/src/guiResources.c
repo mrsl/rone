@@ -45,7 +45,6 @@ void drawInit()
 
 	drawingListBase = glGenLists(NUM_DRAWING_LISTS);
 
-	/* Draw twice to smooth some jagged edges */
 	glNewList(LIST_CIRCLE_FILLED, GL_COMPILE);
 		gluQuadricDrawStyle(qobj, GLU_FILL);
 		gluDisk(qobj, 0.0, 1.0, DISK_SLICES, DISK_LOOPS);
@@ -53,6 +52,15 @@ void drawInit()
 		gluQuadricDrawStyle(qobj, GLU_SILHOUETTE);
 		gluDisk(qobj, 0.0, 1.0, DISK_SLICES, DISK_LOOPS);
 		gluDisk(qobj, 0.0, 1.0, DISK_SLICES, DISK_LOOPS);
+	glEndList();
+
+	glNewList(LIST_SQUARE, GL_COMPILE);
+		gluQuadricDrawStyle(qobj, GLU_FILL);
+		glRectf(-1, -1, 1, 1);
+		glRectf(-1, -1, 1, 1);
+		gluQuadricDrawStyle(qobj, GLU_SILHOUETTE);
+		glRectf(-1, -1, 1, 1);
+		glRectf(-1, -1, 1, 1);
 	glEndList();
 
 	gluDeleteQuadric(qobj);
