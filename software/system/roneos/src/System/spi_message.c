@@ -628,4 +628,3 @@ uint8 msp430SystemGetCommandMessage(void){
 	return 0;
 }
 #endif
-
