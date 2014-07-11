@@ -372,7 +372,8 @@ void serialCmdRIFunc(char* command) {
 
 
 void serialCmdRRFunc(char* command) {
-	cprintf("rr %04X,%04X\n", roneID, rprintfIsHost());
+	cprintf("rr %04X,%04X,%04X\n", roneID, rprintfIsHost(),
+		radioCommandGetLocalSubnet());
 }
 
 

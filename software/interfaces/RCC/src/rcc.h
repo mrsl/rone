@@ -6,16 +6,22 @@
 #ifndef RCC_H_
 #define RCC_H_
 
+#define _WIN32_WINNT 	0x0501
+
 /* Standard includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
 /* Windows includes */
-#include <winsock.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <process.h>
+#include <psapi.h>
 
-/* Open GL */
+/* OpenGL */
 #include "GL/freeglut.h"
 
 /* File includes */
@@ -26,7 +32,11 @@
 #include "robotLink.h"
 #include "gui.h"
 
-extern int port;
-extern int verbose;
+extern int port;					// Port we are listening on
+extern int verbose;					// Verbose output?
+extern GLfloat aprilTagX;			// AprilTag window parameters
+extern GLfloat aprilTagY;
+extern char logDir[MAX_PATH];		// Logfile directory
+extern char defaultATServerIP[15];	// Default AprilTag server IP
 
 #endif

@@ -32,7 +32,8 @@ int autoselect;
 
 textbox textboxes[NUM_TEXTBOXES];
 
-void inputInit() {
+void inputInit()
+{
 	currentLED = -1;
 	motorLeft = 0;
 	motorRight = 0;
@@ -46,7 +47,8 @@ void inputInit() {
 	int i = 0;
 	for (i = 0; i < NUM_TEXTBOXES; i++) {
 		textboxes[i].index = 0;
-		switch (i) {
+		switch (i)
+		{
 		case TEXTBOX_COM_PORT: {
 			textboxes[i].length = LEN_TXT_COM_PORT;
 			// Hack to let COM number be shown
@@ -68,14 +70,16 @@ void inputInit() {
 }
 
 /* Scroll to the next text box. */
-void textboxScroll() {
+void textboxScroll()
+{
 	if (currentTextbox >= 0) {
 		currentTextbox = (currentTextbox + 1) % NUM_TEXTBOXES;
 	}
 }
 
 /* Clears the current text box and returns its message. */
-void textboxReturn() {
+void textboxReturn()
+{
 	char inputText[MAX_TEXTBOX_LENGTH];
 
 	textbox *txt = &textboxes[currentTextbox];
@@ -85,10 +89,8 @@ void textboxReturn() {
 	memset(inputText, 0, MAX_TEXTBOX_LENGTH);
 	strcpy(inputText, txt->message);
 
-
-
-
-	switch (currentTextbox) {
+	switch (currentTextbox)
+	{
 	case TEXTBOX_COM_PORT: {
 
 		/* General bookkeeping. Moved from outside the cases and duplicated to
@@ -115,35 +117,36 @@ void textboxReturn() {
 		 */
 		cprintf("rcr %s\r", inputText);
 
-
 //char outMsg[MAX_TEXTBOX_LENGTH + 6] = {0};
 //sprintf(outMsg, "rcr %s\r\n", inputText);
 //writeToOUTFile(outMsg, MAX_TEXTBOX_LENGTH + 6);
-
 
 //		pthread_mutex_unlock(&serialPortMutex);
 		break;
 	}
 	default: {
 		break;
-	}}
+	}
+	}
 
 }
 
 /* Read a character as it is input into a text box */
-void readChar(char character) {
+void readChar(char character)
+{
 	if (currentTextbox < 0) {
 		return;
 	}
 	textbox* txt = &textboxes[currentTextbox];
 
-	switch (character) {
+	switch (character)
+	{
 	case '\r':
 	case '\n': {
 		textboxReturn();
 		break;
 	}
-	/* Backspace handler */
+		/* Backspace handler */
 	case '\b': {
 		if (txt->index > 0) {
 			strdel(txt->message, --txt->index);
@@ -154,28 +157,31 @@ void readChar(char character) {
 		textboxScroll();
 		break;
 	}
-	/* Delete handler */
+		/* Delete handler */
 	case 127: {
 		strdel(txt->message, txt->index);
 		break;
 	}
-	/* Default: insert the character */
+		/* Default: insert the character */
 	default: {
 		if (strlen(txt->message) < txt->length) {
 			strins(txt->message, character, txt->index++);
 		}
 		break;
-	}}
+	}
+	}
 }
 
 /* Read a GLUT special character as it is input into a text box */
-void readSpecialChar(char character) {
+void readSpecialChar(char character)
+{
 	if (currentTextbox < 0) {
 		return;
 	}
 	textbox* txt = &textboxes[currentTextbox];
 
-	switch (character) {
+	switch (character)
+	{
 	case GLUT_KEY_LEFT:
 		if (txt->index > 0) {
 			txt->index--;
@@ -190,7 +196,8 @@ void readSpecialChar(char character) {
 }
 
 /* Handle LED button presses */
-void LEDButtonHandler(int index) {
+void LEDButtonHandler(int index)
+{
 	/* If user clicks the LED that is currently on, turn it off. */
 
 	/*
@@ -215,7 +222,8 @@ void LEDButtonHandler(int index) {
 		currentLED = -1;
 		return;
 	}
-	switch(index) {
+	switch (index)
+	{
 	case BUTTON_LED_RED: {
 		cprintf("rcl 00,03,0A,08\r");
 		currentLED = BUTTON_LED_RED;
@@ -248,11 +256,13 @@ void LEDButtonHandler(int index) {
 }
 
 /* Handle PWM control button presses */
-void motorButtonHandler(int hitType, int index) {
+void motorButtonHandler(int hitType, int index)
+{
 	/* Assign the motor to change the value of. */
 	int *motorPtr;
 	motorPtr = (hitType == NAME_MOTOR_LEFT) ? &motorLeft : &motorRight;
-	switch (index) {
+	switch (index)
+	{
 	case MOTOR_ADD10: {
 		*motorPtr += 10;
 		break;
@@ -275,7 +285,8 @@ void motorButtonHandler(int hitType, int index) {
 	}
 	default: {
 		break;
-	}}
+	}
+	}
 
 	if (velOrPwm == PWM) {
 		*motorPtr = clamp(*motorPtr, -MAX_PWM, MAX_PWM);
@@ -290,7 +301,8 @@ void motorButtonHandler(int hitType, int index) {
 /* TODO: COMBINE THESE!!! */
 
 /* Handle motor button presses if the motors are synced. */
-void motorButtonSyncedHandler(int index) {
+void motorButtonSyncedHandler(int index)
+{
 
 	/*
 	 * TODO: Make it depend on
@@ -299,7 +311,8 @@ void motorButtonSyncedHandler(int index) {
 	/*
 	 * Increase or decrease the motor values.
 	 */
-	switch (index) {
+	switch (index)
+	{
 	case MOTOR_ADD10: {
 		motorLeft += 10;
 		motorRight += 10;
@@ -327,7 +340,8 @@ void motorButtonSyncedHandler(int index) {
 	}
 	default: {
 		break;
-	}}
+	}
+	}
 
 	/* Clamp the motor values based on if PWM or VEL */
 	if (velOrPwm == PWM) {
@@ -346,7 +360,8 @@ void motorButtonSyncedHandler(int index) {
 }
 
 /* Handle the pushing of the motorsSynced toggle. */
-void motorSyncHandler() {
+void motorSyncHandler()
+{
 	motorsSynced = !motorsSynced;
 	if (motorsSynced) {
 		motorRight = motorLeft;
@@ -354,12 +369,14 @@ void motorSyncHandler() {
 }
 
 /* Handle the pushing of the velOrPwm button. */
-void velOrPwmHandler() {
+void velOrPwmHandler()
+{
 
 }
 
 /* Handle the smoothing button */
-void smoothingButtonHandler() {
+void smoothingButtonHandler()
+{
 	if (smoothing == 1)
 		smoothing = 0;
 	else
@@ -367,7 +384,8 @@ void smoothingButtonHandler() {
 }
 
 /* Handle the select button */
-void selectButtonHandler() {
+void selectButtonHandler()
+{
 	if (autoselect == 1)
 		autoselect = 0;
 	else
@@ -428,8 +446,7 @@ void processHits(GLint hits, GLuint buffer[])
 //	printf("hits = %d\r\n", hits);
 
 	/* If there are no hits, set no textbox as active. */
-	if (hits == 0)
-	{
+	if (hits == 0) {
 		currentTextbox = -1;
 		return;
 	}
@@ -443,7 +460,7 @@ void processHits(GLint hits, GLuint buffer[])
 		if (names == 0)
 			continue;
 
-		for (j = 0; j < names; j++)	{
+		for (j = 0; j < names; j++) {
 			if (j == 0) {
 				hitType = *ptr;
 			} else if (j == 1) {
@@ -452,7 +469,8 @@ void processHits(GLint hits, GLuint buffer[])
 			ptr++;
 		}
 		/* Delegate type of hit. */
-		switch (hitType) {
+		switch (hitType)
+		{
 		case NAME_TEXTBOX: {
 			currentTextbox = hitIndex;
 			break;

@@ -5,9 +5,12 @@
  */
 #include "rcc.h"
 
-const GLfloat color_red[COLOR_SIZE] = {1.0, 0.0, 0.0};
-const GLfloat color_black[COLOR_SIZE] = {0.0, 0.0, 0.0};
-const GLfloat color_white[COLOR_SIZE] = {1.0, 1.0, 1.0};
+const GLfloat color_red[COLOR_SIZE] = { 0.9, 0.0, 0.0 };
+const GLfloat color_lightred[COLOR_SIZE] = { 0.9, 0.5, 0.5 };
+const GLfloat color_black[COLOR_SIZE] = { 0.1, 0.1, 0.1 };
+const GLfloat color_grey[COLOR_SIZE] = { 0.9, 0.9, 0.9 };
+const GLfloat color_darkgrey[COLOR_SIZE] = { 0.5, 0.5, 0.5 };
+const GLfloat color_white[COLOR_SIZE] = { 0.98, 0.98, 0.98 };
 
 GLint drawingListBase;
 
@@ -21,8 +24,7 @@ static GLfloat textWidth = TEXT_MED, textHeight = TEXT_MED;
 /**
  * Initialize drawing object list
  */
-void
-drawInit()
+void drawInit()
 {
 	glPointSize(POINT_SIZE);
 	glLineWidth(LINE_WIDTH);
@@ -46,8 +48,23 @@ drawInit()
 	glNewList(LIST_CIRCLE_FILLED, GL_COMPILE);
 		gluQuadricDrawStyle(qobj, GLU_FILL);
 		gluDisk(qobj, 0.0, 1.0, DISK_SLICES, DISK_LOOPS);
+		gluDisk(qobj, 0.0, 1.0, DISK_SLICES, DISK_LOOPS);
 		gluQuadricDrawStyle(qobj, GLU_SILHOUETTE);
 		gluDisk(qobj, 0.0, 1.0, DISK_SLICES, DISK_LOOPS);
+		gluDisk(qobj, 0.0, 1.0, DISK_SLICES, DISK_LOOPS);
+	glEndList();
+
+	glNewList(LIST_SQUARE, GL_COMPILE);
+		gluQuadricDrawStyle(qobj, GLU_FILL);
+		glRectf(-1, -1, 1, 1);
+		gluQuadricDrawStyle(qobj, GLU_SILHOUETTE);
+		glRectf(-1, -1, 1, 1);
+		glBegin(GL_LINE_LOOP);
+			glVertex2f(-1, -1);
+			glVertex2f(1, -1);
+			glVertex2f(1, 1);
+			glVertex2f(-1, 1);
+		glEnd();
 	glEndList();
 
 	gluDeleteQuadric(qobj);
@@ -56,27 +73,26 @@ drawInit()
 /**
  * Initialize the text for rendering on the GUI
  */
-GLvoid
-textInit(GLvoid)
+GLvoid textInit(GLvoid)
 {
 	HDC hdc = wglGetCurrentDC();
 	HFONT font;
 
 	/* Create our font */
 	font = CreateFont(-12,
-			0,
-			0,
-			0,
-			FW_ULTRALIGHT,
-			FALSE,
-			FALSE,
-			FALSE,
-			ANSI_CHARSET,
-			OUT_TT_PRECIS,
-			CLIP_DEFAULT_PRECIS,
-			ANTIALIASED_QUALITY,
-			FF_DONTCARE|DEFAULT_PITCH,
-			"Lucida Console");
+					  0,
+					  0,
+					  0,
+					  FW_ULTRALIGHT,
+					  FALSE,
+					  FALSE,
+					  FALSE,
+					  ANSI_CHARSET,
+					  OUT_TT_PRECIS,
+					  CLIP_DEFAULT_PRECIS,
+					  ANTIALIASED_QUALITY,
+					  FF_DONTCARE | DEFAULT_PITCH,
+					  "Lucida Console");
 
 	SelectObject(hdc, font);
 
@@ -85,21 +101,21 @@ textInit(GLvoid)
 
 	/* Create the font and font outline (for antialias) */
 	wglUseFontOutlines(hdc,
-			0,
-			255,
-			base,
-			0.0,
-			0.0,
-			WGL_FONT_POLYGONS,
-			gmf);
+					   0,
+					   255,
+					   base,
+					   0.0,
+					   0.0,
+					   WGL_FONT_POLYGONS,
+					   gmf);
 	wglUseFontOutlines(hdc,
-			0,
-			255,
-			baseOut,
-			0.0,
-			0.0,
-			WGL_FONT_LINES,
-			gmfOut);
+					   0,
+					   255,
+					   baseOut,
+					   0.0,
+					   0.0,
+					   WGL_FONT_LINES,
+					   gmfOut);
 
 	DeleteObject(font);
 }
@@ -107,41 +123,41 @@ textInit(GLvoid)
 /**
  * Output text onto the GUI
  */
-GLvoid
-textPrintf(const char *fmt, ...)
+GLfloat textPrintf(const char *fmt, ...)
 {
 	unsigned int i;
 	GLfloat length = 0;
-	char text[256] = {0};
+	char text[256] = { 0 };
 	va_list ap;
 
 	if (fmt == NULL)
-		return;
+		return (-1);
 
 	va_start(ap, fmt);
 		vsprintf(text, fmt, ap);
 	va_end(ap);
 
 	for (i = 0; i < strlen(text); i++)
-		length += gmf[(int)text[i]].gmfCellIncX;
+		length += gmf[(int) text[i]].gmfCellIncX;
 
 	glPushMatrix();
 		glScalef(textWidth, textHeight, 0);
 
 		/* Translate for alignment */
-		switch (alignment) {
-			case ALIGN_RIGHT: {
-				glTranslatef(-length, 0.0, 0.0);
-				break;
-			}
-			case ALIGN_CENTER: {
-				glTranslatef(-length/2, 0.0, 0.0);
-				break;
-			}
-			case ALIGN_LEFT:
-			default: {
-				break;
-			}
+		switch (alignment)
+		{
+		case ALIGN_RIGHT: {
+			glTranslatef(-length, 0.0, 0.0);
+			break;
+		}
+		case ALIGN_CENTER: {
+			glTranslatef(-length / 2, 0.0, 0.0);
+			break;
+		}
+		case ALIGN_LEFT:
+		default: {
+			break;
+		}
 		}
 
 		glPushAttrib(GL_LIST_BIT);
@@ -162,13 +178,14 @@ textPrintf(const char *fmt, ...)
 
 		glPopAttrib();
 	glPopMatrix();
+
+	return (length);
 }
 
 /**
  * Set current alignment of the text
  */
-void
-textSetAlignment(int ta)
+void textSetAlignment(int ta)
 {
 	alignment = ta;
 }
@@ -176,8 +193,7 @@ textSetAlignment(int ta)
 /**
  * Set the current size of the text
  */
-void
-textSetSize(GLfloat size)
+void textSetSize(GLfloat size)
 {
 	textWidth = size;
 	textHeight = size;

@@ -24,19 +24,20 @@ float clamp(float num, float min, float max)
 }
 
 /*
- * Insert character into the string at the position. There should be room in the string.
+ * Insert character into the string at the position.
+ * There should be room in the string.
  */
 void strins(char* str, char c, int index)
 {
 	int i, temp1, temp2;
 	temp1 = str[index];
-	for (i = index+1; str[i] != '\0'; i++) {
+	for (i = index + 1; str[i] != '\0'; i++) {
 		temp2 = str[i];
 		str[i] = temp1;
 		temp1 = temp2;
 	}
 	str[i] = temp1;
-	str[i+1] = '\0';
+	str[i + 1] = '\0';
 	str[index] = c;
 }
 
@@ -46,24 +47,28 @@ void strins(char* str, char c, int index)
 void strdel(char* str, int index)
 {
 	int i;
-	for (i = index; str[i] != '\0'; i++)
-	{
-		str[i] = str[i+1];
+	for (i = index; str[i] != '\0'; i++) {
+		str[i] = str[i + 1];
 	}
 }
 
 /*
- * First order infinite input response filter with specified alpha, 0 < alpha < 1.
+ * First order infinite input response filter with specified alpha,
+ * 0 < alpha < 1.
  */
-void differential(int newData, int *oldDataPtr, float alpha) {
-	*oldDataPtr = (int)((float)newData * alpha + (float)*oldDataPtr * (1 - alpha));
+void differential(int newData, int *oldDataPtr, float alpha)
+{
+	*oldDataPtr = (int) ((float) newData * alpha
+		+ (float) *oldDataPtr * (1 - alpha));
 }
 
-void differentialf(float newData, float *oldDataPtr, float alpha) {
+void differentialf(float newData, float *oldDataPtr, float alpha)
+{
 	*oldDataPtr = (newData * alpha + *oldDataPtr * (1 - alpha));
 }
 
-void differentiala(float newData, float *oldDataPtr) {
+void differentiala(float newData, float *oldDataPtr)
+{
 	float centerAngle = (newData + *oldDataPtr + 360) / 2;
 
 	if (abs(newData - *oldDataPtr) > 180)

@@ -34,6 +34,8 @@ void behaviorTask(void* parameters) {
 	uint32 neighborRound = 0;
 	int i;
 	uint32 nbrBearing;
+	Nbr* nbrPtr;
+	uint32 tempWakeTime = 0;
 
 
 	// Init nbr system
@@ -48,6 +50,12 @@ void behaviorTask(void* parameters) {
 	systemPrintStartup();
 	systemPrintMemUsage();
 
+	NbrData TV_H;
+	NbrData TV_L;
+	NbrData RV_H;
+	NbrData RV_L;
+	nbrDataCreate16(&TV_H,&TV_L,"TV_H","TV_L",0);
+	nbrDataCreate16(&RV_H,&RV_L,"RV_H","RV_L",0);
 
 	for (;;) {
 		behOutput = behInactive;
@@ -55,29 +63,29 @@ void behaviorTask(void* parameters) {
 		nbrListCreate(&nbrList);
 		broadcastMsgUpdate(&broadcastMessage, &nbrList);
 		// Determine state from buttons
-		if (state == STATE_IDLE) {
+		//if (state == STATE_IDLE) {
 			if (buttonsGet(BUTTON_RED)) {
 			} else if (buttonsGet (BUTTON_GREEN)) {
 				state = STATE_IDLE;
 			} else if (buttonsGet (BUTTON_BLUE)) {
 				state = STATE_BOUNCE;
-			//	movementState = MOVE_FORWARD;
+				movementState = MOVE_FORWARD;
 			}
-		}
+		//}
 
 		// Set LEDs for each state
 		switch (state) {
 		case STATE_BOUNCE: {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
 			uint8* bitMatrix = irObstaclesGetBitMatrix();
-			for(i = 0; i < 8; i++){
+			/*for(i = 0; i < 8; i++){
 				rprintf("%d", bitMatrix[i]);
 
 				if (i != 7)
 					rprintf(",");
 			}
 			rprintf("\n");
-			movementState = MOVE_IDLE;
+			*/
 			break;
 		}
 		case STATE_IDLE:
@@ -127,10 +135,18 @@ void behaviorTask(void* parameters) {
 			}
 		}
 
-
+		nbrDataSet16(&TV_H,&TV_L,(int16)behOutput.tv);
+		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
 		motorSetBeh(&behOutput);
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 		lastWakeTime = osTaskGetTickCount();
+		for (i = 0; i < nbrList.size; i++){
+			nbrPtr = nbrList.nbrs[i];
+			nbrBearing = nbrGetBearing(nbrPtr);
+				if (printNow){
+					rprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
+				}
+		}
 	}
 }
 

@@ -5,7 +5,6 @@
  *
  */
 
-
 #include "gui.h"
 
 #define MAX_COMM_NUMBER 255
@@ -52,16 +51,6 @@ serialConnect(HANDLE *hSerialPtr, int comPort)
 		if(!GetCommState(hSerial, &dcbSerialParams))
 			return 0;
 
-		/*
-		 * Can't use CBR_230400 because it doesn't have that specific
-		 *      value.
-		 *
-		 * That may be a problem.
-		 *
-		 * TODO: Figure out if that is a problem.
-		 */
-		/* Old baud rate: CBR_115200 */
-		//dcbSerialParams.BaudRate = CBR_230400;
 		dcbSerialParams.BaudRate = 230400;
 		dcbSerialParams.ByteSize = 8;
 		dcbSerialParams.StopBits = ONESTOPBIT;
@@ -72,12 +61,6 @@ serialConnect(HANDLE *hSerialPtr, int comPort)
 		}
 
 		COMMTIMEOUTS timeouts={0};
-
-//		timeouts.ReadIntervalTimeout = MAXDWORD;
-//		timeouts.ReadTotalTimeoutConstant = 0;
-//		timeouts.ReadTotalTimeoutMultiplier = 0;
-//		timeouts.WriteTotalTimeoutConstant = 5;
-//		timeouts.WriteTotalTimeoutMultiplier = 5;
 
 		timeouts.ReadIntervalTimeout = 2;
 		timeouts.ReadTotalTimeoutConstant = 4;
@@ -95,10 +78,8 @@ serialConnect(HANDLE *hSerialPtr, int comPort)
 
 
 int serialSendData(HANDLE file, char * msg) {
-//	pthread_mutex_lock(&serialPortMutex);
 	DWORD dwBytesWritten = 0;
 	WriteFile(file, msg, strlen(msg), &dwBytesWritten, NULL);
-//	pthread_mutex_unlock(&serialPortMutex);
 	return 1;
 }
 
@@ -123,7 +104,6 @@ GLvoid cprintf(const char *fmt, ...) {
  * Output files to the queue.
  * Returns zero if failed, nonzero if success.
  */
-//#define READ_BUFFER		QUEUE_SIZE
 #define READ_BUFFER		1024
 int serialDataHandler(HANDLE file) {
 	/* Read characters in the serial port to a data file. */
@@ -173,5 +153,5 @@ int serialMessageGet(char *buffer, int buflen) {
 		}
 	}
 	msgAvail--;
-	return 1;// buflen;
+	return 1; // buflen;
 }

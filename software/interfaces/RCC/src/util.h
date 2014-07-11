@@ -6,21 +6,24 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
+typedef signed char int8;
+typedef signed short int16;
 
-typedef signed char 	int8;
-typedef signed short 	int16;
-
-typedef unsigned char	uint8;
-typedef unsigned short	uint16;
-
-typedef CRITICAL_SECTION pthread_mutex_t;
+typedef unsigned char uint8;
+typedef unsigned short uint16;
 
 /* Function Declarations */
 uint8 convertASCIIHexNibble(char val);
 uint8 convertASCIIHexByte(char *val);
 uint16 convertASCIIHexWord(char *val);
 
-void fcprintf(HANDLE *hSerialPtr, const char *fmt, ...);
+void datestr(char *buffer);
+void strins(char* str, char c, int index);
+void strdel(char* str, int index);
+
+void makeThread(void *function, void *args);
+
+void hprintf(HANDLE *hSerialPtr, const char *fmt, ...);
 
 void Error(const char *fmt, ...);
 
@@ -29,10 +32,8 @@ void *Malloc(size_t size);
 void *Calloc(size_t nmemb, size_t size);
 void Free(void *p);
 
-void mutexInit(HANDLE *mutex);
-
-void Pthread_mutex_init(pthread_mutex_t *mp);
-void Pthread_mutex_lock(pthread_mutex_t *mp);
-void Pthread_mutex_unlock(pthread_mutex_t *mp);
+void mutexLock(CRITICAL_SECTION *mp);
+void mutexUnlock(CRITICAL_SECTION *mp);
+void mutexInit(CRITICAL_SECTION *mp);
 
 #endif

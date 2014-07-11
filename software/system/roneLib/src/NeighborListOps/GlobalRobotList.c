@@ -42,9 +42,18 @@ uint8 globalRobotListGetSize(GlobalRobotList* globalRobotListPtr) {
 }
 
 
-// TODO: return the index of robot with ID robotID
 int8 globalRobotListGetIndex(GlobalRobotList* globalRobotListPtr, uint8 robotID) {
-	return globalRobotListPtr->size;
+	int j;
+	for (j = 0; j < GLOBAL_ROBOTLIST_MAX_SIZE; j++) {
+		uint8 nbrTotalRobotListRobotID = nbrDataGet(&(globalRobotListPtr->list[j].ID));
+		if (nbrTotalRobotListRobotID == ROBOT_ID_NULL) {
+			// no more robots on the list of this neighbor.  break and select the next nbr.
+			return -1;
+		}else if (nbrTotalRobotListRobotID == robotID) {
+			return j;
+		}
+	}
+	return -1;
 }
 
 
