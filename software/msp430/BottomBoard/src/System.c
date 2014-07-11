@@ -454,6 +454,9 @@ void main(void) {
 			// wait for I2C to finish
 			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
 
+			ADC10Init();
+			powerVBatInit();
+
 			// init the on-chip I/O
 			accelInit();
 			gyroInit();
@@ -463,8 +466,7 @@ void main(void) {
 			bumpSensorInit();
 			reflectiveSensorsInit();
 
-			ADC10Init();
-			powerVBatInit();
+
 			/*#ifdef RONE_V12
 				Usb5vSenseInit();
 			#endif*/
