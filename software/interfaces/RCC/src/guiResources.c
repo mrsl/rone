@@ -57,10 +57,14 @@ void drawInit()
 	glNewList(LIST_SQUARE, GL_COMPILE);
 		gluQuadricDrawStyle(qobj, GLU_FILL);
 		glRectf(-1, -1, 1, 1);
-		glRectf(-1, -1, 1, 1);
 		gluQuadricDrawStyle(qobj, GLU_SILHOUETTE);
 		glRectf(-1, -1, 1, 1);
-		glRectf(-1, -1, 1, 1);
+		glBegin(GL_LINE_LOOP);
+			glVertex2f(-1, -1);
+			glVertex2f(1, -1);
+			glVertex2f(1, 1);
+			glVertex2f(-1, 1);
+		glEnd();
 	glEndList();
 
 	gluDeleteQuadric(qobj);

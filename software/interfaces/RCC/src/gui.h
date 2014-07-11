@@ -134,8 +134,6 @@ extern const float color_grey[COLOR_SIZE];
 extern const float color_darkgrey[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
 
-extern const char scriptTemplate[256];	// secureCRT script
-
 /* GUI functions and drawing functions */
 void display();
 void reshape(int w, int h);

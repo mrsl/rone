@@ -293,6 +293,13 @@ void commCommander(void *vargp)
 	}
 	robots[id].hSerial = NULL;
 
+	robots[id].display = 0;
+	robots[id].subnet = -1;
+	if (robots[id].log) {
+		robots[id].log = 0;
+		CloseHandle(robots[id].logH);
+	}
+
 	/* If blacklisted, should break out of loop due to serial read error. */
 	if (robots[id].blacklisted) {
 		if (verbose)
@@ -306,11 +313,6 @@ void commCommander(void *vargp)
 		commToNum[info->port] = 0;
 		robots[id].type = UNKNOWN;
 		robots[id].up = 0;
-		robots[id].display = 0;
-		if (robots[id].log) {
-			robots[id].log = 0;
-			CloseHandle(robots[id].logH);
-		}
 		robots[id].aid = -1;
 		CloseHandle(*info->hSerial);
 	}
@@ -365,8 +367,8 @@ void insertBuffer(int robotID, char *buffer, int extraBytes)
 	}
 
 	robots[robotID].bps[robots[robotID].head] =
-		((float) strlen(buffer) + extraBytes)
-		/ ((float) (robots[robotID].up - robots[robotID].lup) / 1000.);
+		((float) strlen(buffer) + extraBytes) * 10000
+		/ ((float) (robots[robotID].up - robots[robotID].lup));
 
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;

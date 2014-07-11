@@ -6,16 +6,12 @@
 #include "rcc.h"
 
 /* The script template */
-const char scriptTemplate[256] =
+const char scriptTemplate[212] =
 	"#$language = \"VBScript\"\r\n#$interface = \"1.0\"\r\n\r\nSub Main()\r\n\tcrt.Session.Connect \"/TELNET %s %d\"\r\n\tcrt.Screen.Synchronous = True\r\n\tcrt.Screen.WaitForString \"Enter the robot ID\"\r\n\tcrt.Screen.Send \"%d\" & Chr(13)\r\n";
-
-const char scriptEnd[16] = "End Sub\r\n";
-
-const char scriptAT[300] = "\tcrt.Screen.WaitForString \"Robot AprilTag\"\r\n\tcrt.Screen.Send ";
-
-const char scriptATSend[203] = "\"%d\" & ";
-
-const char scriptEnter[232] = "Chr(13)\r\n";
+const char scriptEnd[10] = "End Sub\r\n";
+const char scriptAT[62] = "\tcrt.Screen.WaitForString \"Robot AprilTag\"\r\n\tcrt.Screen.Send ";
+const char scriptATSend[8] = "\"%d\" & ";
+const char scriptEnter[10] = "Chr(13)\r\n";
 
 /**
  * Opens a secureCRT window and connects to the server to the requested ID

@@ -203,6 +203,10 @@ void connectionHandler(void *vargp)
 	if (verbose)
 		printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
 
+	/* Initialize stuff for select */
+	FD_ZERO(&read_set);
+	FD_SET(conn->fd, &read_set);
+
 	/* Query user for robot ID */
 	id = -1;
 	while (id == -1) {
@@ -265,7 +269,6 @@ void connectionHandler(void *vargp)
 		Free(conn);
 		return;
 	}
-
 	if (verbose)
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
 
@@ -313,10 +316,6 @@ void connectionHandler(void *vargp)
 		mutexLock(&robots[id].mutex);
 		head = robots[id].head;
 		mutexUnlock(&robots[id].mutex);
-
-		/* Initialize stuff for select */
-		FD_ZERO(&read_set);
-		FD_SET(conn->fd, &read_set);
 
 		for (;;) {
 			ready_set = read_set;
