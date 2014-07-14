@@ -495,9 +495,9 @@ void aprilTagHandler(void *vargp)
 					continue;
 				}
 				/* Format end to be CRLF */
-				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n') {
+				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n')
 					buffer[n--] = '\0';
-				}
+
 				buffer[n] = '\r';
 				buffer[n + 1] = '\n';
 				insertBuffer(0, buffer, 0);
@@ -560,6 +560,7 @@ void aprilTagHandler(void *vargp)
 		mutexLock(&aprilTagData[i].mutex);
 		aprilTagData[i].active = 0;
 		aprilTagData[i].up = 0;
+		aprilTagData[i].display = 0;
 		if (aprilTagData[i].log) {
 			aprilTagData[i].log = 0;
 			CloseHandle(aprilTagData[i].logH);
