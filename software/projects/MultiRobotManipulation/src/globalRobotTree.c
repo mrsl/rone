@@ -56,7 +56,7 @@ void behaviorTask(void* parameters) {
 	boolean printNow;
 	uint32 neighborRound = 0;
 	NbrList nbrList;
-	uint8 moveState;
+	uint8 moveState = 0;
 	BroadcastMessage broadcastMessage;
 	broadcastMsgCreate(&broadcastMessage, 20);
 	systemPrintStartup();
@@ -133,9 +133,10 @@ void behaviorTask(void* parameters) {
 			switch (state) {
 			case BUILD_TREE:{
 				ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
-				if(globalRobotList.size >= GLOBAL_ROBOTLIST_MAX_SIZE){
+				if((globalRobotList.size >= GLOBAL_ROBOTLIST_MAX_SIZE) || (buttonsGet(BUTTON_BLUE))){
 					state = GUESS_COM;
 				}
+
 				break;
 			}
 			case GUESS_COM:{
@@ -263,7 +264,8 @@ void behaviorTask(void* parameters) {
 				rprintf("%d %d\n",COM_X,COM_Y);
 				if(moveState == 0){				//Transport
 					behFlock_gain(&behOutput, &nbrList, TVcmd, FLOCK_RV_GAIN_MOVEOBJ);
-					//behOutput.rv  = behOutput.rv + (RVcmd*10);
+					behOutput.rv  = behOutput.rv + (RVcmd*10);
+					cprintf("%d , %d\n",COM_X,COM_Y);
 				}else if(moveState == 1){		//Rotate
 					behOutput = behInactive;
 					//cprintf("%d , %d\n",COM_X,COM_Y);
@@ -350,7 +352,7 @@ void behaviorTask(void* parameters) {
 			}
 
 			/*** FINAL STUFF ***/
-			motorSetBeh(&behOutput);
+			//motorSetBeh(&behOutput);
 			neighborsPutMutex();
 
 			// delay until the next behavior period
@@ -368,7 +370,7 @@ int main(void) {
 	systemInit();
 
 	// init the behavior system and start the behavior thread
-	behaviorSystemInit(behaviorTask, 8192);
+	behaviorSystemInit(behaviorTask, 4096);
 
 	// Start the scheduler
 	osTaskStartScheduler();

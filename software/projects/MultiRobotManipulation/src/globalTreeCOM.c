@@ -59,7 +59,7 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 				yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				x = xprime;
 
-				//Range = nbrRangeLookUp(roneID, nbrGetID(nbrPtr));
+				Range = nbrRangeLookUp(roneID, nbrGetID(nbrPtr));
 				y = yprime + Range;
 
 				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
@@ -237,24 +237,24 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 600;
 				break;
 			}
-			case 17:{
+			case 11:{
 				Range = 900;
 				break;
 			}
-			case 19:{
+			case 15:{
 				Range = 1200;
 				break;
 			}
-			case 23:{
+			case 17:{
 				Range = 1500;
 				break;
 			}
-			case 24:{
+			case 23:{
 				Range = 1800;
 				break;
 			}
-			case 27:{
-				Range = 300;
+			case 24:{
+				Range = 2100;
 				break;
 			}
 		}
@@ -270,24 +270,24 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 300;
 				break;
 			}
-			case 17:{
+			case 11:{
 				Range = 600;
 				break;
 			}
-			case 19:{
+			case 15:{
 				Range = 900;
 				break;
 			}
-			case 23:{
+			case 17:{
 				Range = 1200;
 				break;
 			}
-			case 24:{
+			case 23:{
 				Range = 1500;
 				break;
 			}
-			case 27:{
-				Range = 600;
+			case 24:{
+				Range = 1800;
 				break;
 			}
 		}
@@ -303,23 +303,89 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 300;
 				break;
 			}
+			case 11:{
+				Range = 300;
+				break;
+			}
+			case 15:{
+				Range = 600;
+				break;
+			}
+			case 17:{
+				Range = 900;
+				break;
+			}
+			case 23:{
+				Range = 1500;
+				break;
+			}
+			case 24:{
+				Range = 1800;
+				break;
+			}
+		}
+		break;
+	}
+	case 11:{
+		switch(nbrID){
+			case 8:{
+				Range = 900;
+				break;
+			}
+			case 9:{
+				Range = 600;
+				break;
+			}
+			case 10:{
+				Range = 300;
+				break;
+			}
+			case 15:{
+				Range = 300;
+				break;
+			}
+			case 17:{
+				Range = 900;
+				break;
+			}
+			case 23:{
+				Range = 1200;
+				break;
+			}
+			case 24:{
+				Range = 1500;
+				break;
+			}
+		}
+		break;
+	}
+	case 15:{
+		switch(nbrID){
+			case 8:{
+				Range = 1200;
+				break;
+			}
+			case 9:{
+				Range = 900;
+				break;
+			}
+			case 10:{
+				Range = 600;
+				break;
+			}
+			case 11:{
+				Range = 300;
+				break;
+			}
 			case 17:{
 				Range = 300;
 				break;
 			}
-			case 19:{
+			case 23:{
 				Range = 600;
 				break;
 			}
-			case 23:{
-				Range = 900;
-				break;
-			}
 			case 24:{
-				Range = 1200;
-				break;
-			}
-			case 27:{
 				Range = 900;
 				break;
 			}
@@ -329,64 +395,31 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 	case 17:{
 		switch(nbrID){
 			case 8:{
-				Range = 900;
-				break;
-			}
-			case 9:{
-				Range = 600;
-				break;
-			}
-			case 10:{
-				Range = 300;
-				break;
-			}
-			case 19:{
-				Range = 300;
-				break;
-			}
-			case 23:{
-				Range = 600;
-				break;
-			}
-			case 24:{
-				Range = 900;
-				break;
-			}
-			case 27:{
-				Range = 1200;
-				break;
-			}
-		}
-		break;
-	}
-	case 19:{
-		switch(nbrID){
-			case 8:{
-				Range = 1200;
-				break;
-			}
-			case 9:{
-				Range = 900;
-				break;
-			}
-			case 10:{
-				Range = 600;
-				break;
-			}
-			case 17:{
-				Range = 300;
-				break;
-			}
-			case 23:{
-				Range = 300;
-				break;
-			}
-			case 24:{
-				Range = 600;
-				break;
-			}
-			case 27:{
 				Range = 1500;
+				break;
+			}
+			case 9:{
+				Range = 1200;
+				break;
+			}
+			case 10:{
+				Range = 900;
+				break;
+			}
+			case 11:{
+				Range = 600;
+				break;
+			}
+			case 15:{
+				Range = 300;
+				break;
+			}
+			case 23:{
+				Range = 300;
+				break;
+			}
+			case 24:{
+				Range = 600;
 				break;
 			}
 		}
@@ -395,64 +428,31 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 	case 23:{
 		switch(nbrID){
 			case 8:{
-				Range = 1500;
+				Range = 1800;
 				break;
 			}
 			case 9:{
-				Range = 1200;
+				Range = 1500;
 				break;
 			}
 			case 10:{
+				Range = 1200;
+				break;
+			}
+			case 11:{
 				Range = 900;
 				break;
 			}
-			case 17:{
+			case 15:{
 				Range = 600;
 				break;
 			}
-			case 19:{
+			case 17:{
 				Range = 300;
 				break;
 			}
 			case 24:{
 				Range = 300;
-				break;
-			}
-			case 27:{
-				Range = 1800;
-				break;
-			}
-		}
-		break;
-	}
-	case 24:{
-		switch(nbrID){
-			case 8:{
-				Range = 1800;
-				break;
-			}
-			case 9:{
-				Range = 1500;
-				break;
-			}
-			case 10:{
-				Range = 1200;
-				break;
-			}
-			case 17:{
-				Range = 900;
-				break;
-			}
-			case 19:{
-				Range = 600;
-				break;
-			}
-			case 23:{
-				Range = 300;
-				break;
-			}
-			case 27:{
-				Range = 2100;
 				break;
 			}
 		}
@@ -461,31 +461,31 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 	case 27:{
 		switch(nbrID){
 			case 8:{
-				Range = 300;
+				Range = 2100;
 				break;
 			}
 			case 9:{
-				Range = 600;
+				Range = 1800;
 				break;
 			}
 			case 10:{
+				Range = 1500;
+				break;
+			}
+			case 11:{
+				Range = 1200;
+				break;
+			}
+			case 15:{
 				Range = 900;
 				break;
 			}
 			case 17:{
-				Range = 1200;
-				break;
-			}
-			case 19:{
-				Range = 1500;
+				Range = 600;
 				break;
 			}
 			case 23:{
-				Range = 1800;
-				break;
-			}
-			case 24:{
-				Range = 2100;
+				Range = 300;
 				break;
 			}
 		}
