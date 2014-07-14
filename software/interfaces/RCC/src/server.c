@@ -495,9 +495,9 @@ void aprilTagHandler(void *vargp)
 					continue;
 				}
 				/* Format end to be CRLF */
-				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n') {
+				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n')
 					buffer[n--] = '\0';
-				}
+
 				buffer[n] = '\r';
 				buffer[n + 1] = '\n';
 				insertBuffer(0, buffer, 0);
@@ -522,11 +522,17 @@ void aprilTagHandler(void *vargp)
 					aprilTagData[id].y = y;
 					aprilTagData[id].t = t;
 
-					if (x > 2 * aprilTagX)
-						aprilTagX = x / 2. + 25;
+					if (x > 2 * aprilTagX) {
+						aprilTagX = ((int) (aprilTagData[id].x / 2) + 50) / 100
+							* 100;
+						aprilTagX += (aprilTagX < aprilTagData[id].x) ? 50 : 0;
+					}
 
-					if (y > 2 * aprilTagY)
-						aprilTagY = y / 2. + 25;
+					if (y > 2 * aprilTagY) {
+						aprilTagY = ((int) (aprilTagData[id].y / 2) + 50) / 100
+							* 100;
+						aprilTagY += (aprilTagY < aprilTagData[id].y) ? 50 : 0;
+					}
 				}
 
 				aprilTagData[id].up = clock();
@@ -560,6 +566,7 @@ void aprilTagHandler(void *vargp)
 		mutexLock(&aprilTagData[i].mutex);
 		aprilTagData[i].active = 0;
 		aprilTagData[i].up = 0;
+		aprilTagData[i].display = 0;
 		if (aprilTagData[i].log) {
 			aprilTagData[i].log = 0;
 			CloseHandle(aprilTagData[i].logH);

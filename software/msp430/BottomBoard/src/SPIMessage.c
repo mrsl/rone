@@ -5,6 +5,7 @@
 #include "Accelerometer.h"
 #include "Magnetometer.h"
 #include "RFIDReader.h"
+#include "ReflectiveSensors.h"
 #include "BumpSensors.h"
 #include "IRBeacon.h"
 #include "I2C.h"
@@ -70,6 +71,7 @@ void msp430CheckAndUpdate(void) {
 		SPI8962SetMessage(SPIMessageOut);
 
 		// Update sensor values
+		reflectiveSensorsUpdate();
 		bumpSensorUpdate();
 		accelUpdate();
 		gyroUpdate();

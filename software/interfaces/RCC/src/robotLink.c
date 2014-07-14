@@ -7,6 +7,7 @@
 
 struct commCon robots[MAXROBOTID]; /* Robot buffers */
 
+int init = 0;
 /**
  * Initialize the robot buffers
  */
@@ -20,17 +21,23 @@ void initRobots()
 		robots[i].aid = -1;
 		robots[i].blacklisted = 0;
 		robots[i].log = 0;
+		robots[i].logH = NULL;
 		robots[i].hSerial = NULL;
+		robots[i].port = 0;
 		robots[i].up = 0;
 		robots[i].lup = 0;
 		robots[i].head = 0;
 		robots[i].count = 0;
 		robots[i].type = UNKNOWN;
 		robots[i].subnet = -1;
-		mutexInit(&robots[i].mutex);
+		if (!init)
+			mutexInit(&robots[i].mutex);
 	}
 
-	makeThread(&commManager, 0);
+	if (!init)
+		makeThread(&commManager, 0);
+
+	init = 1;
 }
 
 /**

@@ -40,7 +40,7 @@ void updateMSP430BSLVersion(void){
 	// write data from MSP430_PROGRAM[0].DATA to segments 0 and 1 
 	// starting at the address MSP430_PROGRAM[0].MSP430_SECTION_ADDRESS
 	int i;
-	for(i=0; i< MSP430_PROGRAM[0].MSP430_SECTION_SIZE; i+=2){
+	for(i=0; i< MSP430_PROGRAM[0].MSP430_SECTION_SIZE; i += 2){
 		uint16 word = (uint16) MSP430_PROGRAM[0].MSP430_SECTION_DATA[i];        // constructs a word from 2 consecutive bytes
 		//word = word << 8;                                                     // puts first of two bytes into last 8 bits
 		if(i+1 != MSP430_PROGRAM[0].MSP430_SECTION_SIZE){                       // if(there's another byte in program){

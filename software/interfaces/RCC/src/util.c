@@ -46,8 +46,8 @@ void datestr(char *buffer)
 
     GetLocalTime(&st);
 
-    sprintf(buffer, "%02d%02d%02d_%02d%02d%02d",
-    	st.wHour, st.wMinute, st.wSecond, st.wDay, st.wMonth, st.wYear);
+    sprintf(buffer, "%d-%d-%d-T%d%d%d",
+    	st.wYear, st.wMonth, st.wDay,  st.wHour, st.wMinute, st.wSecond);
 }
 
 /**
