@@ -870,6 +870,7 @@ void drawAprilTags(GLenum mode)
 	struct aprilTag *activeTags[MAX_APRILTAG];
 	GLfloat xi, yi;
 	GLfloat xs, ys;
+	GLfloat xg, yg;
 
 	/* Figure scale */
 	if ((aprilTagX / aprilTagY) >= (AT_SCALE_X / AT_SCALE_Y)) {
@@ -889,44 +890,44 @@ void drawAprilTags(GLenum mode)
 			glLoadName(APRILTAG_GRID);
 
 		glPushMatrix();
+			xg = 0;
+			yg = 0;
 			glColor3fv(color_grey);
-			for (i = 0; i <= AT_SCALE_X + 1; i++) {
-				glBegin(GL_LINES);
-					glVertex2f(0, -AT_SCALE_Y - 1);
-					glVertex2f(0, AT_SCALE_Y + 1);
-				glEnd();
-				glTranslatef(1, 0, 0);
+			for (xg = 0; xg < 2* aprilTagX; xg += 100) {
+				xi = xs * ((xg - aprilTagX) / aprilTagX);
+				glPushMatrix();
+					glTranslatef(xi, 0, 0);
+					glBegin(GL_LINES);
+						glVertex2f(0, -ys);
+						glVertex2f(0, ys);
+					glEnd();
+				glPopMatrix();
 			}
-		glPopMatrix();
-		glPushMatrix();
-			glColor3fv(color_grey);
-			for (i = 0; i < AT_SCALE_X + 1; i++) {
-				glTranslatef(-1, 0, 0);
+			glPushMatrix();
+				glTranslatef(xs, 0, 0);
 				glBegin(GL_LINES);
-					glVertex2f(0, -AT_SCALE_Y - 1);
-					glVertex2f(0, AT_SCALE_Y + 1);
+					glVertex2f(0, -ys);
+					glVertex2f(0, ys);
 				glEnd();
+			glPopMatrix();
+
+			for (yg = 0; yg < 2* aprilTagY; yg += 100) {
+				yi = -ys * ((yg - aprilTagY) / aprilTagY);
+				glPushMatrix();
+					glTranslatef(0, yi, 0);
+					glBegin(GL_LINES);
+						glVertex2f(-xs, 0);
+						glVertex2f(xs, 0);
+					glEnd();
+				glPopMatrix();
 			}
-		glPopMatrix();
-		glPushMatrix();
-			glColor3fv(color_grey);
-			for (i = 0; i <= AT_SCALE_Y + 1; i++) {
+			glPushMatrix();
+				glTranslatef(0, -ys, 0);
 				glBegin(GL_LINES);
-					glVertex2f(-AT_SCALE_X - 1, 0);
-					glVertex2f(AT_SCALE_X + 1, 0);
+					glVertex2f(-xs, 0);
+					glVertex2f(xs, 0);
 				glEnd();
-				glTranslatef(0, 1, 0);
-			}
-		glPopMatrix();
-		glPushMatrix();
-			glColor3fv(color_grey);
-			for (i = 0; i < AT_SCALE_Y + 1; i++) {
-				glTranslatef(0, -1, 0);
-				glBegin(GL_LINES);
-					glVertex2f(-AT_SCALE_X - 1, 0);
-					glVertex2f(AT_SCALE_X + 1, 0);
-				glEnd();
-			}
+			glPopMatrix();
 		glPopMatrix();
 
 		/* Draw the bounding corners */
@@ -941,7 +942,7 @@ void drawAprilTags(GLenum mode)
 				glVertex2f(0, 0);
 				glVertex2f(0, -2);
 			glEnd();
-			glTranslatef(0, TEXT_SMALL - 0.4, 0);
+			glTranslatef(0, TEXT_SMALL, 0);
 			textSetSize(TEXT_SMALL);
 			textPrintf("(0, 0)");
 		glPopMatrix();
@@ -956,7 +957,7 @@ void drawAprilTags(GLenum mode)
 				glVertex2f(0, 2);
 			glEnd();
 			textSetAlignment(ALIGN_RIGHT);
-			glTranslatef(0, -2 * TEXT_SMALL + 0.6, 0);
+			glTranslatef(0, -2 * TEXT_SMALL, 0);
 			textSetSize(TEXT_SMALL);
 			textPrintf("(%.0f, %.0f)", 2 * aprilTagX, 2 * aprilTagY);
 			textSetAlignment(ALIGN_LEFT);
@@ -1004,9 +1005,9 @@ void drawAprilTags(GLenum mode)
 					glPushMatrix();
 						glRotatef(180, 0, 0, 1);
 						glTranslatef(0, 0.1, 0);
-						glColor3fv(color_white);
 						textSetSize(TEXT_TINY);
 						textSetAlignment(ALIGN_CENTER);
+						glColor3fv(color_white);
 						textPrintf("%02d", activeTags[i]->rid);
 					glPopMatrix();
 				} else {
@@ -1020,7 +1021,6 @@ void drawAprilTags(GLenum mode)
 					glPopMatrix();
 				}
 			glPopMatrix();
-
 			/* Draw the ID in the corner */
 			glPushMatrix();
 				glTranslatef(0.9, -0.6, 0);
@@ -1095,7 +1095,7 @@ void drawAprilTags(GLenum mode)
 	glPopMatrix();
 
 	/* Draw dividing bar */
-		glPushMatrix();
+	glPushMatrix();
 		glColor3fv(color_darkgrey);
 		glTranslatef(MAP_DIVIDE_X, 0, 0);
 		glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
@@ -1115,7 +1115,7 @@ void drawAprilTags(GLenum mode)
 
 void drawAprilTagTextbox(GLenum mode)
 {
-	char name[17] = "AprilTag Server: ";
+	char name[18] = "AprilTag Server: ";
 
 	/* Find the drawn width of the strings. */
 	GLfloat textWidth = TEXT_MED * gmf[(int) 'm'].gmfCellIncX *
@@ -1136,20 +1136,27 @@ void drawAprilTagTextbox(GLenum mode)
 
 	glTranslatef(nameWidth, 0, 0);
 
-	if (aprilTagConnected)
-		glColor3fv(color_red);
-	else
-		glColor3fv(color_black);
-	glRectf(-LINE_WIDTH_SMALL,
-			-LINE_WIDTH_SMALL,
-			textWidth + LINE_WIDTH_SMALL,
-			TEXT_MED + LINE_WIDTH_SMALL);
+	glPushMatrix();
+		glTranslatef(textWidth / 2, TEXT_MED / 2, 0);
 
-	glColor3fv(color_black);
-	glRectf(-LINE_WIDTH_SMALL / 2.,
-			-LINE_WIDTH_SMALL / 2.,
-			textWidth + LINE_WIDTH_SMALL / 2.,
-			TEXT_MED + LINE_WIDTH_SMALL / 2.);
+		glPushMatrix();
+			glColor3fv(color_darkgrey);
+			glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
+			glScalef(textWidth / 2 + 0.3, TEXT_MED / 2 + 0.3, 0);
+			glCallList(LIST_SQUARE);
+		glPopMatrix();
+
+		glScalef(textWidth / 2 + 0.3, TEXT_MED / 2 + 0.3, 0);
+
+		if (aprilTagConnected)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		glCallList(LIST_SQUARE);
+		glScalef(0.95, 0.95, 0);
+		glColor3fv(color_black);
+		glCallList(LIST_SQUARE);
+	glPopMatrix();
 
 	glColor3fv(color_white);
 	textPrintf(aprilTagURL.message);
@@ -1176,17 +1183,6 @@ void drawButtonBox(GLfloat width)
 {
 	glPushMatrix();
 		glTranslatef(width / 2, 0.45, 0);
-//		glPushMatrix();
-//			glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
-//			glColor3fv(color_darkgrey);
-//			glScalef(width / 2 + 0.2, TEXT_LARGE / 2 + 0.1, 0);
-//			glCallList(LIST_SQUARE);
-//		glPopMatrix();
-//		glPushMatrix();
-//			glColor3fv(color_black);
-//			glScalef(width / 2 + 0.2, TEXT_LARGE / 2 + 0.1, 0);
-//			glCallList(LIST_SQUARE);
-//		glPopMatrix();
 		glPushMatrix();
 			glColor3fv(color_white);
 			glScalef(width / 2 + 0.1, TEXT_LARGE / 2, 0);

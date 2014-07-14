@@ -152,6 +152,7 @@ void drawAprilTagTextbox(GLenum mode);
 void drawToolbar(GLenum mode);
 void drawHelp();
 void timerEnableDraw(int value);
+void special(int key, int x, int y);
 void guiInit();
 
 /* Text functions */

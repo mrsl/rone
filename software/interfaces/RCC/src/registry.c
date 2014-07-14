@@ -23,7 +23,7 @@ void commWatch(void *vargp)
 
 		/* Try to connect to each robot */
 		for (i = 0; i < data.n; i++) {
-			if (robots[commToNum[data.ports[i]]].up == 0)
+			if (robots[commToNum[data.ports[i]]].hSerial == NULL)
 				initCommCommander(data.ports[i]);
 		}
 
