@@ -262,6 +262,7 @@ void resetInit(void) {
 	resetSet(TRUE);
 }
 
+
 #ifdef RONE_V12
 	void ftdiResetSet(boolean val) {
 		if(val) {
