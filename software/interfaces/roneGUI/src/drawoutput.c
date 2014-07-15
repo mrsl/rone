@@ -488,7 +488,12 @@ drawLightSensor(GLfloat x, GLfloat y, char name[], int lsData)
 
 		/* Draw the bar */
 		glPushMatrix();
+			if (name[1] == 'c') {
+				glRotatef(90, 0, 0, 1);
+				glTranslatef(LS_WIDTH, -1.6, 0);
+			}
 			glScalef(LS_WIDTH / 2, LS_HEIGHT, 0);
+
 			drawBar((GLfloat) lsData / MAX_LIGHT_SENSOR_VALUE);
 		glPopMatrix();
 
@@ -498,9 +503,11 @@ drawLightSensor(GLfloat x, GLfloat y, char name[], int lsData)
 				glTranslatef(-LS_TEXT_OFFSET, LS_HEIGHT + 0.1, 0);
 			else
 				glTranslatef(LS_TEXT_OFFSET, LS_HEIGHT + 0.1, 0);
-		} else {
+		} else if (name[0] == 'b') {
 			if (name[1] == 'l')
 				glTranslatef(-LS_TEXT_OFFSET, -TEXT_SMALL, 0);
+			else if (name[1] == 'r')
+				glTranslatef(LS_TEXT_OFFSET, -TEXT_SMALL, 0);
 			else
 				glTranslatef(LS_TEXT_OFFSET, -TEXT_SMALL, 0);
 		}
@@ -515,16 +522,26 @@ drawLightSensor(GLfloat x, GLfloat y, char name[], int lsData)
 
 /* Draw all the light sensors */
 void
-drawLightSensors(GLfloat x, GLfloat y, const unsigned int lsData[], int toOffset)
+drawLightSensors(GLfloat x, GLfloat y, const unsigned int lsData[], int toOffset, int v11)
 {
 	int lightSensorOffset = (toOffset) ? LS_OFFSET_X_G : LS_OFFSET_X;
 
 	glPushMatrix();
 		glTranslatef(x, y - 1.5, 0);
-		drawLightSensor(-lightSensorOffset, LS_OFFSET_Y, "fl", lsData[LS_FRONT_LEFT]);
-		drawLightSensor(lightSensorOffset, LS_OFFSET_Y, "fr", lsData[LS_FRONT_RIGHT]);
-		drawLightSensor(-lightSensorOffset, -LS_OFFSET_Y, "bl", lsData[LS_BACK_LEFT]);
-		drawLightSensor(lightSensorOffset, -LS_OFFSET_Y, "br", lsData[LS_BACK_RIGHT]);
+		if (v11) {
+			drawLightSensor(-lightSensorOffset, LS_OFFSET_Y, "fl",
+				lsData[LS_FRONT_LEFT]);
+			drawLightSensor(lightSensorOffset, LS_OFFSET_Y, "fr",
+				lsData[LS_FRONT_RIGHT]);
+			drawLightSensor((toOffset) ? lightSensorOffset : 0,
+				-LS_OFFSET_Y, "bc",
+				lsData[LS_BACK_RIGHT]);
+		} else {
+			drawLightSensor(-lightSensorOffset, LS_OFFSET_Y, "fl", lsData[LS_FRONT_LEFT]);
+			drawLightSensor(lightSensorOffset, LS_OFFSET_Y, "fr", lsData[LS_FRONT_RIGHT]);
+			drawLightSensor(-lightSensorOffset, -LS_OFFSET_Y, "bl", lsData[LS_BACK_LEFT]);
+			drawLightSensor(lightSensorOffset, -LS_OFFSET_Y, "br", lsData[LS_BACK_RIGHT]);
+		}
 	glPopMatrix();
 
 }
@@ -814,7 +831,7 @@ drawOutput(outputData *data)
 	drawNBRMap(NBR_ROBOT_POS_X, NBR_ROBOT_POS_Y);
 	drawNBRs(NBR_ROBOT_POS_X, NBR_ROBOT_POS_Y,
 		data->id, data->numNbrs, data->nbrs);
-	drawLightSensors(ROBOT_POS_X, ROBOT_POS_Y, data->lightSensors, data->gripper.isOn);
+	drawLightSensors(ROBOT_POS_X, ROBOT_POS_Y, data->lightSensors, data->gripper.isOn, data->isv11);
 	drawBumpSensors(ROBOT_POS_X, ROBOT_POS_Y, color_red, data->bumpSensors);
 	drawButtons(BTNLED_POS_X, BTNLED_POS_Y, data->buttons);
 	drawText(RADIO_POS_X, RADIOOUT_POS_Y, data->radioMsg, LEN_RADIO_MESSAGE);
