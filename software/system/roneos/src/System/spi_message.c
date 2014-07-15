@@ -61,6 +61,7 @@ const uint8 MSP430Code[] = {'B', 'O', 'T'};
 #define MSP430_MSG_VUSB_IDX				14 + MSP430_CODE_LENGTH
 #define MSP430_MSG_POWER_BUTTON_IDX		15 + MSP430_CODE_LENGTH
 #define MSP430_MSG_VERSION_IDX			16 + MSP430_CODE_LENGTH
+#define MSP430_MSG_REFLECT_START_IDX	17 + MSP430_CODE_LENGTH
 #define MSP430_MSG_CHECKSUM_IDX			MSP430_MSG_LENGTH - 1
 /* Commands:
  * 0x00:		Normal Operation, LED and Button Information Sent
@@ -456,6 +457,7 @@ uint8 bottomBoardISR() {
 					systemUSBVoltageUpdate(MSP430MessageIn[MSP430_MSG_VUSB_IDX]);
 					systemPowerButtonUpdate(MSP430MessageIn[MSP430_MSG_POWER_BUTTON_IDX]);
 					systemMSPVersionUpdate(MSP430MessageIn[MSP430_MSG_VERSION_IDX]);
+					reflectiveSensorsUpdate(&MSP430MessageIn[MSP430_MSG_REFLECT_START_IDX]);
 
 					if((MSP430MessageIn[MSP430_MSG_VERSION_IDX] != 0) && (!systemMSP430CommsValid)) {
 						systemMSP430CommsValid = TRUE;

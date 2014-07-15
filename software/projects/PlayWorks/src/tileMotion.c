@@ -193,7 +193,6 @@ void tileMotionTask(void* parameters) {
 		behOutput = behInactive;
 		boolean printNow = printTimer(&printTime, PRINT_TIME);
 
-
 		switch (mode) {
 		case MOTION_STATE_TEST_MAG_CENTER: {
 			if (printNow) cprintf("tileID=% 3d ", bumpSensorsGetBits());
