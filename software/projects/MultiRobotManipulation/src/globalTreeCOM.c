@@ -59,7 +59,7 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 				yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				x = xprime;
 
-				Range = nbrRangeLookUp(roneID, nbrGetID(nbrPtr));
+				//Range = nbrRangeLookUp(roneID, nbrGetID(nbrPtr));
 				y = yprime + Range;
 
 				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
@@ -148,7 +148,7 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
  * 			TV - intended TV of a robot that is orbiting i.e 0 TV means robots stay in place and turn
  * @return void
  */
-void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
+void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV, int16 cyliodCOMoffset){
 	int32 bearing = atan2MilliRad((int32)COMY,(int32)COMX) - 3141;
 	int32 distance = vectorMag((int32)COMY,(int32)COMX);
 	int32 newRv = 0;
@@ -157,6 +157,12 @@ void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 		behSetTvRv(BehRotate, 0, 0);
 		return;
 	}
+	if(cyliodCOMoffset){
+		cyliodCOMoffset += PI/2;
+		bearing -= abs(cyliodCOMoffset/4);
+		rprintf("offSet %d B %d \n",cyliodCOMoffset,bearing);
+	}
+
 	if(abs(bearing) > 100){
 		if(bearing < 0){
 			newRv = bearing/ 1.5;
@@ -168,6 +174,11 @@ void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 	}else{
 		behSetTvRv(BehRotate, TV, 0);
 	}
+
+	if(cyliodCOMoffset){
+
+	}
+
 	//rprintf("X%d Y%d b%d RV%d\n",COMX,COMY,bearing,newRv);
 
 }
@@ -249,7 +260,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 1500;
 				break;
 			}
-			case 23:{
+			case 20:{
 				Range = 1800;
 				break;
 			}
@@ -282,7 +293,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 1200;
 				break;
 			}
-			case 23:{
+			case 20:{
 				Range = 1500;
 				break;
 			}
@@ -315,7 +326,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 900;
 				break;
 			}
-			case 23:{
+			case 20:{
 				Range = 1500;
 				break;
 			}
@@ -348,7 +359,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 900;
 				break;
 			}
-			case 23:{
+			case 20:{
 				Range = 1200;
 				break;
 			}
@@ -381,7 +392,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 300;
 				break;
 			}
-			case 23:{
+			case 20:{
 				Range = 600;
 				break;
 			}
@@ -414,7 +425,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 300;
 				break;
 			}
-			case 23:{
+			case 20:{
 				Range = 300;
 				break;
 			}
@@ -425,7 +436,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 		}
 		break;
 	}
-	case 23:{
+	case 20:{
 		switch(nbrID){
 			case 8:{
 				Range = 1800;
@@ -484,7 +495,7 @@ int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 				Range = 600;
 				break;
 			}
-			case 23:{
+			case 20:{
 				Range = 300;
 				break;
 			}

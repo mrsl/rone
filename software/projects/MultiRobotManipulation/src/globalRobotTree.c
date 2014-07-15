@@ -30,7 +30,7 @@
 #define NORM_TV							75
 #define cycloidPeriod					5000
 #define	TOWER_WAIT_TIME					200
-#define	cyldoidSpeed					150
+#define	cyldoidSpeed					200
 
 
 #define BUILD_TREE		 0
@@ -212,9 +212,9 @@ void behaviorTask(void* parameters) {
 					vecCOMtoTowerY = x*sinMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER;
 
 					//rprintf("COMtoTOWER X %d Y %d B %d CM %d\n",COMtoTowerX,COMtoTowerY, atan2MilliRad((int32)COMtoTowerX,(int32)COMtoTowerY), cylciodModifier);
-					//Todo: Assumes that 127 is highest ID that will be seen, need to be changed if v15 are used
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_L,vecCOMtoTowerX);
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,vecCOMtoTowerY);
+					//Todo: Assumes that 127 is highest ID that will be seen, need to be changed if v15 are used
 					nbrList.size--;
 					navTowerTime = osTaskGetTickCount();
 				}else{
@@ -224,8 +224,8 @@ void behaviorTask(void* parameters) {
 					int i;
 					for (i = 0; i < nbrList.size; i++){
 						nbrPtr = nbrList.nbrs[i];
-						vecCOMtoTowerX = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,nbrPtr);
-						vecCOMtoTowerY = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_L,nbrPtr);
+						vecCOMtoTowerX = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,nbrPtr);
+						vecCOMtoTowerY = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,nbrPtr);
 						if(vecCOMtoTowerX || vecCOMtoTowerY){
 							int16 x,y,xprime,yprime;
 							int32 nbrOrient = nbrGetOrientation(nbrPtr);
@@ -242,6 +242,9 @@ void behaviorTask(void* parameters) {
 
 							vecCOMtoTowerX = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 							vecCOMtoTowerY = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
+
+							nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_L,vecCOMtoTowerX);
+							nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,vecCOMtoTowerY);
 							navTowerTime = osTaskGetTickCount();
 							break;
 						}
@@ -261,19 +264,17 @@ void behaviorTask(void* parameters) {
 					COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
 					COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
 				}
-				rprintf("%d %d\n",COM_X,COM_Y);
+				//rprintf("%d %d\n",COM_X,COM_Y);
 				if(moveState == 0){				//Transport
 					behFlock_gain(&behOutput, &nbrList, TVcmd, FLOCK_RV_GAIN_MOVEOBJ);
 					behOutput.rv  = behOutput.rv + (RVcmd*10);
-					cprintf("%d , %d\n",COM_X,COM_Y);
 				}else if(moveState == 1){		//Rotate
 					behOutput = behInactive;
-					//cprintf("%d , %d\n",COM_X,COM_Y);
-					GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
+					GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd, 0);
 				}else if(moveState == 2){		//Pivot
 					PIVOT_X =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L);
 					PIVOT_Y =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L);
-					GlobalTreePointOrbit(PIVOT_X, PIVOT_Y, &behOutput,  RVcmd);
+					GlobalTreePointOrbit(PIVOT_X, PIVOT_Y, &behOutput,  RVcmd, 0);
 				}else if(moveState == 3){		//Cycloid Motion
 					vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
 					vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
@@ -286,11 +287,11 @@ void behaviorTask(void* parameters) {
 					}
 
 					if(osTaskGetTickCount() >= (navTowerTime + TOWER_WAIT_TIME)){
-						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  30);
-						rprintf("Cyliod Mod %d C %d %d v %d %d NNT\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
+						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  30, vecCOMtoTowerBearing);
+						//rprintf("Cyliod Mod %d C %d %d v %d %d NNT\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
 					}else{
-						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier);
-						rprintf("Cyliod Mod %d C %d %d v %d %d\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
+						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier, vecCOMtoTowerBearing);
+						//rprintf("Cyliod Mod %d C %d %d v %d %d\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
 					}
 					behOutput.rv = behOutput.rv * 2;
 				}
@@ -352,7 +353,7 @@ void behaviorTask(void* parameters) {
 			}
 
 			/*** FINAL STUFF ***/
-			//motorSetBeh(&behOutput);
+			motorSetBeh(&behOutput);
 			neighborsPutMutex();
 
 			// delay until the next behavior period
@@ -370,7 +371,7 @@ int main(void) {
 	systemInit();
 
 	// init the behavior system and start the behavior thread
-	behaviorSystemInit(behaviorTask, 4096);
+	behaviorSystemInit(behaviorTask, 6144);
 
 	// Start the scheduler
 	osTaskStartScheduler();
