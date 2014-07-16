@@ -14,8 +14,6 @@
 		#warning "Compiling for rone_v6"
 	#elif defined(RONE_V9)
 		#warning "Compiling for rone_v9"
-	#elif define(RONE_V12_TILETRACK)
-		#warning "Compiling for rone_v12_tiletrack"
 	#elif defined(RONE_V12)
 		#warning "Compiling for rone_v12"
 	#elif defined(RONE_IRBEACON)
