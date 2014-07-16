@@ -5,7 +5,6 @@
 #include "SPI_8962.h"
 #include "Gyroscope.h"
 #include "Accelerometer.h"
-#include "Magnetometer.h"
 #include "BumpSensors.h"
 #include "ReflectiveSensors.h"
 #include "RFIDReader.h"
@@ -461,7 +460,6 @@ void main(void) {
 			accelInit();
 			gyroInit();
 			ledInit();
-//			magInit();
 			RFIDInterruptEnable();
 			bumpSensorInit();
 			reflectiveSensorsInit();
