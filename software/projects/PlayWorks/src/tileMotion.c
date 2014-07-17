@@ -165,7 +165,7 @@ void moveStart(TileInfo* tilePtr, char* motion) {
 	motionOdometerStart = encoderGetOdometer();
 	encoderGetPose(&motionPoseStart);
 	magRVController(0, 0, TRUE, FALSE);
-	cprintf("\ntile \"%s\": %s", tilePrint(tilePtr), motion);
+	cprintf("\ntile \"%s\": %s\n", tilePrint(tilePtr), motion);
 }
 
 
@@ -207,9 +207,11 @@ void tileMotionTask(void* parameters) {
 //			break;
 //		}
 		case MOTION_STATE_IDLE: {
+			cprintf("IDLE\n");
+
 			// Idle state waits and takes user motion command inputs
 			// TODO change light pattern
-			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 			portBASE_TYPE val = osQueueReceive(tileMotionMsgQueue, (void *)(&tileMotionMsg), 0);
 			if (val == pdPASS) {
 				/* New message.  Start the tile track motion controller.
@@ -255,6 +257,9 @@ void tileMotionTask(void* parameters) {
 			break;
 		}
 		case MOTION_STATE_FORWARD_TO_EDGE: {
+			cprintf("FORWARD_TO_EDGE\n");
+			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+
 			/* move to the edge of the current tile.  We can't get here unless we have
 			 * a valid tilePtr.  Use odometry to measure distance,
 			 * and use the magnetometer to help center the robot.
@@ -268,17 +273,19 @@ void tileMotionTask(void* parameters) {
 			// Calculate distance to goal
 			if (tileCurrentPtr) {
 				distanceToGoal = tileGetDistanceToCenter(tileCurrentPtr) - distanceTraveled;
-				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+//				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			} else {
 				// use the distance of the smallest tile until we get the tile ID
 				distanceToGoal = TILE_WIDTH_HEX_LARGE - distanceTraveled;
-				ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+//				ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			}
 
 			if (distanceToGoal < 0) {
 				tileCurrentPtr = NULL;
 				moveStart(tileCurrentPtr, "move to center");
-				mode = MOTION_STATE_FORWARD_TO_CENTER;
+				//				mode = MOTION_STATE_FORWARD_TO_CENTER;
+				mode = MOTION_STATE_IDLE;
+				motionDone = TRUE;
 			} else {
 				behOutput.tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTraveled, distanceToGoal, TRUE, FALSE);
 				if (reflectiveGetNumActiveSensors(&direction) > 0) {
@@ -292,7 +299,6 @@ void tileMotionTask(void* parameters) {
 				//if (printNow) cprintf(",%d", distanceToGoal);
 				behOutput.active = TRUE;
 			}
-			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			break;
 		}
 		case MOTION_STATE_FORWARD_TO_CENTER: {
@@ -329,6 +335,7 @@ void tileMotionTask(void* parameters) {
 			break;
 		}
 		case MOTION_STATE_ROTATE: {
+			cprintf("ROTATE\n");
 			Pose pose;
 			encoderGetPose(&pose);
 			int32 angleRotated = abs(smallestAngleDifference(motionPoseStart.theta, pose.theta));
@@ -344,11 +351,12 @@ void tileMotionTask(void* parameters) {
 				//if (printNow) cprintf("%d l=% 6d r=% 6d\n", angle, magGetMagnitudeLeft(), magGetMagnitudeRight());
 				if (tileMotionRotationGoal > 0) {
 					behSetTvRv(&behOutput, 0, rv);
+					ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 				} else {
 					behSetTvRv(&behOutput, 0, -rv);
+					ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 				}
 			}
-			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			break;
 		}
 //		case MOTION_STATE_ROTATE_MAG: {

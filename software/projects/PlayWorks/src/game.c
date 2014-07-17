@@ -35,7 +35,7 @@
 #define GAME_MODE_STORY_TILE		4
 #define GAME_MODE_NAVIGATION		5
 
-#define MAX_NUM_INPUT				20
+#define MAX_NUM_INPUT				10
 
 
 /******** user code ********/
@@ -92,6 +92,12 @@ static void serialCmdTPFunc(char* command) {
 	}
 
 }
+
+
+//static void serialCmdStartFunc(char* command) {
+//
+//}
+
 #else
 /* echo the programmign commands back to the phone */
 static void serialCmdTPFunc(char* command) {
@@ -122,11 +128,15 @@ void behaviorTask(void* parameters) {
 	static uint32 printTime = 0;
 	static uint32 printTimeMem = 0;
 	uint8 gameStatus = GAME_STATUS_CONTINUE;
-	static SerialCmd serialCmdTP;
+	static SerialCmd serialCmdTP, serialCmdStart;
 
 	uint32 i;
-	boolean inputList[MAX_NUM_INPUT]; // Store a list of turn/forward inputs
-	uint8 inputListPtr = 0;
+	uint8 inputList[MAX_NUM_INPUT]; // Store a list of turn/forward inputs
+	uint8 inputListPtr = 0, inputListExecPtr = 0;
+	uint8 numInput = 0;
+
+	// Led start screen
+	ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
 
 	// init the neighbor system.  use a 300ms update
 	neighborsInit(300);
@@ -149,6 +159,9 @@ void behaviorTask(void* parameters) {
 
     // Add a serial command to receive remote control messages from the joysticks
 	serialCommandAdd(&serialCmdTP, "TP", serialCmdTPFunc);
+
+	// Start command after the user finishes inputing commands
+//	serialCommandAdd(&serialCmdStart, "start", serialCmdStartFunc);
 
 
 	// Init inputList
@@ -175,29 +188,42 @@ void behaviorTask(void* parameters) {
 			}
 			break;
 		case GAME_MODE_NAVIGATION:
-			// TODO Change LED to show input mode
+			// TODO Change LED to show input mode (but tileMotion is already doing it)
 			// Enter the sequence of motion commands
 			// TODO add finish command
 			// Check if the input List is full
-			if (inputList[inputListPtr] != TILEMOTION_IDLE) {
-				// TODO inputlist full
-			}
-			if (buttonsGetEdge(BUTTON_RED)) {
-				// Left
-				inputList[inputListPtr] = TILEMOTION_ROTATE_LEFT;
-				inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
-			} else if (buttonsGetEdge(BUTTON_BLUE)) {
-				// Right
-				inputList[inputListPtr] = TILEMOTION_ROTATE_RIGHT;
-				inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
-			} else if (buttonsGetEdge(BUTTON_GREEN)) {
-				// Forward
-				inputList[inputListPtr] = TILEMOTION_FORWARD;
-				inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
+			if (numInput == MAX_NUM_INPUT) {
+//				cprintf("Max input reached, begin executing commands\n");
+				// Send new command to tileMotion task when it is ready
+				if (tileMotionDone() && (inputListExecPtr < MAX_NUM_INPUT)) {
+					tileMotion(inputList[inputListExecPtr]);
+					inputListExecPtr++;
+				}
+			} else {
+				if (buttonsGetEdge(BUTTON_RED)) {
+					// Left
+					cprintf("%d = left\n", numInput);
+					inputList[inputListPtr] = TILEMOTION_ROTATE_LEFT;
+					inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
+					numInput++;
+				} else if (buttonsGetEdge(BUTTON_BLUE)) {
+					// Right
+					cprintf("%d = right\n", numInput);
+					inputList[inputListPtr] = TILEMOTION_ROTATE_RIGHT;
+					inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
+					numInput++;
+				} else if (buttonsGetEdge(BUTTON_GREEN)) {
+					// Forward
+					cprintf("%d = forward\n", numInput);
+					inputList[inputListPtr] = TILEMOTION_FORWARD;
+					inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
+					numInput++;
+				}
 			}
 			break;
 		default:
 			break;
+
 		}
 
 		neighborsPutMutex();
