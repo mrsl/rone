@@ -275,7 +275,7 @@ void radioCommandSetSubnet(uint8 subnet) {
 void radioCommandInit(void) {
 	// Make a thread to process command strings
 	radioCommandSetSubnet(RADIO_COMMAND_DEFAULT_SUBNET);
-	osTaskCreate(radioCommandTask, "radioCommand", 1024, NULL, RADIOCOMMAND_TASK_PRIORITY);
+	osTaskCreate(radioCommandTask, "radioCommand", 2048, NULL, RADIOCOMMAND_TASK_PRIORITY);
 	radioCmdStartPtr = NULL;
 }
 

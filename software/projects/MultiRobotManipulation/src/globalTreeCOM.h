@@ -18,7 +18,7 @@ typedef struct posCOM {
 
 void GlobalTreeCOMListCreate(PosistionCOM* posListPtr);
 void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, PosistionCOM* posListPtr, int Range,  NbrData* LeaderHeading_H, NbrData* LeaderHeading_L);
-void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV);
+void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV, int16 cyliodCOMoffset);
 void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, uint16 distCOM ,int32 maxSpeed, int32 radius, Beh*behOutput);
 //void GlobalTreeCycloidMotrion(uint cycloidTime, int16 COMX, int16 COMY ,int32 maxSpeed, int32 radius, Beh*behOutput);
 int nbrRangeLookUp(uint8 myID, uint8 nbrID);
