@@ -846,7 +846,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			if (robot->aid != -1)
 				textPrintf("AprilTag:%d", robot->aid);
 			else
-				textPrintf("AprilTag :None");
+				textPrintf("AprilTag:None");
 			glTranslatef(0, -TEXT_SMALL, 0);
 			if (robot->subnet != -1)
 				textPrintf("Subnet:%d", robot->subnet);

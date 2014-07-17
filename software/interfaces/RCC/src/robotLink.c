@@ -326,6 +326,9 @@ void commCommander(void *vargp)
 
 	Free(info->hSerial);
 	Free(info);
+
+	_endthread();
+	return;
 }
 
 /**
