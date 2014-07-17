@@ -149,18 +149,13 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
  * @return void
  */
 void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV, int16 cyliodCOMoffset){
-	int32 bearing = atan2MilliRad((int32)COMY,(int32)COMX) - 3141;
+	int32 bearing = atan2MilliRad((int32)COMY,(int32)COMX) - PI;
 	int32 distance = vectorMag((int32)COMY,(int32)COMX);
 	int32 newRv = 0;
 	TV = TV * distance / 100;
 	if(COMX == 0 && COMY == 0){
 		behSetTvRv(BehRotate, 0, 0);
 		return;
-	}
-	if(cyliodCOMoffset){
-		cyliodCOMoffset += PI/2;
-		bearing -= abs(cyliodCOMoffset/4);
-		rprintf("offSet %d B %d \n",cyliodCOMoffset,bearing);
 	}
 
 	if(abs(bearing) > 100){

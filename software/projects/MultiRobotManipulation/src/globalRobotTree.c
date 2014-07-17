@@ -31,6 +31,8 @@
 #define cycloidPeriod					5000
 #define	TOWER_WAIT_TIME					200
 #define	cyldoidSpeed					200
+#define CYCLOID_ROTATION_MOD			0				//Modifies translation speed vs rotational speed in cyliod motion
+														//From 0 to 50, 0 for more translation, 50 for more rotation
 
 
 #define BUILD_TREE		 0
@@ -279,7 +281,7 @@ void behaviorTask(void* parameters) {
 					vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
 					vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
 					vecCOMtoTowerBearing = normalizeAngleMilliRad2(atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY));
-					cylciodModifier = abs(vecCOMtoTowerBearing) * cyldoidSpeed / PI;
+					cylciodModifier = abs(vecCOMtoTowerBearing) * (cyldoidSpeed - CYCLOID_ROTATION_MOD) / PI;
 
 					if((abs(COM_X) >= abs(vecCOMtoTowerX/2)) && (abs(COM_Y) >= abs(vecCOMtoTowerY/2))){
 						COM_X += vecCOMtoTowerX/2;
