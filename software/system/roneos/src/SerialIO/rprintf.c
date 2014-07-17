@@ -44,8 +44,8 @@ static char* rprintfBufferPtr = rprintfBuffer;
 static uint8 rprintfBufferLength = 0;
 
 static char rprintfRadioBuffer[RPRINTF_TEXT_STRING_SIZE];
-static char rprintfRadioBufferPrev[RPRINTF_TEXT_STRING_SIZE];
-static char* rprintfRadioBufferPrevPtr = rprintfRadioBufferPrev;
+static char rprintfRadioBufferSend[RPRINTF_TEXT_STRING_SIZE];
+static char* rprintfRadioBufferSendPtr = rprintfRadioBufferSend;
 static char* rprintfRadioBufferPtr = rprintfRadioBuffer;
 static boolean rprintfRadioBufferDataReady = FALSE;
 static boolean rprintfBufferCallbackLock = FALSE;
@@ -85,22 +85,24 @@ void rprintf(char *format, ...) {
 	int32 potentialChars;
 	char* charPtr;
 	if (rprintfOSInit) {
-		// wait until the callback function clears the flag, or the buffer times out
-		if (rprintfBufferCallbackLock) {
-			if (osTaskGetTickCount() > (rprintfRemoteRequestTime + RPRINTF_HOST_RESPONSE_TIMEOUT)) {
-				// the previous radio request has timed out.  release the buffer lock
-				rprintfBufferCallbackLock = FALSE;
-			} else {
-				// wait a bit for the callback function to release the lock
-				osTaskDelay(1);
-			}
-		}
+//		// wait until the callback function clears the flag, or the buffer times out
+//		if (rprintfBufferCallbackLock) {
+//			if (osTaskGetTickCount() > (rprintfRemoteRequestTime + RPRINTF_HOST_RESPONSE_TIMEOUT)) {
+//				// the previous radio request has timed out.  release the buffer lock
+//				rprintfBufferCallbackLock = FALSE;
+//			} else {
+//				// wait a bit for the callback function to release the lock
+//				osTaskDelay(1);
+//			}
+//		}
+		// Not needed since we are now double buffered
 
-		// get the mutex to write to the rptintf flags and buffer
+		// get the mutex to write to the rprintf flags and buffer
 		osSemaphoreTake(rprintfMutex, portMAX_DELAY);
 
 		// since we are writing new data, the buffer is not ready to be accessed by the rprintf thread
-		rprintfRadioBufferDataReady = FALSE;
+		// rprintfRadioBufferDataReady = FALSE;
+		// Not needed since we are now double buffered
 
 		/* Process the input string and store the output in the 'outStringFormatted' */
 		/* note that vsnprintf returns the number of characters that would have been
@@ -352,7 +354,8 @@ static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	// If the buffer is ready, determine the length of the message.
 	if (rprintfRadioBufferDataReady) {
 		length = strlen(rprintfRadioBuffer);
-		rprintfBufferCallbackLock = TRUE;
+		strncpy(rprintfRadioBufferSend, rprintfRadioBuffer, length);
+		//rprintfBufferCallbackLock = TRUE;
 		rprintfRadioBufferDataReady = FALSE;
 		//Robot is being asked if it has a message
 		//cprintf("*");
@@ -371,7 +374,7 @@ static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	if (packetNumMax == 0) {
 		// You have nothing new to transmit. Send an ack back to the host.
 		radioCommandXmit(&radioCmdRprintfRemoteToHost, ROBOT_ID_ALL, &radioResponseMsg);
-		rprintfBufferCallbackLock = FALSE;
+		//rprintfBufferCallbackLock = FALSE;
 	}
 
 	// Transmit the message.
@@ -385,7 +388,8 @@ static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 			for (packetIdx = 0; packetIdx < RPRINTF_MSG_DATA_PAYLOAD_LENGTH;
 					packetIdx++) {
 				if (msgIdx < RPRINTF_TEXT_STRING_SIZE) {
-					c = rprintfRadioBuffer[msgIdx++];
+					//c = rprintfRadioBuffer[msgIdx++];
+					c = rprintfRadioBufferSend[msgIdx++];
 				} else {
 					c = 0;
 				}
