@@ -5,7 +5,6 @@
 #include "SPI_8962.h"
 #include "Gyroscope.h"
 #include "Accelerometer.h"
-#include "Magnetometer.h"
 #include "BumpSensors.h"
 #include "ReflectiveSensors.h"
 #include "RFIDReader.h"
@@ -336,21 +335,21 @@ void main(void) {
 	
 	//Initalize the power controller module	
 	resetInit();
-//	ADC10Init();
+	ADC10Init();
 
 #ifdef RONE_V12
-//	ftdiResetInit();
-//	ledResetInit();
-//	motSleepInit();
-//	chargeLimitInit();
+	ftdiResetInit();
+	ledResetInit();
+	motSleepInit();
+	chargeLimitInit();
 #endif
+	// Tiletrack functions
 	reflectiveSensorsInit();
 	RFIDReaderInit();
 
 	powerButtonInit();
 	powerEnInit();
-//	powerUSBInit();
-	
+	powerUSBInit();
 #ifdef RONE_V11
 	ir_beacon_init();
 #endif
@@ -359,6 +358,7 @@ void main(void) {
 		//Pet the watchdog so that we don't get reset
 		watchdogPet();
 		
+		// Power-off: Disable all modules and go to LPM4 until woken up by power button press
 		if (powerOffRequest) {
 			// clear the flag
 			powerOffRequest = FALSE;
@@ -368,28 +368,28 @@ void main(void) {
 			irBeaconDisable();
 #endif
 			RFIDInterruptDisable();
-			reflectiveSensorPowerDisble();
+			reflectiveSensorPowerDisable();
 			watchdogPet();
 			watchdogDisable();
-//			timerDisable();
+			timerDisable();
 			SPI8962Shutdown();
-//			I2CShutdown();
-//			ADC10Shutdown();
+			I2CShutdown();
+			ADC10Shutdown();
 			
 			// wait for I2C to finish
-//			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
+			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
 			
 			// reset the robot and shut down the main supply
 			resetSet(TRUE);
 			#ifdef RONE_V12
-//				ftdiResetSet(TRUE);
-//				ledResetSet(TRUE);
-//				motSleepSet(TRUE);
-//				chargeLimitSet(FALSE);
+				ftdiResetSet(TRUE);
+				ledResetSet(TRUE);
+				motSleepSet(TRUE);
+				chargeLimitSet(FALSE);
 			#endif
 			//msp430SetRobotMode(MSP430_MODE_PYTHON);
-//			powerUSBSetEnable(FALSE); // Turn off the USB Power Sense Line comparator
-//			powerEnSet(FALSE);
+			powerUSBSetEnable(FALSE); // Turn off the USB Power Sense Line comparator
+			powerEnSet(FALSE);
 			for (i = 0; i < POWER_OFF_DELAY; ++i) {}
 
 			// enable power button interrupt
@@ -407,7 +407,7 @@ void main(void) {
 			}
 		}
 					
-		// check for a power-on reset
+		// Power-on/reset and initialize all components
 		if (powerOnReset) {
 			// disable interrupts
 			__bic_SR_register(GIE);
@@ -418,21 +418,21 @@ void main(void) {
 			airplaneMode = FALSE;	
 			
 			#ifdef RONE_V12
-				// set Charge Limit to high to force initial charge at 500mA
-//				chargeLimitSet(TRUE);
+				// Set Charge Limit to high to force initial charge at 500mA
+				chargeLimitSet(TRUE);
 			#endif
 			
 			// Turn on the USB Power Sense Line comparator
-//			powerUSBSetEnable(TRUE);
+			powerUSBSetEnable(TRUE);
 			
-			//turn on the main power supply and wait for it to stabilize
+			// Turn on the main power supply and wait for it to stabilize
 			powerEnSet(TRUE);
 			for (i = 0; i < POWER_ON_DELAY; i++) {}
 
 			// Initialize i/o and timer
-//			I2CInit();
+			I2CInit();
 			SPI8962Init();
-//			timerInit();
+			timerInit();
 
 			//Start the watchdog back up
 			watchdogInit();
@@ -443,26 +443,28 @@ void main(void) {
 			// take the 8962 out of reset
 			resetSet(FALSE);
 			#ifdef RONE_V12
-//				ftdiResetSet(FALSE);
-//				ledResetSet(FALSE);
-//				motSleepSet(FALSE);
+				ftdiResetSet(FALSE);
+				ledResetSet(FALSE);
+				motSleepSet(FALSE);
 			#endif
 			
 			airplaneStartTicks = 0;
 
 			// wait for I2C to finish
-//			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
+			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
+
+			ADC10Init();
+			powerVBatInit();
 
 			// init the on-chip I/O
-//			accelInit();
-//			gyroInit();
-//			ledInit();
-//			magInit();
-//			reflectiveSensorPowerEnable();
-//			RFIDInterruptEnable();
-//			bumpSensorInit();
-//			ADC10Init();
-			powerVBatInit();
+			accelInit();
+			gyroInit();
+			ledInit();
+			RFIDInterruptEnable();
+			bumpSensorInit();
+			reflectiveSensorsInit();
+
+
 			/*#ifdef RONE_V12
 				Usb5vSenseInit();
 			#endif*/
@@ -480,35 +482,35 @@ void main(void) {
 		if (!powerButtonLEDOveride) {
 			//TODO: RFID debug
 #ifndef RFID_DEBUG
-//			msp430CheckAndUpdate();
+			msp430CheckAndUpdate();
 #endif
-//			if (systemLEDRampBrightness != systemLEDRampBrightnessOld) {
-//				if (systemLEDRampBrightness >= 0) {
-//					blinkyLEDSet(systemLEDRampBrightness);
-//				} else {
-//					blinkyLEDSet(0);
-//				}
-//				systemLEDRampBrightnessOld = systemLEDRampBrightness;
-//			}
+			if (systemLEDRampBrightness != systemLEDRampBrightnessOld) {
+				if (systemLEDRampBrightness >= 0) {
+					blinkyLEDSet(systemLEDRampBrightness);
+				} else {
+					blinkyLEDSet(0);
+				}
+				systemLEDRampBrightnessOld = systemLEDRampBrightness;
+			}
 		}
 
-		// Update the VBAT value and the USB 5V Line ADC (V-12 Only)
-//		if (timerADCUpdate == 0) {
-//			// Disable almost all of the interrupts so that these are atomic
-//			__bic_SR_register(GIE);
-//			watchdogDisable();
-//
-//			// Update the values
-//			powerVBatReadADC();
-//			/*#ifdef RONE_V12
-//				Usb5vReadADC();
-//			#endif*/
-//			timerADCUpdate = TIMER_ADC_PERIOD;
-//
-//			// Re-enable inturupts
-//			__bis_SR_register(GIE);
-//			watchdogInit();
-//		}
+		// Update the VBAT value and the USB 5V Line ADC (V12 Only)
+		if (timerADCUpdate == 0) {
+			// Disable almost all of the interrupts so that these are atomic
+			__bic_SR_register(GIE);
+			watchdogDisable();
+
+			// Update the values
+			powerVBatReadADC();
+			/*#ifdef RONE_V12
+				Usb5vReadADC();
+			#endif*/
+			timerADCUpdate = TIMER_ADC_PERIOD;
+
+			// Re-enable inturupts
+			__bis_SR_register(GIE);
+			watchdogInit();
+		}
 		/*
 		#ifdef RONE_V12
 			if(powerEnGet()){
@@ -522,138 +524,138 @@ void main(void) {
 		
 		//TODO RFID debug
 //#ifndef RFID_DEBUG
-//		// check for a power off request
-//		currentTicks = systemTicks();
-// 		if (powerButtonGetValue()) {
-//			if (powerButtonFSMState == 1) { //Reset Mode
-//				powerButtonLEDOveride = FALSE;
-//				// power button is depressed and the state is still in reset
-//				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_OFF) {
-//					// it was held long enough to turn off - display the battery and time-to-airplane
-//					powerButtonFSMState = 2;
-//					powerButtonLEDOveride = TRUE;
-//					batteryLEDFadeIn = 0;
-//					//Turn off the system LED so that it is not left stuck on
-//					blinkyLEDSet(0);
-//				}
-//			}
-//			else if (powerButtonFSMState == 2) { //Off mode
-//				powerButtonLEDOveride = TRUE;
-//				//Display the time until airplane on lights in addition to
-//				//the battery meter in this mode
-//				setAllLEDData(powerButtonLEDOverideData, 0);
-//				setBatteryLEDData(powerButtonLEDOverideData);
-//				setTimeToAirplaneLEDData(powerButtonLEDOverideData, POWER_BUTTON_HOLD_DELAY_AIRPLANE - timerDiff(powerButtonStartTicks, currentTicks));
-//
-//				ledUpdate(powerButtonLEDOverideData);
-//				ledTimeoutReset();
-//
-//				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_AIRPLANE) {
-//					// It was held long enough to go into airplane mode - turn the robot off
-//					// and put the rone in airplane mode
-//					powerButtonFSMState = 3;
-//					powerOffRequest = TRUE;
-//					airplaneMode = TRUE;
-//					powerButtonFSMState = 0; //idle again
-//					powerButtonLEDOveride = TRUE;
-//				}
-//			}
-//			else if (powerButtonFSMState == 3) {
-//				//This shoudln't happen, because the robot should be off
-//				powerButtonLEDOveride = TRUE;
-//				//turn off all the lights in preparation for airplane mode
-//				ledSetAll(0);
-//			} else {
-//				// power button is first pressed.  record the ticks
-//				powerButtonStartTicks = currentTicks;
-//				powerButtonFSMState = 1;
-//				powerButtonLEDOveride = FALSE;
-//			}
-//		} else {
-//			//Release the overide on the LEDs
-//			powerButtonLEDOveride = FALSE;
-//
-//			if (powerButtonFSMState == 1) {
-//				//debounce
-//				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_RESET) {
-//					// the power button is released after a short delay - reset the rone
-//					resetSet(TRUE);
-//					#ifdef RONE_V12
-//						if(resetFTDIWithButton){
-//							ftdiResetSet(TRUE);
-//						}
-//						ledResetSet(TRUE);
-//						motSleepSet(TRUE);
-//					#endif
-//					//msp430SetRobotMode(MSP430_MODE_PYTHON);
-//					for (i = 0; i < RESET_DELAY; i++) {}
-//				    resetSet(FALSE);
-//				    #ifdef RONE_V12
-//						if(resetFTDIWithButton){
-//							ftdiResetSet(FALSE);
-//						}
-//						ledResetSet(FALSE);
-//						motSleepSet(FALSE);
-//					#endif
-//					//for (i = 0; i < RESET_DELAY; i++) {}
-//					ledInit();
-//					powerButtonFSMState = 0; //idle again
-//				}
-//			}
-//			else if (powerButtonFSMState == 2){
-//				// The power button was released while in the off state - turn the robot off
-//				// Do not put the rone in airplane mode
-//				powerOffRequest = TRUE;
-//				airplaneMode = FALSE;
-//				powerButtonFSMState = 0; //idle again
-//			}
-//		}
-//
-//		//Turn off the robot as soon as possible if the VBat drops below a threshold
-//		if(powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD){
-//			if(!powerUSBGetState()) {
-//				resetSet(TRUE);
-//				#ifdef RONE_V12
-//					ftdiResetSet(TRUE);
-//					motSleepSet(TRUE);
-//				#endif
-//
-//				// Turn the robot off officially this time
-//				powerOffRequest = TRUE;
-//				airplaneMode = FALSE;
-//
-//				// Go into airplane mode if the battery is beyond dead
-//				if(powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)){
-//					airplaneMode = TRUE;
-//				}
-//
-//				// Disable some interupts
-//				watchdogPet();
-//				watchdogDisable();
-//
-//				// Make sure the LED's don't turn off
-//				ledTimeoutReset();
-//
-//				// Turn off the bliky led so it isn't stuck on
-//				blinkyLEDSet(0);
-//
-//				// Blink the red light 3 times so that the user knows there is no battery
-//				uint8 blinkCount;
-//				setAllLEDData(powerButtonLEDOverideData, 0);
-//				for (blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
-//					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
-//					ledUpdate(powerButtonLEDOverideData);
-//
-//					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
-//
-//					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
-//					ledUpdate(powerButtonLEDOverideData);
-//
-//					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
-//				}
-//				watchdogEnable();
-//			}
-//		}
+		// check for a power off request
+		currentTicks = systemTicks();
+ 		if (powerButtonGetValue()) {
+			if (powerButtonFSMState == 1) { //Reset Mode
+				powerButtonLEDOveride = FALSE;
+				// power button is depressed and the state is still in reset
+				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_OFF) {
+					// it was held long enough to turn off - display the battery and time-to-airplane
+					powerButtonFSMState = 2;
+					powerButtonLEDOveride = TRUE;
+					batteryLEDFadeIn = 0;
+					//Turn off the system LED so that it is not left stuck on
+					blinkyLEDSet(0);
+				}
+			}
+			else if (powerButtonFSMState == 2) { //Off mode
+				powerButtonLEDOveride = TRUE;
+				//Display the time until airplane on lights in addition to
+				//the battery meter in this mode
+				setAllLEDData(powerButtonLEDOverideData, 0);
+				setBatteryLEDData(powerButtonLEDOverideData);
+				setTimeToAirplaneLEDData(powerButtonLEDOverideData, POWER_BUTTON_HOLD_DELAY_AIRPLANE - timerDiff(powerButtonStartTicks, currentTicks));
+
+				ledUpdate(powerButtonLEDOverideData);
+				ledTimeoutReset();
+
+				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_AIRPLANE) {
+					// It was held long enough to go into airplane mode - turn the robot off
+					// and put the rone in airplane mode
+					powerButtonFSMState = 3;
+					powerOffRequest = TRUE;
+					airplaneMode = TRUE;
+					powerButtonFSMState = 0; //idle again
+					powerButtonLEDOveride = TRUE;
+				}
+			}
+			else if (powerButtonFSMState == 3) {
+				//This shoudln't happen, because the robot should be off
+				powerButtonLEDOveride = TRUE;
+				//turn off all the lights in preparation for airplane mode
+				ledSetAll(0);
+			} else {
+				// power button is first pressed.  record the ticks
+				powerButtonStartTicks = currentTicks;
+				powerButtonFSMState = 1;
+				powerButtonLEDOveride = FALSE;
+			}
+		} else {
+			//Release the overide on the LEDs
+			powerButtonLEDOveride = FALSE;
+
+			if (powerButtonFSMState == 1) {
+				//debounce
+				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_RESET) {
+					// the power button is released after a short delay - reset the rone
+					resetSet(TRUE);
+					#ifdef RONE_V12
+						if (resetFTDIWithButton) {
+							ftdiResetSet(TRUE);
+						}
+						ledResetSet(TRUE);
+						motSleepSet(TRUE);
+					#endif
+					//msp430SetRobotMode(MSP430_MODE_PYTHON);
+					for (i = 0; i < RESET_DELAY; i++) {}
+				    resetSet(FALSE);
+				    #ifdef RONE_V12
+						if (resetFTDIWithButton) {
+							ftdiResetSet(FALSE);
+						}
+						ledResetSet(FALSE);
+						motSleepSet(FALSE);
+					#endif
+					//for (i = 0; i < RESET_DELAY; i++) {}
+					ledInit();
+					powerButtonFSMState = 0; //idle again
+				}
+			}
+			else if (powerButtonFSMState == 2){
+				// The power button was released while in the off state - turn the robot off
+				// Do not put the rone in airplane mode
+				powerOffRequest = TRUE;
+				airplaneMode = FALSE;
+				powerButtonFSMState = 0; //idle again
+			}
+		}
+
+		//Turn off the robot as soon as possible if the VBat drops below a threshold
+		if (powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD) {
+			if(!powerUSBGetState()) {
+				resetSet(TRUE);
+				#ifdef RONE_V12
+					ftdiResetSet(TRUE);
+					motSleepSet(TRUE);
+				#endif
+
+				// Turn the robot off officially this time
+				powerOffRequest = TRUE;
+				airplaneMode = FALSE;
+
+				// Go into airplane mode if the battery is beyond dead
+				if (powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
+					airplaneMode = TRUE;
+				}
+
+				// Disable some interupts
+				watchdogPet();
+				watchdogDisable();
+
+				// Make sure the LED's don't turn off
+				ledTimeoutReset();
+
+				// Turn off the bliky led so it isn't stuck on
+				blinkyLEDSet(0);
+
+				// Blink the red light 3 times so that the user knows there is no battery
+				uint8 blinkCount;
+				setAllLEDData(powerButtonLEDOverideData, 0);
+				for (blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
+					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
+					ledUpdate(powerButtonLEDOverideData);
+
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
+
+					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
+					ledUpdate(powerButtonLEDOverideData);
+
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
+				}
+				watchdogEnable();
+			}
+		}
 //#endif
 	} // while
 }
@@ -738,6 +740,7 @@ __interrupt void Timer_A0 (void)
 //SPI and I2C RX interrupt vector handler
 #pragma vector=USCIAB0RX_VECTOR
 __interrupt void USCI0RX_ISR(void) {
+	// SPI CPU board ISR
 	if(IFG2 & UCA0RXIFG) {
 		SPI8962RX_ISR();
 	}
@@ -749,12 +752,13 @@ __interrupt void USCI0RX_ISR(void) {
 	}
 }
 
+
 /* Handle the Port2 Interrupts */
-//#pragma vector = PORT2_VECTOR
-//__interrupt void port2Interupt(void) {
-////#ifdef RONE_V12_TILETRACK
-////	if (RFID_PORT_IFLG & RFID_INTERUPT_BITS) {
-////		RFIDReaderInterupt();
-////	}
-////#endif
-//}
+#pragma vector = PORT2_VECTOR
+__interrupt void port2Interupt(void) {
+#ifdef RONE_V12_TILETRACK
+	if (RFID_PORT_IFLG & RFID_INTERUPT_BITS) {
+		RFIDReaderInterupt();
+	}
+#endif
+}

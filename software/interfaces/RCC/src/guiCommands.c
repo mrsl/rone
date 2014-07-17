@@ -165,8 +165,10 @@ void blacklist(int robotID)
 		}
 	} else {
 		robots[robotID].blacklisted = 1;
-		if (robots[robotID].hSerial != NULL)
+		if (robots[robotID].hSerial != NULL) {
 			CloseHandle(*robots[robotID].hSerial);
+			robots[robotID].hSerial = NULL;
+		}
 	}
 }
 

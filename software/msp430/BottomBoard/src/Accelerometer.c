@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <msp430f2132.h>
 
-#ifndef RONE_V12_TILETRACK
-
 #include "typedefs.h"
 #include "I2C.h"
 #include "Accelerometer.h"
@@ -43,6 +41,3 @@ uint16 accelGetData(uint8 addr) {
 		return 0;
 	}
 }
-
-
-#endif //#ifndef RONE_V12_TILETRACK
