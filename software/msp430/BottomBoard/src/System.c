@@ -752,7 +752,6 @@ __interrupt void USCI0RX_ISR(void) {
 	}
 }
 
-
 /* Handle the Port2 Interrupts */
 #pragma vector = PORT2_VECTOR
 __interrupt void port2Interupt(void) {
