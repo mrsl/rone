@@ -69,6 +69,7 @@
 #include "../src/Sensors/light_sensor.h"
 #include "../src/Sensors/accelerometer.h"
 #include "../src/Sensors/bump_sensor.h"
+#include "../src/Sensors/reflective_sensors.h"
 
 #include "../src/SerialIO/serial.h"
 #include "../src/SerialIO/cprintf.h"

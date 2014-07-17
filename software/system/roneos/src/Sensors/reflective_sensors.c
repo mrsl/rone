@@ -11,9 +11,8 @@
 
 #include "roneos.h"
 
-#define NUM_REFLECTIVE_PORTS 	5
-
 uint8 reflectiveValues[NUM_REFLECTIVE_PORTS];
+
 
 /*
  * @brief Updates reflective values received from tiletrack bottomboard.
@@ -27,6 +26,7 @@ void reflectiveSensorsUpdate(uint8 msgIn[]) {
 		reflectiveValues[i] = msgIn[i];
 	}
 }
+
 
 /*
  * @brief Return the raw light sensor values normalized to uint8 range.

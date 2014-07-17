@@ -45,4 +45,5 @@ int32 gyroGetValue(uint32 axis);
  */
 void gyroUpdate(uint8 msgIn[]);
 
+
 #endif /* GYRO_H_ */

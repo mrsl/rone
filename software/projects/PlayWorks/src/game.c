@@ -33,6 +33,9 @@
 #define GAME_MODE_MATH_TILE			2
 #define GAME_MODE_STORY_PROGRAM		3
 #define GAME_MODE_STORY_TILE		4
+#define GAME_MODE_NAVIGATION		5
+
+#define MAX_NUM_INPUT				20
 
 
 /******** user code ********/
@@ -111,7 +114,7 @@ static void serialCmdTPFunc(char* command) {
 
 
 
-// behaviors run every 50ms.  They should be designed to be short, and terminate quickly.
+// behaviors run every 50ms (?).  They should be designed to be short, and terminate quickly.
 // they are used for robot control.
 void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
@@ -121,24 +124,37 @@ void behaviorTask(void* parameters) {
 	uint8 gameStatus = GAME_STATUS_CONTINUE;
 	static SerialCmd serialCmdTP;
 
+	uint32 i;
+	boolean inputList[MAX_NUM_INPUT]; // Store a list of turn/forward inputs
+	uint8 inputListPtr = 0;
+
 	// init the neighbor system.  use a 300ms update
 	neighborsInit(300);
 
 	// init the magnetometers
+	// TODO remove
     magInit();
 
-    // init the tile motion controller
+    // Init the reflective sensors
+    //TODO small delay
+
+    // Create tileMotion task
     tileMotionInit();
 
-    // init the sound task
+    // Create sound task
     playworksSoundInit();
 
     // setup cprintf to send only a newline
     //cprintfCRLFMode(CPRINTF_CRLF_LF);
 
-    // add a serial command to receive remote control messages from the joysticks
+    // Add a serial command to receive remote control messages from the joysticks
 	serialCommandAdd(&serialCmdTP, "TP", serialCmdTPFunc);
 
+
+	// Init inputList
+	for (i = 0; i < MAX_NUM_INPUT; i++) {
+		inputList[i] = TILEMOTION_IDLE;
+	}
 
 	while (TRUE) {
 		neighborsGetMutex();
@@ -151,14 +167,40 @@ void behaviorTask(void* parameters) {
 		}
 
 		switch (gameMode) {
-		case GAME_MODE_IDLE: {
+		case GAME_MODE_IDLE:
+			// Select game mode: RED = NAVI.
+			if (buttonsGetEdge(BUTTON_RED)) {
+				cprintf("Game mode = Navigation\n");
+				gameMode = GAME_MODE_NAVIGATION;
+			}
 			break;
-		}
+		case GAME_MODE_NAVIGATION:
+			// TODO Change LED to show input mode
+			// Enter the sequence of motion commands
+			// TODO add finish command
+			// Check if the input List is full
+			if (inputList[inputListPtr] != TILEMOTION_IDLE) {
+				// TODO inputlist full
+			}
+			if (buttonsGetEdge(BUTTON_RED)) {
+				// Left
+				inputList[inputListPtr] = TILEMOTION_ROTATE_LEFT;
+				inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
+			} else if (buttonsGetEdge(BUTTON_BLUE)) {
+				// Right
+				inputList[inputListPtr] = TILEMOTION_ROTATE_RIGHT;
+				inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
+			} else if (buttonsGetEdge(BUTTON_GREEN)) {
+				// Forward
+				inputList[inputListPtr] = TILEMOTION_FORWARD;
+				inputListPtr = (inputListPtr + 1) % MAX_NUM_INPUT;
+			}
+			break;
+		default:
+			break;
 		}
 
 		neighborsPutMutex();
-
-
 
 		osTaskDelayUntil(&lastWakeTime, 20);
 	}

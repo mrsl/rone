@@ -13,6 +13,7 @@
 #include "ronelib.h"
 #include "playworks.h"
 
+// Tile to tile forward movement state
 #define MOTION_STATE_IDLE					0
 #define MOTION_STATE_FORWARD_TO_CENTER		1
 #define MOTION_STATE_ROTATE					2
@@ -54,6 +55,7 @@
 #define ITERM_MAX					1200
 
 #define PRINT_TIME	200
+
 
 static uint32 motionOdometerStart;
 static Pose motionPoseStart;
@@ -171,6 +173,7 @@ TileInfo* tileMotionReadTile (void) {
 	static TileInfo* tileOldPtr = NULL;
 
 	TileInfo* tileTempPtr = tileReadSensor();
+	// Detected new tile and it's not the last tile
 	if ((tileTempPtr) && (tileTempPtr != tileOldPtr)) {
 		tileCurrentPtr = tileTempPtr;
 		tileOldPtr = tileCurrentPtr;
@@ -182,6 +185,7 @@ TileInfo* tileMotionReadTile (void) {
 
 
 void tileMotionTask(void* parameters) {
+	uint8 tileMotionMsg;
 	uint32 lastWakeTime = osTaskGetTickCount();
 	Beh behOutput;
 	uint32 printTime = 0;
@@ -194,18 +198,19 @@ void tileMotionTask(void* parameters) {
 		boolean printNow = printTimer(&printTime, PRINT_TIME);
 
 		switch (mode) {
-		case MOTION_STATE_TEST_MAG_CENTER: {
-			if (printNow) cprintf("tileID=% 3d ", bumpSensorsGetBits());
-			//int32 rv = magRVController(MAG_TRANSLATE_KP, MAG_TRANSLATE_KI, FALSE, printNow);
-			int32 rv = magThreeAxisController(MAG_ROTATE_TA_KP, MAG_ROTATE_TA_KI, FALSE, printNow);
-			behSetTvRv(&behOutput, 0, rv);
-			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
-			break;
-		}
+//		case MOTION_STATE_TEST_MAG_CENTER: {
+//			if (printNow) cprintf("tileID=% 3d ", bumpSensorsGetBits());
+//			//int32 rv = magRVController(MAG_TRANSLATE_KP, MAG_TRANSLATE_KI, FALSE, printNow);
+//			int32 rv = magThreeAxisController(MAG_ROTATE_TA_KP, MAG_ROTATE_TA_KI, FALSE, printNow);
+//			behSetTvRv(&behOutput, 0, rv);
+//			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+//			break;
+//		}
 		case MOTION_STATE_IDLE: {
+			// Idle state waits and takes user motion command inputs
+			// TODO change light pattern
 			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
-			uint8 tileMotionMsg;
-			portBASE_TYPE val = osQueueReceive(tileMotionMsgQueue, (void*)(&tileMotionMsg), 0);
+			portBASE_TYPE val = osQueueReceive(tileMotionMsgQueue, (void *)(&tileMotionMsg), 0);
 			if (val == pdPASS) {
 				/* New message.  Start the tile track motion controller.
 				 * IF we don't have a tile, just do dead reckoning.
@@ -243,9 +248,10 @@ void tileMotionTask(void* parameters) {
 					break;
 				}
 			}
-			if (buttonsGetEdge(BUTTON_GREEN)) {
-				mode = MOTION_STATE_TEST_MAG_CENTER;
-			}
+			/* Check of the button is pressed (low to high transition) */
+//			if (buttonsGetEdge(BUTTON_GREEN)) {
+//				mode = MOTION_STATE_TEST_MAG_CENTER;
+//			}
 			break;
 		}
 		case MOTION_STATE_FORWARD_TO_EDGE: {
@@ -253,25 +259,38 @@ void tileMotionTask(void* parameters) {
 			 * a valid tilePtr.  Use odometry to measure distance,
 			 * and use the magnetometer to help center the robot.
 			 */
-			int32 distanceTravelled = encoderGetOdometer() - motionOdometerStart;
+			int32 distanceTraveled = encoderGetOdometer() - motionOdometerStart;
 			int32 distanceToGoal;
+			uint32 tv, rv;
+			int8 direction;
+
+			// TODO new way to calculate distance to goal using line sensor
+			// Calculate distance to goal
 			if (tileCurrentPtr) {
-				distanceToGoal = tileGetDistanceToCenter(tileCurrentPtr) - distanceTravelled;
+				distanceToGoal = tileGetDistanceToCenter(tileCurrentPtr) - distanceTraveled;
 				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			} else {
 				// use the distance of the smallest tile until we get the tile ID
-				distanceToGoal = TILE_WIDTH_HEX_LARGE - distanceTravelled;
+				distanceToGoal = TILE_WIDTH_HEX_LARGE - distanceTraveled;
 				ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			}
-			int32 tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTravelled, distanceToGoal, TRUE, FALSE);
-			int32 rv = magRVController(MAG_TRANSLATE_KP, MAG_TRANSLATE_KI, FALSE, printNow);
+
 			if (distanceToGoal < 0) {
 				tileCurrentPtr = NULL;
 				moveStart(tileCurrentPtr, "move to center");
 				mode = MOTION_STATE_FORWARD_TO_CENTER;
 			} else {
+				behOutput.tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTraveled, distanceToGoal, TRUE, FALSE);
+				if (reflectiveGetNumActiveSensors(&direction) > 0) {
+					// Online, apply rv adjustment to center robot
+					// TODO tweak gain
+					rvBearingController(&behOutput, REFLECTIVE_SENSOR_SEPARATION * direction, 50);
+				} else {
+					// No line detected
+					behOutput.rv = 0;
+				}
 				//if (printNow) cprintf(",%d", distanceToGoal);
-				behSetTvRv(&behOutput, tv, 0);
+				behOutput.active = TRUE;
 			}
 			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			break;
@@ -332,25 +351,27 @@ void tileMotionTask(void* parameters) {
 			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			break;
 		}
-		case MOTION_STATE_ROTATE_MAG: {
-			int32 rv = magRVController(MAG_ROTATE_KP, MAG_ROTATE_KI, FALSE, printNow);
-			if (abs(rv) < MAGNETOMETER_RV_THRESHOLD) {
-				//TODO also use the magnetometer to center the robot on the tile.
-				moveStart(tileCurrentPtr, "move to edge");
-				mode = MOTION_STATE_FORWARD_TO_EDGE;
-			} else {
-				behSetTvRv(&behOutput, 0, rv);
-			}
-			ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
-			break;
-		}
+//		case MOTION_STATE_ROTATE_MAG: {
+//			int32 rv = magRVController(MAG_ROTATE_KP, MAG_ROTATE_KI, FALSE, printNow);
+//			if (abs(rv) < MAGNETOMETER_RV_THRESHOLD) {
+//				//TODO also use the magnetometer to center the robot on the tile.
+//				moveStart(tileCurrentPtr, "move to edge");
+//				mode = MOTION_STATE_FORWARD_TO_EDGE;
+//			} else {
+//				behSetTvRv(&behOutput, 0, rv);
+//			}
+//			ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+//			break;
+//		}
 		}
 
+		// Apply motion
 		motorSetBeh(&behOutput);
 
 		osTaskDelayUntil(&lastWakeTime, 10);
 	}
 }
+
 
 void tileMotionInit(void) {
     //init the tile motion task

@@ -1,5 +1,5 @@
 /*
- * @file reflective_sensors.c
+ * @file reflective_sensors.h
  * @brief interface functions for reflective sensors in tiletrack robots
  * @since July 15, 2014
  * @author William Xie
@@ -7,7 +7,10 @@
 #ifndef REFLECTIVE_SENSORS_H_
 #define REFLECTIVE_SENSORS_H_
 
+#define NUM_REFLECTIVE_PORTS				5
 
+// 8 degrees separation between reflective sensors (140 mrad)
+#define REFLECTIVE_SENSOR_SEPARATION		140
 /**
  * @brief Updates reflective values received from tiletrack bottomboard.
  *
