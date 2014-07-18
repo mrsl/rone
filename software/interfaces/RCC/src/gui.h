@@ -109,6 +109,7 @@
 #define HELP_BUTTON			1010
 #define INFO_BUTTON			1011
 #define TIME_BUTTON			1012
+#define LOGST_BUTTON		1013
 
 #define APRILTAG_GRID		1501
 

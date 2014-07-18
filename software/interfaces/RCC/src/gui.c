@@ -148,6 +148,10 @@ void readChar(char character)
 			openRemoteConnections();
 			return;
 		}
+		case (19): {
+			logging = (logging) ? 0 : 1;
+			return;
+		}
 		case (20): {
 			timestamps = (timestamps) ? 0 : 1;
 			return;
@@ -330,6 +334,10 @@ void processHits(GLint hits, GLuint buffer[])
 		}
 		case (TIME_BUTTON): {
 			timestamps = (timestamps) ? 0 : 1;
+			continue;
+		}
+		case (LOGST_BUTTON): {
+			logging = (logging) ? 0 : 1;
 			continue;
 		}
 		default: {
@@ -816,7 +824,10 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glTranslatef(0, -0.3, 0);
-			glColor3fv(color_black);
+			if (logging)
+				glColor3fv(color_red);
+			else
+				glColor3fv(color_black);
 			textSetSize(TEXT_MED);
 			textPrintf("L", robot->aid);
 		glPopMatrix();
@@ -1084,7 +1095,10 @@ void drawAprilTags(GLenum mode)
 						glCallList(LIST_SQUARE);
 					glPopMatrix();
 					glTranslatef(0, -0.2, 0);
-					glColor3fv(color_black);
+					if (logging)
+						glColor3fv(color_red);
+					else
+						glColor3fv(color_black);
 					textSetSize(TEXT_SMALL);
 					textSetAlignment(ALIGN_CENTER);
 					textPrintf("L");
@@ -1315,7 +1329,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("IN");
 
-		glTranslatef(0, -2.5, 0);
+		glTranslatef(0, -1.6, 0);
 
 		/* TS Button */
 		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
@@ -1331,6 +1345,21 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_black);
 		textSetSize(TEXT_LARGE);
 		textPrintf("TS");
+
+		/* LS Button */
+		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(LOGST_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (logging)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("LS");
 
 		/* OL Button */
 		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
@@ -1368,7 +1397,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("KO");
 
-		glTranslatef(0, -2.5, 0);
+		glTranslatef(0, -1.6, 0);
 
 		/* ? Button */
 		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
@@ -1506,13 +1535,15 @@ void drawHelp()
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("SC - Connect to a robot via serial. Blacklists the robot.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("LG - Begins to log all robot data to a time-stamped file.");
+		textPrintf("LG - Creates a time-stamped file to log data to.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("AL - Click a robot and AprilTag or vice versa to pair them.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("IN - Displays additional robot data. Click on a robot or");
 		glTranslatef(0, -2 * TEXT_MED, 0);
 		textPrintf("TS - Toggles time-stamping of incoming robot data.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("LS - Begins to log data.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OL - Opens a connection to all local robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);

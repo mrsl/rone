@@ -9,6 +9,7 @@ struct commCon robots[MAXROBOTID]; /* Robot buffers */
 
 int init = 0;
 int timestamps = 1;
+int logging = 0;
 
 /**
  * Initialize the robot buffers
@@ -375,7 +376,7 @@ void insertBuffer(int robotID, char *buffer, int extraBytes)
 	}
 
 	/* Log data */
-	if (robots[robotID].log) {
+	if (robots[robotID].log && logging) {
 		mutexUnlock(&robots[robotID].mutex);
 		fetchData(lbuffer, robotID, robots[robotID].head, robots[robotID].aid, -1);
 		mutexLock(&robots[robotID].mutex);

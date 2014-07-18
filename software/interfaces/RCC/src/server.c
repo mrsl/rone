@@ -543,7 +543,7 @@ void aprilTagHandler(void *vargp)
 				aprilTagData[id].head = (aprilTagData[id].head + 1)
 					% NUMBUFFER_APRILTAG;
 
-				if (aprilTagData[id].log) {
+				if (aprilTagData[id].log && logging) {
 					if ((rid = aprilTagData[id].rid) != -1) {
 						mutexUnlock(&aprilTagData[id].mutex);
 						fetchData(lbuffer, rid, -1, id, -1);
