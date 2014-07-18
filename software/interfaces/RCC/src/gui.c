@@ -8,6 +8,13 @@
 int showHelp = 0;
 int clickMode;
 int prevClick;
+
+char *toasterText;
+CRITICAL_SECTION toasterMutex;
+long toasterTime;
+int toasterDraw = 0;
+char tbuffer[64];
+
 struct textbox aprilTagURL;
 
 char connectName[20] = 		"Connect via Telnet";
@@ -17,6 +24,14 @@ char aprilName[20] =		"AprilTag Linking";
 char hostName[20] =			"Make Radio Host";
 char infoName[20] =			"Extra Information";
 char logName[20] =			"Log Data";
+char openlocalName[21] = 	"Opened Local Robots!";
+char openremoteName[22] = 	"Opened Remote Robots!";
+char timeOnName[21] = 		"Time-stamps enabled!";
+char timeOffName[22] = 		"Time-stamps disabled!";
+char logOnName[20] = 		"Began Logging Data!";
+char logOffName[22] = 		"Stopped Logging Data!";
+char killallName[30] = 		"Closed All SecureCRT Windows!";
+char errorName[20] =		"Oops!";
 
 /**
  * Display function, we don't want to do anything here
@@ -135,6 +150,7 @@ void readChar(char character)
 		}
 		case (12): {
 			openLocalConnections();
+			setToaster(openlocalName);
 			return;
 		}
 		case (17): {
@@ -146,18 +162,32 @@ void readChar(char character)
 		}
 		case (18): {
 			openRemoteConnections();
+			setToaster(openremoteName);
 			return;
 		}
 		case (19): {
-			logging = (logging) ? 0 : 1;
+			if (logging) {
+				logging = 0;
+				setToaster(logOffName);
+			} else {
+				logging = 1;
+				setToaster(logOnName);
+			}
 			return;
 		}
 		case (20): {
-			timestamps = (timestamps) ? 0 : 1;
+			if (timestamps) {
+				timestamps = 0;
+				setToaster(timeOffName);
+			} else {
+				timestamps = 1;
+				setToaster(timeOnName);
+			}
 			return;
 		}
 		case (23): {
 			killSecureCRT();
+			setToaster(killallName);
 			return;
 		}
 		default: {
@@ -176,30 +206,37 @@ void readChar(char character)
 		{
 		case ('1'): {
 			clickMode = CONNECT;
+			setToaster(connectName);
 			break;
 		}
 		case ('2'): {
 			clickMode = HOSTBOT;
+			setToaster(hostName);
 			break;
 		}
 		case ('3'): {
 			clickMode = BLACKLIST;
+			setToaster(blacklistName);
 			break;
 		}
 		case ('4'): {
 			clickMode = SCONNECT;
+			setToaster(serialName);
 			break;
 		}
 		case ('5'): {
 			clickMode = LOG;
+			setToaster(logName);
 			break;
 		}
 		case ('6'): {
 			clickMode = ATLINK;
+			setToaster(aprilName);
 			break;
 		}
 		case ('7'): {
 			clickMode = DISPLAY;
+			setToaster(infoName);
 			break;
 		}
 		default: {
@@ -290,42 +327,52 @@ void processHits(GLint hits, GLuint buffer[])
 		/* Toolbar buttons */
 		case (CONNECT_BUTTON): {
 			clickMode = CONNECT;
+			setToaster(connectName);
 			continue;
 		}
 		case (HOST_BUTTON): {
 			clickMode = HOSTBOT;
+			setToaster(hostName);
 			continue;
 		}
 		case (BLACKLIST_BUTTON): {
 			clickMode = BLACKLIST;
+			setToaster(blacklistName);
 			continue;
 		}
 		case (SCONNECT_BUTTON): {
 			clickMode = SCONNECT;
+			setToaster(serialName);
 			continue;
 		}
 		case (ATLINK_BUTTON): {
 			clickMode = ATLINK;
+			setToaster(aprilName);
 			continue;
 		}
 		case (LOG_BUTTON): {
 			clickMode = LOG;
+			setToaster(logName);
 			continue;
 		}
 		case (INFO_BUTTON): {
 			clickMode = DISPLAY;
+			setToaster(infoName);
 			continue;
 		}
 		case (OPENLOCAL_BUTTON): {
 			openLocalConnections();
+			setToaster(openlocalName);
 			continue;
 		}
 		case (OPENREMOTE_BUTTON): {
 			openRemoteConnections();
+			setToaster(openremoteName);
 			continue;
 		}
 		case (KILLALL_BUTTON): {
 			killSecureCRT();
+			setToaster(killallName);
 			continue;
 		}
 		case (HELP_BUTTON): {
@@ -333,11 +380,23 @@ void processHits(GLint hits, GLuint buffer[])
 			continue;
 		}
 		case (TIME_BUTTON): {
-			timestamps = (timestamps) ? 0 : 1;
+			if (timestamps) {
+				timestamps = 0;
+				setToaster(timeOffName);
+			} else {
+				timestamps = 1;
+				setToaster(timeOnName);
+			}
 			continue;
 		}
 		case (LOGST_BUTTON): {
-			logging = (logging) ? 0 : 1;
+			if (logging) {
+				logging = 0;
+				setToaster(logOffName);
+			} else {
+				logging = 1;
+				setToaster(logOnName);
+			}
 			continue;
 		}
 		default: {
@@ -1222,8 +1281,6 @@ void drawButtonBox(GLfloat width)
 }
 void drawToolbar(GLenum mode)
 {
-	int i;
-	char *name;
 	GLfloat textWidth = TEXT_LARGE * gmf[(int) 'm'].gmfCellIncX * 2;
 
 	glPushMatrix();
@@ -1410,79 +1467,77 @@ void drawToolbar(GLenum mode)
 		glColor3fv(color_black);
 		textSetSize(TEXT_LARGE);
 		textPrintf("??");
-
-		switch (clickMode) {
-		case (CONNECT): {
-			name = connectName;
-			break;
-		}
-		case (HOSTBOT): {
-			name = hostName;
-			break;
-		}
-		case (BLACKLIST): {
-			name = blacklistName;
-			break;
-		}
-		case (SCONNECT): {
-			name = serialName;
-			break;
-		}
-		case (LOG): {
-			name = logName;
-			break;
-		}
-		case (ATLINK): {
-			name = aprilName;
-			break;
-		}
-		case (DISPLAY): {
-			name = infoName;
-			break;
-		}
-		default: {
-			break;
-		}
-		}
-
-		textWidth = 0;
-		for (i = 0; i < strlen(name); i++)
-			textWidth += gmf[(int) name[i]].gmfCellIncX;
-
-		if (aprilTagConnected)
-			glTranslatef(GUI_WIDTH / 2 - textWidth, 0, 0);
-		else
-			glTranslatef(GUI_WIDTH - textWidth, 0, 0);
-
-		glPushMatrix();
-			glTranslatef(textWidth / 3 - 1, -0.5, 0);
-			glPushMatrix();
-				glTranslatef(textWidth / 3, 0.45, 0);
-				glPushMatrix();
-					glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
-					glColor3fv(color_darkgrey);
-					glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
-					glCallList(LIST_SQUARE);
-				glPopMatrix();
-				glPushMatrix();
-					glColor3fv(color_black);
-					glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
-					glCallList(LIST_SQUARE);
-				glPopMatrix();
-				glPushMatrix();
-					glColor3fv(color_white);
-					glScalef(textWidth / 3, TEXT_SMALL / 2, 0);
-					glCallList(LIST_SQUARE);
-				glPopMatrix();
-			glPopMatrix();
-			glTranslatef(0.1, 0.25, 0);
-			glColor3fv(color_black);
-			textSetSize(TEXT_SMALL);
-			textSetAlignment(ALIGN_LEFT);
-			textPrintf(name);
-		glPopMatrix();
-
 	glPopMatrix();
+}
+
+void setToaster(char *text)
+{
+	mutexLock(&toasterMutex);
+	toasterText = text;
+	toasterTime = clock();
+	toasterDraw = 1;
+	mutexUnlock(&toasterMutex);
+}
+
+void drawToaster()
+{
+	unsigned int i;
+
+	GLfloat shift;
+	GLfloat textWidth = 0;
+
+	if (!toasterDraw)
+		return;
+
+	mutexLock(&toasterMutex);
+
+	for (i = 0; i < strlen(toasterText); i++)
+		textWidth += gmf[(int) toasterText[i]].gmfCellIncX;
+
+	glPushMatrix();
+		if (aprilTagConnected)
+			glTranslatef(-textWidth, -GUI_HEIGHT / 2 + 1, 0);
+		else
+			glTranslatef(GUI_WIDTH / 2 - textWidth, -GUI_HEIGHT / 2 + 1, 0);
+
+		if (toasterTime + TOASTER_POP_TIME < clock()) {
+			shift =
+				-((GLfloat) clock() - ((GLfloat) toasterTime + TOASTER_POP_TIME))
+					/ 700.;
+			glTranslatef(textWidth / 3 - 1, shift - 0.5, 0);
+			if (shift < -2)
+				toasterDraw = 0;
+
+		} else {
+			glTranslatef(textWidth / 3 - 1, -0.5, 0);
+		}
+		glPushMatrix();
+			glTranslatef(textWidth / 3, 0.45, 0);
+			glPushMatrix();
+				glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
+				glColor3fv(color_darkgrey);
+				glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_black);
+				glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_white);
+				glScalef(textWidth / 3, TEXT_SMALL / 2, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+		glPopMatrix();
+		glTranslatef(0.1, 0.25, 0);
+		glColor3fv(color_black);
+		textSetSize(TEXT_SMALL);
+		textSetAlignment(ALIGN_LEFT);
+		textPrintf(toasterText);
+	glPopMatrix();
+
+	mutexUnlock(&toasterMutex);
 }
 
 void drawHelp()
@@ -1613,6 +1668,8 @@ void timerEnableDraw(int value)
 
 	drawToolbar(GL_RENDER);
 
+	drawToaster();
+
 	if (aprilTagConnected)
 		drawAprilTags(GL_RENDER);
 
@@ -1657,6 +1714,8 @@ void guiInit()
 	glutReshapeFunc(reshape);
 
 	clickMode = CONNECT;
+
+	mutexInit(&toasterMutex);
 
 	glutTimerFunc(DRAW_DELAY, timerEnableDraw, 0);
 

@@ -50,6 +50,8 @@
 #define SCALE_SMALL			2.
 #define SCALE_TINY			3.
 
+#define TOASTER_POP_TIME	1000
+
 /* AprilTag drawing defines */
 #define APRILTAG_X			10
 #define APRILTAG_Y			-1
@@ -123,6 +125,8 @@ struct textbox {
 	char message[MAX_TEXTBOX_LENGTH];
 };
 
+extern char tbuffer[64];
+
 extern struct textbox aprilTagURL;	// AprilTag IP textbox
 
 extern GLYPHMETRICSFLOAT gmf[256];	// Character information
@@ -155,6 +159,9 @@ void drawToolbar(GLenum mode);
 void drawHelp();
 void timerEnableDraw(int value);
 void special(int key, int x, int y);
+void setToaster(char *text);
+void drawToaster();
+
 void guiInit();
 
 /* Text functions */

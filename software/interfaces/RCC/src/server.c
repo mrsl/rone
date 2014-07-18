@@ -369,6 +369,9 @@ void connectionHandler(void *vargp)
 	} else {
 		int rid;
 
+		sprintf(tbuffer, "New Connection to AprilTag ID %2d!", aid);
+		setToaster(tbuffer);
+
 		mutexLock(&aprilTagData[aid].mutex);
 		head = aprilTagData[aid].head;
 		mutexUnlock(&aprilTagData[aid].mutex);
