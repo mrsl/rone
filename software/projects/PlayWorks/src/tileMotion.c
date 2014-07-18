@@ -189,9 +189,11 @@ void tileMotionTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
 	Beh behOutput;
 	uint32 printTime = 0;
+	int32 lastOnlineOdometerValue = 0;
 
 	tileMotionMsgQueue = osQueueCreate(1, sizeof(uint8));
-	int16 tileMotionRotationGoal = 0;
+	int16 tileMotionRotationGoal = 0, distanceElapsedBetweenLines = 0;
+	boolean online = FALSE;
 
 	while (TRUE) {
 		behOutput = behInactive;
@@ -266,7 +268,6 @@ void tileMotionTask(void* parameters) {
 			 */
 			int32 distanceTraveled = encoderGetOdometer() - motionOdometerStart;
 			int32 distanceToGoal;
-			uint32 tv, rv;
 			int8 direction;
 
 			// TODO new way to calculate distance to goal using line sensor
@@ -288,13 +289,23 @@ void tileMotionTask(void* parameters) {
 				motionDone = TRUE;
 			} else {
 				behOutput.tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTraveled, distanceToGoal, TRUE, FALSE);
+				// Check line sensors for rv adjustment
 				if (reflectiveGetNumActiveSensors(&direction) > 0) {
 					// Online, apply rv adjustment to center robot
-					// TODO tweak gain
-					rvBearingController(&behOutput, REFLECTIVE_SENSOR_SEPARATION * direction, 50);
+					rvBearingController(&behOutput, REFLECTIVE_SENSOR_SEPARATION * direction, REFLECTIVE_TURING_SPEED);
+					// distance traveled when the robot gets back online
+					if (!online) {
+						distanceElapsedBetweenLines = encoderGetOdometer() - lastOnlineOdometerValue;
+					}
+					online = TRUE;
 				} else {
-					// No line detected
+					// No line detected, no turn
 					behOutput.rv = 0;
+					// Save the odometer value for the position when the robot exits a line
+					if (online) {
+						lastOnlineOdometerValue = encoderGetOdometer();
+					}
+					online = FALSE;
 				}
 				//if (printNow) cprintf(",%d", distanceToGoal);
 				behOutput.active = TRUE;

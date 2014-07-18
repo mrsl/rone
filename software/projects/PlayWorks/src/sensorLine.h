@@ -8,6 +8,8 @@
 #ifndef SENSORLINE_H_
 #define SENSORLINE_H_
 
+// Use with reflectiveFindTurnDirection() to set proper RV
+#define REFLECTIVE_TURING_SPEED					50
 
 /*
  * @brief Find the number of active sensors detecting the line. If the number

@@ -14,7 +14,6 @@
 // [0, 255]
 #define LINE_DETECTION_THRESHOLD		240
 
-
 /*
  * @brief Find the number of active sensors detecting the line. If the number
  * if greater than 0, the direction to turn is stored in the location of

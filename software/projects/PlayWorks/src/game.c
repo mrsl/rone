@@ -124,7 +124,7 @@ static void serialCmdTPFunc(char* command) {
 // they are used for robot control.
 void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
-	uint8 gameMode = GAME_MODE_IDLE;
+	uint8 gameMode = GAME_MODE_NAVIGATION;
 	static uint32 printTime = 0;
 	static uint32 printTimeMem = 0;
 	uint8 gameStatus = GAME_STATUS_CONTINUE;
