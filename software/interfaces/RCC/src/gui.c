@@ -10,6 +10,14 @@ int clickMode;
 int prevClick;
 struct textbox aprilTagURL;
 
+char connectName[20] = 		"Connect via Telnet";
+char blacklistName[20] =	"Blacklist";
+char serialName[20] =		"Connect via Serial";
+char aprilName[20] =		"AprilTag Linking";
+char hostName[20] =			"Make Radio Host";
+char infoName[20] =			"Extra Information";
+char logName[20] =			"Log Data";
+
 /**
  * Display function, we don't want to do anything here
  */
@@ -138,6 +146,10 @@ void readChar(char character)
 		}
 		case (18): {
 			openRemoteConnections();
+			return;
+		}
+		case (20): {
+			timestamps = (timestamps) ? 0 : 1;
 			return;
 		}
 		case (23): {
@@ -314,6 +326,10 @@ void processHits(GLint hits, GLuint buffer[])
 		}
 		case (HELP_BUTTON): {
 			showHelp = 1;
+			continue;
+		}
+		case (TIME_BUTTON): {
+			timestamps = (timestamps) ? 0 : 1;
 			continue;
 		}
 		default: {
@@ -1192,6 +1208,8 @@ void drawButtonBox(GLfloat width)
 }
 void drawToolbar(GLenum mode)
 {
+	int i;
+	char *name;
 	GLfloat textWidth = TEXT_LARGE * gmf[(int) 'm'].gmfCellIncX * 2;
 
 	glPushMatrix();
@@ -1297,7 +1315,22 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("IN");
 
-		glTranslatef(0, -3, 0);
+		glTranslatef(0, -2.5, 0);
+
+		/* TS Button */
+		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(TIME_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (timestamps)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("TS");
 
 		/* OL Button */
 		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
@@ -1335,7 +1368,7 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("KO");
 
-		glTranslatef(0, -3, 0);
+		glTranslatef(0, -2.5, 0);
 
 		/* ? Button */
 		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
@@ -1348,6 +1381,78 @@ void drawToolbar(GLenum mode)
 		glColor3fv(color_black);
 		textSetSize(TEXT_LARGE);
 		textPrintf("??");
+
+		switch (clickMode) {
+		case (CONNECT): {
+			name = connectName;
+			break;
+		}
+		case (HOSTBOT): {
+			name = hostName;
+			break;
+		}
+		case (BLACKLIST): {
+			name = blacklistName;
+			break;
+		}
+		case (SCONNECT): {
+			name = serialName;
+			break;
+		}
+		case (LOG): {
+			name = logName;
+			break;
+		}
+		case (ATLINK): {
+			name = aprilName;
+			break;
+		}
+		case (DISPLAY): {
+			name = infoName;
+			break;
+		}
+		default: {
+			break;
+		}
+		}
+
+		textWidth = 0;
+		for (i = 0; i < strlen(name); i++)
+			textWidth += gmf[(int) name[i]].gmfCellIncX;
+
+		if (aprilTagConnected)
+			glTranslatef(GUI_WIDTH / 2 - textWidth, 0, 0);
+		else
+			glTranslatef(GUI_WIDTH - textWidth, 0, 0);
+
+		glPushMatrix();
+			glTranslatef(textWidth / 3 - 1, -0.5, 0);
+			glPushMatrix();
+				glTranslatef(textWidth / 3, 0.45, 0);
+				glPushMatrix();
+					glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
+					glColor3fv(color_darkgrey);
+					glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
+					glCallList(LIST_SQUARE);
+				glPopMatrix();
+				glPushMatrix();
+					glColor3fv(color_black);
+					glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
+					glCallList(LIST_SQUARE);
+				glPopMatrix();
+				glPushMatrix();
+					glColor3fv(color_white);
+					glScalef(textWidth / 3, TEXT_SMALL / 2, 0);
+					glCallList(LIST_SQUARE);
+				glPopMatrix();
+			glPopMatrix();
+			glTranslatef(0.1, 0.25, 0);
+			glColor3fv(color_black);
+			textSetSize(TEXT_SMALL);
+			textSetAlignment(ALIGN_LEFT);
+			textPrintf(name);
+		glPopMatrix();
+
 	glPopMatrix();
 }
 
@@ -1393,43 +1498,29 @@ void drawHelp()
 		textSetSize(TEXT_MED);
 		textPrintf("Command List:");
 		glTranslatef(TEXT_MED, -TEXT_MED, 0);
-		textPrintf("CT - Connect to robot. Click on a robot to open a Secure");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     CRT connection to it.");
+		textPrintf("CT - Connect to robot via telnet. Opens a SecureCRT window.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("RH - Make robot a radio host. Click on a robot to make it");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     a radio host.");
+		textPrintf("RH - Make robot a radio host.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("BL - Blacklist a robot. Click on a robot to prevent the");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     RCC from connecting to it. Click again to reconnect.");
+		textPrintf("BL - Blacklist a robot.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("SC - Connect to a robot via serial. Click on a robot to");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     blacklist it and open a Secure CRT window using serial.");
+		textPrintf("SC - Connect to a robot via serial. Blacklists the robot.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("LG - Log robot data. Begins to log all data to a file. If");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     linked to AprilTag, records that data too. Can also");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     log individual AprilTags by clicking on them.");
+		textPrintf("LG - Begins to log all robot data to a time-stamped file.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("AL - Link AprilTag. Click a robot and then an AprilTag to");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     link AprilTag data to robot data. Double-click robot");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     to unlink AprilTag.");
+		textPrintf("AL - Click a robot and AprilTag or vice versa to pair them.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("IN - Displays additional robot data. Click on a robot or");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     AprilTag to show extra information.");
+		glTranslatef(0, -2 * TEXT_MED, 0);
+		textPrintf("TS - Toggles time-stamping of incoming robot data.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OL - Opens a connection to all local robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OR - Opens a connection to all remote robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("KO - Kills all open Secure CRT windows.");
+		glTranslatef(-TEXT_MED, -2 * TEXT_MED, 0);
+		textPrintf("For more in-depth help, visit the wiki page!");
 	glPopMatrix();
 }
 /**

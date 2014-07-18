@@ -8,6 +8,8 @@
 struct commCon robots[MAXROBOTID]; /* Robot buffers */
 
 int init = 0;
+int timestamps = 1;
+
 /**
  * Initialize the robot buffers
  */
@@ -364,8 +366,13 @@ void insertBuffer(int robotID, char *buffer, int extraBytes)
 
 	robots[robotID].lup = robots[robotID].up;
 	robots[robotID].up = clock();
-	sprintf(robots[robotID].buffer[robots[robotID].head], "%11ld, %s",
-		robots[robotID].up, lbuffer);
+
+	if (timestamps) {
+		sprintf(robots[robotID].buffer[robots[robotID].head], "%11ld, %s",
+			robots[robotID].up, lbuffer);
+	} else {
+		sprintf(robots[robotID].buffer[robots[robotID].head], lbuffer);
+	}
 
 	/* Log data */
 	if (robots[robotID].log) {
