@@ -8,6 +8,9 @@
 struct commCon robots[MAXROBOTID]; /* Robot buffers */
 
 int init = 0;
+int timestamps = 1;
+int logging = 0;
+
 /**
  * Initialize the robot buffers
  */
@@ -326,6 +329,9 @@ void commCommander(void *vargp)
 
 	Free(info->hSerial);
 	Free(info);
+
+	_endthread();
+	return;
 }
 
 /**
@@ -361,11 +367,16 @@ void insertBuffer(int robotID, char *buffer, int extraBytes)
 
 	robots[robotID].lup = robots[robotID].up;
 	robots[robotID].up = clock();
-	sprintf(robots[robotID].buffer[robots[robotID].head], "%11ld, %s",
-		robots[robotID].up, lbuffer);
+
+	if (timestamps) {
+		sprintf(robots[robotID].buffer[robots[robotID].head], "%11ld, %s",
+			robots[robotID].up, lbuffer);
+	} else {
+		sprintf(robots[robotID].buffer[robots[robotID].head], lbuffer);
+	}
 
 	/* Log data */
-	if (robots[robotID].log) {
+	if (robots[robotID].log && logging) {
 		mutexUnlock(&robots[robotID].mutex);
 		fetchData(lbuffer, robotID, robots[robotID].head, robots[robotID].aid, -1);
 		mutexLock(&robots[robotID].mutex);

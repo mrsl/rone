@@ -40,8 +40,8 @@ struct commCon
 	int log;									// Log this robots data?
 	HANDLE *hSerial;							// Serial handle if connected
 	HANDLE logH;								// Logfile
-	unsigned long up;							// Last time we saw the robot
-	unsigned long lup;							// Prev time we saw the robot
+	long up;									// Last time we saw the robot
+	long lup;									// Prev time we saw the robot
 	int type;									// Type of robot
 	int subnet;									// Radio subnet of robot
 	int display;								// Show extra data?
@@ -53,6 +53,8 @@ struct commCon
 };
 
 extern struct commCon robots[MAXROBOTID];	// Robot data
+extern int timestamps;						// Use timestamps?
+extern int logging;							// Log data?
 
 void initRobots();
 void commManager(void *vargp);

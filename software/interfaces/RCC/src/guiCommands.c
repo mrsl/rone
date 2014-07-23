@@ -186,7 +186,12 @@ void beginLog(int robotID)
 
 	if (!robots[robotID].log) {
 		robots[robotID].log = 1;
-		sprintf(fileName, "%s\\%d_%s.log", logDir, robotID, date);
+		if (robots[robotID].aid != -1) {
+			sprintf(fileName, "%s\\%d_AT%d_%s.log", logDir, robotID,
+				robots[robotID].aid, date);
+		} else {
+			sprintf(fileName, "%s\\%d_%s.log", logDir, robotID, date);
+		}
 		robots[robotID].logH = CreateFile((LPTSTR) fileName,
 										  GENERIC_WRITE,
 										  0,
@@ -209,7 +214,12 @@ void beginAprilTagLog(int aprilTagID)
 
 	if (!aprilTagData[aprilTagID].log) {
 		aprilTagData[aprilTagID].log = 1;
-		sprintf(fileName, "%s\\AT%d_%s.log", logDir, aprilTagID, date);
+		if (aprilTagData[aprilTagID].rid != -1) {
+			sprintf(fileName, "%s\\AT%d_%d_%s.log", logDir, aprilTagID,
+				aprilTagData[aprilTagID].rid, date);
+		} else {
+			sprintf(fileName, "%s\\AT%d_%s.log", logDir, aprilTagID, date);
+		}
 		aprilTagData[aprilTagID].logH = CreateFile((LPTSTR) fileName,
 												   GENERIC_WRITE,
 											 	   0,
