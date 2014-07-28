@@ -38,5 +38,6 @@ extern GLfloat aprilTagX;			// AprilTag window parameters
 extern GLfloat aprilTagY;
 extern char logDir[MAX_PATH];		// Logfile directory
 extern char defaultATServerIP[15];	// Default AprilTag server IP
+extern char guiPath[MAX_PATH];		// Path to roneGUI
 
 #endif

@@ -55,6 +55,7 @@ struct commCon
 extern struct commCon robots[MAXROBOTID];	// Robot data
 extern int timestamps;						// Use timestamps?
 extern int logging;							// Log data?
+extern int hostData;						// Filter host robot data?
 
 void initRobots();
 void commManager(void *vargp);

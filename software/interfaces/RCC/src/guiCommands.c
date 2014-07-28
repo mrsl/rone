@@ -87,9 +87,7 @@ int directConnect(int robotID)
 {
 	char buffer[BUFFERSIZE];
 
-	robots[robotID].blacklisted = 1;
-	if (robots[robotID].hSerial != NULL)
-		CloseHandle(*robots[robotID].hSerial);
+	blacklist(robotID);
 
 	if (sprintf(buffer, "/SERIAL COM%d /BAUD 230400 /NOCTS",
 		robots[robotID].port) < 0)
@@ -283,4 +281,31 @@ void showAprilTagInfo(int robotID)
 		aprilTagData[robotID].display = 0;
 	else
 		aprilTagData[robotID].display = 1;
+}
+
+int guiConnect(int robotID)
+{
+	char exeName[BUFFERSIZE];
+	char buffer[BUFFERSIZE];
+
+	if (robots[robotID].type == REMOTE || robots[robotID].hSerial == NULL
+		|| robots[robotID].blacklisted)
+		return (-1);
+
+	blacklist(robotID);
+
+	if (sprintf(exeName, "%s\\%s", guiPath, "roneGUI.exe") < 0)
+		return (-1);
+
+	if (sprintf(buffer, "-p %d", robots[robotID].port) < 0)
+		return (-1);
+
+	ShellExecute(GetDesktopWindow(),
+				 "open",
+				 exeName,
+				 buffer,
+				 "",
+				 SW_SHOW);
+
+	return (0);
 }
