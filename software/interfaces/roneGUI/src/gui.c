@@ -323,27 +323,8 @@ timerAutoSelect(int value)
 		}
 	}
 
-
 	/* Initialize timer loop. */
 	glutTimerFunc(AUTOSELECT_DELAY, timerAutoSelect, value);
-}
-
-void
-writeToINFile()
-{
-	char message[MSG_SIZE] = {0};
-	int x;
-
-	while((x = serialMessageGet(message, MSG_SIZE)) > 0) {
-		fwrite(message, sizeof(char), x, in);
-		memset(message, 0, MSG_SIZE);
-	}
-}
-
-void
-writeToOUTFile(char *msg, int size)
-{
-	fwrite(msg, sizeof(char), size, out);
 }
 
 /**
@@ -354,11 +335,24 @@ writeToOUTFile(char *msg, int size)
 int
 main(int argc, char* argv[])
 {
+	int i;
+	for (i = 1; i < argc; i++) {
+		if (i + 1 != argc) {
+			if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--port") == 0) {
+				if (sscanf(argv[i + 1], "%d", &comNumber) != 1) {
+					break;
+				}
+				i++;
+				continue;
+			}
+		}
+	}
+
+	argc = 0;
+	glutInit(&argc, NULL);
+
 	/* Remove the terminal that would spawn behind the GUI. */
 	FreeConsole();
-
-	/* Initialize OpenGL. */
-	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	glutCreateWindow("Rone GUI");
@@ -388,5 +382,5 @@ main(int argc, char* argv[])
 	glutTimerFunc(AUTOSELECT_DELAY, timerAutoSelect, 0);
 
 	glutMainLoop();
-	return 0;
+	return (0);
 }

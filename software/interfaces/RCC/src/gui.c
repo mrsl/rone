@@ -24,6 +24,7 @@ char aprilName[20] =		"AprilTag Linking";
 char hostName[20] =			"Make Radio Host";
 char infoName[20] =			"Extra Information";
 char logName[20] =			"Log Data";
+char guiName[20] =			"Connect to GUI";
 char openlocalName[21] = 	"Opened Local Robots!";
 char openremoteName[22] = 	"Opened Remote Robots!";
 char timeOnName[21] = 		"Time-stamps enabled!";
@@ -31,6 +32,8 @@ char timeOffName[22] = 		"Time-stamps disabled!";
 char logOnName[20] = 		"Began Logging Data!";
 char logOffName[22] = 		"Stopped Logging Data!";
 char killallName[30] = 		"Closed All SecureCRT Windows!";
+char hostDataOnName[30] = 	"Filtering Radio Host Data!";
+char hostDataOffName[35] = 	"Stopped Filtering Radio Host Data!";
 char errorName[20] =		"Oops!";
 
 /**
@@ -148,6 +151,16 @@ void readChar(char character)
 			aprilTagURL.isActive = 1;
 			return;
 		}
+		case (8): {
+			if (hostData) {
+				hostData = 0;
+				setToaster(hostDataOnName);
+			} else {
+				hostData = 1;
+				setToaster(hostDataOffName);
+			}
+			return;
+		}
 		case (12): {
 			openLocalConnections();
 			setToaster(openlocalName);
@@ -237,6 +250,11 @@ void readChar(char character)
 		case ('7'): {
 			clickMode = DISPLAY;
 			setToaster(infoName);
+			break;
+		}
+		case ('8'): {
+			clickMode = GUI;
+			setToaster(guiName);
 			break;
 		}
 		default: {
@@ -360,6 +378,11 @@ void processHits(GLint hits, GLuint buffer[])
 			setToaster(infoName);
 			continue;
 		}
+		case (GUI_BUTTON): {
+			clickMode = GUI;
+			setToaster(guiName);
+			continue;
+		}
 		case (OPENLOCAL_BUTTON): {
 			openLocalConnections();
 			setToaster(openlocalName);
@@ -396,6 +419,16 @@ void processHits(GLint hits, GLuint buffer[])
 			} else {
 				logging = 1;
 				setToaster(logOnName);
+			}
+			continue;
+		}
+		case (HDATA_BUTTON): {
+			if (hostData) {
+				hostData = 0;
+				setToaster(hostDataOnName);
+			} else {
+				hostData = 1;
+				setToaster(hostDataOffName);
 			}
 			continue;
 		}
@@ -441,6 +474,11 @@ void processHits(GLint hits, GLuint buffer[])
 			/* Ctrl-Alt-Click to open a direct connection to secureCRT */
 			case (6): {
 				commConnect(robotID);
+				break;
+			}
+			/* Ctrl-Alt-Shift-Click to open a GUI window */
+			case (7): {
+				guiConnect(robotID);
 				break;
 			}
 			/* Do whatever tool is selected */
@@ -494,6 +532,10 @@ void processHits(GLint hits, GLuint buffer[])
 				}
 				case (DISPLAY): {
 					showRobotInfo(robotID);
+					break;
+				}
+				case (GUI): {
+					guiConnect(robotID);
 					break;
 				}
 				default: {
@@ -1301,7 +1343,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("CT");
 
 		/* RT Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(HOST_BUTTON);
 
@@ -1315,7 +1357,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("RH");
 
 		/* BL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(BLACKLIST_BUTTON);
 
@@ -1329,7 +1371,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("BL");
 
 		/* ST Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(SCONNECT_BUTTON);
 
@@ -1343,7 +1385,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("SC");
 
 		/* LG Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(LOG_BUTTON);
 
@@ -1357,7 +1399,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("LG");
 
 		/* AL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(ATLINK_BUTTON);
@@ -1371,8 +1413,8 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
-		/* AL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		/* IN Button */
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(INFO_BUTTON);
@@ -1386,10 +1428,25 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("IN");
 
-		glTranslatef(0, -1.6, 0);
+		/* GV Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(GUI_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (clickMode == GUI)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("GV");
+
+		glTranslatef(0, BUTTONBLOCKSPACE, 0);
 
 		/* TS Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(TIME_BUTTON);
@@ -1404,7 +1461,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("TS");
 
 		/* LS Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(LOGST_BUTTON);
@@ -1418,8 +1475,23 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("LS");
 
+		/* HF Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(HDATA_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (hostData)
+			glColor3fv(color_black);
+		else
+			glColor3fv(color_red);
+		textSetSize(TEXT_LARGE);
+		textPrintf("HF");
+
 		/* OL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(OPENLOCAL_BUTTON);
@@ -1431,7 +1503,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("OL");
 
 		/* OR Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(OPENREMOTE_BUTTON);
@@ -1443,7 +1515,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("OR");
 
 		/* KO Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(KILLALL_BUTTON);
@@ -1454,10 +1526,10 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("KO");
 
-		glTranslatef(0, -1.6, 0);
+		glTranslatef(0, BUTTONBLOCKSPACE, 0);
 
 		/* ? Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(HELP_BUTTON);
@@ -1500,17 +1572,26 @@ void drawToaster()
 		else
 			glTranslatef(GUI_WIDTH / 2 - textWidth, -GUI_HEIGHT / 2 + 1, 0);
 
-		if (toasterTime + TOASTER_POP_TIME < clock()) {
+		if (toasterTime + 2 * TOASTER_POP_TIME < clock()) {
 			shift =
-				-((GLfloat) clock() - ((GLfloat) toasterTime + TOASTER_POP_TIME))
-					/ 700.;
+				-((GLfloat) clock() - ((GLfloat) toasterTime + 2 * TOASTER_POP_TIME))
+					/ 100.;
 			glTranslatef(textWidth / 3 - 1, shift - 0.5, 0);
 			if (shift < -2)
 				toasterDraw = 0;
 
-		} else {
+		} else if (toasterTime + TOASTER_POP_TIME < clock()) {
 			glTranslatef(textWidth / 3 - 1, -0.5, 0);
+
+		} else {
+			shift =
+				((GLfloat) clock() - ((GLfloat) toasterTime))
+					/ 100.;
+			if (shift > 2)
+				shift = 2;
+			glTranslatef(textWidth / 3 - 1, shift - 2.5, 0);
 		}
+
 		glPushMatrix();
 			glTranslatef(textWidth / 3, 0.45, 0);
 			glPushMatrix();
@@ -1594,7 +1675,7 @@ void drawHelp()
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("AL - Click a robot and AprilTag or vice versa to pair them.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("IN - Displays additional robot data. Click on a robot or");
+		textPrintf("IN - Displays additional robot or AprilTag information.");
 		glTranslatef(0, -2 * TEXT_MED, 0);
 		textPrintf("TS - Toggles time-stamping of incoming robot data.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
