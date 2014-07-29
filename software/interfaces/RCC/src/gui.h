@@ -179,11 +179,13 @@ void textSetSize(GLfloat size);
 /* Resource functions */
 void drawInit();
 
+/* Command functions */
+void telnetConnect(int robotID);
 void hostRobot(int robotID);
 void blacklist(int robotID);
 void commConnect(int robotID);
-void beginLog(int robotID);
-void beginAprilTagLog(int aprilTagID);
+void logRobot(int robotID);
+void logAprilTag(int aprilTagID);
 void openLocalConnections();
 void openRemoteConnections();
 void showRobotInfo(int robotID);

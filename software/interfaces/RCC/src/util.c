@@ -10,14 +10,15 @@
  */
 uint8 convertASCIIHexNibble(char val)
 {
-	if (val >= '0' && val <= '9')
+	if (val >= '0' && val <= '9') {
 		return (val - '0');
-	else if (val >= 'A' && val <= 'F')
+	} else if (val >= 'A' && val <= 'F') {
 		return (val - 'A' + 10);
-	else if (val >= 'a' && val <= 'f')
+	} else if (val >= 'a' && val <= 'f') {
 		return (val - 'a' + 10);
-	else
+	} else {
 		return (0);
+	}
 }
 
 uint8 convertASCIIHexByte(char *val)
@@ -58,11 +59,13 @@ void strins(char* str, char c, int index)
 {
 	int i, temp1, temp2;
 	temp1 = str[index];
+
 	for (i = index + 1; str[i] != '\0'; i++) {
 		temp2 = str[i];
 		str[i] = temp1;
 		temp1 = temp2;
 	}
+
 	str[i] = temp1;
 	str[i + 1] = '\0';
 	str[index] = c;
@@ -74,8 +77,9 @@ void strins(char* str, char c, int index)
 void strdel(char* str, int index)
 {
 	int i;
-	for (i = index; str[i] != '\0'; i++)
+	for (i = index; str[i] != '\0'; i++) {
 		str[i] = str[i + 1];
+	}
 }
 
 /**
@@ -96,14 +100,40 @@ void hprintf(HANDLE *hSerialPtr, const char *fmt, ...)
 	char text[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
 	va_list ap;
 
-	if (fmt == NULL)
+	if (fmt == NULL) {
 		return;
+	}
 
 	va_start(ap, fmt);
 		vsprintf(text, fmt, ap);
 	va_end(ap);
 
 	WriteFile(*hSerialPtr, text, strlen(text), &dwBytesWritten, NULL);
+}
+
+/**
+ * Creates a regular file
+ */
+HANDLE createRegularFile(char *fileName)
+{
+	HANDLE file;
+	file = CreateFile((LPTSTR) fileName,
+						 GENERIC_WRITE,
+						 0,
+						 NULL,
+						 CREATE_ALWAYS,
+						 FILE_ATTRIBUTE_NORMAL,
+						 NULL);
+	if (file == INVALID_HANDLE_VALUE) {
+		return (NULL);
+	}
+
+	return (file);
+}
+
+void executeProgram(char *name, char *args)
+{
+	ShellExecute(GetDesktopWindow(), "open", name, args, "", SW_SHOW);
 }
 
 /**
@@ -115,8 +145,9 @@ void Error(const char *fmt, ...)
 	va_list ap;
 
 	if (verbose) {
-		if (fmt == NULL)
+		if (fmt == NULL) {
 			return;
+		}
 
 		va_start(ap, fmt);
 			vsprintf(text, fmt, ap);
@@ -133,16 +164,18 @@ void Error(const char *fmt, ...)
  */
 void Close(int fd)
 {
-	if (closesocket(fd) < 0)
+	if (closesocket(fd) < 0) {
 		Error("close failure");
+	}
 }
 
 void *Malloc(size_t size)
 {
 	void *p;
 
-	if ((p = malloc(size)) == NULL)
+	if ((p = malloc(size)) == NULL) {
 		Error("malloc failure");
+	}
 
 	return (p);
 }
@@ -151,8 +184,9 @@ void *Calloc(size_t nmemb, size_t size)
 {
 	void *p;
 
-	if ((p = calloc(nmemb, size)) == NULL)
+	if ((p = calloc(nmemb, size)) == NULL) {
 		Error("calloc failure");
+	}
 
 	return (p);
 }

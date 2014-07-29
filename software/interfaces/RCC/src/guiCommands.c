@@ -77,12 +77,7 @@ int openClientConnection(int robotID, int aprilTagID)
 		return (-1);
 	}
 
-	ShellExecute(GetDesktopWindow(),
-				 "open",
-				 "securecrt.exe",
-				 buffer,
-				 "",
-				 SW_SHOW);
+	executeProgram("securecrt.exe", buffer);
 
 	return (0);
 }
@@ -101,12 +96,7 @@ int directConnect(int robotID)
 		return (-1);
 	}
 
-	ShellExecute(GetDesktopWindow(),
-				 "open",
-				 "securecrt.exe",
-				 buffer,
-				 "",
-				 SW_SHOW);
+	executeProgram("securecrt.exe", buffer);
 
 	return (0);
 }
@@ -157,6 +147,20 @@ void killSecureCRT()
 	}
 }
 
+/**
+ * Opens a telnet connection to the requested robot
+ */
+void telnetConnect(int robotID)
+{
+	if (!robots[robotID].blacklisted
+		|| robots[robotID].type == REMOTE) {
+		openClientConnection(robotID, -1);
+	}
+}
+
+/**
+ * Makes a robot a host robot
+ */
 void hostRobot(int robotID)
 {
 	if (robots[robotID].type == LOCAL && robots[robotID].hSerial != NULL
@@ -165,6 +169,9 @@ void hostRobot(int robotID)
 	}
 }
 
+/**
+ * Blacklists a robot
+ */
 void blacklist(int robotID)
 {
 	if (robots[robotID].blacklisted) {
@@ -182,6 +189,9 @@ void blacklist(int robotID)
 	}
 }
 
+/**
+ * Opens a direct serial connection to a robot
+ */
 void commConnect(int robotID)
 {
 	if (robots[robotID].type != REMOTE && robots[robotID].hSerial != NULL
@@ -190,8 +200,10 @@ void commConnect(int robotID)
 	}
 }
 
-/* TODO: Modularize log files */
-void beginLog(int robotID)
+/**
+ * Handles logging of robots
+ */
+void logRobot(int robotID)
 {
 	char fileName[MAX_PATH], date[BUFFERSIZE];
 	datestr(date);
@@ -204,14 +216,7 @@ void beginLog(int robotID)
 		} else {
 			sprintf(fileName, "%s\\%d_%s.log", logDir, robotID, date);
 		}
-		robots[robotID].logH = CreateFile((LPTSTR) fileName,
-										  GENERIC_WRITE,
-										  0,
-										  NULL,
-										  CREATE_ALWAYS,
-										  FILE_ATTRIBUTE_NORMAL,
-										  NULL);
-		if (robots[robotID].logH == INVALID_HANDLE_VALUE) {
+		if ((robots[robotID].logH = createRegularFile(fileName)) == NULL) {
 			robots[robotID].log = 0;
 		}
 	} else {
@@ -220,7 +225,10 @@ void beginLog(int robotID)
 	}
 }
 
-void beginAprilTagLog(int aprilTagID)
+/**
+ * Handles logging of aprilTags
+ */
+void logAprilTag(int aprilTagID)
 {
 	char fileName[MAX_PATH], date[BUFFERSIZE];
 	datestr(date);
@@ -233,14 +241,8 @@ void beginAprilTagLog(int aprilTagID)
 		} else {
 			sprintf(fileName, "%s\\AT%d_%s.log", logDir, aprilTagID, date);
 		}
-		aprilTagData[aprilTagID].logH = CreateFile((LPTSTR) fileName,
-												   GENERIC_WRITE,
-											 	   0,
-											       NULL,
-												   CREATE_ALWAYS,
-												   FILE_ATTRIBUTE_NORMAL,
-												   NULL);
-		if (aprilTagData[aprilTagID].logH == INVALID_HANDLE_VALUE) {
+		if ((aprilTagData[aprilTagID].logH = createRegularFile(fileName))
+			== NULL) {
 			aprilTagData[aprilTagID].log = 0;
 		}
 	} else {
@@ -249,6 +251,9 @@ void beginAprilTagLog(int aprilTagID)
 	}
 }
 
+/**
+ * Opens a connection to all local robots
+ */
 void openLocalConnections()
 {
 	int i;
@@ -258,13 +263,16 @@ void openLocalConnections()
 		/* If the robot is active */
 		if (robots[i].up != 0 && !robots[i].blacklisted) {
 			if (robots[i].type == LOCAL || robots[i].type == HOST) {
-				openClientConnection(i, -1);
+				telnetConnect(i);
 			}
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
 }
 
+/**
+ * Opens a connection to all remote robots
+ */
 void openRemoteConnections()
 {
 	int i;
@@ -274,13 +282,16 @@ void openRemoteConnections()
 		/* If the robot is active */
 		if (robots[i].up != 0) {
 			if (robots[i].type == REMOTE) {
-				openClientConnection(i, -1);
+				telnetConnect(i);
 			}
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
 }
 
+/**
+ * Toggles display of information for robots
+ */
 void showRobotInfo(int robotID)
 {
 	if (robots[robotID].display) {
@@ -293,6 +304,9 @@ void showRobotInfo(int robotID)
 	}
 }
 
+/**
+ * Toggles display of information for aprilTags
+ */
 void showAprilTagInfo(int robotID)
 {
 	robotID -= 2000;
@@ -304,6 +318,9 @@ void showAprilTagInfo(int robotID)
 	}
 }
 
+/**
+ * Opens a GUI connected to a robot
+ */
 int guiConnect(int robotID)
 {
 	char exeName[BUFFERSIZE];
@@ -314,8 +331,6 @@ int guiConnect(int robotID)
 		return (-1);
 	}
 
-	blacklist(robotID);
-
 	if (sprintf(exeName, "%s\\%s", guiPath, "roneGUI.exe") < 0) {
 		return (-1);
 	}
@@ -324,12 +339,8 @@ int guiConnect(int robotID)
 		return (-1);
 	}
 
-	ShellExecute(GetDesktopWindow(),
-				 "open",
-				 exeName,
-				 buffer,
-				 "",
-				 SW_SHOW);
+	blacklist(robotID);
+	executeProgram(exeName, buffer);
 
 	return (0);
 }

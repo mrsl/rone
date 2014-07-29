@@ -446,9 +446,7 @@ void processHits(GLint hits, GLuint buffer[])
 			{
 			/* Shift-Click to Open a connection to a robot */
 			case (1): {
-				if (!robots[robotID].blacklisted
-					|| robots[robotID].type == REMOTE)
-					openClientConnection(robotID, -1);
+				telnetConnect(robotID);
 				break;
 			}
 			/* Ctrl-Click to blacklist robots */
@@ -458,7 +456,7 @@ void processHits(GLint hits, GLuint buffer[])
 			}
 			/* Shift-Ctrl-Click to Log robots */
 			case (3): {
-				beginLog(robotID);
+				logRobot(robotID);
 				break;
 			}
 			/* Alt-Click to make robot into a host */
@@ -487,9 +485,7 @@ void processHits(GLint hits, GLuint buffer[])
 				switch (clickMode)
 				{
 				case (CONNECT): {
-					if (!robots[robotID].blacklisted
-						|| robots[robotID].type == REMOTE)
-						openClientConnection(robotID, -1);
+					telnetConnect(robotID);
 					break;
 				}
 				case (HOSTBOT): {
@@ -527,7 +523,7 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (LOG): {
-					beginLog(robotID);
+					logRobot(robotID);
 					break;
 				}
 				case (DISPLAY): {
@@ -557,7 +553,7 @@ void processHits(GLint hits, GLuint buffer[])
 			}
 			/* Shift-Ctrl-Click to Log AprilTags */
 			case (3): {
-				beginAprilTagLog(robotID - 2000);
+				logAprilTag(robotID - 2000);
 				break;
 			}
 			/* Shift-Alt-Click to show info */
@@ -596,7 +592,7 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (LOG): {
-					beginAprilTagLog(robotID - 2000);
+					logAprilTag(robotID - 2000);
 					break;
 				}
 				case (DISPLAY): {
@@ -661,10 +657,11 @@ void drawRobots(GLenum mode)
 		mutexLock(&robots[i].mutex);
 		/* If the robot is active */
 		if (robots[i].up != 0) {
-			if (robots[i].type == LOCAL || robots[i].type == HOST)
+			if (robots[i].type == LOCAL || robots[i].type == HOST) {
 				local[numLocal++] = &robots[i];
-			else if (robots[i].type == REMOTE)
+			} else if (robots[i].type == REMOTE) {
 				remote[numRemote++] = &robots[i];
+			}
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
@@ -695,16 +692,18 @@ void drawRobots(GLenum mode)
 		x = ROBOT_START_X + ROBOT_RADIUS / scale / 2;
 		y = ROBOT_START_Y + ROBOT_RADIUS / scale / 2;
 	}
-	if (maxScale != 1)
+	if (maxScale != 1) {
 		x -= 0.5;
+	}
 
 	start = x;
 
 	/* Draw local robots */
 	for (i = 0; i < numLocal; i++) {
 		mutexLock(&local[i]->mutex);
-		if (mode == GL_SELECT)
+		if (mode == GL_SELECT) {
 			glLoadName(local[i]->id);
+		}
 
 		drawRobot(x, y, local[i], scale);
 		mutexUnlock(&local[i]->mutex);
@@ -718,8 +717,9 @@ void drawRobots(GLenum mode)
 	/* Draw remote robots */
 	for (i = 0; i < numRemote; i++) {
 		mutexLock(&remote[i]->mutex);
-		if (mode == GL_SELECT)
+		if (mode == GL_SELECT) {
 			glLoadName(remote[i]->id);
+		}
 
 		drawRobot(x, y, remote[i], scale);
 		mutexUnlock(&remote[i]->mutex);
@@ -964,22 +964,25 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glColor3fv(color_black);
 			textSetSize(TEXT_SMALL);
 			textSetAlignment(ALIGN_LEFT);
-			if (robot->type != REMOTE)
+			if (robot->type != REMOTE) {
 				textPrintf("ID:%02d COM%d", robot->id, robot->port);
-			else
+			} else {
 				textPrintf("ID:%02d Host:%d", robot->id, robot->host);
+			}
 			glTranslatef(0, -TEXT_SMALL, 0);
 			textPrintf("Log:%s", (robot->log) ? "Yes" : "No");
 			glTranslatef(0, -TEXT_SMALL, 0);
-			if (robot->aid != -1)
+			if (robot->aid != -1) {
 				textPrintf("AprilTag:%d", robot->aid);
-			else
+			} else {
 				textPrintf("AprilTag:None");
+			}
 			glTranslatef(0, -TEXT_SMALL, 0);
-			if (robot->subnet != -1)
+			if (robot->subnet != -1) {
 				textPrintf("Subnet:%d", robot->subnet);
-			else
+			} else {
 				textPrintf("Subnet:N/A");
+			}
 			glTranslatef(0, -TEXT_SMALL, 0);
 			if (robot->up + GRACETIME >= clock()) {
 				for (i = 0; i < robot->count; i++)

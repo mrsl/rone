@@ -92,8 +92,9 @@ int main(int argc, char **argv)
 	CreateDirectory(logDir, NULL);
 
 	/* Create web server */
-	if (createServer(port) < 0)
+	if (createServer(port) < 0) {
 		Error("Failed to create server");
+	}
 
 	initAprilTag();
 	guiInit();

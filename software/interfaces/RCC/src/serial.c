@@ -12,8 +12,9 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 {
 	char port[128];
 
-	if (sprintf(port, "//./COM%d", comPort) < 0)
+	if (sprintf(port, "//./COM%d", comPort) < 0) {
 		return (-1);
+	}
 
 	/* Try and open serial port */
 	*hSerialPtr = CreateFile(port,
@@ -31,8 +32,9 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 		DCB dcbSerialParams = { 0 };
 		dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 
-		if (!GetCommState(*hSerialPtr, &dcbSerialParams))
+		if (!GetCommState(*hSerialPtr, &dcbSerialParams)) {
 			return (0);
+		}
 
 		dcbSerialParams.BaudRate = 230400;
 		dcbSerialParams.ByteSize = 8;
@@ -40,8 +42,9 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 		dcbSerialParams.Parity = NOPARITY;
 		dcbSerialParams.fAbortOnError = 0;
 
-		if (!SetCommState(*hSerialPtr, &dcbSerialParams))
+		if (!SetCommState(*hSerialPtr, &dcbSerialParams)) {
 			return (0);
+		}
 
 		COMMTIMEOUTS timeouts = { 0 };
 
@@ -51,8 +54,9 @@ int serialConnect(HANDLE *hSerialPtr, int comPort)
 		timeouts.WriteTotalTimeoutConstant = 5;
 		timeouts.WriteTotalTimeoutMultiplier = 0;
 
-		if (!SetCommTimeouts(*hSerialPtr, &timeouts))
+		if (!SetCommTimeouts(*hSerialPtr, &timeouts)) {
 			return (-1);
+		}
 	}
 	return (0);
 }
@@ -75,8 +79,9 @@ ssize_t serialRead(struct serialIO *sp, char *usrbuf, size_t n)
 	int cnt;
 
 	while (sp->count <= 0) {
-		if (!ReadFile(*sp->handle, sp->buffer, BUFFERSIZE, &sp->count, NULL))
+		if (!ReadFile(*sp->handle, sp->buffer, BUFFERSIZE, &sp->count, NULL)) {
 			return (-1);
+		}
 
 		if (sp->count == 0) {
 			return (0);
@@ -87,8 +92,9 @@ ssize_t serialRead(struct serialIO *sp, char *usrbuf, size_t n)
 
 	cnt = n;
 
-	if (sp->count < n)
+	if (sp->count < n) {
 		cnt = sp->count;
+	}
 
 	memcpy(usrbuf, sp->bufp, cnt);
 	sp->bufp += cnt;
@@ -115,10 +121,11 @@ ssize_t serialReadline(struct serialIO *sp, char *usrbuf, size_t maxlen)
 				break;
 			}
 		} else if (rc == 0) {
-			if (n == 1)
+			if (n == 1) {
 				return (0);
-			else
+			} else {
 				break;
+			}
 		} else {
 			return (-1);
 		}

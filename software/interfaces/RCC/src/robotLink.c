@@ -216,10 +216,12 @@ void commCommander(void *vargp)
 				/* Initializing */
 				initialized = 1;
 				activateRobot(id, info);
-				if (isHost)
+				if (isHost) {
 					robots[id].type = HOST;
-				if (subnet != -1)
+				}
+				if (subnet != -1) {
 					robots[id].subnet = subnet;
+				}
 				bufp = buffer;
 			} else if (strncmp(buffer, "svs", 3) == 0) {
 				bufp = buffer + 4;
@@ -390,7 +392,6 @@ void commCommander(void *vargp)
 	Free(info->hSerial);
 	Free(info);
 
-	_endthread();
 	return;
 }
 
@@ -450,8 +451,9 @@ void insertBuffer(int robotID, char *buffer, int extraBytes)
 
 	/* Add new message to rotating buffer */
 	robots[robotID].head = (robots[robotID].head + 1) % NUMBUFFER;
-	if (robots[robotID].count < NUMBUFFER)
+	if (robots[robotID].count < NUMBUFFER) {
 		robots[robotID].count++;
+	}
 
 	/* Unlock the robot buffer */
 	mutexUnlock(&robots[robotID].mutex);

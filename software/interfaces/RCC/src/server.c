@@ -22,8 +22,9 @@ int createServer(int port)
 
 	/* Initialize the Windows socket interface */
 	version = MAKEWORD(2, 0);
-	if (WSAStartup(version, &wsaData) != 0)
+	if (WSAStartup(version, &wsaData) != 0) {
 		Error("WSAStartup error");
+	}
 
 	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) {
 		WSACleanup();
@@ -36,14 +37,16 @@ int createServer(int port)
 	listenfd = Malloc(sizeof(int));
 
 	/* Open a port to listen on */
-	if ((*listenfd = openListenFD(port)) < 0)
+	if ((*listenfd = openListenFD(port)) < 0) {
 		return (-1);
+	}
 
 	/* Create incoming connection handler */
 	makeThread(&incomingHandler, listenfd);
 
-	if (verbose)
+	if (verbose) {
 		printf("T00: Server initialized on port %d\n", port);
+	}
 
 	/* Success */
 	return (0);
@@ -59,13 +62,15 @@ void getIPAddress()
 	struct hostent *hostname;
 	struct in_addr addr;
 
-	if (gethostname(name, sizeof(name)) == SOCKET_ERROR)
+	if (gethostname(name, sizeof(name)) == SOCKET_ERROR) {
 		return;
+	}
 
 	/* Just use gethostbyname as we don't need to worry about reentrance */
 	hostname = gethostbyname(name);
-	if (hostname == 0)
+	if (hostname == 0) {
 		return;
+	}
 
 	for (i = 0; hostname->h_addr_list[i] != 0; ++i) {
 		memcpy(&addr, hostname->h_addr_list[i], sizeof(struct in_addr));
@@ -83,25 +88,30 @@ SOCKET openListenFD(int port)
 	struct sockaddr_in serveraddr;
 
 	/* Create a socket descriptor */
-	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+	if ((listenfd = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
 		return (-1);
+	}
 
 	/* Eliminates "Address already in use" error from bind */
 	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *) &optval,
-		sizeof(int)) < 0)
+		sizeof(int)) < 0) {
 		return (-1);
+	}
 
 	memset((char *) &serveraddr, 0, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons((unsigned short) port);
 
-	if (bind(listenfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
+	if (bind(listenfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr))
+		< 0) {
 		return (-1);
+	}
 
 	/* Make it a listening socket ready to accept connection requests */
-	if (listen(listenfd, LISTENQ) < 0)
+	if (listen(listenfd, LISTENQ) < 0) {
 		return (-1);
+	}
 
 	return (listenfd);
 }
@@ -113,16 +123,18 @@ SOCKET openClientFD(char *hostname, char *port)
 
 	// Resolve the server address and port
 	if (getaddrinfo(hostname, port, NULL, &result) != 0) {
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, "MAS: Bad AprilTag Address!\n");
+		}
 		return (INVALID_SOCKET);
 	}
 
 	/* Attempt to connect to an address until one succeeds */
 	for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
 		client = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
-		if (client == INVALID_SOCKET)
+		if (client == INVALID_SOCKET) {
 			Error("socket failure: %ld\n", WSAGetLastError());
+		}
 
 		/* Connect to server. */
 		if (connect(client, ptr->ai_addr,
@@ -163,8 +175,9 @@ void incomingHandler(void *vargp)
 			continue;
 		}
 
-		if (verbose)
+		if (verbose) {
 			printf("T00: New client connection, request number %d\n", count);
+		}
 
 		conn->n = count++;
 
@@ -194,14 +207,16 @@ void connectionHandler(void *vargp)
 	conn = (struct Connection *) vargp;
 	tid = conn->n;
 
-	if (verbose)
+	if (verbose) {
 		printf("T%02d: Handler thread initialized\n", tid);
+	}
 
 	/* Initialize robust IO on the socket */
 	socketInitIO(&socketio, conn->fd);
 
-	if (verbose)
+	if (verbose) {
 		printf("T%02d: [%d] Processing new client connection\n", tid, conn->n);
+	}
 
 	/* Initialize stuff for select */
 	FD_ZERO(&read_set);
@@ -213,35 +228,41 @@ void connectionHandler(void *vargp)
 		if (aprilTagConnected) {
 			if (socketWrite(conn->fd,
 				"Enter the robot ID you wish to view (0 for AprilTag only): ",
-				59) < 0)
+				59) < 0) {
 				break;
+			}
 		} else {
 			if (socketWrite(conn->fd, "Enter the robot ID you wish to view: ",
-				37) < 0)
+				37) < 0) {
 				break;
+			}
 		}
 
-		if (socketReadline(&socketio, buffer, BUFFERSIZE) == 0)
+		if (socketReadline(&socketio, buffer, BUFFERSIZE) == 0) {
 			break;
+		}
 
 		if (sscanf(buffer, "%d\n", &id) != 1) {
-			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
+			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0) {
 				break;
+			}
 			continue;
 		}
 
 		/* Handle bad numbers */
 		if (id >= MAXROBOTID || id < 0) {
 			id = -1;
-			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
+			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0) {
 				break;
+			}
 			continue;
 		}
 
 		if (id == 0 && !aprilTagConnected) {
 			id = -1;
-			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0)
+			if (socketWrite(conn->fd, "Invalid ID! Try Again.\r\n", 24) < 0) {
 				break;
+			}
 			continue;
 		}
 
@@ -251,36 +272,43 @@ void connectionHandler(void *vargp)
 		mutexUnlock(&robots[id].mutex);
 
 		if (up && !bl) {
-			if (socketWrite(conn->fd, "Connected!\r\n", 12) < 0)
+			if (socketWrite(conn->fd, "Connected!\r\n", 12) < 0) {
 				break;
+			}
 		} else {
 			id = -1;
-			if (socketWrite(conn->fd, "Robot ID not connected!\r\n", 25) < 0)
+			if (socketWrite(conn->fd, "Robot ID not connected!\r\n", 25) < 0) {
 				break;
+			}
 		}
 	}
 
 	/* Close if the connection broke */
 	if (id == -1) {
-		if (verbose)
+		if (verbose) {
 			printf("T%02d: [%d] Done!\n", tid, conn->n);
+		}
 
 		Close(conn->fd);
 		Free(conn);
 		return;
 	}
-	if (verbose)
+
+	if (verbose) {
 		printf("T%02d: [%d] Connected to robot %02d\n", tid, conn->n, id);
+	}
 
 	aid = robots[id].aid;
 	if (aprilTagConnected) {
 		while (aid == -1) {
 			if (socketWrite(conn->fd, "Robot AprilTag (Enter for none): ", 33)
-				< 0)
+				< 0) {
 				break;
+			}
 
-			if (socketReadline(&socketio, buffer, BUFFERSIZE) == 0)
+			if (socketReadline(&socketio, buffer, BUFFERSIZE) == 0) {
 				break;
+			}
 
 			if (sscanf(buffer, "%d\n", &aid) != 1) {
 				aid = -1;
@@ -291,21 +319,25 @@ void connectionHandler(void *vargp)
 			if (aid >= MAX_APRILTAG || aid < 0) {
 				aid = -1;
 				if (socketWrite(conn->fd, "Invalid AprilTag! Try Again.\r\n",
-					30) < 0)
+					30) < 0) {
 					break;
+				}
 				continue;
 			}
 
 			if (aprilTagData[aid].active) {
-				if (socketWrite(conn->fd, "AprilTag linked!\r\n", 18) < 0)
+				if (socketWrite(conn->fd, "AprilTag linked!\r\n", 18) < 0) {
 					break;
+				}
 
-				if (verbose)
+				if (verbose) {
 					printf("T%02d: [%d] Connected to AprilTag %d\n", tid,
 						conn->n, aid);
+				}
 			} else {
-				if (socketWrite(conn->fd, "AprilTag not seen!\r\n", 20) < 0)
+				if (socketWrite(conn->fd, "AprilTag not seen!\r\n", 20) < 0) {
 					break;
+				}
 				aid = -1;
 			}
 		}
@@ -321,16 +353,18 @@ void connectionHandler(void *vargp)
 			ready_set = read_set;
 
 			/* Check if there is data available from the client. */
-			if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0)
+			if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0) {
 				break;
+			}
 
 			/* Is there is data to be read? */
 			if (FD_ISSET(conn->fd, &ready_set)) {
 				if (socketRead(&socketio, inBuffer, BUFFERSIZE) != 0) {
 					/* Write data out to serial port if the robot is local */
 					mutexLock(&robots[id].mutex);
-					if (robots[id].type == LOCAL || robots[id].type == HOST)
+					if (robots[id].type == LOCAL || robots[id].type == HOST) {
 						hprintf(robots[id].hSerial, inBuffer);
+					}
 					mutexUnlock(&robots[id].mutex);
 				} else {
 					break;
@@ -344,8 +378,9 @@ void connectionHandler(void *vargp)
 
 				fetchData(buffer, id, head, aid, -1);
 
-				if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
+				if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0) {
 					break;
+				}
 
 				head = (head + 1) % NUMBUFFER;
 				mutexLock(&robots[id].mutex);
@@ -384,8 +419,9 @@ void connectionHandler(void *vargp)
 				mutexUnlock(&aprilTagData[aid].mutex);
 				fetchData(buffer, rid, -1, aid, -1);
 
-				if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0)
+				if ((n = socketWrite(conn->fd, buffer, strlen(buffer))) < 0) {
 					break;
+				}
 
 				head = (head + 1) % NUMBUFFER_APRILTAG;
 				mutexLock(&aprilTagData[aid].mutex);
@@ -398,14 +434,14 @@ void connectionHandler(void *vargp)
 		}
 	}
 
-	if (verbose)
+	if (verbose) {
 		printf("T%02d: [%d] Done!\n", tid, conn->n);
+	}
 
 	/* Clean up. */
 	Close(conn->fd);
 	Free(conn);
 
-	_endthread();
 	return;
 }
 
@@ -432,13 +468,15 @@ int connectAprilTag()
 	strcpy(hostname, aprilTagURL.message);
 
 	/* Parse out port from hostname */
-	if ((port = strpbrk(hostname, ":")) != NULL)
+	if ((port = strpbrk(hostname, ":")) != NULL) {
 		*(port++) = '\0';
-	else
+	} else {
 		port = "2001";
+	}
 
-	if ((fd = openClientFD(hostname, port)) == INVALID_SOCKET)
+	if ((fd = openClientFD(hostname, port)) == INVALID_SOCKET) {
 		return (-1);
+	}
 
 	conn = Malloc(sizeof(struct Connection));
 	conn->fd = fd;
@@ -469,14 +507,16 @@ void aprilTagHandler(void *vargp)
 	conn = (struct Connection *) vargp;
 	tid = conn->n;
 
-	if (verbose)
+	if (verbose) {
 		printf("A%02d: Handler thread initialized\n", tid);
+	}
 
 	/* Initialize robust IO on the socket */
 	socketInitIO(&socketio, conn->fd);
 
-	if (verbose)
+	if (verbose) {
 		printf("A%02d: Processing April Tag Data\n", tid);
+	}
 
 	/* Initialize stuff for select */
 	FD_ZERO(&read_set);
@@ -487,8 +527,9 @@ void aprilTagHandler(void *vargp)
 		ready_set = read_set;
 
 		/* Check if there is data available from the client. */
-		if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0)
+		if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0) {
 			break;
+		}
 
 		/* Is there is data to be read? */
 		if (FD_ISSET(conn->fd, &ready_set)) {
@@ -500,8 +541,9 @@ void aprilTagHandler(void *vargp)
 					continue;
 				}
 				/* Format end to be CRLF */
-				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n')
+				while (buffer[n - 1] == '\r' || buffer[n - 1] == '\n') {
 					buffer[n--] = '\0';
+				}
 
 				buffer[n] = '\r';
 				buffer[n + 1] = '\n';
@@ -509,14 +551,17 @@ void aprilTagHandler(void *vargp)
 
 				/* Parse AprilTag ID */
 				*(bufp++) = '\0';
-				if (sscanf(buffer, "%d,", &id) < 1)
+				if (sscanf(buffer, "%d,", &id) < 1) {
 					continue;
+				}
 
-				if (id < 0 || id >= MAX_APRILTAG)
+				if (id < 0 || id >= MAX_APRILTAG) {
 					continue;
+				}
 
-				if (id > maxAprilTag)
+				if (id > maxAprilTag) {
 					maxAprilTag = id;
+				}
 
 				mutexLock(&aprilTagData[id].mutex);
 				aprilTagData[id].active = 1;
@@ -564,8 +609,9 @@ void aprilTagHandler(void *vargp)
 		}
 	}
 
-	if (verbose)
+	if (verbose) {
 		printf("A%02d: AprilTag connection closed!\n", tid);
+	}
 
 	for (i = 0; i < MAX_APRILTAG; i++) {
 		mutexLock(&aprilTagData[i].mutex);
@@ -584,7 +630,6 @@ void aprilTagHandler(void *vargp)
 	Close(conn->fd);
 	Free(conn);
 
-	_endthread();
 	return;
 }
 
@@ -606,8 +651,9 @@ int fetchData(char *buffer, int rid, int rhead, int aid, int ahead)
 		n = sprintf(buffer, "%s", robots[rid].buffer[rhead]);
 		mutexUnlock(&robots[rid].mutex);
 
-		if (n < 0)
+		if (n < 0) {
 			return (-1);
+		}
 	}
 
 	if (aid != -1) {
@@ -619,18 +665,20 @@ int fetchData(char *buffer, int rid, int rhead, int aid, int ahead)
 					+ NUMBUFFER_APRILTAG) % NUMBUFFER_APRILTAG;
 		}
 
-		if (rid != -1)
+		if (rid != -1) {
 			n = sprintf(bufp, ", %s", aprilTagData[aid].buffer[ahead]);
-		else
+		} else {
 			n = sprintf(bufp, "%s", aprilTagData[aid].buffer[ahead]);
+		}
 		mutexUnlock(&aprilTagData[aid].mutex);
 
 		if (n < 0) {
 			return (-1);
 		/* If there was no data, rewrite the CRLF */
 		} else if (n == 2) {
-			if (sprintf(bufp, "\r\n") < 0)
+			if (sprintf(bufp, "\r\n") < 0) {
 				return (-1);
+			}
 		}
 	}
 
@@ -648,8 +696,9 @@ ssize_t socketWrite(int fd, char *usrbuf, size_t n)
 
 	/* Write data until finished or error */
 	while (nleft > 0) {
-		if ((nwritten = send(fd, bufp, nleft, 0)) < 0)
+		if ((nwritten = send(fd, bufp, nleft, 0)) < 0) {
 			return (-1);
+		}
 
 		nleft -= nwritten;
 		bufp += nwritten;
@@ -682,8 +731,9 @@ ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n)
 	cnt = n;
 
 	/* Copy data over to user buffer */
-	if (sp->count < n)
+	if (sp->count < n) {
 		cnt = sp->count;
+	}
 
 	memcpy(usrbuf, sp->bufp, cnt);
 	sp->bufp += cnt;
@@ -722,10 +772,11 @@ ssize_t socketReadline(struct socketIO *sp, char *usrbuf, size_t maxlen)
 				break;
 			}
 		} else if (rc == 0) {
-			if (n == 1)
+			if (n == 1) {
 				return (0);
-			else
+			} else {
 				break;
+			}
 		} else {
 			return (-1);
 		}
