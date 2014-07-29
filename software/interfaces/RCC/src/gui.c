@@ -1676,10 +1676,14 @@ void drawHelp()
 		textPrintf("AL - Click a robot and AprilTag or vice versa to pair them.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("IN - Displays additional robot or AprilTag information.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("GV - Opens roneGUI connection to robot.");
 		glTranslatef(0, -2 * TEXT_MED, 0);
 		textPrintf("TS - Toggles time-stamping of incoming robot data.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("LS - Begins to log data.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("HF - Toggles filtering of radio host status and data messages.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OL - Opens a connection to all local robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);

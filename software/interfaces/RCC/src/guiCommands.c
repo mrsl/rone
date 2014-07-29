@@ -30,15 +30,17 @@ int openClientConnection(int robotID, int aprilTagID)
 	/* Create a temporary file */
 	dwRetVal = GetTempPath(MAX_PATH, lpTempPathBuffer);
 
-	if (dwRetVal > MAX_PATH || (dwRetVal == 0))
+	if (dwRetVal > MAX_PATH || (dwRetVal == 0)) {
 		return (-1);
+	}
 
 	uRetVal = GetTempFileName(lpTempPathBuffer,
 							  TEXT("SCRIPT"),
 							  0,
 							  szTempFileName);
-	if (uRetVal == 0)
+	if (uRetVal == 0) {
 		return (-1);
+	}
 
 	hTempFile = CreateFile((LPTSTR) szTempFileName,
 						   GENERIC_WRITE, 0,
@@ -46,14 +48,17 @@ int openClientConnection(int robotID, int aprilTagID)
 						   CREATE_ALWAYS,
 						   FILE_ATTRIBUTE_NORMAL,
 						   NULL);
-	if (hTempFile == INVALID_HANDLE_VALUE)
+
+	if (hTempFile == INVALID_HANDLE_VALUE) {
 		return (-1);
+	}
 
 	if (robotID == 0) {
 		hprintf(&hTempFile, scriptTemplate, ipAddress, port, robotID);
 		hprintf(&hTempFile, scriptAT);
-		if (aprilTagID != -1)
+		if (aprilTagID != -1) {
 			hprintf(&hTempFile, scriptATSend, aprilTagID);
+		}
 		hprintf(&hTempFile, scriptEnter);
 		hprintf(&hTempFile, scriptEnd);
 	/* Output the script to the temporary file */
@@ -63,12 +68,14 @@ int openClientConnection(int robotID, int aprilTagID)
 	}
 
 
-	if (!CloseHandle(hTempFile))
+	if (!CloseHandle(hTempFile)) {
 		return (-1);
+	}
 
 	/* Open secureCRT with the script as an argument */
-	if (sprintf(buffer, "/SCRIPT \"%s\"", szTempFileName) < 0)
+	if (sprintf(buffer, "/SCRIPT \"%s\"", szTempFileName) < 0) {
 		return (-1);
+	}
 
 	ShellExecute(GetDesktopWindow(),
 				 "open",
@@ -90,8 +97,9 @@ int directConnect(int robotID)
 	blacklist(robotID);
 
 	if (sprintf(buffer, "/SERIAL COM%d /BAUD 230400 /NOCTS",
-		robots[robotID].port) < 0)
+		robots[robotID].port) < 0) {
 		return (-1);
+	}
 
 	ShellExecute(GetDesktopWindow(),
 				 "open",
@@ -120,16 +128,18 @@ void killSecureCRT()
 
 	if (EnumProcesses(processIDs,
 					  MAX_PROCESSES,
-					  &pBytesReturned) == 0)
+					  &pBytesReturned) == 0) {
 		return;
+	}
 
 	for (i = 0; i < pBytesReturned / sizeof(DWORD); i++) {
 		process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_TERMINATE |
 							  PROCESS_VM_READ,
 							  FALSE,
 							  processIDs[i]);
-		if (process == NULL)
+		if (process == NULL) {
 			continue;
+		}
 
 		if (EnumProcessModules(process,
 							   &hMod,
@@ -140,8 +150,9 @@ void killSecureCRT()
 							  processName,
 							  sizeof(processName) / sizeof(TCHAR));
 
-			if (strcmp(name, processName) == 0)
+			if (strcmp(name, processName) == 0) {
 				TerminateProcess(process, 0);
+			}
 		}
 	}
 }
@@ -149,8 +160,9 @@ void killSecureCRT()
 void hostRobot(int robotID)
 {
 	if (robots[robotID].type == LOCAL && robots[robotID].hSerial != NULL
-		&& !robots[robotID].blacklisted)
+		&& !robots[robotID].blacklisted) {
 		hprintf(robots[robotID].hSerial, "rt\n");
+	}
 }
 
 void blacklist(int robotID)
@@ -173,10 +185,12 @@ void blacklist(int robotID)
 void commConnect(int robotID)
 {
 	if (robots[robotID].type != REMOTE && robots[robotID].hSerial != NULL
-		&& !robots[robotID].blacklisted)
+		&& !robots[robotID].blacklisted) {
 		directConnect(robotID);
+	}
 }
 
+/* TODO: Modularize log files */
 void beginLog(int robotID)
 {
 	char fileName[MAX_PATH], date[BUFFERSIZE];
@@ -197,8 +211,9 @@ void beginLog(int robotID)
 										  CREATE_ALWAYS,
 										  FILE_ATTRIBUTE_NORMAL,
 										  NULL);
-		if (robots[robotID].logH == INVALID_HANDLE_VALUE)
+		if (robots[robotID].logH == INVALID_HANDLE_VALUE) {
 			robots[robotID].log = 0;
+		}
 	} else {
 		robots[robotID].log = 0;
 		CloseHandle(robots[robotID].logH);
@@ -225,8 +240,9 @@ void beginAprilTagLog(int aprilTagID)
 												   CREATE_ALWAYS,
 												   FILE_ATTRIBUTE_NORMAL,
 												   NULL);
-		if (aprilTagData[aprilTagID].logH == INVALID_HANDLE_VALUE)
+		if (aprilTagData[aprilTagID].logH == INVALID_HANDLE_VALUE) {
 			aprilTagData[aprilTagID].log = 0;
+		}
 	} else {
 		aprilTagData[aprilTagID].log = 0;
 		CloseHandle(aprilTagData[aprilTagID].logH);
@@ -241,8 +257,9 @@ void openLocalConnections()
 		mutexLock(&robots[i].mutex);
 		/* If the robot is active */
 		if (robots[i].up != 0 && !robots[i].blacklisted) {
-			if (robots[i].type == LOCAL || robots[i].type == HOST)
+			if (robots[i].type == LOCAL || robots[i].type == HOST) {
 				openClientConnection(i, -1);
+			}
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
@@ -256,8 +273,9 @@ void openRemoteConnections()
 		mutexLock(&robots[i].mutex);
 		/* If the robot is active */
 		if (robots[i].up != 0) {
-			if (robots[i].type == REMOTE)
+			if (robots[i].type == REMOTE) {
 				openClientConnection(i, -1);
+			}
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
@@ -269,18 +287,21 @@ void showRobotInfo(int robotID)
 		robots[robotID].display = 0;
 	} else {
 		if (!robots[robotID].blacklisted
-			|| robots[robotID].type == REMOTE)
+			|| robots[robotID].type == REMOTE) {
 			robots[robotID].display = 1;
+		}
 	}
 }
 
 void showAprilTagInfo(int robotID)
 {
 	robotID -= 2000;
-	if (aprilTagData[robotID].display)
+
+	if (aprilTagData[robotID].display) {
 		aprilTagData[robotID].display = 0;
-	else
+	} else {
 		aprilTagData[robotID].display = 1;
+	}
 }
 
 int guiConnect(int robotID)
@@ -289,16 +310,19 @@ int guiConnect(int robotID)
 	char buffer[BUFFERSIZE];
 
 	if (robots[robotID].type == REMOTE || robots[robotID].hSerial == NULL
-		|| robots[robotID].blacklisted)
+		|| robots[robotID].blacklisted) {
 		return (-1);
+	}
 
 	blacklist(robotID);
 
-	if (sprintf(exeName, "%s\\%s", guiPath, "roneGUI.exe") < 0)
+	if (sprintf(exeName, "%s\\%s", guiPath, "roneGUI.exe") < 0) {
 		return (-1);
+	}
 
-	if (sprintf(buffer, "-p %d", robots[robotID].port) < 0)
+	if (sprintf(buffer, "-p %d", robots[robotID].port) < 0) {
 		return (-1);
+	}
 
 	ShellExecute(GetDesktopWindow(),
 				 "open",

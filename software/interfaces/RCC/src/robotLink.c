@@ -7,7 +7,6 @@
 
 struct commCon robots[MAXROBOTID]; /* Robot buffers */
 
-int init = 0;
 int timestamps = 1;
 int logging = 0;
 int hostData = 1;
@@ -34,14 +33,10 @@ void initRobots()
 		robots[i].count = 0;
 		robots[i].type = UNKNOWN;
 		robots[i].subnet = -1;
-		if (!init)
-			mutexInit(&robots[i].mutex);
+		mutexInit(&robots[i].mutex);
 	}
 
-	if (!init)
-		makeThread(&commManager, 0);
-
-	init = 1;
+	makeThread(&commManager, 0);
 }
 
 /**
@@ -50,6 +45,8 @@ void initRobots()
 void commManager(void *vargp)
 {
 	int i;
+
+	vargp = (void *) vargp;
 
 	/* Iterate through robot list indefinitely */
 	for (;;) {
@@ -66,8 +63,9 @@ void commManager(void *vargp)
 			/* Ping all host robots for updated remote robots. */
 			if (robots[i].up
 				&& robots[i].type == HOST
-				&& !robots[i].blacklisted)
+				&& !robots[i].blacklisted) {
 				hprintf(robots[i].hSerial, "rt\n");
+			}
 
 			if (robots[i].aid != -1 && !aprilTagConnected) {
 				robots[i].aid = -1;
@@ -79,8 +77,9 @@ void commManager(void *vargp)
 		if (aprilTagConnected) {
 			for (i = 0; i < MAX_APRILTAG; i++) {
 				mutexLock(&aprilTagData[i].mutex);
-				if (!robots[aprilTagData[i].rid].up)
+				if (!robots[aprilTagData[i].rid].up) {
 					aprilTagData[i].rid = -1;
+				}
 
 				if ((aprilTagData[i].up + GRACETIME < clock())
 					&& aprilTagData[i].active) {
@@ -88,9 +87,11 @@ void commManager(void *vargp)
 					aprilTagData[i].up = 0;
 					aprilTagData[i].rid = -1;
 				}
+
 				mutexUnlock(&aprilTagData[i].mutex);
 			}
 		}
+
 		/* Sleep for a while. */
 		Sleep(SLEEPTIME);
 	}
@@ -106,8 +107,10 @@ int initCommCommander(int port)
 
 	/* Connect to the port */
 	if (serialConnect(hSerial, port) < 0) {
-		if (verbose)
+		if (verbose) {
 			fprintf(stderr, "ERROR: Failed to connect serial\n");
+		}
+
 		return (-1);
 	}
 
@@ -127,7 +130,7 @@ void commCommander(void *vargp)
 {
 	int i, j, n;
 	int id = 0;							// Robot ID
-	int initialized = 0;				// Have we handshaked with the robot?
+	int initialized = 0;				// Have we hand-shook with the robot?
 	int isHost = 0;						// Is this robot a rprintf host?
 	int subnet = -1;					// What is this robot's subnet?
 	int rid;							// Remote robot ID
@@ -151,8 +154,9 @@ void commCommander(void *vargp)
 	for (;;) {
 		/* Read a line */
 		if ((n = serialReadline(&sio, bufp, BUFFERSIZE)) < 0) {
-			if (verbose)
+			if (verbose) {
 				fprintf(stderr, "S%02d: Serial read error\n", id);
+			}
 			break;
 		} else if (n == 0) {
 			continue;
@@ -167,6 +171,7 @@ void commCommander(void *vargp)
 			while (bufp[n - 1] == '\r' || bufp[n - 1] == '\n') {
 				bufp[n--] = '\0';
 			}
+
 			bufp[n] = '\r';
 			bufp[n + 1] = '\n';
 
@@ -196,15 +201,16 @@ void commCommander(void *vargp)
 					bufp++;
 
 					/* Convert hex number in buffer to correct endianness */
-					if (i == 0)
+					if (i == 0) {
 						id = convertASCIIHexWord(rbuffer);
-					else if (i == 1)
+					} else if (i == 1) {
 						isHost = convertASCIIHexWord(rbuffer);
-					else if (j != SBUFSIZE)
+					} else if (j != SBUFSIZE) {
 						subnet = convertASCIIHexWord(rbuffer);
+					}
 				}
 
-				if (verbose && !initialized)
+				if (verbose)
 					printf("S%02d: Connected to robot ID %02d\n", id, id);
 
 				/* Initializing */
@@ -237,8 +243,9 @@ void commCommander(void *vargp)
 				/* Convert hex number in buffer to correct endianness */
 				id = convertASCIIHexWord(rbuffer);
 
-				if (verbose && !initialized)
+				if (verbose) {
 					printf("S%02d: Connected to robot ID %02d\n", id, id);
+				}
 
 				/* Initializing */
 				initialized = 1;
@@ -247,6 +254,7 @@ void commCommander(void *vargp)
 				bufp = buffer;
 			}
 
+			/* Keep looping until we have gotten the robot's ID. */
 			continue;
 		}
 
@@ -256,25 +264,30 @@ void commCommander(void *vargp)
 			robots[id].type = HOST;
 			isHost = 1;
 
-			if (hostData)
+			if (hostData) {
 				insertBuffer(id, buffer, 0);
+			}
 
 			/* Get Number or robots */
-			if (sscanf(buffer, "rts,%d%s", &n, rbuffer) < 1)
+			if (sscanf(buffer, "rts,%d%s", &n, rbuffer) < 1) {
 				continue;
+			}
 
 			/* Handle bad numbers */
-			if (n > MAXROBOTID || n < 0)
+			if (n > MAXROBOTID || n < 0) {
 				continue;
+			}
 
 			/* Get IDs of connected robots */
 			for (i = 0; i < n; i++) {
-				if (sscanf(rbuffer, ",%d%s", &rid, rbuffer) < 1)
+				if (sscanf(rbuffer, ",%d%s", &rid, rbuffer) < 1) {
 					break;
+				}
 
 				/* Handle bad numbers */
-				if (rid > MAXROBOTID || rid < 0)
+				if (rid > MAXROBOTID || rid < 0) {
 					break;
+				}
 
 				mutexLock(&robots[rid].mutex);
 
@@ -288,20 +301,24 @@ void commCommander(void *vargp)
 				robots[rid].type = REMOTE;
 				robots[rid].up = clock();
 				robots[rid].host = id;
-				if (subnet != -1)
+				if (subnet != -1) {
 					robots[rid].subnet = subnet;
+				}
 
 				mutexUnlock(&robots[rid].mutex);
 			}
+		/* If we get a data line from the robot */
 		} else if (strncmp(buffer, "rtd", 3) == 0) {
-			if (hostData)
+			if (hostData) {
 				insertBuffer(id, buffer, 0);
+			}
 
 			/* Get the beginning of the remote message */
 			if ((bufp = strpbrk(buffer, " ")) == NULL) {
 				bufp = buffer;
 				continue;
 			}
+
 			*bufp = '\0';
 
 			/* Scan ID and data */
@@ -322,8 +339,9 @@ void commCommander(void *vargp)
 				/* Insert parsed line into remote robot's buffer. */
 				robots[rid].type = REMOTE;
 				robots[rid].host = id;
-				if (subnet != -1)
+				if (subnet != -1) {
 					robots[rid].subnet = subnet;
+				}
 
 				mutexUnlock(&robots[rid].mutex);
 
@@ -331,6 +349,7 @@ void commCommander(void *vargp)
 			} else {
 				mutexUnlock(&robots[rid].mutex);
 			}
+
 			bufp = buffer;
 		} else {
 			/* Insert the read line into robot's buffer. */
@@ -338,6 +357,7 @@ void commCommander(void *vargp)
 		}
 	}
 
+	/* On close. */
 	if (id != 0) {
 		robots[id].hSerial = NULL;
 
@@ -350,13 +370,14 @@ void commCommander(void *vargp)
 
 		/* If blacklisted, should break out of loop due to serial read error. */
 		if (robots[id].blacklisted) {
-			if (verbose)
+			if (verbose) {
 				printf("S%02d: Blacklisted!\n", id);
+			}
 		/* If we exited from something else */
 		} else {
-			if (verbose)
+			if (verbose) {
 				printf("S%02d: Done!\n", id);
-
+			}
 			/* Clean up */
 			commToNum[info->port] = 0;
 			robots[id].type = UNKNOWN;
