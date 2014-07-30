@@ -311,7 +311,7 @@ void connectionHandler(void *vargp)
 		}
 	}
 
-	/* Connected to a robot / main AprilTag feed */
+	/* Connected to a robot / AprilTag feed */
 	if (id != 0 || (id == 0 && aid == -1)) {
 		mutexLock(&robots[id].mutex);
 		head = robots[id].head;
@@ -369,6 +369,9 @@ void connectionHandler(void *vargp)
 	} else {
 		int rid;
 
+		sprintf(tbuffer, "New Connection to AprilTag ID %2d!", aid);
+		setToaster(tbuffer);
+
 		mutexLock(&aprilTagData[aid].mutex);
 		head = aprilTagData[aid].head;
 		mutexUnlock(&aprilTagData[aid].mutex);
@@ -402,6 +405,8 @@ void connectionHandler(void *vargp)
 	Close(conn->fd);
 	Free(conn);
 
+	_endthread();
+	return;
 }
 
 void initAprilTag()
@@ -541,7 +546,7 @@ void aprilTagHandler(void *vargp)
 				aprilTagData[id].head = (aprilTagData[id].head + 1)
 					% NUMBUFFER_APRILTAG;
 
-				if (aprilTagData[id].log) {
+				if (aprilTagData[id].log && logging) {
 					if ((rid = aprilTagData[id].rid) != -1) {
 						mutexUnlock(&aprilTagData[id].mutex);
 						fetchData(lbuffer, rid, -1, id, -1);
@@ -578,6 +583,9 @@ void aprilTagHandler(void *vargp)
 	aprilTagConnected = 0;
 	Close(conn->fd);
 	Free(conn);
+
+	_endthread();
+	return;
 }
 
 /**
@@ -663,6 +671,8 @@ ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n)
 		sp->count = recv(sp->fd, sp->buffer, sizeof(sp->buffer), 0);
 
 		if (sp->count == 0) { /* EOF */
+			return (0);
+		} else if (sp->count == -1) {
 			return (0);
 		} else {
 			sp->bufp = sp->buffer; /* Reset buffer ptr */

@@ -11,6 +11,7 @@ GLfloat aprilTagX = 0.;
 GLfloat aprilTagY = 0.;
 char logDir[MAX_PATH] = ".\\logs";
 char defaultATServerIP[15] = "192.168.1.155";
+char guiPath[MAX_PATH] = "..\\..\\roneGUI\\bin";
 
 /**
  * Main function
@@ -62,13 +63,21 @@ int main(int argc, char **argv)
 				aprilTagX /= 2.;
 				continue;
 			}
+			if (strcmp(argv[i], "-g") == 0 || strcmp(argv[i], "--gui") == 0) {
+				if (sscanf(argv[i + 1], "%s", guiPath) != 1) {
+					err = 1;
+					break;
+				}
+				i++;
+				continue;
+			}
 		}
 		err = 1;
 		break;
 	}
 
 	if (err) {
-		printf("Usage: %s <-v|--verbose> <-p|--port> [portnum]\n    <-h|--height> [AprilTag max Y] <-w|--width> [AprilTag max X]\n", argv[0]);
+		printf("Usage: %s <-v|--verbose> <-p|--port> [Port]\n    <-h|--height> [AprilTag max Y] <-w|--width> [AprilTag max X]\n    <-g|--gui> [Path to roneGUI.exe]", argv[0]);
 		return (-1);
 	}
 

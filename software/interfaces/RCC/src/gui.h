@@ -50,6 +50,11 @@
 #define SCALE_SMALL			2.
 #define SCALE_TINY			3.
 
+#define BUTTONSPACE			-TEXT_LARGE - 0.2
+#define BUTTONBLOCKSPACE	-1.6
+
+#define TOASTER_POP_TIME	750
+
 /* AprilTag drawing defines */
 #define APRILTAG_X			10
 #define APRILTAG_Y			-1
@@ -96,6 +101,7 @@
 #define HOSTBOT		4
 #define LOG			5
 #define DISPLAY		6
+#define GUI			7
 
 #define CONNECT_BUTTON		1001
 #define BLACKLIST_BUTTON	1002
@@ -108,6 +114,10 @@
 #define LOG_BUTTON			1009
 #define HELP_BUTTON			1010
 #define INFO_BUTTON			1011
+#define TIME_BUTTON			1012
+#define LOGST_BUTTON		1013
+#define GUI_BUTTON			1014
+#define HDATA_BUTTON		1015
 
 #define APRILTAG_GRID		1501
 
@@ -120,6 +130,8 @@ struct textbox {
 	int index;
 	char message[MAX_TEXTBOX_LENGTH];
 };
+
+extern char tbuffer[64];
 
 extern struct textbox aprilTagURL;	// AprilTag IP textbox
 
@@ -153,6 +165,9 @@ void drawToolbar(GLenum mode);
 void drawHelp();
 void timerEnableDraw(int value);
 void special(int key, int x, int y);
+void setToaster(char *text);
+void drawToaster();
+
 void guiInit();
 
 /* Text functions */
@@ -173,5 +188,6 @@ void openLocalConnections();
 void openRemoteConnections();
 void showRobotInfo(int robotID);
 void showAprilTagInfo(int robotID);
+int guiConnect(int robotID);
 
 #endif

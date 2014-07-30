@@ -8,6 +8,10 @@
 struct commCon robots[MAXROBOTID]; /* Robot buffers */
 
 int init = 0;
+int timestamps = 1;
+int logging = 0;
+int hostData = 1;
+
 /**
  * Initialize the robot buffers
  */
@@ -138,6 +142,7 @@ void commCommander(void *vargp)
 
 	/* Query the robot for its id, and if it is a host */
 	hprintf(info->hSerial, "rr\n");
+	hprintf(info->hSerial, "sv\n");
 
 	/* Initialize robust IO on the serial */
 	serialInitIO(&sio, info->hSerial);
@@ -168,9 +173,8 @@ void commCommander(void *vargp)
 			bufp = buffer;
 		}
 
-		/* Loop until ID and host data has been obtained from the robot */
+		/* Get ID and host data has been obtained from the robot */
 		if (!initialized) {
-			/* Parse in hex data of reverse endianness from the robots */
 			if (strncmp(buffer, "rr", 2) == 0) {
 				bufp = buffer + 3;
 				/* Get the two arguments */
@@ -191,7 +195,7 @@ void commCommander(void *vargp)
 					}
 					bufp++;
 
-					/* Convert hex number in buffer to usable values */
+					/* Convert hex number in buffer to correct endianness */
 					if (i == 0)
 						id = convertASCIIHexWord(rbuffer);
 					else if (i == 1)
@@ -200,7 +204,7 @@ void commCommander(void *vargp)
 						subnet = convertASCIIHexWord(rbuffer);
 				}
 
-				if (verbose)
+				if (verbose && !initialized)
 					printf("S%02d: Connected to robot ID %02d\n", id, id);
 
 				/* Initializing */
@@ -211,17 +215,49 @@ void commCommander(void *vargp)
 				if (subnet != -1)
 					robots[id].subnet = subnet;
 				bufp = buffer;
+			} else if (strncmp(buffer, "svs", 3) == 0) {
+				bufp = buffer + 4;
+				/* Get the argument */
+				j = 0;
+				while (*bufp != ',') {
+					if (*bufp == '\r' && *(bufp + 1) == '\n') {
+						rbuffer[j] = '\0';
+						break;
+					} else if (j == SBUFSIZE) {
+						rbuffer[j] = '\0';
+						break;
+					}
+					rbuffer[j] = *bufp;
+
+					j++;
+					bufp++;
+				}
+				bufp++;
+
+				/* Convert hex number in buffer to correct endianness */
+				id = convertASCIIHexWord(rbuffer);
+
+				if (verbose && !initialized)
+					printf("S%02d: Connected to robot ID %02d\n", id, id);
+
+				/* Initializing */
+				initialized = 1;
+				activateRobot(id, info);
+
+				bufp = buffer;
 			}
+
 			continue;
 		}
-		/* Insert the read line into robot's buffer. */
-		insertBuffer(id, buffer, 0);
 
 		/* If we get a status line from a host robot. */
 		if (strncmp(buffer, "rts", 3) == 0) {
 			/* This robot is a host robot. */
 			robots[id].type = HOST;
 			isHost = 1;
+
+			if (hostData)
+				insertBuffer(id, buffer, 0);
 
 			/* Get Number or robots */
 			if (sscanf(buffer, "rts,%d%s", &n, rbuffer) < 1)
@@ -257,10 +293,10 @@ void commCommander(void *vargp)
 
 				mutexUnlock(&robots[rid].mutex);
 			}
-		}
+		} else if (strncmp(buffer, "rtd", 3) == 0) {
+			if (hostData)
+				insertBuffer(id, buffer, 0);
 
-		/* If we get a data line */
-		if (strncmp(buffer, "rtd", 3) == 0) {
 			/* Get the beginning of the remote message */
 			if ((bufp = strpbrk(buffer, " ")) == NULL) {
 				bufp = buffer;
@@ -296,36 +332,45 @@ void commCommander(void *vargp)
 				mutexUnlock(&robots[rid].mutex);
 			}
 			bufp = buffer;
+		} else {
+			/* Insert the read line into robot's buffer. */
+			insertBuffer(id, buffer, 0);
 		}
 	}
-	robots[id].hSerial = NULL;
 
-	robots[id].display = 0;
-	robots[id].subnet = -1;
-	if (robots[id].log) {
-		robots[id].log = 0;
-		CloseHandle(robots[id].logH);
-	}
+	if (id != 0) {
+		robots[id].hSerial = NULL;
 
-	/* If blacklisted, should break out of loop due to serial read error. */
-	if (robots[id].blacklisted) {
-		if (verbose)
-			printf("S%02d: Blacklisted!\n", id);
-	/* If we exited from something else */
-	} else {
-		if (verbose)
-			printf("S%02d: Done!\n", id);
+		robots[id].display = 0;
+		robots[id].subnet = -1;
+		if (robots[id].log) {
+			robots[id].log = 0;
+			CloseHandle(robots[id].logH);
+		}
 
-		/* Clean up */
-		commToNum[info->port] = 0;
-		robots[id].type = UNKNOWN;
-		robots[id].up = 0;
-		robots[id].aid = -1;
-		CloseHandle(*info->hSerial);
+		/* If blacklisted, should break out of loop due to serial read error. */
+		if (robots[id].blacklisted) {
+			if (verbose)
+				printf("S%02d: Blacklisted!\n", id);
+		/* If we exited from something else */
+		} else {
+			if (verbose)
+				printf("S%02d: Done!\n", id);
+
+			/* Clean up */
+			commToNum[info->port] = 0;
+			robots[id].type = UNKNOWN;
+			robots[id].up = 0;
+			robots[id].aid = -1;
+			CloseHandle(*info->hSerial);
+		}
 	}
 
 	Free(info->hSerial);
 	Free(info);
+
+	_endthread();
+	return;
 }
 
 /**
@@ -361,11 +406,16 @@ void insertBuffer(int robotID, char *buffer, int extraBytes)
 
 	robots[robotID].lup = robots[robotID].up;
 	robots[robotID].up = clock();
-	sprintf(robots[robotID].buffer[robots[robotID].head], "%11ld, %s",
-		robots[robotID].up, lbuffer);
+
+	if (timestamps) {
+		sprintf(robots[robotID].buffer[robots[robotID].head], "%11ld, %s",
+			robots[robotID].up, lbuffer);
+	} else {
+		sprintf(robots[robotID].buffer[robots[robotID].head], lbuffer);
+	}
 
 	/* Log data */
-	if (robots[robotID].log) {
+	if (robots[robotID].log && logging) {
 		mutexUnlock(&robots[robotID].mutex);
 		fetchData(lbuffer, robotID, robots[robotID].head, robots[robotID].aid, -1);
 		mutexLock(&robots[robotID].mutex);

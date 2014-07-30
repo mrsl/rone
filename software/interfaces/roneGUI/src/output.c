@@ -9,6 +9,8 @@
 
 #define MSG_SIZE		256
 
+int toggle = 0;
+
 /*
  * Conversion ASCII -> uint conversion functions.
  *
@@ -72,7 +74,10 @@ int convertASCIIBool(char val)
 void outputInit(outputData *out)
 {
 	int i;
+	toggle = 0;
+
 	out->id = 0;
+	out->isv11 = 0;
 	memset(out->radioMsg, 0, LEN_TXT_RADIO);
 	for (i = 0; i < NUM_BUTTONS; i++) {
 		out->buttons[i] = 0;
@@ -211,11 +216,18 @@ void executeCmd(guiCmdData *command, outputData *out)
 		break;
 	}
 	case DAT_LIGHT: {
+
 		out->lightSensors[LS_FRONT_LEFT] = convertASCIIHexWord(command->arg[0]);
 		out->lightSensors[LS_FRONT_RIGHT] = convertASCIIHexWord(
 			command->arg[1]);
 		out->lightSensors[LS_BACK_RIGHT] = convertASCIIHexWord(command->arg[2]);
 		out->lightSensors[LS_BACK_LEFT] = convertASCIIHexWord(command->arg[3]);
+
+		if (!toggle && out->lightSensors[LS_BACK_LEFT] == 0)
+			out->isv11 = 1;
+
+		if (!toggle)
+			toggle = 1;
 
 		break;
 	}
@@ -273,10 +285,12 @@ void executeCmd(guiCmdData *command, outputData *out)
 		break;
 	}
 	case DAT_GRIP: {
-		out->gripper.isOn = 1;
 		out->gripper.current = convertASCIIHexByte(command->arg[0]);
 		out->gripper.servo = convertASCIIHexByte(command->arg[1]);
 		out->gripper.gripped = convertASCIIHexByte(command->arg[2]);
+
+		out->gripper.isOn = (out->gripper.current || out->gripper.servo
+			|| out->gripper.gripped);
 		break;
 	}
 		/*

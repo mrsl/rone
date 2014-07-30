@@ -8,7 +8,33 @@
 int showHelp = 0;
 int clickMode;
 int prevClick;
+
+char *toasterText;
+CRITICAL_SECTION toasterMutex;
+long toasterTime;
+int toasterDraw = 0;
+char tbuffer[64];
+
 struct textbox aprilTagURL;
+
+char connectName[20] = 		"Connect via Telnet";
+char blacklistName[20] =	"Blacklist";
+char serialName[20] =		"Connect via Serial";
+char aprilName[20] =		"AprilTag Linking";
+char hostName[20] =			"Make Radio Host";
+char infoName[20] =			"Extra Information";
+char logName[20] =			"Log Data";
+char guiName[20] =			"Connect to GUI";
+char openlocalName[21] = 	"Opened Local Robots!";
+char openremoteName[22] = 	"Opened Remote Robots!";
+char timeOnName[21] = 		"Time-stamps enabled!";
+char timeOffName[22] = 		"Time-stamps disabled!";
+char logOnName[20] = 		"Began Logging Data!";
+char logOffName[22] = 		"Stopped Logging Data!";
+char killallName[30] = 		"Closed All SecureCRT Windows!";
+char hostDataOnName[30] = 	"Filtering Radio Host Data!";
+char hostDataOffName[35] = 	"Stopped Filtering Radio Host Data!";
+char errorName[20] =		"Oops!";
 
 /**
  * Display function, we don't want to do anything here
@@ -125,8 +151,19 @@ void readChar(char character)
 			aprilTagURL.isActive = 1;
 			return;
 		}
+		case (8): {
+			if (hostData) {
+				hostData = 0;
+				setToaster(hostDataOnName);
+			} else {
+				hostData = 1;
+				setToaster(hostDataOffName);
+			}
+			return;
+		}
 		case (12): {
 			openLocalConnections();
+			setToaster(openlocalName);
 			return;
 		}
 		case (17): {
@@ -138,10 +175,32 @@ void readChar(char character)
 		}
 		case (18): {
 			openRemoteConnections();
+			setToaster(openremoteName);
+			return;
+		}
+		case (19): {
+			if (logging) {
+				logging = 0;
+				setToaster(logOffName);
+			} else {
+				logging = 1;
+				setToaster(logOnName);
+			}
+			return;
+		}
+		case (20): {
+			if (timestamps) {
+				timestamps = 0;
+				setToaster(timeOffName);
+			} else {
+				timestamps = 1;
+				setToaster(timeOnName);
+			}
 			return;
 		}
 		case (23): {
 			killSecureCRT();
+			setToaster(killallName);
 			return;
 		}
 		default: {
@@ -160,30 +219,42 @@ void readChar(char character)
 		{
 		case ('1'): {
 			clickMode = CONNECT;
+			setToaster(connectName);
 			break;
 		}
 		case ('2'): {
 			clickMode = HOSTBOT;
+			setToaster(hostName);
 			break;
 		}
 		case ('3'): {
 			clickMode = BLACKLIST;
+			setToaster(blacklistName);
 			break;
 		}
 		case ('4'): {
 			clickMode = SCONNECT;
+			setToaster(serialName);
 			break;
 		}
 		case ('5'): {
 			clickMode = LOG;
+			setToaster(logName);
 			break;
 		}
 		case ('6'): {
 			clickMode = ATLINK;
+			setToaster(aprilName);
 			break;
 		}
 		case ('7'): {
 			clickMode = DISPLAY;
+			setToaster(infoName);
+			break;
+		}
+		case ('8'): {
+			clickMode = GUI;
+			setToaster(guiName);
 			break;
 		}
 		default: {
@@ -274,46 +345,91 @@ void processHits(GLint hits, GLuint buffer[])
 		/* Toolbar buttons */
 		case (CONNECT_BUTTON): {
 			clickMode = CONNECT;
+			setToaster(connectName);
 			continue;
 		}
 		case (HOST_BUTTON): {
 			clickMode = HOSTBOT;
+			setToaster(hostName);
 			continue;
 		}
 		case (BLACKLIST_BUTTON): {
 			clickMode = BLACKLIST;
+			setToaster(blacklistName);
 			continue;
 		}
 		case (SCONNECT_BUTTON): {
 			clickMode = SCONNECT;
+			setToaster(serialName);
 			continue;
 		}
 		case (ATLINK_BUTTON): {
 			clickMode = ATLINK;
+			setToaster(aprilName);
 			continue;
 		}
 		case (LOG_BUTTON): {
 			clickMode = LOG;
+			setToaster(logName);
 			continue;
 		}
 		case (INFO_BUTTON): {
 			clickMode = DISPLAY;
+			setToaster(infoName);
+			continue;
+		}
+		case (GUI_BUTTON): {
+			clickMode = GUI;
+			setToaster(guiName);
 			continue;
 		}
 		case (OPENLOCAL_BUTTON): {
 			openLocalConnections();
+			setToaster(openlocalName);
 			continue;
 		}
 		case (OPENREMOTE_BUTTON): {
 			openRemoteConnections();
+			setToaster(openremoteName);
 			continue;
 		}
 		case (KILLALL_BUTTON): {
 			killSecureCRT();
+			setToaster(killallName);
 			continue;
 		}
 		case (HELP_BUTTON): {
 			showHelp = 1;
+			continue;
+		}
+		case (TIME_BUTTON): {
+			if (timestamps) {
+				timestamps = 0;
+				setToaster(timeOffName);
+			} else {
+				timestamps = 1;
+				setToaster(timeOnName);
+			}
+			continue;
+		}
+		case (LOGST_BUTTON): {
+			if (logging) {
+				logging = 0;
+				setToaster(logOffName);
+			} else {
+				logging = 1;
+				setToaster(logOnName);
+			}
+			continue;
+		}
+		case (HDATA_BUTTON): {
+			if (hostData) {
+				hostData = 0;
+				setToaster(hostDataOnName);
+			} else {
+				hostData = 1;
+				setToaster(hostDataOffName);
+			}
 			continue;
 		}
 		default: {
@@ -358,6 +474,11 @@ void processHits(GLint hits, GLuint buffer[])
 			/* Ctrl-Alt-Click to open a direct connection to secureCRT */
 			case (6): {
 				commConnect(robotID);
+				break;
+			}
+			/* Ctrl-Alt-Shift-Click to open a GUI window */
+			case (7): {
+				guiConnect(robotID);
 				break;
 			}
 			/* Do whatever tool is selected */
@@ -411,6 +532,10 @@ void processHits(GLint hits, GLuint buffer[])
 				}
 				case (DISPLAY): {
 					showRobotInfo(robotID);
+					break;
+				}
+				case (GUI): {
+					guiConnect(robotID);
 					break;
 				}
 				default: {
@@ -800,7 +925,10 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 				glCallList(LIST_SQUARE);
 			glPopMatrix();
 			glTranslatef(0, -0.3, 0);
-			glColor3fv(color_black);
+			if (logging)
+				glColor3fv(color_red);
+			else
+				glColor3fv(color_black);
 			textSetSize(TEXT_MED);
 			textPrintf("L", robot->aid);
 		glPopMatrix();
@@ -846,7 +974,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			if (robot->aid != -1)
 				textPrintf("AprilTag:%d", robot->aid);
 			else
-				textPrintf("AprilTag :None");
+				textPrintf("AprilTag:None");
 			glTranslatef(0, -TEXT_SMALL, 0);
 			if (robot->subnet != -1)
 				textPrintf("Subnet:%d", robot->subnet);
@@ -1068,7 +1196,10 @@ void drawAprilTags(GLenum mode)
 						glCallList(LIST_SQUARE);
 					glPopMatrix();
 					glTranslatef(0, -0.2, 0);
-					glColor3fv(color_black);
+					if (logging)
+						glColor3fv(color_red);
+					else
+						glColor3fv(color_black);
 					textSetSize(TEXT_SMALL);
 					textSetAlignment(ALIGN_CENTER);
 					textPrintf("L");
@@ -1212,7 +1343,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("CT");
 
 		/* RT Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(HOST_BUTTON);
 
@@ -1226,7 +1357,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("RH");
 
 		/* BL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(BLACKLIST_BUTTON);
 
@@ -1240,7 +1371,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("BL");
 
 		/* ST Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(SCONNECT_BUTTON);
 
@@ -1254,7 +1385,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("SC");
 
 		/* LG Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 		if (mode == GL_SELECT)
 			glLoadName(LOG_BUTTON);
 
@@ -1268,7 +1399,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("LG");
 
 		/* AL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(ATLINK_BUTTON);
@@ -1282,8 +1413,8 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("AL");
 
-		/* AL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		/* IN Button */
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(INFO_BUTTON);
@@ -1297,10 +1428,70 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("IN");
 
-		glTranslatef(0, -3, 0);
+		/* GV Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(GUI_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (clickMode == GUI)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("GV");
+
+		glTranslatef(0, BUTTONBLOCKSPACE, 0);
+
+		/* TS Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(TIME_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (timestamps)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("TS");
+
+		/* LS Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(LOGST_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (logging)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_LARGE);
+		textPrintf("LS");
+
+		/* HF Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(HDATA_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (hostData)
+			glColor3fv(color_black);
+		else
+			glColor3fv(color_red);
+		textSetSize(TEXT_LARGE);
+		textPrintf("HF");
 
 		/* OL Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(OPENLOCAL_BUTTON);
@@ -1312,7 +1503,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("OL");
 
 		/* OR Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(OPENREMOTE_BUTTON);
@@ -1324,7 +1515,7 @@ void drawToolbar(GLenum mode)
 		textPrintf("OR");
 
 		/* KO Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(KILLALL_BUTTON);
@@ -1335,10 +1526,10 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("KO");
 
-		glTranslatef(0, -3, 0);
+		glTranslatef(0, BUTTONBLOCKSPACE, 0);
 
 		/* ? Button */
-		glTranslatef(0, -TEXT_LARGE - 0.5, 0);
+		glTranslatef(0, BUTTONSPACE, 0);
 
 		if (mode == GL_SELECT)
 			glLoadName(HELP_BUTTON);
@@ -1349,6 +1540,85 @@ void drawToolbar(GLenum mode)
 		textSetSize(TEXT_LARGE);
 		textPrintf("??");
 	glPopMatrix();
+}
+
+void setToaster(char *text)
+{
+	mutexLock(&toasterMutex);
+	toasterText = text;
+	toasterTime = clock();
+	toasterDraw = 1;
+	mutexUnlock(&toasterMutex);
+}
+
+void drawToaster()
+{
+	unsigned int i;
+
+	GLfloat shift;
+	GLfloat textWidth = 0;
+
+	if (!toasterDraw)
+		return;
+
+	mutexLock(&toasterMutex);
+
+	for (i = 0; i < strlen(toasterText); i++)
+		textWidth += gmf[(int) toasterText[i]].gmfCellIncX;
+
+	glPushMatrix();
+		if (aprilTagConnected)
+			glTranslatef(-textWidth, -GUI_HEIGHT / 2 + 1, 0);
+		else
+			glTranslatef(GUI_WIDTH / 2 - textWidth, -GUI_HEIGHT / 2 + 1, 0);
+
+		if (toasterTime + 2 * TOASTER_POP_TIME < clock()) {
+			shift =
+				-((GLfloat) clock() - ((GLfloat) toasterTime + 2 * TOASTER_POP_TIME))
+					/ 100.;
+			glTranslatef(textWidth / 3 - 1, shift - 0.5, 0);
+			if (shift < -2)
+				toasterDraw = 0;
+
+		} else if (toasterTime + TOASTER_POP_TIME < clock()) {
+			glTranslatef(textWidth / 3 - 1, -0.5, 0);
+
+		} else {
+			shift =
+				((GLfloat) clock() - ((GLfloat) toasterTime))
+					/ 100.;
+			if (shift > 2)
+				shift = 2;
+			glTranslatef(textWidth / 3 - 1, shift - 2.5, 0);
+		}
+
+		glPushMatrix();
+			glTranslatef(textWidth / 3, 0.45, 0);
+			glPushMatrix();
+				glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
+				glColor3fv(color_darkgrey);
+				glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_black);
+				glScalef(textWidth / 3 + 0.1, TEXT_SMALL / 2 + 0.1, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_white);
+				glScalef(textWidth / 3, TEXT_SMALL / 2, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+		glPopMatrix();
+		glTranslatef(0.1, 0.25, 0);
+		glColor3fv(color_black);
+		textSetSize(TEXT_SMALL);
+		textSetAlignment(ALIGN_LEFT);
+		textPrintf(toasterText);
+	glPopMatrix();
+
+	mutexUnlock(&toasterMutex);
 }
 
 void drawHelp()
@@ -1393,43 +1663,31 @@ void drawHelp()
 		textSetSize(TEXT_MED);
 		textPrintf("Command List:");
 		glTranslatef(TEXT_MED, -TEXT_MED, 0);
-		textPrintf("CT - Connect to robot. Click on a robot to open a Secure");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     CRT connection to it.");
+		textPrintf("CT - Connect to robot via telnet. Opens a SecureCRT window.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("RH - Make robot a radio host. Click on a robot to make it");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     a radio host.");
+		textPrintf("RH - Make robot a radio host.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("BL - Blacklist a robot. Click on a robot to prevent the");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     RCC from connecting to it. Click again to reconnect.");
+		textPrintf("BL - Blacklist a robot.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("SC - Connect to a robot via serial. Click on a robot to");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     blacklist it and open a Secure CRT window using serial.");
+		textPrintf("SC - Connect to a robot via serial. Blacklists the robot.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("LG - Log robot data. Begins to log all data to a file. If");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     linked to AprilTag, records that data too. Can also");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     log individual AprilTags by clicking on them.");
+		textPrintf("LG - Creates a time-stamped file to log data to.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("AL - Link AprilTag. Click a robot and then an AprilTag to");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     link AprilTag data to robot data. Double-click robot");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     to unlink AprilTag.");
+		textPrintf("AL - Click a robot and AprilTag or vice versa to pair them.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("IN - Displays additional robot data. Click on a robot or");
-		glTranslatef(0, -TEXT_MED, 0);
-		textPrintf("     AprilTag to show extra information.");
+		textPrintf("IN - Displays additional robot or AprilTag information.");
+		glTranslatef(0, -2 * TEXT_MED, 0);
+		textPrintf("TS - Toggles time-stamping of incoming robot data.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("LS - Begins to log data.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OL - Opens a connection to all local robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("OR - Opens a connection to all remote robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
 		textPrintf("KO - Kills all open Secure CRT windows.");
+		glTranslatef(-TEXT_MED, -2 * TEXT_MED, 0);
+		textPrintf("For more in-depth help, visit the wiki page!");
 	glPopMatrix();
 }
 /**
@@ -1491,6 +1749,8 @@ void timerEnableDraw(int value)
 
 	drawToolbar(GL_RENDER);
 
+	drawToaster();
+
 	if (aprilTagConnected)
 		drawAprilTags(GL_RENDER);
 
@@ -1535,6 +1795,8 @@ void guiInit()
 	glutReshapeFunc(reshape);
 
 	clickMode = CONNECT;
+
+	mutexInit(&toasterMutex);
 
 	glutTimerFunc(DRAW_DELAY, timerEnableDraw, 0);
 
