@@ -37,6 +37,7 @@
 #define TILE_WIDTH_SQUARE_SMALL			(106/2)
 #define TILE_WIDTH_HEX_LARGE			(192/2)
 #define TILE_WIDTH_HEX_SMALL			(182/2)
+#define TILE_WIDTH_HEX_TEST				(136/2)
 
 
 typedef struct TileGeometryInfo {

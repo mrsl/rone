@@ -188,18 +188,21 @@ void behaviorTask(void* parameters) {
 			}
 			break;
 		case GAME_MODE_NAVIGATION:
-			// TODO Change LED to show input mode (but tileMotion is already doing it)
-			// Enter the sequence of motion commands
-			// TODO add finish command
-			// Check if the input List is full
+			// Robot execute commands when the input buffer is full
+			// Check if the inputList is full
 			if (numInput == MAX_NUM_INPUT) {
-//				cprintf("Max input reached, begin executing commands\n");
 				// Send new command to tileMotion task when it is ready
 				if (tileMotionDone() && (inputListExecPtr < MAX_NUM_INPUT)) {
 					tileMotion(inputList[inputListExecPtr]);
 					inputListExecPtr++;
 				}
+				// Finished executing all inputs. Revert back to normal state
+				if (inputListExecPtr == MAX_NUM_INPUT) {
+					inputListExecPtr = 0;
+					numInput = 0;
+				}
 			} else {
+				// Enter the sequence of motion commands
 				if (buttonsGetEdge(BUTTON_RED)) {
 					// Left
 					cprintf("%d = left\n", numInput);
