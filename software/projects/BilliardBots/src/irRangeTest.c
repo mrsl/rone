@@ -33,10 +33,11 @@ void behaviorTask(void* parameters) {
 	boolean momementumActive, printNow;
 	uint32 neighborRound = 0;
 	int i;
-	uint32 nbrBearing;
+	int16 cnt = 0;
+	uint32 nbrBearing,nbrRange,nbrOrientation;
 	Nbr* nbrPtr;
 	uint32 tempWakeTime = 0;
-	uint8 nbrID;
+	Pose pose;
 
 
 	// Init nbr system
@@ -50,6 +51,9 @@ void behaviorTask(void* parameters) {
     // Print startup message and thread memory usage
 	systemPrintStartup();
 	systemPrintMemUsage();
+
+	// Initalize Encoder
+	encoderInit();
 
 	NbrData TV_H;
 	NbrData TV_L;
@@ -115,8 +119,14 @@ void behaviorTask(void* parameters) {
 			}
 			case MOVE_FORWARD: {
 				momementumActive = 1;
+				if(cnt%2==0)
 				behSetTvRv(&behOutput, 150, 0);
+				if(cnt%4==1)
+				behSetTvRv(&behOutput,100,-500);
+				if(cnt%4==3)
+				behSetTvRv(&behOutput,100,500);
 				if (bumpSensorsGetBearing() != -1) {
+					cnt++;
 					movementState = MOVE_ROTATE;
 					rotateTime = osTaskGetTickCount();
 					bumpBearing = bumpSensorsGetBearing();
@@ -139,15 +149,26 @@ void behaviorTask(void* parameters) {
 		nbrDataSet16(&TV_H,&TV_L,(int16)behOutput.tv);
 		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
 		motorSetBeh(&behOutput);
+
+		encoderPoseUpdate();
+		encoderGetPose(&pose);
+
+			if (!printNow)
+				rprintf("%d, %d, %d\n",pose.x,pose.y,pose.theta);
+
+
+			for (i = 0; i < nbrList.size; i++){
+				nbrPtr = nbrList.nbrs[i];
+				nbrBearing = nbrGetBearing(nbrPtr);
+				nbrRange = nbrGetRange(nbrPtr);
+				nbrOrientation = nbrGetOrientation(nbrPtr);
+					if (printNow){
+						rprintf("%d, %d, %d, %d, %d, %d, %d, %d\n", pose.x, pose.y, pose.theta, nbrBearing, nbrOrientation, nbrRange, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
+					}
+			}
+
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 		lastWakeTime = osTaskGetTickCount();
-		for (i = 0; i < nbrList.size; i++){
-			nbrPtr = nbrList.nbrs[i];
-			nbrBearing = nbrGetBearing(nbrPtr);
-				if (printNow){
-					cprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
-				}
-		}
 	}
 }
 
