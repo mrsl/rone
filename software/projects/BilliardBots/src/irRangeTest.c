@@ -36,6 +36,7 @@ void behaviorTask(void* parameters) {
 	uint32 nbrBearing;
 	Nbr* nbrPtr;
 	uint32 tempWakeTime = 0;
+	uint8 nbrID;
 
 
 	// Init nbr system
@@ -144,7 +145,7 @@ void behaviorTask(void* parameters) {
 			nbrPtr = nbrList.nbrs[i];
 			nbrBearing = nbrGetBearing(nbrPtr);
 				if (printNow){
-					rprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
+					cprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
 				}
 		}
 	}
