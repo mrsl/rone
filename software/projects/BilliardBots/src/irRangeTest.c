@@ -38,6 +38,9 @@ void behaviorTask(void* parameters) {
 	Nbr* nbrPtr;
 	uint32 tempWakeTime = 0;
 	Pose pose;
+	uint8 nbrID;
+	char str[120];
+	char tempstr[75];
 
 
 	// Init nbr system
@@ -150,22 +153,21 @@ void behaviorTask(void* parameters) {
 		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
 		motorSetBeh(&behOutput);
 
-		encoderPoseUpdate();
-		encoderGetPose(&pose);
-
-			if (!printNow)
-				rprintf("%d, %d, %d\n",pose.x,pose.y,pose.theta);
-
-
-			for (i = 0; i < nbrList.size; i++){
-				nbrPtr = nbrList.nbrs[i];
-				nbrBearing = nbrGetBearing(nbrPtr);
-				nbrRange = nbrGetRange(nbrPtr);
-				nbrOrientation = nbrGetOrientation(nbrPtr);
-					if (printNow){
-						rprintf("%d, %d, %d, %d, %d, %d, %d, %d\n", pose.x, pose.y, pose.theta, nbrBearing, nbrOrientation, nbrRange, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
-					}
-			}
+//		encoderPoseUpdate();
+//		encoderGetPose(&pose);
+//
+//		if (printNow){
+//			for (i = 0; i < nbrList.size; i++){
+//				nbrPtr = nbrList.nbrs[i];
+//				nbrBearing = nbrGetBearing(nbrPtr);
+//				nbrRange = nbrGetRange(nbrPtr);
+//				nbrOrientation = nbrGetOrientation(nbrPtr);
+//				nbrID = nbrGetID(nbrPtr);
+//				sprintf(tempstr,"%d, %d, %d, %d, %d, %d, ",nbrBearing, nbrOrientation, nbrRange, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr),nbrID);
+//				strcat(str,tempstr);
+//			}
+//			rprintf("%s\n",str);
+//		}
 
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 		lastWakeTime = osTaskGetTickCount();
