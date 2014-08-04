@@ -36,6 +36,10 @@ void behaviorTask(void* parameters) {
 	uint32 nbrBearing;
 	Nbr* nbrPtr;
 	uint32 tempWakeTime = 0;
+	RadioMessage radioMessageTX;
+	RadioMessage radioMessageRX;
+	RadioCmd radioCmdRemoteControl;
+	char* name = "RCwifi";
 
 
 	// Init nbr system
@@ -62,8 +66,22 @@ void behaviorTask(void* parameters) {
 		printNow = neighborsNewRoundCheck(&neighborRound);
 		nbrListCreate(&nbrList);
 		broadcastMsgUpdate(&broadcastMessage, &nbrList);
+		radioCommandSetSubnet(1);
 		// Determine state from buttons
 		//if (state == STATE_IDLE) {
+
+
+		if( radioCommandReceive(&radioCmdRemoteControl, &radioMessageRX,0) ) {
+			//Grabing stream and paresing
+			char* RXmsg = radioCommandGetDataPtr(&radioMessageRX);
+			radioMessageTimePrev = osTaskGetTickCount();
+			sscanf(RXmsg,"%d", &comBlue); //parse the speed and turning rate
+			if(comBlue){
+				state = GUESS_COM;
+			}
+
+
+
 			if (buttonsGet(BUTTON_RED)) {
 			} else if (buttonsGet (BUTTON_GREEN)) {
 				state = STATE_IDLE;
