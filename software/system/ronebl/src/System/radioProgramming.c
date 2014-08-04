@@ -80,9 +80,6 @@ void radioProgrammingInput() {
 			faultPrintSerial("Error: Invalid subnet.\n\n");
 		}
 	} while (tempVal > 3);
-//		faultPrintSerial("SUBNET = ");
-//		faultPrintSerialDec(bootloaderSubnet);
-//		faultPrintSerial("\n");
 	do {
 		faultPrintSerial("Please select the range of robot ID to be programmed (default = [");
 		faultPrintSerialDec(ROBOT_ID_MIN);
@@ -148,12 +145,6 @@ void radioProgrammingInput() {
 		if (robotIDMax < robotIDMin) {
 			faultPrintSerial("Error: Invalid range.\n\n");
 		}
-//		faultPrintSerialDec((unsigned long)robotIDMin);
-//		faultPrintSerial("\n");
-//		faultPrintSerialDec((unsigned long)robotIDMax);
-//		faultPrintSerial("\n");
-
-
 	} while (robotIDMax < robotIDMin);
 	faultPrintSerial("\n");
 }
@@ -167,7 +158,6 @@ void radioProgrammingInput() {
  */
 void crcTableInit(uint32 startingAddress, uint16 length) {
 	uint32 segmentNumber;
-	uint8 *currentByte;
 
 	// Default 4-KB segments
 	for (segmentNumber = 0; segmentNumber < length; segmentNumber++) {
@@ -221,7 +211,7 @@ boolean isValidQueryResponse(RadioMessage *messagePtr, uint8 expectedID, uint8 h
 	if ((messagePtr->program.type & RADIO_COMMAND_TYPE_MASK) != RADIO_COMMAND_TYPE_QUERY_REQUEST ||
 			messagePtr->program.subsegment != hostID ||
 			messagePtr->program.robotID != expectedID) {
-		retval == FALSE;
+		retval = FALSE;
 	}
 
 	return retval;
@@ -345,7 +335,6 @@ void sendSegment(uint8 segmentNumber) {
 		packMessageHeader(&outgoingRadioMessage, RADIO_COMMAND_TYPE_SEGMENTS, segmentNumber, subsegmentNumber, getSelfID());
 		for (payloadIdx = 0; payloadIdx < RADIO_PROGRAM_MESSAGE_DATA_LENGTH; payloadIdx++) {
 			if (subsegmentNumber * RADIO_PROGRAM_MESSAGE_DATA_LENGTH + payloadIdx < length) {
-				int z = *((uint8 *)(startingAddress + subsegmentNumber * RADIO_PROGRAM_MESSAGE_DATA_LENGTH + payloadIdx));
 				outgoingRadioMessage.program.data[payloadIdx] = *((uint8 *)(startingAddress + subsegmentNumber * RADIO_PROGRAM_MESSAGE_DATA_LENGTH + payloadIdx));
 			} else {
 				outgoingRadioMessage.program.data[payloadIdx] = 0;
@@ -422,7 +411,6 @@ void radioHost(void) {
 	RadioMessage incomingRadioMessage, outgoingRadioMessage;
 	uint32 i;
 	uint32 broadcastCount;
-	uint16 segmentNumber, payloadIdx;
 
 	// Broadcast 'Program Time' message to bring all active robots in the same subnet to bootloader radio receiver mode
 	faultPrintSerial("Broadcasting PROGRAM TIME command\n");
@@ -514,12 +502,11 @@ void radioRemote(void) {
 	int32 segmentIdx;
 	uint32 byteCount, i;
 	uint16 crcSegmentNumber, payloadIdx;
-	boolean crcTableReceiveFinished, programFinished, checkQueryRange;
+	boolean crcTableReceiveFinished, programFinished;
 
 	// Initialize variables
 	crcTableReceiveFinished = FALSE;
 	programFinished = FALSE;
-	checkQueryRange = FALSE;
 	byteCount = 0;
 
 	// Enter receive message loop
