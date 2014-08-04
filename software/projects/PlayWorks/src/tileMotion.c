@@ -58,7 +58,7 @@
 
 // Physical measurements of hardware in mm
 #define ROBOT_RADIUS				50
-#define TILE_CENTER_DIAMETER		20
+#define TILE_CENTER_RADIUS			0
 
 static uint32 motionOdometerStart;
 static Pose motionPoseStart;
@@ -301,14 +301,13 @@ void tileMotionTask(void* parameters) {
 						motionOdometerStart = moveStart(&motionPoseStart, tileCurrentPtr, "enter new stage");
 						if (!forwardStageTwo) {
 							// Enter stage 2
-							forwardStageTwo = TRUE; // TODO remember to reset stage 2 when done
+							forwardStageTwo = TRUE;
 						} else {
 							// Enter stage 3
 							forwardStageTwo = FALSE;
 							mode = MOTION_STATE_PARK;
 						}
 					}
-
 					// distance traveled when the robot gets back online
 //					if (!online) {
 //						distanceElapsedBetweenLines = encoderGetOdometer() - lastOnlineOdometerValue;
@@ -335,7 +334,7 @@ void tileMotionTask(void* parameters) {
 			distanceTraveled = encoderGetOdometer() - motionOdometerStart;
 
 			// Calculate distance to goal
-			distanceToGoal = ROBOT_RADIUS + TILE_CENTER_DIAMETER - distanceTraveled;
+			distanceToGoal = ROBOT_RADIUS + TILE_CENTER_RADIUS - distanceTraveled;
 
 			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_TURBO);
 

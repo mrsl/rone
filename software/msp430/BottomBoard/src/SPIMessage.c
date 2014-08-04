@@ -91,8 +91,6 @@ void msp430CheckAndUpdate(void) {
 				break;
 			case MSP430_CMD_COMMAND_RESET:
 				// Toggle the reset line
-//				resetSet(TRUE);
-//				resetSet(FALSE);
 				setPowerResetRequest(TRUE);
 				setPowerOffRequest(TRUE);
 				break;

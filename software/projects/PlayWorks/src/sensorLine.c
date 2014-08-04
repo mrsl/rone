@@ -12,7 +12,7 @@
 #include "playworks.h"
 
 // [0, 255]
-#define LINE_DETECTION_THRESHOLD		240
+#define LINE_DETECTION_THRESHOLD		150
 
 /*
  * @brief Find the number of active sensors detecting the line. If the number
