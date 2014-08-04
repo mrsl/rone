@@ -14,11 +14,23 @@
 #define STATE_IDLE 		0
 #define STATE_CUEBALL 	1
 #define STATE_POCKET 	2
-#define STATE_BOUNCE 		3
+#define STATE_BOUNCE 	3
+#define STATE_REMOTE	4
 
 #define MOVE_IDLE 		0
 #define MOVE_ROTATE 	1
 #define MOVE_FORWARD 	2
+#define FLOCKWAIT		2000
+#define FLOCKSPEED 		25
+#define PROBABILITYSTOP 1
+
+#define CHECK 0xDADA // unique code to check for correct message
+
+struct __attribute__((__packed__)) {
+	uint32 check;
+	uint8 val;
+	char pad[25];
+} typedef remoteControlMsg;
 
 
 void behaviorTask(void* parameters) {
@@ -33,14 +45,16 @@ void behaviorTask(void* parameters) {
 	boolean momementumActive, printNow;
 	uint32 neighborRound = 0;
 	int i;
-	int16 cnt = 0;
-	uint32 nbrBearing,nbrRange,nbrOrientation;
+	uint32 nbrBearing;
 	Nbr* nbrPtr;
 	uint32 tempWakeTime = 0;
-	Pose pose;
-	uint8 nbrID;
-	char str[120];
-	char tempstr[75];
+	RadioMessage radioMessageRX;
+	RadioMessage radioMessageTX;
+	RadioCmd radioCmdRemoteControl;
+	char* name = "remoteControl";
+	int comBlue = 0;
+	radioCommandAddQueue(&radioCmdRemoteControl, name, 1);
+	uint32 tickSeconds = osTaskGetTickCount();
 
 
 	// Init nbr system
@@ -55,9 +69,6 @@ void behaviorTask(void* parameters) {
 	systemPrintStartup();
 	systemPrintMemUsage();
 
-	// Initalize Encoder
-	encoderInit();
-
 	NbrData TV_H;
 	NbrData TV_L;
 	NbrData RV_H;
@@ -70,30 +81,63 @@ void behaviorTask(void* parameters) {
 		printNow = neighborsNewRoundCheck(&neighborRound);
 		nbrListCreate(&nbrList);
 		broadcastMsgUpdate(&broadcastMessage, &nbrList);
-		// Determine state from buttons
-		//if (state == STATE_IDLE) {
-			if (buttonsGet(BUTTON_RED)) {
-			} else if (buttonsGet (BUTTON_GREEN)) {
-				state = STATE_IDLE;
-			} else if (buttonsGet (BUTTON_BLUE)) {
-				state = STATE_BOUNCE;
-				movementState = MOVE_FORWARD;
+		radioCommandSetSubnet(1);
+
+		// read buttons
+		buttonRed = buttonsGet(BUTTON_RED);
+		buttonGreen = buttonsGet(BUTTON_GREEN);
+		buttonBlue =buttonsGet(BUTTON_BLUE);
+
+		// set state machine
+		if (buttonRed) {
+			if (state == STATE_IDLE) {
+				state = STATE_REMOTE;
+			} else if (state == STATE_REMOTE) {
+				remoteControlMsg *rcMsg = (remoteControlMsg *)radioCommandGetDataPtr(&radioMessageTX);
+				rcMsg->check = CHECK;
+				rcMsg->val = 1;
+				radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessageTX);
 			}
-		//}
+		} else if (buttonGreen) {
+			if (state != STATE_IDLE) {
+				state = STATE_IDLE;
+			}
+		} else if (buttonBlue) {
+			if (state == STATE_IDLE) {
+				state = STATE_BOUNCE;
+			} else if (state == STATE_REMOTE) {
+				remoteControlMsg *rcMsg = (remoteControlMsg *)radioCommandGetDataPtr(&radioMessageTX);
+				rcMsg->check = CHECK;
+				rcMsg->val = 0;
+				radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessageTX);
+			}
+		}
+
+		// parse remote messages
+		if (state != STATE_REMOTE) {
+			if (radioCommandReceive(&radioCmdRemoteControl, &radioMessageRX, 0)) {
+				remoteControlMsg *rcMsg = (remoteControlMsg *)radioCommandGetDataPtr(&radioMessageRX);
+				if (rcMsg->check == CHECK) {
+					if (rcMsg->val == 1) {
+						state = STATE_BOUNCE;
+					} else {
+						state = STATE_IDLE;
+					}
+				}
+			}
+		}
 
 		// Set LEDs for each state
 		switch (state) {
+		case STATE_REMOTE: {
+			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+			movementState = MOVE_IDLE;
+			break;
+		}
 		case STATE_BOUNCE: {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
 			uint8* bitMatrix = irObstaclesGetBitMatrix();
-			/*for(i = 0; i < 8; i++){
-				rprintf("%d", bitMatrix[i]);
-
-				if (i != 7)
-					rprintf(",");
-			}
-			rprintf("\n");
-			*/
+			movementState = MOVE_FORWARD;
 			break;
 		}
 		case STATE_IDLE:
@@ -106,76 +150,62 @@ void behaviorTask(void* parameters) {
 
 		//Movement State Machine
 		switch (movementState) {
-			case MOVE_IDLE: {
-				momementumActive = 0;
-				behSetTvRv(&behOutput, 0, 0);
-				break;
+		case MOVE_IDLE: {
+			momementumActive = 0;
+			behSetTvRv(&behOutput, 0, 0);
+			if (osTaskGetTickCount() - tickSeconds > FLOCKWAIT) {
+				movementState = MOVE_FORWARD;
+				tickSeconds = osTaskGetTickCount();
 			}
-			case MOVE_ROTATE: {
-				momementumActive = 0;
-				behSetTvRv(&behOutput, 0, rotateRV);
-				if((rotateTime + bumpBearing) < osTaskGetTickCount()){
-					movementState = MOVE_FORWARD;
-					momentumTime = osTaskGetTickCount();
-				}
-				break;
+			break;
+		}
+		case MOVE_ROTATE: {
+			momementumActive = 0;
+			behSetTvRv(&behOutput, 0, rotateRV);
+			if ((rotateTime + bumpBearing) < osTaskGetTickCount()) {
+				movementState = MOVE_FORWARD;
+				momentumTime = osTaskGetTickCount();
 			}
-			case MOVE_FORWARD: {
-				momementumActive = 1;
-				if(cnt%2==0)
-				behSetTvRv(&behOutput, 150, 0);
-				if(cnt%4==1)
-				behSetTvRv(&behOutput,100,-500);
-				if(cnt%4==3)
-				behSetTvRv(&behOutput,100,500);
-				if (bumpSensorsGetBearing() != -1) {
-					cnt++;
-					movementState = MOVE_ROTATE;
-					rotateTime = osTaskGetTickCount();
-					bumpBearing = bumpSensorsGetBearing();
+			break;
+		}
+		case MOVE_FORWARD: {
+			momementumActive = 1;
+			behFlock(&behOutput, &nbrList, FLOCKSPEED);
+			if (osTaskGetTickCount() - tickSeconds > 1000) {
+				tickSeconds = osTaskGetTickCount();
+				if (rand() % 1000 <= PROBABILITYSTOP)
+					movementState = MOVE_IDLE;
+				else
+					behFlock(&behOutput, &nbrList, FLOCKSPEED);
+			}
+			break;
+		}
+		}
 
-					if(bumpBearing > 0){
-						bumpBearing = PI - bumpBearing;
-						rotateRV = -1000;
-					} else{
-						bumpBearing = PI - abs(bumpBearing);
-						rotateRV = 1000;
-					}
-					//bearing = bearing * 1.25;
-					behSetTvRv(&behOutput, 0, rotateRV);
-				}
+		// Set nbr data
+		nbrDataSet16(&TV_H,&TV_L,(int16)behOutput.tv);
+		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
 
-				break;
+		// print neighbor list
+		for (i = 0; i < nbrList.size; i++) {
+			nbrPtr = nbrList.nbrs[i];
+			nbrBearing = nbrGetBearing(nbrPtr);
+			if (printNow) {
+				rprintf("%d, %d, %d,\n", nbrBearing,
+						(int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
+						(int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
 			}
 		}
 
-		nbrDataSet16(&TV_H,&TV_L,(int16)behOutput.tv);
-		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
+		// set behavior and delay task
 		motorSetBeh(&behOutput);
-
-//		encoderPoseUpdate();
-//		encoderGetPose(&pose);
-//
-//		if (printNow){
-//			for (i = 0; i < nbrList.size; i++){
-//				nbrPtr = nbrList.nbrs[i];
-//				nbrBearing = nbrGetBearing(nbrPtr);
-//				nbrRange = nbrGetRange(nbrPtr);
-//				nbrOrientation = nbrGetOrientation(nbrPtr);
-//				nbrID = nbrGetID(nbrPtr);
-//				sprintf(tempstr,"%d, %d, %d, %d, %d, %d, ",nbrBearing, nbrOrientation, nbrRange, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr),nbrID);
-//				strcat(str,tempstr);
-//			}
-//			rprintf("%s\n",str);
-//		}
-
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 		lastWakeTime = osTaskGetTickCount();
 	}
 }
 
 
-int main(void) {
+int main() {
 	systemInit();
 	systemPrintStartup();
 
