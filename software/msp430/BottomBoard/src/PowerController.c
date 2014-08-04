@@ -51,12 +51,20 @@
 	#define FTDI_RESET_PORT_DIR			P1DIR
 	#define FTDI_RESET_BIT				BIT3
 	
+#ifdef RONE_V12_TILETRACK
+	#define MOT_SLEEP_PORT_SEL			P1SEL
+	#define MOT_SLEEP_PORT_IN			P1IN
+	#define MOT_SLEEP_PORT_OUT			P1OUT
+	#define MOT_SLEEP_PORT_DIR			P1DIR
+	#define MOT_SLEEP_BIT				BIT5
+#else
 	#define MOT_SLEEP_PORT_SEL			P3SEL
 	#define MOT_SLEEP_PORT_IN			P3IN
 	#define MOT_SLEEP_PORT_OUT			P3OUT
 	#define MOT_SLEEP_PORT_DIR			P3DIR
 	#define MOT_SLEEP_BIT				BIT6
-	
+#endif /* #ifdef RONE_V12_TILETRACK */
+
 	#define CHRG_LIM_PORT_IN			P2IN
 	#define CHRG_LIM_PORT_OUT			P2OUT
 	#define CHRG_LIM_PORT_DIR			P2DIR
@@ -68,11 +76,19 @@
 	uint8 Usb5vRunAvgCount = 0;       
 #endif
 
+#ifndef RONE_V12_TILETRACK
 #define RESET_PORT_SEL		P2SEL
 #define RESET_PORT_IN		P2IN
 #define RESET_PORT_OUT		P2OUT
 #define RESET_PORT_DIR		P2DIR
 #define RESET_BIT			BIT4
+#else
+#define RESET_PORT_SEL		P1SEL
+#define RESET_PORT_IN		P1IN
+#define RESET_PORT_OUT		P1OUT
+#define RESET_PORT_DIR		P1DIR
+#define RESET_BIT			BIT4
+#endif // #ifndef RONE_V12_TILETRACK
 
 boolean powerOn = FALSE;
 uint16 startCount;
@@ -156,7 +172,7 @@ uint8 powerVBatGet(void){
 }
 
 void ADC10Init(void){
-	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 	// 16 clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
+	ADC10CTL0 = SREF_0 | ADC10SHT_2 | ADC10ON; 					// Default ref, 16 x clk, ADC10 on
 }
 
 void powerVBatInit(void) {
@@ -176,9 +192,11 @@ void powerVBatInit(void) {
 	vBatRunAvgCount = 0;
 }
 
+
 void ADC10Shutdown(void){
-	ADC10CTL0 = 0; // ADC10ON
+	ADC10CTL0 = 0; // ~ADC10ON
 }
+
 
 #define ADC_MAX_DELAY_TIME		500
 #define VBAT_CONV_NUMER			(2.5 * 10)
@@ -188,18 +206,24 @@ void ADC10Shutdown(void){
 void powerVBatReadADC(void){
 	volatile uint16 i;
 	
-	ADC10AE0 |= BIT7; // A7
-	ADC10CTL1 = INCH_7 | ADC10DIV_7 | CONSEQ_0;			// input channel 7, single sequence 
-   	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
+	// Reconfigure ADC10 for power sense
+	ADC10AE0 |= BIT7; 													// A7
+	ADC10CTL1 = INCH_7 | ADC10DIV_7 | CONSEQ_0;							// input channel 7, single sequence
+	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 		// 16 x clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
+   	ADC10CTL0 |= ENC + ADC10SC;             							// Sampling and conversion start
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
-		if(!(ADC10CTL1 & ADC10BUSY)){
-			//Add the current read to the sliding average if there was a sucsessful read
+		if (!(ADC10CTL1 & ADC10BUSY)) {
+			// Add the current read to the sliding average if there was a sucsessful read
 			vBatRunAvg[vBatRunAvgCount] = (uint8)(ADC10MEM * VBAT_CONV_NUMER / VBAT_CONV_DENOM);
-			vBatRunAvgCount = (vBatRunAvgCount+1)%VBAT_RUN_AVG_LEN;
+			vBatRunAvgCount = (vBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
 			break;
 		} 
 	}
+
+	// Change back to original ADC10 settings
+	ADC10Init();
 }
+
 
 void powerEnSet(uint8 val) {
 	if (val) {
@@ -237,6 +261,7 @@ void resetInit(void) {
 	RESET_PORT_SEL &= ~RESET_BIT; 
 	resetSet(TRUE);
 }
+
 
 #ifdef RONE_V12
 	void ftdiResetSet(boolean val) {
@@ -349,13 +374,14 @@ void powerButtonInit(void) {
 
 
 void powerButtonIRQEnable(void) {
-	P1IE |= POWER_BUTTON_BIT;                             // P1.3 interrupt enabled
-  	P1IES |= POWER_BUTTON_BIT;                            // P1.3 Hi/lo edge
-  	P1IFG &= ~POWER_BUTTON_BIT;                           // P1.3 IFG cleared	
+	P1IE |= POWER_BUTTON_BIT;                             // P1.2 interrupt enabled
+  	P1IES |= POWER_BUTTON_BIT;                            // P1.2 Hi-to-lo edge
+  	P1IFG &= ~POWER_BUTTON_BIT;                           // P1.2 IFG cleared
 }
 
+
 void powerButtonIRQDisable(void) {
-	P1IE &= ~POWER_BUTTON_BIT;                             // P1.3 interrupt disabled
+	P1IE &= ~POWER_BUTTON_BIT;                             // P1.2 interrupt disabled
 }
 
 //void powerButtonDisable(void) {
@@ -367,6 +393,7 @@ void powerButtonIRQDisable(void) {
 //void powerButtonEnable(void) {
 //	powerButtonState = TRUE;	
 //}
+
 
 #define BUTTON_DEBOUNCE_COUNT   15000
 
@@ -386,7 +413,7 @@ __interrupt void Port_1(void) {
 			powerUSBSetEnable(TRUE); // Turn on the USB Power Sense Line
 		}
 		for (i = 0; i < BUTTON_DEBOUNCE_COUNT; ++i) {}
-		// is the button still down?
+		// Is the button still down?
 		if (powerButtonGetValue()) {
 			if (airplaneModeGetState()) {
 				if (powerUSBGetState()) {
@@ -407,7 +434,5 @@ __interrupt void Port_1(void) {
 		// aka turn the robot back on
 		__bic_SR_register_on_exit(SCG1 + SCG0 + OSCOFF + CPUOFF);
 	}
-	P1IFG &= ~POWER_BUTTON_BIT;                           // P1.3 IFG cleared
+	P1IFG &= ~POWER_BUTTON_BIT;                           // P1.2 IFG cleared
 }
-
-

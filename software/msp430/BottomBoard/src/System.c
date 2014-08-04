@@ -5,8 +5,8 @@
 #include "SPI_8962.h"
 #include "Gyroscope.h"
 #include "Accelerometer.h"
-#include "Magnetometer.h"
 #include "BumpSensors.h"
+#include "ReflectiveSensors.h"
 #include "RFIDReader.h"
 #include "IRBeacon.h"
 #include "I2C.h"
@@ -212,6 +212,7 @@ void timerInit(void) {
 	timerEnable();
 }
 
+
 uint32 systemTicks(void) {
 	return systemTicksVal;
 }
@@ -232,9 +233,11 @@ boolean airplaneModeGetState(void) {
 	return airplaneMode;	
 }
 
+
 void setSystemLEDRampBrightness(int16 newBrightness){
 	systemLEDRampBrightness = newBrightness;
 }
+
 
 void setAllLEDData(uint8 *data, uint8 value){
 	//Sets all of the values in the array data
@@ -274,6 +277,7 @@ void setBatteryLEDData(uint8 *data){
 	}
 }
 
+
 void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 	uint8 lightsOn = (uint8)(timeLeft/((POWER_BUTTON_HOLD_DELAY_AIRPLANE-POWER_BUTTON_HOLD_DELAY_OFF)/5))+1;
 	uint8 i;
@@ -286,6 +290,7 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 	}
 }
 
+
 #ifdef RONE_V12
 	void resetFTDIWithButtonSet(boolean r){
 		resetFTDIWithButton = r;
@@ -293,9 +298,7 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 #endif
 
 
-
-
-  void main(void){
+void main(void) {
 	uint32 i;
 
 	// Enable interupts
@@ -312,8 +315,6 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 
 	// Start with the robot in airplane mode
 	airplaneMode = FALSE;
-
-
 #else
 	//Start with the robot off
 	powerOffRequest = TRUE;
@@ -322,10 +323,9 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 	// Start with the robot in airplane mode
 	airplaneMode = TRUE;
 
-
 	//check bootloader version and update as needed
 	uint8 *msp430BSLVersionPtr = (uint8 *)MSP430_BSL_VERSION_ADRESS;
-	if(*msp430BSLVersionPtr != getStoredBSLVersion()){
+	if (*msp430BSLVersionPtr != getStoredBSLVersion()){
 		updateMSP430BSLVersion();
 	}
 #endif
@@ -336,26 +336,29 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 	//Initalize the power controller module	
 	resetInit();
 	ADC10Init();
+
 #ifdef RONE_V12
 	ftdiResetInit();
 	ledResetInit();
 	motSleepInit();
 	chargeLimitInit();
 #endif
+	// Tiletrack functions
+	reflectiveSensorsInit();
 	RFIDReaderInit();
+
 	powerButtonInit();
 	powerEnInit();
 	powerUSBInit();
-	
 #ifdef RONE_V11
 	ir_beacon_init();
 #endif
-	
 
-	while(1){
+	while(1) {
 		//Pet the watchdog so that we don't get reset
 		watchdogPet();
 		
+		// Power-off: Disable all modules and go to LPM4 until woken up by power button press
 		if (powerOffRequest) {
 			// clear the flag
 			powerOffRequest = FALSE;
@@ -365,6 +368,7 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 			irBeaconDisable();
 #endif
 			RFIDInterruptDisable();
+			reflectiveSensorPowerDisable();
 			watchdogPet();
 			watchdogDisable();
 			timerDisable();
@@ -397,14 +401,13 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 			// shutdown the MSP430 and wait for power button interrupt or usb
 			if (!powerResetRequest) {
 				__bis_SR_register(LPM4_bits + GIE);
-			} else {
+ 			} else {
 				powerResetRequest = FALSE;
 				for (i = 0; i < POWER_OFF_DELAY; ++i) {}
 			}
 		}
-		
 					
-		// check for a power-on reset
+		// Power-on/reset and initialize all components
 		if (powerOnReset) {
 			// disable interrupts
 			__bic_SR_register(GIE);
@@ -415,19 +418,16 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 			airplaneMode = FALSE;	
 			
 			#ifdef RONE_V12
-				// set Charge Limit to high to force initial charge at 500mA
+				// Set Charge Limit to high to force initial charge at 500mA
 				chargeLimitSet(TRUE);
 			#endif
 			
 			// Turn on the USB Power Sense Line comparator
 			powerUSBSetEnable(TRUE);
 			
-			//turn on the main power supply and wait for it to stabilize
+			// Turn on the main power supply and wait for it to stabilize
 			powerEnSet(TRUE);
 			for (i = 0; i < POWER_ON_DELAY; i++) {}
-			
-			//TODO: RFID debug
-			//while(TRUE) {}
 
 			// Initialize i/o and timer
 			I2CInit();
@@ -453,15 +453,18 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 			// wait for I2C to finish
 			for(i = 0; (UCB0STAT & UCBBUSY) && (i < I2C_MAX_WHILE_DELAY) ; i++) {}
 
+			ADC10Init();
+			powerVBatInit();
+
 			// init the on-chip I/O
 			accelInit();
 			gyroInit();
 			ledInit();
-			magInit();
 			RFIDInterruptEnable();
 			bumpSensorInit();
-			ADC10Init();
-			powerVBatInit();
+			reflectiveSensorsInit();
+
+
 			/*#ifdef RONE_V12
 				Usb5vSenseInit();
 			#endif*/
@@ -476,12 +479,12 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 
 		//Only update and check the SPI messages and LEDs if 
 		//the MSP is not overiding the LEDs
-		if(!powerButtonLEDOveride){
+		if (!powerButtonLEDOveride) {
 			//TODO: RFID debug
 #ifndef RFID_DEBUG
 			msp430CheckAndUpdate();
 #endif
-			if(systemLEDRampBrightness != systemLEDRampBrightnessOld) {
+			if (systemLEDRampBrightness != systemLEDRampBrightnessOld) {
 				if (systemLEDRampBrightness >= 0) {
 					blinkyLEDSet(systemLEDRampBrightness);
 				} else {
@@ -490,25 +493,23 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 				systemLEDRampBrightnessOld = systemLEDRampBrightness;
 			}
 		}
-		
-		
-		
-		// Update the VBAT value and the USB 5V Line ADC (V-12 Only)
-		if(timerADCUpdate == 0) {
+
+		// Update the VBAT value and the USB 5V Line ADC (V12 Only)
+		if (timerADCUpdate == 0) {
 			// Disable almost all of the interrupts so that these are atomic
 			__bic_SR_register(GIE);
 			watchdogDisable();
-			
+
 			// Update the values
 			powerVBatReadADC();
 			/*#ifdef RONE_V12
 				Usb5vReadADC();
 			#endif*/
 			timerADCUpdate = TIMER_ADC_PERIOD;
-			
+
 			// Re-enable inturupts
 			__bis_SR_register(GIE);
-			watchdogInit();	
+			watchdogInit();
 		}
 		/*
 		#ifdef RONE_V12
@@ -522,10 +523,10 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 		#endif*/
 		
 		//TODO RFID debug
-#ifndef RFID_DEBUG
+//#ifndef RFID_DEBUG
 		// check for a power off request
 		currentTicks = systemTicks();
-		if (powerButtonGetValue()){
+ 		if (powerButtonGetValue()) {
 			if (powerButtonFSMState == 1) { //Reset Mode
 				powerButtonLEDOveride = FALSE;
 				// power button is depressed and the state is still in reset
@@ -545,10 +546,10 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 				setAllLEDData(powerButtonLEDOverideData, 0);
 				setBatteryLEDData(powerButtonLEDOverideData);
 				setTimeToAirplaneLEDData(powerButtonLEDOverideData, POWER_BUTTON_HOLD_DELAY_AIRPLANE - timerDiff(powerButtonStartTicks, currentTicks));
-				
+
 				ledUpdate(powerButtonLEDOverideData);
 				ledTimeoutReset();
-				
+
 				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_AIRPLANE) {
 					// It was held long enough to go into airplane mode - turn the robot off
 					// and put the rone in airplane mode
@@ -558,7 +559,7 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 					powerButtonFSMState = 0; //idle again
 					powerButtonLEDOveride = TRUE;
 				}
-			} 
+			}
 			else if (powerButtonFSMState == 3) {
 				//This shoudln't happen, because the robot should be off
 				powerButtonLEDOveride = TRUE;
@@ -573,24 +574,24 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 		} else {
 			//Release the overide on the LEDs
 			powerButtonLEDOveride = FALSE;
-			
+
 			if (powerButtonFSMState == 1) {
 				//debounce
 				if (timerDiff(powerButtonStartTicks, currentTicks) > POWER_BUTTON_HOLD_DELAY_RESET) {
-					// the power button is released after a short delay - reset the rone		
+					// the power button is released after a short delay - reset the rone
 					resetSet(TRUE);
 					#ifdef RONE_V12
-						if(resetFTDIWithButton){
+						if (resetFTDIWithButton) {
 							ftdiResetSet(TRUE);
 						}
 						ledResetSet(TRUE);
 						motSleepSet(TRUE);
 					#endif
 					//msp430SetRobotMode(MSP430_MODE_PYTHON);
-					for (i = 0; i < RESET_DELAY; i++) {}	
+					for (i = 0; i < RESET_DELAY; i++) {}
 				    resetSet(FALSE);
 				    #ifdef RONE_V12
-						if(resetFTDIWithButton){
+						if (resetFTDIWithButton) {
 							ftdiResetSet(FALSE);
 						}
 						ledResetSet(FALSE);
@@ -609,54 +610,54 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 				powerButtonFSMState = 0; //idle again
 			}
 		}
-		
+
 		//Turn off the robot as soon as possible if the VBat drops below a threshold
-		if(powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD){
+		if (powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD) {
 			if(!powerUSBGetState()) {
 				resetSet(TRUE);
 				#ifdef RONE_V12
 					ftdiResetSet(TRUE);
 					motSleepSet(TRUE);
 				#endif
-				
-				//Turn the robot off officially this time
+
+				// Turn the robot off officially this time
 				powerOffRequest = TRUE;
 				airplaneMode = FALSE;
-				
-				//Go into airplane mode if the battery is beyond dead
-				if(powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)){
+
+				// Go into airplane mode if the battery is beyond dead
+				if (powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
 					airplaneMode = TRUE;
 				}
-				
-				//Disable some interupts
+
+				// Disable some interupts
 				watchdogPet();
 				watchdogDisable();
-				
-				//Make sure the LED's don't turn off
+
+				// Make sure the LED's don't turn off
 				ledTimeoutReset();
-				
-				//Turn off the bliky led so it isn't stuck on
+
+				// Turn off the bliky led so it isn't stuck on
 				blinkyLEDSet(0);
-				
-				//Blink the red light 3 times so that the user knows there is no battery
+
+				// Blink the red light 3 times so that the user knows there is no battery
 				uint8 blinkCount;
 				setAllLEDData(powerButtonLEDOverideData, 0);
-				for(blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
+				for (blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
 					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
 					ledUpdate(powerButtonLEDOverideData);
-					
-					for(i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
-					
+
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
+
 					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
 					ledUpdate(powerButtonLEDOverideData);
-					
-					for(i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++){}
+
+					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
 				}
 				watchdogEnable();
 			}
 		}
-#endif
-	}
+//#endif
+	} // while
 }
 
 
@@ -694,6 +695,7 @@ __interrupt void Timer_A0 (void)
 //			systemLEDRampBrightness = -1;
 //		}
 //	}
+
 	if (SPIMessageTicks > 0) {
 		// you have received a SPI message recently.  reset the time-outs 
 		SPIMessageTicks--;
@@ -723,15 +725,13 @@ __interrupt void Timer_A0 (void)
 		}
 	}
 	
-	if(timer10hz >= 60){
+	if(timer10hz >= 60) {
 		//Run the 10Hz Code
 		timer10hz = 0;
 		
 		//Update the LEDs so that they will timeout correctly
 		ledTimeoutUpdate();
 	}
-		
-	
 // Used for testing frequency of interrupt function being called
 //	pulseFlag = 1 - pulseFlag;
 //	blinkySet(pulseFlag);
@@ -740,6 +740,7 @@ __interrupt void Timer_A0 (void)
 //SPI and I2C RX interrupt vector handler
 #pragma vector=USCIAB0RX_VECTOR
 __interrupt void USCI0RX_ISR(void) {
+	// SPI CPU board ISR
 	if(IFG2 & UCA0RXIFG) {
 		SPI8962RX_ISR();
 	}
@@ -750,6 +751,7 @@ __interrupt void USCI0RX_ISR(void) {
 		UCB0STAT &= ~UCNACKIFG;
 	}
 }
+
 
 /* Handle the Port2 Interrupts */
 #pragma vector = PORT2_VECTOR

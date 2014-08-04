@@ -35,7 +35,6 @@
  */
 
 
-
 //P2.2 for bump sensors
 #define BUMP_PWR_PORT_DIR		P2DIR
 #define BUMP_PWR_PORT_SEL		P2SEL

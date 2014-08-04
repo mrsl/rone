@@ -3,8 +3,8 @@
 #include "SPIMessage.h"
 #include "Gyroscope.h"
 #include "Accelerometer.h"
-#include "Magnetometer.h"
 #include "RFIDReader.h"
+#include "ReflectiveSensors.h"
 #include "BumpSensors.h"
 #include "IRBeacon.h"
 #include "I2C.h"
@@ -38,26 +38,28 @@ void msp430CheckAndUpdate(void) {
 		}
 
 		// Pack payload
-		#ifdef RONE_V12_TILETRACK
+#ifdef RONE_V12_TILETRACK
 		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = RFIDReaderGet();
-		for (i = 0; i < MAG_DATA_LENGTH; i++) {
-			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = magGetDataLeft(i);
-		}
-		for (i = 0; i < MAG_DATA_LENGTH; i++) {
-			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = magGetDataRight(i);
-		}
-		#else
-
-		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = bumpSensorGet();
-
 		for (i = 0; i < ACCEL_DATA_LENGTH; i++) {
 			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = accelGetData(i);
 		}
+		// 6 bytes free from gyro
+		for (i = 0; i < GYRO_DATA_LENGTH; i++) {
+			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = 0;
+		}
+		for (i = 0; i < NUM_REFLECTIVE_PORTS; i++) {
+			SPIMessageOut[MSP430_MSG_REFLECT_START_IDX + i] = reflectiveGetData(i);
 
+		}
+#else
+		SPIMessageOut[MSP430_MSG_BUMPER_IDX] = bumpSensorGet();
+		for (i = 0; i < ACCEL_DATA_LENGTH; i++) {
+			SPIMessageOut[MSP430_MSG_ACCEL_START_IDX + i] = accelGetData(i);
+		}
 		for (i = 0; i < GYRO_DATA_LENGTH; i++) {
 			SPIMessageOut[MSP430_MSG_GYRO_START_IDX + i] = gyroGetData(i);
 		}
-		#endif //RONE_V12_TILETRACK
+#endif //RONE_V12_TILETRACK
 
 		SPIMessageOut[MSP430_MSG_VBAT_IDX] = powerVBatGet();
 		SPIMessageOut[MSP430_MSG_VUSB_IDX] = powerUSBGetState();
@@ -70,11 +72,10 @@ void msp430CheckAndUpdate(void) {
 		SPI8962SetMessage(SPIMessageOut);
 
 		// Update sensor values
+		reflectiveSensorsUpdate();
 		bumpSensorUpdate();
 		accelUpdate();
 		gyroUpdate();
-		magUpdate();
-
 
 		// Process the received message
 		if (messageChecksum(SPIMessageIn, MSP430_CODE_LENGTH, MSP430_MSG_LENGTH) == SPIMessageIn[MSP430_CMD_C_CHECKSUM_IDX]) {

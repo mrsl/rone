@@ -87,9 +87,7 @@ int directConnect(int robotID)
 {
 	char buffer[BUFFERSIZE];
 
-	robots[robotID].blacklisted = 1;
-	if (robots[robotID].hSerial != NULL)
-		CloseHandle(*robots[robotID].hSerial);
+	blacklist(robotID);
 
 	if (sprintf(buffer, "/SERIAL COM%d /BAUD 230400 /NOCTS",
 		robots[robotID].port) < 0)
@@ -165,8 +163,10 @@ void blacklist(int robotID)
 		}
 	} else {
 		robots[robotID].blacklisted = 1;
-		if (robots[robotID].hSerial != NULL)
+		if (robots[robotID].hSerial != NULL) {
 			CloseHandle(*robots[robotID].hSerial);
+			robots[robotID].hSerial = NULL;
+		}
 	}
 }
 
@@ -184,7 +184,12 @@ void beginLog(int robotID)
 
 	if (!robots[robotID].log) {
 		robots[robotID].log = 1;
-		sprintf(fileName, "%s\\%d_%s.log", logDir, robotID, date);
+		if (robots[robotID].aid != -1) {
+			sprintf(fileName, "%s\\%d_AT%d_%s.log", logDir, robotID,
+				robots[robotID].aid, date);
+		} else {
+			sprintf(fileName, "%s\\%d_%s.log", logDir, robotID, date);
+		}
 		robots[robotID].logH = CreateFile((LPTSTR) fileName,
 										  GENERIC_WRITE,
 										  0,
@@ -207,7 +212,12 @@ void beginAprilTagLog(int aprilTagID)
 
 	if (!aprilTagData[aprilTagID].log) {
 		aprilTagData[aprilTagID].log = 1;
-		sprintf(fileName, "%s\\AT%d_%s.log", logDir, aprilTagID, date);
+		if (aprilTagData[aprilTagID].rid != -1) {
+			sprintf(fileName, "%s\\AT%d_%d_%s.log", logDir, aprilTagID,
+				aprilTagData[aprilTagID].rid, date);
+		} else {
+			sprintf(fileName, "%s\\AT%d_%s.log", logDir, aprilTagID, date);
+		}
 		aprilTagData[aprilTagID].logH = CreateFile((LPTSTR) fileName,
 												   GENERIC_WRITE,
 											 	   0,
@@ -271,4 +281,31 @@ void showAprilTagInfo(int robotID)
 		aprilTagData[robotID].display = 0;
 	else
 		aprilTagData[robotID].display = 1;
+}
+
+int guiConnect(int robotID)
+{
+	char exeName[BUFFERSIZE];
+	char buffer[BUFFERSIZE];
+
+	if (robots[robotID].type == REMOTE || robots[robotID].hSerial == NULL
+		|| robots[robotID].blacklisted)
+		return (-1);
+
+	blacklist(robotID);
+
+	if (sprintf(exeName, "%s\\%s", guiPath, "roneGUI.exe") < 0)
+		return (-1);
+
+	if (sprintf(buffer, "-p %d", robots[robotID].port) < 0)
+		return (-1);
+
+	ShellExecute(GetDesktopWindow(),
+				 "open",
+				 exeName,
+				 buffer,
+				 "",
+				 SW_SHOW);
+
+	return (0);
 }

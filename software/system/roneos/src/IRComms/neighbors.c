@@ -127,7 +127,7 @@ void neighborsInit(uint32 neighbor_period_arg) {
 	nbrDataCreateIR(&nbrMsgID, "ID", 8, roneID);
 	neighborsMutex = osSemaphoreCreateMutex();
 	serialCommandAdd(&serialCmdSN, "sn", serialCmdSNFunc);
-	osTaskCreate(neighborsTask, "neighbors", 2048, NULL, NEIGHBORS_TASK_PRIORITY );
+	osTaskCreate(neighborsTask, "neighbors", 4096, NULL, NEIGHBORS_TASK_PRIORITY );
 }
 
 

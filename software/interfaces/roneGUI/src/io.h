@@ -79,23 +79,23 @@ extern textbox textboxes[];
 
 /* Output commands. These are sent *from* the robot *to* the GUI. */
 #define DAT_ACCEL	'a'
-#define DAT_BTN	'b'
-#define DAT_ENC	'e'
+#define DAT_BTN		'b'
+#define DAT_ENC		'e'
 #define DAT_GYRO	'g'
 #define DAT_IR		'i'
 #define DAT_LIGHT	'l'
 #define DAT_BUMP	'm'
-#define DAT_NBR	'n'
+#define DAT_NBR		'n'
 #define DAT_NBRS	'o'
 #define DAT_GRIP	'p'
 #define DAT_RADIO	'r'
 #define DAT_ID		's'
 #define DAT_BATT	'v'
-#define DAT_EXP	'x'
+#define DAT_EXP		'x'
 
 /* Input commands. These are sent *from* the GUI *to* the robot. */
 #define CMD_AUDIO	'a'
-#define CMD_PWM	'p'
+#define CMD_PWM		'p'
 #define CMD_LEDS	'l'
 #define CMD_TVRV	'm'
 #define CMD_RADIO	'r'
@@ -137,9 +137,9 @@ typedef signed char 	int8;
 typedef signed short 	int16;
 typedef signed long 	int32;
 
-typedef unsigned char		uint8;
+typedef unsigned char	uint8;
 typedef unsigned short	uint16;
-typedef unsigned long		uint32;
+typedef unsigned long	uint32;
 
 
 /* Data values for the gyroscope (v9) and accelerometer. */
@@ -172,6 +172,7 @@ typedef struct gripData {
  */
 typedef struct outputData {
 	int id;
+	int isv11;
 	char radioMsg[LEN_TXT_RADIO];
 	unsigned int buttons[NUM_BUTTONS];
 	unsigned int lightSensors[NUM_LIGHT_SENSORS];

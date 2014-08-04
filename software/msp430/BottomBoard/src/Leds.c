@@ -177,6 +177,7 @@ void blinkyLEDSet(uint8 brightness) {
 	ledSet(BLINKY_LED_IDX, brightness);
 }
 
+
 #ifdef RONE_V12
 	void ledResetSet(boolean val) {
 		if(val) {

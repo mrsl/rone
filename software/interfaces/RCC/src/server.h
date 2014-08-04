@@ -12,7 +12,7 @@
 
 #define MAX_APRILTAG			1024
 #define	APRILTAG_BUFFERSIZE		64
-#define NUMBUFFER_APRILTAG		16
+#define NUMBUFFER_APRILTAG		64
 
 /**
  * Connection information struct that is passed to the handlers

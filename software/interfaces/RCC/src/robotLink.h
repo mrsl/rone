@@ -34,15 +34,15 @@ struct commCon
 {
 	int id; 									// Robot ID
 	int aid;									// AprilTag ID
+	int port;									// If local, the COM port
+	int host;									// If remote, the host robot
 	int blacklisted;							// Is this robot ID blacklisted?
 	int log;									// Log this robots data?
 	HANDLE *hSerial;							// Serial handle if connected
 	HANDLE logH;								// Logfile
-	unsigned long up;							// Last time we saw the robot
-	unsigned long lup;							// Prev time we saw the robot
+	long up;									// Last time we saw the robot
+	long lup;									// Prev time we saw the robot
 	int type;									// Type of robot
-	int port;									// If local, the COM port
-	int host;									// If remote, the host robot
 	int subnet;									// Radio subnet of robot
 	int display;								// Show extra data?
 	char buffer[NUMBUFFER][BUFFERSIZE + APRILTAG_BUFFERSIZE + 16]; // buffer
@@ -53,6 +53,9 @@ struct commCon
 };
 
 extern struct commCon robots[MAXROBOTID];	// Robot data
+extern int timestamps;						// Use timestamps?
+extern int logging;							// Log data?
+extern int hostData;						// Filter host robot data?
 
 void initRobots();
 void commManager(void *vargp);

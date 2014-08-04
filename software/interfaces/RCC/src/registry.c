@@ -15,7 +15,6 @@ void commWatch(void *vargp)
 	int i;
 	struct regData data; /* Read data from the registry */
 
-	/* Get rid of pesky compiler warnings */
 	vargp = (void *) vargp;
 
 	for (;;) {
@@ -23,7 +22,8 @@ void commWatch(void *vargp)
 
 		/* Try to connect to each robot */
 		for (i = 0; i < data.n; i++) {
-			if (robots[commToNum[data.ports[i]]].up == 0)
+			if (robots[commToNum[data.ports[i]]].hSerial == NULL
+				&& !robots[commToNum[data.ports[i]]].blacklisted)
 				initCommCommander(data.ports[i]);
 		}
 
