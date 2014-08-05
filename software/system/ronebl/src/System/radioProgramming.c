@@ -439,9 +439,9 @@ void radioHost(void) {
 
 	// Query robots for segment requests or crcTable rebroadcast
 	uint32 robotIDCount;
-	uint32 requestAttempts;
+	uint32 requestAttempts, segmentRequestCounter;
+	uint8 previousSegmentNumber = CRC_TABLE_SEGMENT_IDX;
 
-	requestAttempts = 0;
 	for (robotIDCount = robotIDMin; robotIDCount < robotIDMax + 1; robotIDCount++) {
 		faultPrintSerial("Querying robot ");
 		faultPrintSerialDec((unsigned long)robotIDCount);
@@ -449,6 +449,7 @@ void radioHost(void) {
 		// RADIO_COMMAND_TYPE_QUERY_REQUEST: message_header[4] = [type + subnet, segment request number, destination robot ID, sender ID]
 		packMessageHeader(&outgoingRadioMessage, RADIO_COMMAND_TYPE_QUERY_REQUEST, 0, robotIDCount, getSelfID());
 		requestAttempts = 0;
+		segmentRequestCounter = 0;
 
 		// Ping remote robot until timeout
 		while (requestAttempts++ < MAX_QUERY_REQUEST) {
@@ -459,6 +460,7 @@ void radioHost(void) {
 			for (i = 0; i < MAX_QUERY_REQUEST_WAIT; i++) {
 				while (radioRecvMessage(&incomingRadioMessage)) {
 					if (isValidQueryResponse(&incomingRadioMessage, robotIDCount, getSelfID())) {
+						// Got a valid response from target remote robot
 						// Respond to query request response with crc table or segment
 						if (incomingRadioMessage.program.segment == CRC_TABLE_SEGMENT_IDX) {
 							faultPrintSerial("\n");
@@ -471,7 +473,30 @@ void radioHost(void) {
 							sendSegment(incomingRadioMessage.program.segment);
 							faultPrintSerial("\n");
 						}
+						// Reset requestAttempts when the host gets a response from remote
 						requestAttempts = 0;
+
+						// Check if we are sending the same segment as before
+						if (previousSegmentNumber == incomingRadioMessage.program.segment) {
+							// Timeout if the same segment is being requested too many times
+							if (segmentRequestCounter > SEGMENT_REQUEST_TIMEOUT) {
+								// Skip current queried robot if it is stuck
+								faultPrintSerial("Error: Robot ");
+								faultPrintSerialDec(robotIDCount);
+								faultPrintSerial(" timed out\n");
+								i = MAX_QUERY_REQUEST_WAIT;
+								requestAttempts = MAX_QUERY_REQUEST;
+								segmentRequestCounter = 0;
+								break;
+							} else {
+								segmentRequestCounter++;
+							}
+						} else {
+							previousSegmentNumber = incomingRadioMessage.program.segment;
+							segmentRequestCounter = 0;
+						}
+
+
 					}
 				}
 			}
