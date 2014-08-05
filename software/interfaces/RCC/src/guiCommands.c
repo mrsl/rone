@@ -73,7 +73,7 @@ int openClientConnection(int robotID, int aprilTagID)
 	}
 
 	/* Open secureCRT with the script as an argument */
-	if (sprintf(buffer, "/SCRIPT \"%s\"", szTempFileName) < 0) {
+	if (sprintf(buffer, "/TITLEBAR \"Robot %d\" /SCRIPT \"%s\"", robotID, szTempFileName) < 0) {
 		return (-1);
 	}
 
@@ -91,8 +91,8 @@ int directConnect(int robotID)
 
 	blacklist(robotID);
 
-	if (sprintf(buffer, "/SERIAL COM%d /BAUD 230400 /NOCTS",
-		robots[robotID].port) < 0) {
+	if (sprintf(buffer, "/TITLEBAR \"Robot %d\" /SERIAL COM%d /BAUD 230400 /NOCTS",
+		robotID, robots[robotID].port) < 0) {
 		return (-1);
 	}
 

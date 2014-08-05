@@ -311,7 +311,7 @@ void commCommander(void *vargp)
 			}
 		/* If we get a data line from the robot */
 		} else if (strncmp(buffer, "rtd", 3) == 0) {
-			if (hostData) {
+			if (hostData || robots[id].type != HOST) {
 				insertBuffer(id, buffer, 0);
 			}
 
