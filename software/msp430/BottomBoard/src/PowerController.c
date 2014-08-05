@@ -109,9 +109,9 @@ void powerUSBInit(void) {
 #ifdef RONE_V12
 	// Set up the comparator to read true if we receive more than about 2.5V on
 	// USB 5V. This allows airplaine mode with a 1/3 Voltage Divider
-	CACTL1 = CARSEL + CAREF0;  // 0.25*Vcc reference applied to '-' terminal
-							   // No interrupts.
-	CACTL2 = P2CA0 + CAF;      // Input CA0 on '+' terminal, filter output.
+//	CACTL1 = CARSEL + CAREF0;  // 0.25*Vcc (Vcc = 5V?)reference applied to '-' terminal
+//							   // No interrupts.
+//	CACTL2 = P2CA0 + CAF;      // Input CA0 on '+' terminal, filter output.
 
 	powerUSBSetEnable(FALSE);
 #endif
@@ -151,11 +151,12 @@ boolean powerUSBGetState(void){
 #endif
 #ifdef RONE_V12
 	// CAOUT is the value of the filtered Comparator
-	if((CACTL2 & CAOUT) == CAOUT) {
-		return TRUE;
-	} else {
-		return FALSE;
-	}
+//	if((CACTL2 & CAOUT) == CAOUT) {
+//		return TRUE;
+//	} else {
+//		return FALSE;
+//	}
+
 #endif
 }
 
