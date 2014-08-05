@@ -36,6 +36,9 @@ void behaviorTask(void* parameters) {
 	uint32 nbrBearing;
 	Nbr* nbrPtr;
 	uint32 tempWakeTime = 0;
+	int32 Xs[100] = {0};
+	int32 cnt = 0;
+	int32 Ys[100] = {0};
 
 
 	// Init nbr system
@@ -140,13 +143,19 @@ void behaviorTask(void* parameters) {
 		motorSetBeh(&behOutput);
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 		lastWakeTime = osTaskGetTickCount();
-		for (i = 0; i < nbrList.size; i++){
-			nbrPtr = nbrList.nbrs[i];
-			nbrBearing = nbrGetBearing(nbrPtr);
-				if (printNow){
-					rprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
-				}
-		}
+
+		cprintf("x:%d y:%d atan2MilliRad:%d\n",Xs[cnt],Ys[cnt],atan2MilliRad(Xs[cnt],Ys[cnt]));
+		cnt++;
+		Xs[cnt] = rand();
+		Ys[cnt] = rand();
+
+//		for (i = 0; i < nbrList.size; i++){
+//			nbrPtr = nbrList.nbrs[i];
+//			nbrBearing = nbrGetBearing(nbrPtr);
+//				if (printNow){
+//					rprintf("%d %d %d\n",nbrBearing, (int16)nbrDataGetNbr16(&TV_H,&TV_L,nbrPtr),(int16)nbrDataGetNbr16(&RV_H,&RV_L,nbrPtr));
+//				}
+//		}
 	}
 }
 
