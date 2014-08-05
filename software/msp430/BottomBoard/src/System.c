@@ -298,7 +298,7 @@ void setTimeToAirplaneLEDData(uint8 *data, uint32 timeLeft){
 #endif
 
 
-void main(void) {
+ void main(void) {
 	uint32 i;
 
 	// Enable interupts
