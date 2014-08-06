@@ -32,11 +32,13 @@
 	#define POWER_EN_PORT_DIR			P1DIR
 	#define POWER_EN_BIT				BIT1
 #endif
+
 #ifdef RONE_V12
 	#define POWER_USB_PORT_IN			P2IN
 	#define POWER_USB_PORT_OUT			P2OUT
 	#define POWER_USB_PORT_DIR			P2DIR
 	#define POWER_USB_PORT_SEL			P2SEL
+	#define POWER_USB_PORT_REN 			P2REN
 	#define POWER_USB_BIT				BIT3
 	
 	#define POWER_EN_PORT_SEL			P1SEL
@@ -71,7 +73,12 @@
 	#define CHRG_LIM_PORT_SEL			P2SEL
 	#define CHRG_LIM_BIT				BIT5
 	
-	#define USB_5V_RUN_AVG_LEN          3
+	// 5VUSB sense modes
+    #define POWER_USB_SENSE_MODE_COMP 			1
+    #define POWER_USB_SENSE_MODE_ADC 			2
+	#define POWER_USB_FAST_CHARGE_THRESHOLD		1000
+
+    #define USB_5V_RUN_AVG_LEN          3
 	uint8 Usb5vRunAvg[USB_5V_RUN_AVG_LEN];
 	uint8 Usb5vRunAvgCount = 0;       
 #endif
@@ -109,9 +116,9 @@ void powerUSBInit(void) {
 #ifdef RONE_V12
 	// Set up the comparator to read true if we receive more than about 2.5V on
 	// USB 5V. This allows airplaine mode with a 1/3 Voltage Divider
-//	CACTL1 = CARSEL + CAREF0;  // 0.25*Vcc (Vcc = 5V?)reference applied to '-' terminal
-//							   // No interrupts.
-//	CACTL2 = P2CA0 + CAF;      // Input CA0 on '+' terminal, filter output.
+	CACTL1 = CARSEL + CAREF0;  // 0.25 * Vcc reference applied to '-' terminal
+							   // No interrupts.
+	CACTL2 = P2CA0 + CAF;      // Input CA0 on '+' terminal, filter output.
 
 	powerUSBSetEnable(FALSE);
 #endif
@@ -136,8 +143,32 @@ void powerUSBSetEnable(boolean on) {
 
 // Set the mode of the USB Power Sense to be either Digital, Analog Comparator, or ADC based
 // This may take over the USBSetEnable
-void powerUSBSetMode(uint8 mode) {
+// Returns 1 if fast charge should be enabled
+uint8 powerUSBSetMode(uint8 mode) {
+	uint8 retval = 0;
+	uint16 ADCValue;
 	// TODO: Do this, and add the ADC for fast charge mode
+	switch(mode) {
+	case POWER_USB_SENSE_MODE_COMP:
+		powerUSBInit();
+		powerUSBSetEnable(TRUE);
+		break;
+	case POWER_USB_SENSE_MODE_ADC:
+		powerUSBSetEnable(FALSE);
+		POWER_USB_PORT_REN &= ~(POWER_USB_BIT);
+		ADC10AE0 |= (POWER_USB_BIT);
+	   	ADC10CTL0 &= ~ENC;             						// Turn off ADC10 to switch channel
+		ADC10CTL1 = INCH_3 | ADC10DIV_0 | CONSEQ_0;			// Input A0, single sequence
+	   	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
+	   	while (ADC10CTL1 & BUSY); 							// Wait until sample ends
+	   	ADCValue = ADC10MEM;
+	   	if (ADCValue > POWER_USB_FAST_CHARGE_THRESHOLD) {
+	   		retval = 1;
+	   	}
+	   	break;
+	}
+
+	return retval;
 }
 
 boolean powerUSBGetState(void){
@@ -151,11 +182,11 @@ boolean powerUSBGetState(void){
 #endif
 #ifdef RONE_V12
 	// CAOUT is the value of the filtered Comparator
-//	if((CACTL2 & CAOUT) == CAOUT) {
-//		return TRUE;
-//	} else {
-//		return FALSE;
-//	}
+	if((CACTL2 & CAOUT) == CAOUT) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
 
 #endif
 }
