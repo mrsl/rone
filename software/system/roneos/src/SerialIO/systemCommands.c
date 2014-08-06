@@ -267,7 +267,6 @@ void executeCmd(guiCmdData *command) {
 		if (msgData[0] != '\0') {
 			radioCommandXmit_internal(&radioCmdGUI, ROBOT_ID_ALL, &radioMsg);
 		}
-
 		break;
 	}
 	case CMD_AUDIO: {

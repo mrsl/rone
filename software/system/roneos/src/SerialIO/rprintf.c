@@ -260,11 +260,14 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 	// Print the message.
 	if (queryComplete && (length > 0)) {
 		rprintfTotalBytesReceived += length;
+		rprintfRadioBuffer[length] = '\0';
 		//rprintfRadioBufferPrevPtr = rprintfRadioBufferPtr;
 		//cprintf("rtd,%d,3.7,80 %s", remoteRobotID, batteryLevel, signalQuality, cfprintfRadioBuffer);
 		//cprintf("red,%d,3.7,80 %s,rprintfRadioBuffer);
 		cprintf("rtd,%d %s", remoteRobotID, rprintfRadioBuffer);
 		//cprintf(";%d%s,%d;", remoteRobotID, rprintfRadioBuffer, remoteRobotID);	//###
+	} else if (!queryComplete) {
+		cprintf("rtd,%d Fail!")
 	}
 	//else if (remoteRobotState){
 		//if we didnt get a new message, print the previous message - used for nav demo
@@ -289,7 +292,7 @@ static void rprintfHostTask(void* parameters) {
 		// This task only runs if we are the host.
 		if (rprintfMode == RPRINTF_HOST) {
 			activeTemp = 0;
-			roundNum+=1;
+			roundNum += 1;
 			for (remoteRobotID = ROBOT_ID_MIN; remoteRobotID <= ROBOT_ID_MAX; remoteRobotID++) {
 				status = rprintfRemoteRobotState[remoteRobotID];
 				if (status == RPRINTF_REMOTE_ROBOT_STATE_ACTIVE) {

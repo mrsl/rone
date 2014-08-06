@@ -25,7 +25,6 @@
 #define RADIO_SUBNET_3					3
 
 
-
 /******** Structs ********/
 
 /** @brief radio message and metrics
@@ -93,5 +92,11 @@ void radioIntEnable(void);
  */
 void radioIntDisable(void);
 
+/*
+ * @brief Outputs debug information about incoming messages
+ *
+ * @return void
+ */
+void radioMonitorDebugOutput(RadioMessage* messagePtr);
 
 #endif /* RADIO_H_ */

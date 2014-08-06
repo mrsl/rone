@@ -35,6 +35,7 @@ static RadioCmd* radioCmdStartPtr = NULL;
 static uint8 radioCmdType = 1;
 static uint8 radioCommandSubnet;
 
+void (*radioMonitorDebugFunction)(RadioMessage *) = NULL;
 
 /******** functions ********/
 
@@ -114,6 +115,12 @@ static void radioCommandTask(void* parameters) {
 	while (TRUE) {
 		// wait for a radio message
 		radioGetMessageBlocking(&message);
+
+		// Radio passive listening debug output
+		if (radioMonitorGetState()) {
+			radioMonitorDebug(&message);
+		}
+
 		// check the subnet.  are we on the same subnet?
 		subnet = radioCommandGetSubnet(&message);
 		if (subnet != RADIO_SUBNET_ALL){
@@ -257,6 +264,14 @@ uint8 radioCommandGetDestinationID(RadioMessage* messagePtr) {
 	return (messagePtr->command.destinationID);
 }
 
+uint8 radioCommandGetLinkQuality(RadioMessage* messagePtr) {
+	return (messagePtr->command.linkQuality);
+}
+
+uint32 radioCommandGetTimeStamp(RadioMessage* messagePtr) {
+	return (messagePtr->command.timeStamp);
+}
+
 
 //uint8 radioCommandGetDestID(RadioMessage* messagePtr) {
 //	return messagePtr->data[RADIO_COMMAND_MESSAGE_DESTID_IDX];
@@ -281,4 +296,32 @@ void radioCommandInit(void) {
 
 uint8 radioCommandGetLocalSubnet() {
 	return radioCommandSubnet;
+}
+
+/*
+ * @brief Toggles passive listening debugging with a function that accepts Radio Messages
+ *
+ * @param radioMonitorFunction a function pointer that accepts Radio Message pointers
+ * @return void
+ */
+void radioMonitorInitDebug(void (*radioMonitorFunction)(RadioMessage *)) {
+	radioMonitorDebugFunction = radioMonitorFunction;
+}
+
+/*
+ * @brief Retrieves radio monitoring state
+ *
+ * @return radio monitoring state
+ */
+boolean radioMonitorGetState() {
+	return (radioMonitorDebugFunction == NULL) ? FALSE : TRUE;
+}
+
+/*
+ * @brief Gives incoming radio packets to a debug function
+ *
+ * @return void
+ */
+void radioMonitorDebug(RadioMessage* messagePtr) {
+	(*radioMonitorDebugFunction)(messagePtr);
 }

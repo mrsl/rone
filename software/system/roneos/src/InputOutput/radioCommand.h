@@ -159,6 +159,21 @@ uint8 radioCommandGetSubnet(RadioMessage* messagePtr);
  */
 uint8 radioCommandGetDestinationID(RadioMessage* messagePtr);
 
+/**
+ * @brief Get radio command link quality.
+ *
+ * @param messagePtr is the message to examine
+ * @returns radio command link quality
+ */
+uint8 radioCommandGetLinkQuality(RadioMessage* messagePtr);
+
+/**
+ * @brief Get radio command timestamp.
+ *
+ * @param messagePtr is the message to examine
+ * @returns radio command timestamp
+ */
+uint32 radioCommandGetTimeStamp(RadioMessage* messagePtr);
 
 /**
  * @brief Sets the radio command subnet.
@@ -184,6 +199,28 @@ char* radioCommandGetDataPtr(RadioMessage* messagePtr);
  */
 uint8 radioCommandGetLocalSubnet();
 
+
+/*
+ * @brief Toggles passive listening debugging with a function that accepts Radio Messages
+ *
+ * @param radioMonitorFunction a function pointer that accepts Radio Message pointers
+ * @return void
+ */
+void radioMonitorInitDebug(void (*radioMonitorFunction)(RadioMessage *));
+
+/*
+ * @brief Retrieves radio monitoring state
+ *
+ * @return radio monitoring state
+ */
+boolean radioMonitorGetState();
+
+/*
+ * @brief Gives incoming radio packets to a debug function
+ *
+ * @return void
+ */
+void radioMonitorDebug(RadioMessage* messagePtr);
 
 //TODO: implement, delete, or debug?
 ///**

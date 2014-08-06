@@ -35,7 +35,6 @@
 
 #include "roneos.h"
 
-
 static int radioRXerror = 0; //TODO look up the queue overflow in FreeRTOS
 static int radioTXerror = 0; //TODO look up the queue overflow in FreeRTOS
 
@@ -44,7 +43,6 @@ static int radioTXerror = 0; //TODO look up the queue overflow in FreeRTOS
 
 /* V11 Pin Definitions - Radio  */
 /*  SS=PA7, SLP_TR=PA6, RST=PG0 , IRQ=PC5  */
-
 
 #define RADIO_IRQ_PORT 					GPIO_PORTC_BASE
 #define RADIO_IRQ_SYSCTL 				SYSCTL_PERIPH_GPIOC
@@ -58,7 +56,6 @@ static int radioTXerror = 0; //TODO look up the queue overflow in FreeRTOS
 static boolean radio_xmit_irq_complete = TRUE;
 static osQueueHandle radioCommsQueueRecv;
 static osQueueHandle radioCommsQueueXmit;
-
 
 static uint32 radio_read_register_isr(uint32 reg) {
 	uint32 chip_status;
@@ -88,6 +85,7 @@ static uint32 radio_write_register_isr(uint32 reg, uint32 val) {
 
 	return chip_status;
 }
+
 
 static void radio_write_command_isr(uint32 command) {
 	uint32 chip_status;
@@ -360,6 +358,9 @@ void radioInit(void) {
 	radio_ce_off();
 	MAP_GPIOPinTypeGPIOOutput(RADIO_CE_PORT, RADIO_CE_PIN);
 
+	// set data rate and power
+	radio_write_register_isr(NRF_RF_SETUP, (1 << NRF_SETUP_RF_DR) | (1 << NRF_SETUP_RF_PWR1) | (1 << NRF_SETUP_RF_PWR0));
+
 	 // turn off all auto acknowledgements
 	radio_write_register_isr(NRF_EN_AA, 0x00);
 
@@ -500,3 +501,5 @@ static boolean radioGetMessage(RadioMessage* messagePtr) {
 		return radioGetMessage_internal(messagePtr);
 	}
 }
+
+
