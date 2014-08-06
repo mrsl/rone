@@ -10,7 +10,7 @@ int verbose = 0;
 GLfloat aprilTagX = 0.;
 GLfloat aprilTagY = 0.;
 char logDir[MAX_PATH] = ".\\logs";
-char defaultATServerIP[15] = "192.168.1.155";
+char defaultATServerIP[15] = "";
 char guiPath[MAX_PATH] = "..\\..\\roneGUI\\bin";
 
 /**
@@ -92,8 +92,9 @@ int main(int argc, char **argv)
 	CreateDirectory(logDir, NULL);
 
 	/* Create web server */
-	if (createServer(port) < 0)
+	if (createServer(port) < 0) {
 		Error("Failed to create server");
+	}
 
 	initAprilTag();
 	guiInit();

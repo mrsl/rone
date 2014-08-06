@@ -51,7 +51,7 @@
 #define SCALE_TINY			3.
 
 #define BUTTONSPACE			-TEXT_LARGE - 0.2
-#define BUTTONBLOCKSPACE	-1.6
+#define BUTTONBLOCKSPACE	-2.7
 
 #define TOASTER_POP_TIME	750
 
@@ -66,6 +66,7 @@
 #define TEXT_TINY			0.5
 #define TEXT_SMALL			0.65
 #define TEXT_MED 			0.85
+#define TEXT_NORMAL			1.0
 #define TEXT_LARGE			1.35
 
 #define ALIGN_CENTER 		1
@@ -179,11 +180,13 @@ void textSetSize(GLfloat size);
 /* Resource functions */
 void drawInit();
 
+/* Command functions */
+void telnetConnect(int robotID);
 void hostRobot(int robotID);
 void blacklist(int robotID);
 void commConnect(int robotID);
-void beginLog(int robotID);
-void beginAprilTagLog(int aprilTagID);
+void logRobot(int robotID);
+void logAprilTag(int aprilTagID);
 void openLocalConnections();
 void openRemoteConnections();
 void showRobotInfo(int robotID);

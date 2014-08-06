@@ -252,11 +252,11 @@ void readChar(char character)
 			setToaster(infoName);
 			break;
 		}
-		case ('8'): {
-			clickMode = GUI;
-			setToaster(guiName);
-			break;
-		}
+//		case ('8'): {
+//			clickMode = GUI;
+//			setToaster(guiName);
+//			break;
+//		}
 		default: {
 			break;
 		}
@@ -378,11 +378,11 @@ void processHits(GLint hits, GLuint buffer[])
 			setToaster(infoName);
 			continue;
 		}
-		case (GUI_BUTTON): {
-			clickMode = GUI;
-			setToaster(guiName);
-			continue;
-		}
+//		case (GUI_BUTTON): {
+//			clickMode = GUI;
+//			setToaster(guiName);
+//			continue;
+//		}
 		case (OPENLOCAL_BUTTON): {
 			openLocalConnections();
 			setToaster(openlocalName);
@@ -446,9 +446,7 @@ void processHits(GLint hits, GLuint buffer[])
 			{
 			/* Shift-Click to Open a connection to a robot */
 			case (1): {
-				if (!robots[robotID].blacklisted
-					|| robots[robotID].type == REMOTE)
-					openClientConnection(robotID, -1);
+				telnetConnect(robotID);
 				break;
 			}
 			/* Ctrl-Click to blacklist robots */
@@ -458,7 +456,7 @@ void processHits(GLint hits, GLuint buffer[])
 			}
 			/* Shift-Ctrl-Click to Log robots */
 			case (3): {
-				beginLog(robotID);
+				logRobot(robotID);
 				break;
 			}
 			/* Alt-Click to make robot into a host */
@@ -477,19 +475,17 @@ void processHits(GLint hits, GLuint buffer[])
 				break;
 			}
 			/* Ctrl-Alt-Shift-Click to open a GUI window */
-			case (7): {
-				guiConnect(robotID);
-				break;
-			}
+//			case (7): {
+//				guiConnect(robotID);
+//				break;
+//			}
 			/* Do whatever tool is selected */
 			case (0):
 			default: {
 				switch (clickMode)
 				{
 				case (CONNECT): {
-					if (!robots[robotID].blacklisted
-						|| robots[robotID].type == REMOTE)
-						openClientConnection(robotID, -1);
+					telnetConnect(robotID);
 					break;
 				}
 				case (HOSTBOT): {
@@ -527,7 +523,7 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (LOG): {
-					beginLog(robotID);
+					logRobot(robotID);
 					break;
 				}
 				case (DISPLAY): {
@@ -557,7 +553,7 @@ void processHits(GLint hits, GLuint buffer[])
 			}
 			/* Shift-Ctrl-Click to Log AprilTags */
 			case (3): {
-				beginAprilTagLog(robotID - 2000);
+				logAprilTag(robotID - 2000);
 				break;
 			}
 			/* Shift-Alt-Click to show info */
@@ -596,7 +592,7 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (LOG): {
-					beginAprilTagLog(robotID - 2000);
+					logAprilTag(robotID - 2000);
 					break;
 				}
 				case (DISPLAY): {
@@ -661,10 +657,11 @@ void drawRobots(GLenum mode)
 		mutexLock(&robots[i].mutex);
 		/* If the robot is active */
 		if (robots[i].up != 0) {
-			if (robots[i].type == LOCAL || robots[i].type == HOST)
+			if (robots[i].type == LOCAL || robots[i].type == HOST) {
 				local[numLocal++] = &robots[i];
-			else if (robots[i].type == REMOTE)
+			} else if (robots[i].type == REMOTE) {
 				remote[numRemote++] = &robots[i];
+			}
 		}
 		mutexUnlock(&robots[i].mutex);
 	}
@@ -695,16 +692,18 @@ void drawRobots(GLenum mode)
 		x = ROBOT_START_X + ROBOT_RADIUS / scale / 2;
 		y = ROBOT_START_Y + ROBOT_RADIUS / scale / 2;
 	}
-	if (maxScale != 1)
+	if (maxScale != 1) {
 		x -= 0.5;
+	}
 
 	start = x;
 
 	/* Draw local robots */
 	for (i = 0; i < numLocal; i++) {
 		mutexLock(&local[i]->mutex);
-		if (mode == GL_SELECT)
+		if (mode == GL_SELECT) {
 			glLoadName(local[i]->id);
+		}
 
 		drawRobot(x, y, local[i], scale);
 		mutexUnlock(&local[i]->mutex);
@@ -718,8 +717,9 @@ void drawRobots(GLenum mode)
 	/* Draw remote robots */
 	for (i = 0; i < numRemote; i++) {
 		mutexLock(&remote[i]->mutex);
-		if (mode == GL_SELECT)
+		if (mode == GL_SELECT) {
 			glLoadName(remote[i]->id);
+		}
 
 		drawRobot(x, y, remote[i], scale);
 		mutexUnlock(&remote[i]->mutex);
@@ -964,22 +964,25 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 			glColor3fv(color_black);
 			textSetSize(TEXT_SMALL);
 			textSetAlignment(ALIGN_LEFT);
-			if (robot->type != REMOTE)
+			if (robot->type != REMOTE) {
 				textPrintf("ID:%02d COM%d", robot->id, robot->port);
-			else
+			} else {
 				textPrintf("ID:%02d Host:%d", robot->id, robot->host);
+			}
 			glTranslatef(0, -TEXT_SMALL, 0);
 			textPrintf("Log:%s", (robot->log) ? "Yes" : "No");
 			glTranslatef(0, -TEXT_SMALL, 0);
-			if (robot->aid != -1)
+			if (robot->aid != -1) {
 				textPrintf("AprilTag:%d", robot->aid);
-			else
+			} else {
 				textPrintf("AprilTag:None");
+			}
 			glTranslatef(0, -TEXT_SMALL, 0);
-			if (robot->subnet != -1)
+			if (robot->subnet != -1) {
 				textPrintf("Subnet:%d", robot->subnet);
-			else
+			} else {
 				textPrintf("Subnet:N/A");
+			}
 			glTranslatef(0, -TEXT_SMALL, 0);
 			if (robot->up + GRACETIME >= clock()) {
 				for (i = 0; i < robot->count; i++)
@@ -1323,7 +1326,7 @@ void drawButtonBox(GLfloat width)
 }
 void drawToolbar(GLenum mode)
 {
-	GLfloat textWidth = TEXT_LARGE * gmf[(int) 'm'].gmfCellIncX * 2;
+	GLfloat textWidth = TEXT_NORMAL * gmf[(int) 'm'].gmfCellIncX * 2;
 
 	glPushMatrix();
 		glTranslatef(TITLE_POS_X - 0.1,
@@ -1339,8 +1342,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("CT");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Tel");
 
 		/* RT Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1353,8 +1356,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("RH");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Hos");
 
 		/* BL Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1367,8 +1370,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("BL");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Blk");
 
 		/* ST Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1381,8 +1384,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("SC");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("OIO");
 
 		/* LG Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1395,8 +1398,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("LG");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Log");
 
 		/* AL Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1410,8 +1413,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("AL");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Apr");
 
 		/* IN Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1425,23 +1428,23 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("IN");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Inf");
 
 		/* GV Button */
-		glTranslatef(0, BUTTONSPACE, 0);
-
-		if (mode == GL_SELECT)
-			glLoadName(GUI_BUTTON);
-
-		drawButtonBox(textWidth);
-
-		if (clickMode == GUI)
-			glColor3fv(color_red);
-		else
-			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("GV");
+//		glTranslatef(0, BUTTONSPACE, 0);
+//
+//		if (mode == GL_SELECT)
+//			glLoadName(GUI_BUTTON);
+//
+//		drawButtonBox(textWidth);
+//
+//		if (clickMode == GUI)
+//			glColor3fv(color_red);
+//		else
+//			glColor3fv(color_black);
+//		textSetSize(TEXT_LARGE);
+//		textPrintf("GV");
 
 		glTranslatef(0, BUTTONBLOCKSPACE, 0);
 
@@ -1457,8 +1460,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("TS");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Tms");
 
 		/* LS Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1472,8 +1475,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_red);
 		else
 			glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("LS");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("LgS");
 
 		/* HF Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1487,8 +1490,8 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_black);
 		else
 			glColor3fv(color_red);
-		textSetSize(TEXT_LARGE);
-		textPrintf("HF");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("HoF");
 
 		/* OL Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1499,8 +1502,8 @@ void drawToolbar(GLenum mode)
 		drawButtonBox(textWidth);
 
 		glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("OL");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("OpL");
 
 		/* OR Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1511,8 +1514,8 @@ void drawToolbar(GLenum mode)
 		drawButtonBox(textWidth);
 
 		glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("OR");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("OpR");
 
 		/* KO Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1523,8 +1526,8 @@ void drawToolbar(GLenum mode)
 		drawButtonBox(textWidth);
 
 		glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("KO");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("Kil");
 
 		glTranslatef(0, BUTTONBLOCKSPACE, 0);
 
@@ -1537,8 +1540,8 @@ void drawToolbar(GLenum mode)
 		drawButtonBox(textWidth);
 
 		glColor3fv(color_black);
-		textSetSize(TEXT_LARGE);
-		textPrintf("??");
+		textSetSize(TEXT_NORMAL);
+		textPrintf("???");
 	glPopMatrix();
 }
 
@@ -1663,29 +1666,33 @@ void drawHelp()
 		textSetSize(TEXT_MED);
 		textPrintf("Command List:");
 		glTranslatef(TEXT_MED, -TEXT_MED, 0);
-		textPrintf("CT - Connect to robot via telnet. Opens a SecureCRT window.");
+		textPrintf("Tel - Connect to robot via telnet. Opens a SecureCRT window.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("RH - Make robot a radio host.");
+		textPrintf("Hos - Make robot a radio host.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("BL - Blacklist a robot.");
+		textPrintf("Blk - Blacklist a robot.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("SC - Connect to a robot via serial. Blacklists the robot.");
+		textPrintf("OIO - Connect to a robot via serial. Blacklists the robot.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("LG - Creates a time-stamped file to log data to.");
+		textPrintf("Log - Creates a time-stamped file to log data to.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("AL - Click a robot and AprilTag or vice versa to pair them.");
+		textPrintf("Apr - Click a robot and AprilTag or vice versa to pair them.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("IN - Displays additional robot or AprilTag information.");
+		textPrintf("Inf - Displays additional robot or AprilTag information.");
+//		glTranslatef(0, -TEXT_MED - 0.25, 0);
+//		textPrintf("GV - Opens roneGUI connection to robot.");
 		glTranslatef(0, -2 * TEXT_MED, 0);
-		textPrintf("TS - Toggles time-stamping of incoming robot data.");
+		textPrintf("Tms - Toggles time-stamping of incoming robot data.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("LS - Begins to log data.");
+		textPrintf("LgS - Begins to log data.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("OL - Opens a connection to all local robots.");
+		textPrintf("HoF - Toggles filtering of incoming radio host messages.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("OR - Opens a connection to all remote robots.");
+		textPrintf("OpL - Opens a connection to all local robots.");
 		glTranslatef(0, -TEXT_MED - 0.25, 0);
-		textPrintf("KO - Kills all open Secure CRT windows.");
+		textPrintf("OpR - Opens a connection to all remote robots.");
+		glTranslatef(0, -TEXT_MED - 0.25, 0);
+		textPrintf("Kil - Kills all open Secure CRT windows.");
 		glTranslatef(-TEXT_MED, -2 * TEXT_MED, 0);
 		textPrintf("For more in-depth help, visit the wiki page!");
 	glPopMatrix();

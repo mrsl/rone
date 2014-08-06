@@ -24,6 +24,8 @@ void strdel(char* str, int index);
 void makeThread(void *function, void *args);
 
 void hprintf(HANDLE *hSerialPtr, const char *fmt, ...);
+HANDLE createRegularFile(char *fileName);
+void executeProgram(char *name, char *args);
 
 void Error(const char *fmt, ...);
 
