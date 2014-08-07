@@ -21,6 +21,7 @@ void powerButtonIRQDisable(void);
 boolean powerUSBGetState(void);
 void powerUSBInit(void);
 void powerUSBSetEnable(boolean on);
+uint16 powerUSBGetAvg();
 uint8 powerUSBSetMode(uint8 mode);
 void ADC10Init(void);
 

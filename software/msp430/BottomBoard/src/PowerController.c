@@ -143,11 +143,21 @@ void powerUSBSetEnable(boolean on) {
 }
 
 
+uint16 powerUSBGetAvg() {
+	uint8 i, average;
+	for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
+		average += USBSenseRunAvg[i];
+	}
+	average = average / USB_SENSE_RUN_AVG_LEN;
+
+	return average;
+}
+
 // Set the mode of the USB Power Sense to be either Digital, Analog Comparator, or ADC based
 // This may take over the USBSetEnable
 // Returns 1 if fast charge should be enabled, 0 otherwise
 uint8 powerUSBSetMode(uint8 mode) {
-	uint8 i, retval = 0;
+	uint8 retval = 0;
 	volatile uint16 ADCValue = 0;
 	switch(mode) {
 	case POWER_USB_SENSE_MODE_COMP:
@@ -170,12 +180,8 @@ uint8 powerUSBSetMode(uint8 mode) {
 	   	// Store and calculate running average
 		USBSenseRunAvg[USBSenseRunAvgCount] = (uint16)ADC10MEM;
 		USBSenseRunAvgCount = (USBSenseRunAvgCount + 1) % USB_SENSE_RUN_AVG_LEN;
-		for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
-			ADCValue += USBSenseRunAvg[i];
-		}
-		ADCValue = ADCValue / USB_SENSE_RUN_AVG_LEN;
 		// Determine if it reached threshold for fast charge
-	   	if (ADCValue > POWER_USB_FAST_CHARGE_THRESHOLD) {
+	   	if (powerUSBGetAvg() > POWER_USB_FAST_CHARGE_THRESHOLD) {
 	   		retval = POWER_USB_SENSE_MODE_ADC;
 	   	}
 	   	break;
