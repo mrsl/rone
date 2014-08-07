@@ -158,6 +158,7 @@ uint16 powerUSBGetAvg() {
 // Returns 1 if fast charge should be enabled, 0 otherwise
 uint8 powerUSBSetMode(uint8 mode) {
 	uint8 retval = 0;
+#ifdef RONE_V12
 	volatile uint16 ADCValue = 0;
 	switch(mode) {
 	case POWER_USB_SENSE_MODE_COMP:
@@ -186,6 +187,7 @@ uint8 powerUSBSetMode(uint8 mode) {
 	   	}
 	   	break;
 	}
+#endif /* RONE_V12 */
 
 	return retval;
 }
