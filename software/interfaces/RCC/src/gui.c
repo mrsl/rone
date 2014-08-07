@@ -17,6 +17,7 @@ char tbuffer[64];
 
 struct textbox aprilTagURL;
 
+// Toaster popup text
 char connectName[20] = 		"Connect via Telnet";
 char blacklistName[20] =	"Blacklist";
 char serialName[20] =		"Connect via Serial";
