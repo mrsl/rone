@@ -1,6 +1,10 @@
 #ifndef POWERCONTROLLER_H_
 #define POWERCONTROLLER_H_
 
+// 5VUSB sense modes
+#define POWER_USB_SENSE_MODE_COMP 			1
+#define POWER_USB_SENSE_MODE_ADC 			2
+
 void set8962Reset(uint8 state);
 
 void powerEnSet(uint8 val);

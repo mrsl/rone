@@ -73,14 +73,12 @@
 	#define CHRG_LIM_PORT_SEL			P2SEL
 	#define CHRG_LIM_BIT				BIT5
 	
-	// 5VUSB sense modes
-    #define POWER_USB_SENSE_MODE_COMP 			1
-    #define POWER_USB_SENSE_MODE_ADC 			2
-	#define POWER_USB_FAST_CHARGE_THRESHOLD		1000
+ 	// 3V / 3.3V * 1024
+	#define POWER_USB_FAST_CHARGE_THRESHOLD		900
 
-    #define USB_5V_RUN_AVG_LEN          3
-	uint8 Usb5vRunAvg[USB_5V_RUN_AVG_LEN];
-	uint8 Usb5vRunAvgCount = 0;       
+//    #define USB_5V_RUN_AVG_LEN          3
+//	uint8 Usb5vRunAvg[USB_5V_RUN_AVG_LEN];
+//	uint8 Usb5vRunAvgCount = 0;
 #endif
 
 #ifndef RONE_V12_TILETRACK
@@ -105,6 +103,10 @@ uint16 endCount;
 uint8 vBatRunAvg[VBAT_RUN_AVG_LEN];
 uint8 vBatRunAvgCount = 0;
 
+#define USB_SENSE_RUN_AVG_LEN 3
+//Start off assuming that USB line gives 0V, used for ADC mode only
+uint16 USBSenseRunAvg[USB_SENSE_RUN_AVG_LEN];
+uint8 USBSenseRunAvgCount = 0;
 
 void powerUSBInit(void) {
 #ifdef RONE_V11
@@ -143,27 +145,38 @@ void powerUSBSetEnable(boolean on) {
 
 // Set the mode of the USB Power Sense to be either Digital, Analog Comparator, or ADC based
 // This may take over the USBSetEnable
-// Returns 1 if fast charge should be enabled
+// Returns 1 if fast charge should be enabled, 0 otherwise
 uint8 powerUSBSetMode(uint8 mode) {
-	uint8 retval = 0;
-	uint16 ADCValue;
-	// TODO: Do this, and add the ADC for fast charge mode
+	uint8 i, retval = 0;
+	volatile uint16 ADCValue = 0;
 	switch(mode) {
 	case POWER_USB_SENSE_MODE_COMP:
+		// Disable ADC
+		ADC10AE0 &= ~(POWER_USB_BIT);
+		// Setup comparator mode settings
 		powerUSBInit();
 		powerUSBSetEnable(TRUE);
 		break;
 	case POWER_USB_SENSE_MODE_ADC:
+		// Disable comparator mode
 		powerUSBSetEnable(FALSE);
+		// Setup ADC pins
 		POWER_USB_PORT_REN &= ~(POWER_USB_BIT);
 		ADC10AE0 |= (POWER_USB_BIT);
 	   	ADC10CTL0 &= ~ENC;             						// Turn off ADC10 to switch channel
 		ADC10CTL1 = INCH_3 | ADC10DIV_0 | CONSEQ_0;			// Input A0, single sequence
 	   	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
 	   	while (ADC10CTL1 & BUSY); 							// Wait until sample ends
-	   	ADCValue = ADC10MEM;
+	   	// Store and calculate running average
+		USBSenseRunAvg[USBSenseRunAvgCount] = (uint16)ADC10MEM;
+		USBSenseRunAvgCount = (USBSenseRunAvgCount + 1) % USB_SENSE_RUN_AVG_LEN;
+		for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
+			ADCValue += USBSenseRunAvg[i];
+		}
+		ADCValue = ADCValue / USB_SENSE_RUN_AVG_LEN;
+		// Determine if it reached threshold for fast charge
 	   	if (ADCValue > POWER_USB_FAST_CHARGE_THRESHOLD) {
-	   		retval = 1;
+	   		retval = POWER_USB_SENSE_MODE_ADC;
 	   	}
 	   	break;
 	}
@@ -468,3 +481,4 @@ __interrupt void Port_1(void) {
 	}
 	P1IFG &= ~POWER_BUTTON_BIT;                           // P1.2 IFG cleared
 }
+
