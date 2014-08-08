@@ -61,9 +61,6 @@ void msp430CheckAndUpdate(void) {
 		}
 #endif //RONE_V12_TILETRACK
 
-		//TODO testcode plz remove
-		SPIMessageOut[MSP430_MSG_REFLECT_START_IDX] = ((uint32)powerUSBGetAvg() * 255 / 1023);
-		//
 		SPIMessageOut[MSP430_MSG_VBAT_IDX] = powerVBatGet();
 		SPIMessageOut[MSP430_MSG_VUSB_IDX] = powerUSBGetState();
 		SPIMessageOut[MSP430_MSG_POWER_BUTTON_IDX] = powerButtonGetValue();

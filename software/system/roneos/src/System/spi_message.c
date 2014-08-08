@@ -460,9 +460,6 @@ uint8 bottomBoardISR() {
 					systemMSPVersionUpdate(MSP430MessageIn[MSP430_MSG_VERSION_IDX]);
 					reflectiveSensorsUpdate(&MSP430MessageIn[MSP430_MSG_REFLECT_START_IDX]);
 
-					// TODO test code plz delete
-					cprintf("%u\n", MSP430MessageIn[MSP430_MSG_REFLECT_START_IDX]);
-
 					if((MSP430MessageIn[MSP430_MSG_VERSION_IDX] != 0) && (!systemMSP430CommsValid)) {
 						systemMSP430CommsValid = TRUE;
 					}

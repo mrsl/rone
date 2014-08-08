@@ -73,8 +73,11 @@
 	#define CHRG_LIM_PORT_SEL			P2SEL
 	#define CHRG_LIM_BIT				BIT5
 	
- 	// 3V / 3.3V * 1024
-	#define POWER_USB_FAST_CHARGE_THRESHOLD		900
+	// Experimentally determined number for V15
+	// USB5VSense USB: 		890
+	//	 		  Charger:	950
+	//			  Both:		926
+	#define POWER_USB_FAST_CHARGE_THRESHOLD		922
 
 //    #define USB_5V_RUN_AVG_LEN          3
 //	uint8 Usb5vRunAvg[USB_5V_RUN_AVG_LEN];
@@ -144,10 +147,13 @@ void powerUSBSetEnable(boolean on) {
 
 
 uint16 powerUSBGetAvg() {
-	uint8 i, average;
+	uint32 average = 0;
+	uint8 i;
+
 	for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
 		average += USBSenseRunAvg[i];
 	}
+
 	average = average / USB_SENSE_RUN_AVG_LEN;
 
 	return average;
