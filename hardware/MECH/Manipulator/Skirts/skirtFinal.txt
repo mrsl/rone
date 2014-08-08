@@ -1,0 +1,22 @@
+Last updated : 08 August 2012
+---------------------------------------------------------------------
+skirtFinal Readme
+---------------------------------------------------------------------
+
+//Lasercutting
+Use 1/4 inch (max 0.3") MDF or Acetal/Delrin. Cut at whatever settings
+the lasercutter feels like. When good speed 1.7 works, when bad 1.2
+for MDF (~0.21"). Delrin (~0.3") bad is 0.5
+
+//Graduation Hats
+Use six 2" washers and place them atop a circular cutout of material
+found wrapped in rubber bands in the black raw stock bin. Cut out 2"
+squares and drill a 1/8"hole through the center. Stick a 1.5" #4 screw
+through the center and use a #4 hex nut with suitable washer to tighten
+in place. Use pliers to tighten securely. 
+
+//Assembly
+Use 7/8" #4 spacers and 1.5" #4 screws to assemble the graduation hats
+on the robots. Make sure the weight is on the side with the castor. 
+
+DONE!

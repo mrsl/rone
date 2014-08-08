@@ -511,6 +511,18 @@ void main(void) {
 			__bis_SR_register(GIE);
 			watchdogInit();
 		}
+#ifdef RONE_V12
+		// Check voltage for fast charge
+		if(powerEnGet()){
+			if (powerUSBSetMode(POWER_USB_SENSE_MODE_ADC) == POWER_USB_SENSE_MODE_ADC) {
+				chargeLimitSet(FALSE); // put LOW
+			} else {
+				chargeLimitSet(TRUE);  // put HIGH
+			}
+			powerUSBSetMode(POWER_USB_SENSE_MODE_COMP);
+		}
+#endif /* RONE_V12 */
+
 		/*
 		#ifdef RONE_V12
 			if(powerEnGet()){

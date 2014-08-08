@@ -13,11 +13,12 @@
 #include "ronelib.h"
 #include "playworks.h"
 
+// Tile to tile forward movement state
 #define MOTION_STATE_IDLE					0
-#define MOTION_STATE_FORWARD_TO_CENTER		1
+#define MOTION_STATE_PARK		1
 #define MOTION_STATE_ROTATE					2
 #define MOTION_STATE_ROTATE_MAG				3
-#define MOTION_STATE_FORWARD_TO_EDGE		4
+#define MOTION_STATE_FORWARD		4
 #define MOTION_STATE_TEST_MAG_CENTER		5
 
 #define MOTION_TV					40
@@ -55,12 +56,17 @@
 
 #define PRINT_TIME	200
 
+// Physical measurements of hardware in mm
+#define ROBOT_RADIUS				50
+#define TILE_CENTER_RADIUS			0
+
 static uint32 motionOdometerStart;
 static Pose motionPoseStart;
 static osQueueHandle tileMotionMsgQueue;
 static uint8 mode = MOTION_STATE_IDLE;
 static TileInfo* tileCurrentPtr = NULL;
 static boolean motionDone = TRUE;
+
 
 void tileMotion(uint8 motionCommand) {
 	motionDone = FALSE;
@@ -122,6 +128,7 @@ int32 magRVController(int32 kp, int32 ki, boolean reset, boolean printNow) {
 #define TA_CONTROLLER_MAG_THRESHOLD		600
 #define TA_CONTROLLER_RV_MAX			0
 
+
 int32 magThreeAxisController(int32 kp, int32 ki, boolean reset, boolean printNow) {
 	int32 x, y, z, mag;
 	static int32 iTerm;
@@ -159,11 +166,12 @@ int32 magThreeAxisController(int32 kp, int32 ki, boolean reset, boolean printNow
 }
 
 
-void moveStart(TileInfo* tilePtr, char* motion) {
-	motionOdometerStart = encoderGetOdometer();
-	encoderGetPose(&motionPoseStart);
+uint32 moveStart(Pose* motionPoseStart, TileInfo* tilePtr, char* motion) {
+	encoderGetPose(motionPoseStart);
 	magRVController(0, 0, TRUE, FALSE);
-	cprintf("\ntile \"%s\": %s", tilePrint(tilePtr), motion);
+	cprintf("\ntile \"%s\": %s\n", tilePrint(tilePtr), motion);
+
+	return encoderGetOdometer();
 }
 
 
@@ -171,6 +179,7 @@ TileInfo* tileMotionReadTile (void) {
 	static TileInfo* tileOldPtr = NULL;
 
 	TileInfo* tileTempPtr = tileReadSensor();
+	// Detected new tile and it's not the last tile
 	if ((tileTempPtr) && (tileTempPtr != tileOldPtr)) {
 		tileCurrentPtr = tileTempPtr;
 		tileOldPtr = tileCurrentPtr;
@@ -182,43 +191,41 @@ TileInfo* tileMotionReadTile (void) {
 
 
 void tileMotionTask(void* parameters) {
+	uint8 tileMotionMsg;
 	uint32 lastWakeTime = osTaskGetTickCount();
 	Beh behOutput;
 	uint32 printTime = 0;
+	int32 distanceTraveled;
+	int32 distanceToGoal;
+	int8 direction;
 
 	tileMotionMsgQueue = osQueueCreate(1, sizeof(uint8));
 	int16 tileMotionRotationGoal = 0;
+	boolean online = FALSE;
+	boolean forwardStageTwo = FALSE;
 
 	while (TRUE) {
 		behOutput = behInactive;
 		boolean printNow = printTimer(&printTime, PRINT_TIME);
 
-
 		switch (mode) {
-		case MOTION_STATE_TEST_MAG_CENTER: {
-			if (printNow) cprintf("tileID=% 3d ", bumpSensorsGetBits());
-			//int32 rv = magRVController(MAG_TRANSLATE_KP, MAG_TRANSLATE_KI, FALSE, printNow);
-			int32 rv = magThreeAxisController(MAG_ROTATE_TA_KP, MAG_ROTATE_TA_KI, FALSE, printNow);
-			behSetTvRv(&behOutput, 0, rv);
-			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
-			break;
-		}
-		case MOTION_STATE_IDLE: {
-			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
-			uint8 tileMotionMsg;
-			portBASE_TYPE val = osQueueReceive(tileMotionMsgQueue, (void*)(&tileMotionMsg), 0);
+		case MOTION_STATE_IDLE:
+			// Idle state makes the robot wait and take user motion command inputs
+			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
+			portBASE_TYPE val = osQueueReceive(tileMotionMsgQueue, (void *)(&tileMotionMsg), 0);
 			if (val == pdPASS) {
-				/* New message.  Start the tile track motion controller.
+				/*
+				 * New message.  Start the tile track motion controller.
 				 * IF we don't have a tile, just do dead reckoning.
 				 * We assume that this controller starts at the center of a tile.
 				 * All other motions will be relative to this initial placement.
 				 * Yes, this is a terrible hack, but we'll make it better later...
 				 */
 				tileCurrentPtr = tileMotionReadTile();
-				moveStart(tileCurrentPtr, "start, align");
+				motionOdometerStart = moveStart(&motionPoseStart, tileCurrentPtr,  "start new motion");
 				switch (tileMotionMsg) {
 				case TILEMOTION_FORWARD:
-					mode = MOTION_STATE_FORWARD_TO_EDGE;
+					mode = MOTION_STATE_FORWARD;
 					break;
 				case TILEMOTION_ROTATE_RIGHT:
 					// compute the number of degrees to rotate from the tile geometry
@@ -244,114 +251,183 @@ void tileMotionTask(void* parameters) {
 					break;
 				}
 			}
-			if (buttonsGetEdge(BUTTON_GREEN)) {
-				mode = MOTION_STATE_TEST_MAG_CENTER;
-			}
 			break;
-		}
-		case MOTION_STATE_FORWARD_TO_EDGE: {
-			/* move to the edge of the current tile.  We can't get here unless we have
-			 * a valid tilePtr.  Use odometry to measure distance,
-			 * and use the magnetometer to help center the robot.
+		case MOTION_STATE_FORWARD:
+			/*
+			 * First state of forward translation. The robot moves in the current direction until
+			 * it finds the tile or after it has traversed the length of the tile.
 			 */
-			int32 distanceTravelled = encoderGetOdometer() - motionOdometerStart;
-			int32 distanceToGoal;
+//			cprintf("FORWARD_TO_EDGE\n");
+
+			/*
+			 * move to the edge of the current tile.  We can't get here unless we have
+			 * a valid tilePtr.  Use odometry to measure distance.
+			 */
+			distanceTraveled = encoderGetOdometer() - motionOdometerStart;
+
+			// Calculate distance to goal
 			if (tileCurrentPtr) {
-				distanceToGoal = tileGetDistanceToCenter(tileCurrentPtr) - distanceTravelled;
-				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+				// TODO test rfid tilesense, 1 state operation?
+				// If the robot started from a tile, use the tile information to help calculate the distance
+				distanceToGoal = tileGetDistanceToCenter(tileCurrentPtr) - distanceTraveled;
+				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 			} else {
-				// use the distance of the smallest tile until we get the tile ID
-				distanceToGoal = TILE_WIDTH_HEX_LARGE - distanceTravelled;
-				ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+				// If the robot started without tile info, use the tile width of the largest tile until we get the tile ID
+				distanceToGoal = (2 * TILE_WIDTH_HEX_TEST) - distanceTraveled;
+				if (!forwardStageTwo) {
+					ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+				} else {
+					ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+				}
 			}
-			int32 tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTravelled, distanceToGoal, TRUE, FALSE);
-			int32 rv = magRVController(MAG_TRANSLATE_KP, MAG_TRANSLATE_KI, FALSE, printNow);
+
+			// Determine progress to goal
 			if (distanceToGoal < 0) {
+				// Goal reached
 				tileCurrentPtr = NULL;
-				moveStart(tileCurrentPtr, "move to center");
-				mode = MOTION_STATE_FORWARD_TO_CENTER;
-			} else {
-				//if (printNow) cprintf(",%d", distanceToGoal);
-				behSetTvRv(&behOutput, tv, 0);
-			}
-			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
-			break;
-		}
-		case MOTION_STATE_FORWARD_TO_CENTER: {
-			/* move to the center of the tile.  initially, you don't know what tile you are on,
-			 * so you don't know how far to go.  Read the RFID Tag to figure out how far to travel.
-			 */
-			int32 distanceToGoal;
-			int32 distanceTravelled = encoderGetOdometer() - motionOdometerStart;
-			if (tileCurrentPtr) {
-				distanceToGoal = tileGetDistanceToCenter(tileCurrentPtr) - distanceTravelled;
-				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
-			} else {
-				// move forward until you detect a tile
-				tileMotionReadTile();
-				// use the distance of the smallest tile until we get the tile ID
-				distanceToGoal = TILE_WIDTH_HEX_LARGE - distanceTravelled;
-				ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
-			}
-			int32 tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTravelled, distanceToGoal, FALSE, TRUE);
-			if (distanceToGoal <= 0) {
-				//TODO this code stops theprogram until the robot reads a tag.  Right now, we just continue
-//				if (tileCurrentPtr) {
-//					mode = MOTION_STATE_IDLE;
-//					motionDone = TRUE;
-//				} else {
-//					tv = 0;
-//				}
+				// Store odometer and pose before switching state
+				motionOdometerStart = moveStart(&motionPoseStart, tileCurrentPtr, "goal reached");
 				mode = MOTION_STATE_IDLE;
 				motionDone = TRUE;
+			} else {
+				// In progress
+				behOutput.tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTraveled, distanceToGoal, TRUE, FALSE);
+				// Check line sensors for robot angle adjustment
+				if (reflectiveGetNumActiveSensors(&direction) > 0) {
+					// Online, apply rv adjustment to center robot
+					rvBearingController(&behOutput, REFLECTIVE_SENSOR_SEPARATION * direction, REFLECTIVE_TURING_SPEED);
+					// Forward-to-edge stage ends when the robot reaches the border lines (white to black transition)
+					if (!online && (tileCurrentPtr == NULL)) {
+						motionOdometerStart = moveStart(&motionPoseStart, tileCurrentPtr, "enter new stage");
+						if (!forwardStageTwo) {
+							// Enter stage 2
+							forwardStageTwo = TRUE;
+						} else {
+							// Enter stage 3
+							forwardStageTwo = FALSE;
+							mode = MOTION_STATE_PARK;
+						}
+					}
+					// distance traveled when the robot gets back online
+//					if (!online) {
+//						distanceElapsedBetweenLines = encoderGetOdometer() - lastOnlineOdometerValue;
+//					}
+					online = TRUE;
+				} else {
+					// No line detected, no turn
+					behOutput.rv = 0;
+					// Save the odometer value for the position when the robot exits a line
+//					if (online) {
+//						lastOnlineOdometerValue = encoderGetOdometer();
+//					}
+					online = FALSE;
+				}
+				//if (printNow) cprintf(",%d", distanceToGoal);
+				behOutput.active = TRUE;
 			}
-			//if (printNow) cprintf(",%d", distanceTravelled);
-			//if (printNow) cprintf("%d l=% 6d r=% 6d\n", distanceTravelled, magGetMagnitudeLeft(), magGetMagnitudeRight());
-			behSetTvRv(&behOutput, tv, 0);
 			break;
-		}
-		case MOTION_STATE_ROTATE: {
+		case MOTION_STATE_PARK:
+			/*
+			 * Second state of forward translation for no tile detection. The robot finds the center of the tile using odometry and with help of line sensors.
+			 */
+			// If the robot started without tile info, use the tile width of the largest tile until we get the tile ID
+			distanceTraveled = encoderGetOdometer() - motionOdometerStart;
+
+			// Calculate distance to goal
+			distanceToGoal = ROBOT_RADIUS + TILE_CENTER_RADIUS - distanceTraveled;
+
+			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_TURBO);
+
+			// Determine progress to goal
+			if (distanceToGoal < 0) {
+				// Goal reached
+				tileCurrentPtr = NULL;
+				// Store odometer and pose before switching state
+				motionOdometerStart = moveStart(&motionPoseStart, tileCurrentPtr, "goal reached");
+				mode = MOTION_STATE_IDLE;
+				motionDone = TRUE;
+			} else {
+				// TODO maybe slow down tv
+				// In progress
+				behOutput.tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTraveled, distanceToGoal, TRUE, FALSE);
+				// Check line sensors for robot angle adjustment
+				if (reflectiveGetNumActiveSensors(&direction) > 0) {
+					// Online, apply rv adjustment to center robot
+					rvBearingController(&behOutput, REFLECTIVE_SENSOR_SEPARATION * direction, REFLECTIVE_TURING_SPEED);
+					online = TRUE;
+				} else {
+					// No line detected, no turn
+					behOutput.rv = 0;
+					online = FALSE;
+				}
+				behOutput.active = TRUE;
+			}
+			break;
+//		case MOTION_STATE_FORWARD_TO_CENTER: {
+//			/* move to the center of the tile.  initially, you don't know what tile you are on,
+//			 * so you don't know how far to go.  Read the RFID Tag to figure out how far to travel.
+//			 */
+//			int32 distanceToGoal;
+//			int32 distanceTravelled = encoderGetOdometer() - motionOdometerStart;
+//			if (tileCurrentPtr) {
+//				distanceToGoal = tileGetDistanceToCenter(tileCurrentPtr) - distanceTravelled;
+//				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+//			} else {
+//				// move forward until you detect a tile
+//				tileMotionReadTile();
+//				// use the distance of the smallest tile until we get the tile ID
+//				distanceToGoal = TILE_WIDTH_HEX_LARGE - distanceTravelled;
+//				ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+//			}
+//			int32 tv = computeVelRamp(MOTION_TV, MOTION_TV_MIN, MOTION_TV_RAMP_DISTANCE, distanceTravelled, distanceToGoal, FALSE, TRUE);
+//			if (distanceToGoal <= 0) {
+//				//TODO this code stops theprogram until the robot reads a tag.  Right now, we just continue
+////				if (tileCurrentPtr) {
+////					mode = MOTION_STATE_IDLE;
+////					motionDone = TRUE;
+////				} else {
+////					tv = 0;
+////				}
+//				mode = MOTION_STATE_IDLE;
+//				motionDone = TRUE;
+//			}
+//			//if (printNow) cprintf(",%d", distanceTravelled);
+//			//if (printNow) cprintf("%d l=% 6d r=% 6d\n", distanceTravelled, magGetMagnitudeLeft(), magGetMagnitudeRight());
+//			behSetTvRv(&behOutput, tv, 0);
+//			break;
+//		}
+		case MOTION_STATE_ROTATE:;
 			Pose pose;
 			encoderGetPose(&pose);
 			int32 angleRotated = abs(smallestAngleDifference(motionPoseStart.theta, pose.theta));
 			int32 angleToGoal = abs(tileMotionRotationGoal) - angleRotated;
 			int32 rv = computeVelRamp(MOTION_RV, MOTION_RV_MIN, MOTION_RV_RAMP_DISTANCE, angleRotated, angleToGoal, TRUE, TRUE);
 			if (angleRotated >= abs(tileMotionRotationGoal)) {
-//				// use the magnetometer to center the robot on the tile.
-//				moveStart(tileCurrentPtr, "align with magnotometer");
-//				mode = TILEMOTION_MODE_MOVE_ROTATE_MAG;
+				// Done rotating
 				mode = MOTION_STATE_IDLE;
 				motionDone = TRUE;
 			} else {
-				//if (printNow) cprintf("%d l=% 6d r=% 6d\n", angle, magGetMagnitudeLeft(), magGetMagnitudeRight());
+				// Keep rotating
 				if (tileMotionRotationGoal > 0) {
+					// Rotate left
 					behSetTvRv(&behOutput, 0, rv);
+					ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 				} else {
+					// Rotate right
 					behSetTvRv(&behOutput, 0, -rv);
+					ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 				}
 			}
-			ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 			break;
-		}
-		case MOTION_STATE_ROTATE_MAG: {
-			int32 rv = magRVController(MAG_ROTATE_KP, MAG_ROTATE_KI, FALSE, printNow);
-			if (abs(rv) < MAGNETOMETER_RV_THRESHOLD) {
-				//TODO also use the magnetometer to center the robot on the tile.
-				moveStart(tileCurrentPtr, "move to edge");
-				mode = MOTION_STATE_FORWARD_TO_EDGE;
-			} else {
-				behSetTvRv(&behOutput, 0, rv);
-			}
-			ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
-			break;
-		}
 		}
 
+		// Apply motion
 		motorSetBeh(&behOutput);
 
 		osTaskDelayUntil(&lastWakeTime, 10);
 	}
 }
+
 
 void tileMotionInit(void) {
     //init the tile motion task

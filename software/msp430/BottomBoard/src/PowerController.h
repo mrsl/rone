@@ -1,6 +1,10 @@
 #ifndef POWERCONTROLLER_H_
 #define POWERCONTROLLER_H_
 
+// 5VUSB sense modes
+#define POWER_USB_SENSE_MODE_COMP 			1
+#define POWER_USB_SENSE_MODE_ADC 			2
+
 void set8962Reset(uint8 state);
 
 void powerEnSet(uint8 val);
@@ -17,7 +21,8 @@ void powerButtonIRQDisable(void);
 boolean powerUSBGetState(void);
 void powerUSBInit(void);
 void powerUSBSetEnable(boolean on);
-void powerUSBSetMode(uint8 mode);
+uint16 powerUSBGetAvg();
+uint8 powerUSBSetMode(uint8 mode);
 void ADC10Init(void);
 
 void resetSet(boolean val);

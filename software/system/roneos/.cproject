@@ -220,9 +220,13 @@
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="bin_rone_v12_tiletrack">
+			<resource resourceType="PROJECT" workspacePath="/roneos"/>
+		</configuration>
 		<configuration configurationName="bin_rone_v09">
 			<resource resourceType="PROJECT" workspacePath="/roneos"/>
 		</configuration>
+		<configuration configurationName="bin_rone_v12"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 	<storageModule moduleId="scannerConfiguration">

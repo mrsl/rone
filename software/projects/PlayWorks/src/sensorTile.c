@@ -71,7 +71,7 @@ char* tilePrint(TileInfo* tilePtr) {
 TileGeometryInfo* tileGetGeometryInfo(TileInfo* tilePtr) {
 	uint8 i = 0;
 	TileGeometryInfo* geometryPtr = NULL;
-	if(tilePtr) {
+	if (tilePtr) {
 		geometryPtr = (TileGeometryInfo*)&tileGeometryData[i];
 		do {
 			if (tilePtr->tileGeometry == geometryPtr->tileGeometry) {
@@ -87,7 +87,7 @@ TileGeometryInfo* tileGetGeometryInfo(TileInfo* tilePtr) {
 }
 
 uint8 tileGetID(TileInfo* tilePtr) {
-	if(tilePtr) {
+	if (tilePtr) {
 		return tilePtr->tileID;
 	} else {
 		return 0;
@@ -95,7 +95,7 @@ uint8 tileGetID(TileInfo* tilePtr) {
 }
 
 uint8 tileGetType(TileInfo* tilePtr) {
-	if(tilePtr) {
+	if (tilePtr) {
 		return tilePtr->tileType;
 	} else {
 		return TILE_NULL;
@@ -103,7 +103,7 @@ uint8 tileGetType(TileInfo* tilePtr) {
 }
 
 const char* tileGetName(TileInfo* tilePtr) {
-	if(tilePtr) {
+	if (tilePtr) {
 		return tilePtr->name;
 	} else {
 		return "";
@@ -111,7 +111,7 @@ const char* tileGetName(TileInfo* tilePtr) {
 }
 
 int16 tileGetDistanceToCenter(TileInfo* tilePtr) {
-	if(tilePtr) {
+	if (tilePtr) {
 		TileGeometryInfo* geometryPtr = tileGetGeometryInfo(tilePtr);
 		if (geometryPtr) {
 			return geometryPtr->distanceToCenter;
@@ -124,7 +124,7 @@ int16 tileGetDistanceToCenter(TileInfo* tilePtr) {
 }
 
 int16 tileGetRotation(TileInfo* tilePtr) {
-	if(tilePtr) {
+	if (tilePtr) {
 		return tilePtr->defaultRotation;
 	} else {
 		return 0;

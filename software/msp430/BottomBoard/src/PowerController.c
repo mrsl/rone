@@ -32,11 +32,13 @@
 	#define POWER_EN_PORT_DIR			P1DIR
 	#define POWER_EN_BIT				BIT1
 #endif
+
 #ifdef RONE_V12
 	#define POWER_USB_PORT_IN			P2IN
 	#define POWER_USB_PORT_OUT			P2OUT
 	#define POWER_USB_PORT_DIR			P2DIR
 	#define POWER_USB_PORT_SEL			P2SEL
+	#define POWER_USB_PORT_REN 			P2REN
 	#define POWER_USB_BIT				BIT3
 	
 	#define POWER_EN_PORT_SEL			P1SEL
@@ -71,9 +73,15 @@
 	#define CHRG_LIM_PORT_SEL			P2SEL
 	#define CHRG_LIM_BIT				BIT5
 	
-	#define USB_5V_RUN_AVG_LEN          3
-	uint8 Usb5vRunAvg[USB_5V_RUN_AVG_LEN];
-	uint8 Usb5vRunAvgCount = 0;       
+	// Experimentally determined number for V15
+	// USB5VSense USB: 		890
+	//	 		  Charger:	950
+	//			  Both:		926
+	#define POWER_USB_FAST_CHARGE_THRESHOLD		922
+
+//    #define USB_5V_RUN_AVG_LEN          3
+//	uint8 Usb5vRunAvg[USB_5V_RUN_AVG_LEN];
+//	uint8 Usb5vRunAvgCount = 0;
 #endif
 
 #ifndef RONE_V12_TILETRACK
@@ -98,6 +106,10 @@ uint16 endCount;
 uint8 vBatRunAvg[VBAT_RUN_AVG_LEN];
 uint8 vBatRunAvgCount = 0;
 
+#define USB_SENSE_RUN_AVG_LEN 3
+//Start off assuming that USB line gives 0V, used for ADC mode only
+uint16 USBSenseRunAvg[USB_SENSE_RUN_AVG_LEN];
+uint8 USBSenseRunAvgCount = 0;
 
 void powerUSBInit(void) {
 #ifdef RONE_V11
@@ -109,7 +121,7 @@ void powerUSBInit(void) {
 #ifdef RONE_V12
 	// Set up the comparator to read true if we receive more than about 2.5V on
 	// USB 5V. This allows airplaine mode with a 1/3 Voltage Divider
-	CACTL1 = CARSEL + CAREF0;  // 0.25*Vcc reference applied to '-' terminal
+	CACTL1 = CARSEL + CAREF0;  // 0.25 * Vcc reference applied to '-' terminal
 							   // No interrupts.
 	CACTL2 = P2CA0 + CAF;      // Input CA0 on '+' terminal, filter output.
 
@@ -134,10 +146,56 @@ void powerUSBSetEnable(boolean on) {
 }
 
 
+uint16 powerUSBGetAvg() {
+	uint32 average = 0;
+	uint8 i;
+
+	for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
+		average += USBSenseRunAvg[i];
+	}
+
+	average = average / USB_SENSE_RUN_AVG_LEN;
+
+	return average;
+}
+
 // Set the mode of the USB Power Sense to be either Digital, Analog Comparator, or ADC based
 // This may take over the USBSetEnable
-void powerUSBSetMode(uint8 mode) {
-	// TODO: Do this, and add the ADC for fast charge mode
+// Returns 1 if fast charge should be enabled, 0 otherwise
+uint8 powerUSBSetMode(uint8 mode) {
+	uint8 retval = 0;
+#ifdef RONE_V12
+	volatile uint16 ADCValue = 0;
+	switch(mode) {
+	case POWER_USB_SENSE_MODE_COMP:
+		// Disable ADC
+		ADC10AE0 &= ~(POWER_USB_BIT);
+		// Setup comparator mode settings
+		powerUSBInit();
+		powerUSBSetEnable(TRUE);
+		break;
+	case POWER_USB_SENSE_MODE_ADC:
+		// Disable comparator mode
+		powerUSBSetEnable(FALSE);
+		// Setup ADC pins
+		POWER_USB_PORT_REN &= ~(POWER_USB_BIT);
+		ADC10AE0 |= (POWER_USB_BIT);
+	   	ADC10CTL0 &= ~ENC;             						// Turn off ADC10 to switch channel
+		ADC10CTL1 = INCH_3 | ADC10DIV_0 | CONSEQ_0;			// Input A0, single sequence
+	   	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
+	   	while (ADC10CTL1 & BUSY); 							// Wait until sample ends
+	   	// Store and calculate running average
+		USBSenseRunAvg[USBSenseRunAvgCount] = (uint16)ADC10MEM;
+		USBSenseRunAvgCount = (USBSenseRunAvgCount + 1) % USB_SENSE_RUN_AVG_LEN;
+		// Determine if it reached threshold for fast charge
+	   	if (powerUSBGetAvg() > POWER_USB_FAST_CHARGE_THRESHOLD) {
+	   		retval = POWER_USB_SENSE_MODE_ADC;
+	   	}
+	   	break;
+	}
+#endif /* RONE_V12 */
+
+	return retval;
 }
 
 boolean powerUSBGetState(void){
@@ -156,6 +214,7 @@ boolean powerUSBGetState(void){
 	} else {
 		return FALSE;
 	}
+
 #endif
 }
 
@@ -436,3 +495,4 @@ __interrupt void Port_1(void) {
 	}
 	P1IFG &= ~POWER_BUTTON_BIT;                           // P1.2 IFG cleared
 }
+

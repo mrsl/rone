@@ -43,7 +43,7 @@ uint8 roneID;
 RadioMessage radioMessage;
 
 int main() {
-	uint32 i, state;
+	uint32 state;
 
 	systemInit();
 

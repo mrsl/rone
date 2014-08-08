@@ -8,6 +8,7 @@
 #ifndef TILEMOTION_H_
 #define TILEMOTION_H_
 
+// User motion command inputs
 #define TILEMOTION_IDLE				0
 #define TILEMOTION_FORWARD			1
 #define TILEMOTION_ROTATE_RIGHT		2
