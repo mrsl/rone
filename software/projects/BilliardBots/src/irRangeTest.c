@@ -24,7 +24,7 @@
 #define FLOCKSPEED 		25
 #define PROBABILITYSTOP 1
 
-#define CHECK 0xDADA // unique code to check for correct message
+#define CHECK 0xCAFE // unique code to check for correct message
 
 struct __attribute__((__packed__)) {
 	uint32 check;
@@ -32,6 +32,9 @@ struct __attribute__((__packed__)) {
 	char pad[25];
 } typedef remoteControlMsg;
 
+
+char buffer[160];
+char *bufp;
 
 void behaviorTask(void* parameters) {
 	int state = STATE_IDLE;
@@ -44,8 +47,8 @@ void behaviorTask(void* parameters) {
 	uint8 buttonRed, buttonGreen, buttonBlue;
 	boolean momementumActive, printNow;
 	uint32 neighborRound = 0;
-	int i;
-	uint32 nbrBearing;
+	int i, n;
+	uint32 nbrBearing, nbrOrientation, nbrRange;
 	Nbr* nbrPtr;
 	uint32 tempWakeTime = 0;
 	RadioMessage radioMessageRX;
@@ -86,7 +89,7 @@ void behaviorTask(void* parameters) {
 		// read buttons
 		buttonRed = buttonsGet(BUTTON_RED);
 		buttonGreen = buttonsGet(BUTTON_GREEN);
-		buttonBlue =buttonsGet(BUTTON_BLUE);
+		buttonBlue = buttonsGet(BUTTON_BLUE);
 
 		// set state machine
 		if (buttonRed) {
@@ -187,14 +190,25 @@ void behaviorTask(void* parameters) {
 		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
 
 		// print neighbor list
-		for (i = 0; i < nbrList.size; i++) {
-			nbrPtr = nbrList.nbrs[i];
-			nbrBearing = nbrGetBearing(nbrPtr);
-			if (printNow) {
-				rprintf("%d, %d, %d,\n", nbrBearing,
-						(int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
-						(int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
+
+		if (printNow) {
+			bufp = buffer;
+			for (i = 0; i < nbrList.size; i++) {
+				nbrPtr = nbrList.nbrs[i];
+				nbrBearing = nbrGetBearing(nbrPtr);
+				nbrOrientation = nbrGetOrientation(nbrPtr);
+				nbrRange = nbrGetRange(nbrPtr);
+
+				n = sprintf(bufp, "%d,%d,%d,%d,", nbrPtr->ID,
+												  nbrBearing,
+												  nbrOrientation,
+												  nbrRange,
+												  (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
+												  (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
+				bufp += n;
 			}
+			n = sprintf(bufp - 1, "\n");
+			rprintf(buffer);
 		}
 
 		// set behavior and delay task
