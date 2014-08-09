@@ -23,4 +23,4 @@
 *.hex
 /.metadata
 *.xml
-/.metadata
+.metadata
