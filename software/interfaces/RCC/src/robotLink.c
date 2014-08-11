@@ -162,6 +162,14 @@ void commCommander(void *vargp)
 			continue;
 		}
 
+		if ((bufp - buffer) >= BUFFERSIZE) {
+			if (verbose) {
+				fprintf(stderr, "S%02d: Buffer Overflow! Dumping contents.\n", id);
+			}
+			bufp = buffer;
+			continue;
+		}
+
 		/* Read in more data if we haven't completed a line */
 		if (bufp[n - 1] != '\n') {
 			bufp += n;
