@@ -59,6 +59,9 @@ void behaviorTask(void* parameters) {
 	radioCommandAddQueue(&radioCmdRemoteControl, name, 1);
 	uint32 tickSeconds = osTaskGetTickCount();
 
+	rprintfSetSleepTime(10);
+	rprintfEnableRobot(ROBOT_ID_ALL, FALSE);
+	rprintfEnableRobot(95 , TRUE);
 
 	// Init nbr system
 	BroadcastMessage broadcastMessage;
@@ -80,6 +83,10 @@ void behaviorTask(void* parameters) {
 	nbrDataCreate16(&RV_H,&RV_L,"RV_H","RV_L",0);
 
 	for (;;) {
+//		if (rprintfIsHost) {
+//			osTaskDelay(1000);
+//			continue;
+//		}
 		behOutput = behInactive;
 		printNow = neighborsNewRoundCheck(&neighborRound);
 		nbrListCreate(&nbrList);
@@ -191,25 +198,44 @@ void behaviorTask(void* parameters) {
 
 		// print neighbor list
 
+
 		if (printNow) {
-			bufp = buffer;
 			for (i = 0; i < nbrList.size; i++) {
 				nbrPtr = nbrList.nbrs[i];
 				nbrBearing = nbrGetBearing(nbrPtr);
 				nbrOrientation = nbrGetOrientation(nbrPtr);
 				nbrRange = nbrGetRange(nbrPtr);
 
-				n = sprintf(bufp, "%d,%d,%d,%d,", nbrPtr->ID,
-												  nbrBearing,
-												  nbrOrientation,
-												  nbrRange,
+				cprintf("%d,%d,%d,%d,%d,%d,", nbrPtr->ID,
+												  (int16) nbrBearing,
+												  (int16) nbrOrientation,
+												  (int16) nbrRange,
 												  (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
 												  (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
-				bufp += n;
+
 			}
-			n = sprintf(bufp - 1, "\n");
-			rprintf(buffer);
+
 		}
+
+//		if (printNow) {
+//			bufp = buffer;
+//			for (i = 0; i < nbrList.size; i++) {
+//				nbrPtr = nbrList.nbrs[i];
+//				nbrBearing = nbrGetBearing(nbrPtr);
+//				nbrOrientation = nbrGetOrientation(nbrPtr);
+//				nbrRange = nbrGetRange(nbrPtr);
+//
+//				n = sprintf(bufp, "%d,%d,%d,%d,%d,%d,", nbrPtr->ID,
+//												  (int16) nbrBearing,
+//												  (int16) nbrOrientation,
+//												  (int16) nbrRange,
+//												  (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
+//												  (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
+//				bufp += n;
+//			}
+//			n = sprintf(bufp - 1, "\n");
+//			fprintf(buffer);
+//		}
 
 		// set behavior and delay task
 		motorSetBeh(&behOutput);
