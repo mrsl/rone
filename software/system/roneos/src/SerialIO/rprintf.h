@@ -37,7 +37,9 @@ void rprintfInit(void);
  *
  *	@returns void
  */
-void rprintf(char* format, ...);
+void rprintf(const char* format, ...);
+
+void rprintfFlush();
 
 
 //TODO: Should this be public?
