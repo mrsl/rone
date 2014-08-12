@@ -37,6 +37,10 @@ static uint8 radioCommandSubnet;
 
 void (*radioMonitorDebugFunction)(RadioMessage *) = NULL;
 
+static uint32 radioCmdPacketTX;
+static uint32 radioCmdPacketRX;
+static uint32 radioCmdStartTime;
+
 /******** functions ********/
 
 static RadioCmd* radioCommandFind(uint8 type) {
@@ -111,6 +115,8 @@ static void radioCommandTask(void* parameters) {
 	//uint8 destinationID;
 	RadioCmd* radioCmdPtr;
 	portBASE_TYPE val;
+
+	radioCmdStartTime = osTaskGetTickCount();
 
 	while (TRUE) {
 		// wait for a radio message

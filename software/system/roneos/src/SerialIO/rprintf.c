@@ -16,7 +16,7 @@
 #include "roneos.h"
 #include "snprintf.h"
 
-#define RPRINTF_HOST_RESPONSE_TIMEOUT			4
+#define RPRINTF_HOST_RESPONSE_TIMEOUT			10
 #define RPRINTF_HOST_REQUESTS_MAX				5
 
 #define RPRINTF_REMOTE_ROBOT_STATE_INACTIVE		0
@@ -35,6 +35,12 @@
 #define RPRINTF_MSG_DATA_PAYLOAD_START			2
 #define RPRINTF_MSG_DATA_PAYLOAD_LENGTH 		(RADIO_COMMAND_MESSAGE_DATA_LENGTH - RPRINTF_MSG_DATA_PAYLOAD_START)
 
+typedef struct rprintfMessage {
+	uint8 bufferLength;
+	uint8 packetID;
+	char  payload[RPRINTF_MSG_DATA_PAYLOAD_LENGTH];
+} rprintfMessage;
+
 /******** Variables ********/
 
 //static osSemaphoreHandle rprintfMutex;
@@ -51,18 +57,17 @@ boolean rprintfOSInit = FALSE;
 //static boolean rprintfBufferCallbackLock = FALSE;
 static uint32 rprintfRemoteRequestTime = 0;
 
-
 static osSemaphoreHandle rprintfWriteMutex;	// Local write buffer mutex
 static osSemaphoreHandle rprintfSendMutex;		// Radio send buffer mutex
 
 static char rprintfWriteBuffer[RPRINTF_TEXT_STRING_SIZE];	// Local write buffer
 static char rprintfSendBuffer[RPRINTF_TEXT_STRING_SIZE];	// Radio send buffer
+static char rprintfRecvBuffer[RPRINTF_TEXT_STRING_SIZE];	// Radio send buffer
 
 static int rprintfWriteBufferLength;	// Length of string in write buffer
 static int rprintfSendBufferLength;		// Length of string in send buffer
 
 static boolean rprintfDataReady;		// Is data ready to be sent over radio?
-
 
 static uint8 rprintfMode = RPRINTF_REMOTE;
 //static uint8 currentRobotIndex = ROBOT_ID_MIN;
@@ -153,7 +158,7 @@ static uint32 rprintfHostInterRobotSleepTime = 25;
 
 
 void rprintf(const char *format, ...) {
-	int i, n, maxLength;
+	int n, maxLength;
 	va_list arguments;
 
 	// If not initialized, return out
@@ -306,7 +311,7 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 					uint16 msgIdx = packetNum * RPRINTF_MSG_DATA_PAYLOAD_LENGTH;
 					for (packetIdx = 0; packetIdx < RPRINTF_MSG_DATA_PAYLOAD_LENGTH; packetIdx++) {
 						if (msgIdx < RPRINTF_TEXT_STRING_SIZE) {
-							rprintfWriteBuffer[msgIdx++] = radioMsg.command.data[RPRINTF_MSG_DATA_PAYLOAD_START + packetIdx];
+							rprintfRecvBuffer[msgIdx++] = radioMsg.command.data[RPRINTF_MSG_DATA_PAYLOAD_START + packetIdx];
 						}
 					}
 				}
@@ -335,7 +340,7 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 		//rprintfRadioBufferPrevPtr = rprintfRadioBufferPtr;
 		//cprintf("rtd,%d,3.7,80 %s", remoteRobotID, batteryLevel, signalQuality, cfprintfRadioBuffer);
 		//cprintf("red,%d,3.7,80 %s,rprintfRadioBuffer);
-		cprintf("rtd,%d %s", remoteRobotID, rprintfWriteBuffer);
+		cprintf("rtd,%d %s", remoteRobotID, rprintfRecvBuffer);
 		//cprintf(";%d%s,%d;", remoteRobotID, rprintfRadioBuffer, remoteRobotID);	//###
 	}
 	//else if (remoteRobotState){
