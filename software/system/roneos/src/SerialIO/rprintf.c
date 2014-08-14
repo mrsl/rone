@@ -8,7 +8,6 @@
  * @copyright iRobot 2001
  */
 
-/******** Include Files ********/
 #include <ctype.h>
 #include <stdarg.h>
 #include <string.h>
@@ -38,8 +37,6 @@
 
 #define RPRINTF_TEXT_STRING_SIZE		(RPRINTF_MSG_DATA_PAYLOAD_LENGTH * RPRINTF_MAX_PACKETS)
 
-/******** Variables ********/
-
 boolean rprintfOSInit = FALSE;
 static uint32 rprintfRemoteRequestTime = 0;
 
@@ -65,12 +62,6 @@ static uint32 rprintfRoundNum = 0;
 static uint32 rprintfHostInterRobotSleepTime = 25;
 static int rprintfSendNumTransmitsRemaining; // Number of retransmits for this data
 static uint8 rprintfMessageID;
-
-
-//128 bytes of text:
-//00000000001111111111222222222233333333334444444444555555555566666666667777777777888888888899999999990000000000111111111122222222
-
-/******** Functions ********/
 
 /*
  *	@brief Prints formatted output to the remote terminal
@@ -115,18 +106,40 @@ void rprintf(const char *format, ...) {
 	va_end(arguments);
 }
 
+
+void rprintfStringOutput(const char *buffer, int length, int robotID) {
+	uint8 i;
+	char *bufp;
+	char bufferCopy[length + 1];
+
+	strncpy(bufferCopy, buffer, length);
+
+	bufp = bufferCopy;
+	for (i = 0; i <= length; i++) {
+		if (bufferCopy[i] == '\n') {
+			bufferCopy[i] = '\0';
+		}
+		if (bufferCopy[i] == '\0') {
+			if (bufp != &bufferCopy[i]) {
+				cprintf("rtd,%d %s\n", robotID, bufp);
+				bufp = &bufferCopy[++i];
+			}
+		}
+	}
+}
+
+
 void rprintfFlush() {
 	// Safely lock the write buffer
 	osSemaphoreTake(rprintfWriteMutex, portMAX_DELAY);
 	// Safely lock the send buffer
 	osSemaphoreTake(rprintfSendMutex, portMAX_DELAY);
 
-	// Copy the buffer over, plus one to include the null terminator
-	memcpy(rprintfSendBuffer, rprintfWriteBuffer,
-		rprintfWriteBufferLength + 1);
-
 	// Print over serial the buffer that will be sent out
-	cprintf(rprintfSendBuffer);
+	rprintfStringOutput(rprintfWriteBuffer, rprintfWriteBufferLength, roneID);
+
+	// Copy the buffer over, plus one to include the null terminator
+	memcpy(rprintfSendBuffer, rprintfWriteBuffer, rprintfWriteBufferLength);
 
 	// Unlock the send buffer
 	osSemaphoreGive(rprintfSendMutex);
@@ -262,10 +275,10 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 		rprintfTotalBytesReceived += length;
 		rprintfRecvBuffer[length] = '\0';
 
-		// print out each line of the buffer prefixed by id marker
-		cprintf("rtd,%d %s", remoteRobotID, rprintfRecvBuffer);
+		rprintfStringOutput(rprintfRecvBuffer, length, remoteRobotID);
 	}
 }
+
 
 /*
  * If the robot is in host mode, this will query other robots remotely
@@ -326,7 +339,7 @@ static void rprintfHostTask(void* parameters) {
  * the callback request.
  */
 static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
-	uint8 destinationRobotID, requestedBits, requestedBitsToXmit;
+	uint8 requestedBits, requestedBitsToXmit;
 	uint8 packetNum, packetNumMax;
 	RadioMessage radioResponseMsg;
 

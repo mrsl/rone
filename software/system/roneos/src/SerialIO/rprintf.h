@@ -41,6 +41,7 @@ void rprintf(const char* format, ...);
 
 void rprintfFlush();
 
+void rprintfStringOutput(const char *buffer, int length, int robotID);
 
 //TODO: Should this be public?
 void rprintfSetHostMode(uint8 val);
