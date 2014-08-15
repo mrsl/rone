@@ -148,7 +148,7 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
  * 			TV - intended TV of a robot that is orbiting i.e 0 TV means robots stay in place and turn
  * @return void
  */
-void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV, int16 cyliodCOMoffset){
+void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 	int32 bearing = atan2MilliRad((int32)COMY,(int32)COMX) - PI;
 	int32 distance = vectorMag((int32)COMY,(int32)COMX);
 	int32 newRv = 0;
@@ -170,15 +170,18 @@ void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV, int1
 		behSetTvRv(BehRotate, TV, 0);
 	}
 
-	if(cyliodCOMoffset){
-
-	}
-
 	//rprintf("X%d Y%d b%d RV%d\n",COMX,COMY,bearing,newRv);
 
 }
 
-
+/**
+ * @brief A path for a sungle robot cycliod path.
+ * @param	cycloidTime	- Time sent out by clock robot
+ * 			cycloidPeriod - Period for full cyliod rotation
+ * 			distCOM - distance to center of mass
+ * 			maxSpeed - maxSpeed allowed of cyliod motion
+ * 			radius - Radius of object
+ */
 void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, uint16 distCOM ,int32 maxSpeed, int32 radius, Beh*behOutput){
 	int32 angleT = 0;
 	int32 theta = 0;
@@ -229,7 +232,9 @@ void GlobalTreeCycloidMotrion(uint cycloidTime, uint32 cycloidPeriod, uint16 dis
 	waypointMoveUpdate(); //use waypoint to set tv and rv
 }*/
 
-
+/*
+ * For hard coding distance
+ */
 int nbrRangeLookUp(uint8 myID, uint8 nbrID){
 	int Range = 500;
 	switch(myID){

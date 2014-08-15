@@ -14,7 +14,7 @@
 #define NEIGHBOR_ROUND_PERIOD			600
 #define RADIO_MESSAGE_PERSISTANCE		200
 #define BEHAVIOR_TASK_PERIOD			50
-#define NAV_TOWER						103
+#define NAV_TOWER						20
 #define PI								3147
 #define ACCEL_DEAD_ZONE					5
 #define ACCEL_IIR_GAIN					50
@@ -23,17 +23,17 @@
 #define NAV_TOWER_DISTANCE				1000
 
 #define FLOCK_RV_GAIN_MOVEOBJ			70
-#define MAX_CYCLIOD_SPEED				200
 #define	RADIUS							250
 #define nbrEdgeDis						250				//hardcoded distance
-#define COM_WAIT						0
-#define NORM_TV							75
-#define cycloidPeriod					5000
+
 #define	TOWER_WAIT_TIME					200
-#define	cyldoidSpeed					200
+#define	cyldoidSpeed					150
+
 #define CYCLOID_ROTATION_MOD			0				//Modifies translation speed vs rotational speed in cyliod motion
 														//From 0 to 50, 0 for more translation, 50 for more rotation
 
+#define OMEGA_ROT			3
+#define OMEGA_TRANS			1
 
 #define BUILD_TREE		 0
 #define GUESS_COM		 1
@@ -50,8 +50,6 @@ RadioCmd radioCmdRemoteControl;
 char* name = "RCwifi";
 
 void behaviorTask(void* parameters) {
-	rprintfSetSleepTime(NEIGHBOR_ROUND_PERIOD);
-
 	uint32 lastWakeTime = osTaskGetTickCount();
 	uint8 state = BUILD_TREE;
 	Beh behOutput = behInactive;
@@ -66,6 +64,7 @@ void behaviorTask(void* parameters) {
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 	radioCommandSetSubnet(1);
 	int16 COM_Y,COM_X,PIVOT_X,PIVOT_Y, cylciodModifier;
+	uint8 cycloidTime = 1;
 
 	PosistionCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+2];
 	GlobalTreeCOMListCreate(treeGuessCOM);
@@ -103,6 +102,9 @@ void behaviorTask(void* parameters) {
 	uint32 navTowerTime;
 	int16 vecCOMtoTowerY, vecCOMtoTowerX, vecCOMtoTowerBearing;
 
+	Pose rotateWaypointPose,translateWaypointPose,goalWaypointPose, CurrPose;
+
+
 	for (;;) {
 		if (rprintfIsHost()) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_MED);
@@ -122,10 +124,27 @@ void behaviorTask(void* parameters) {
 			}
 
 			/*** READ BUTTONS ***/
+			if (!buttonsGet(BUTTON_BLUE)) {
+				bounceBlue = 1;
+			}
+			if (!buttonsGet(BUTTON_RED)) {
+				bounceRed = 1;
+			}
+			if (!buttonsGet(BUTTON_GREEN)) {
+				bounceGreen = 1;
+			}
+
+
 			if(state!= REMOTE){
 				if (buttonsGet(BUTTON_RED)) {
 					state = REMOTE;
-				}else if (buttonsGet(BUTTON_GREEN)) {
+				}else if (buttonsGet(BUTTON_GREEN) && bounceGreen) {
+					comMoveState++;
+					if(comMoveState >= 4){
+						comMoveState = 0;
+					}
+					moveState = comMoveState;
+					bounceGreen = 0;
 				}else if (buttonsGet(BUTTON_BLUE)) {
 					state = GUESS_COM;
 				}
@@ -206,17 +225,19 @@ void behaviorTask(void* parameters) {
 
 			if(state == GUESS_COM){
 				nbrNavTowerPtr = nbrListGetNbrWithID(&nbrList, NAV_TOWER);
+				int16 translateBearing = 0;
 				if(nbrNavTowerPtr) {
 					int16 x,y;
 					x = 0;
 					y = NAV_TOWER_DISTANCE;
+					translateBearing = nbrNavTowerPtr->bearing;
 					vecCOMtoTowerX = x*cosMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER;
 					vecCOMtoTowerY = x*sinMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER;
 
 					//rprintf("COMtoTOWER X %d Y %d B %d CM %d\n",COMtoTowerX,COMtoTowerY, atan2MilliRad((int32)COMtoTowerX,(int32)COMtoTowerY), cylciodModifier);
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_L,vecCOMtoTowerX);
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,vecCOMtoTowerY);
-					//Todo: Assumes that 127 is highest ID that will be seen, need to be changed if v15 are used
+					//Todo: Assumes that nave tower is highest ID that will be seen, need to be changed if v15 are used
 					nbrList.size--;
 					navTowerTime = osTaskGetTickCount();
 				}else{
@@ -256,7 +277,6 @@ void behaviorTask(void* parameters) {
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,0);
 				}
 
-
 				GlobalTreeCOMUpdate(globalRobotList, nbrList, treeGuessCOM, nbrEdgeDis, &LeaderHeading_H,&LeaderHeading_L);
 				int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
 				if(selfIdx == -1){
@@ -272,12 +292,12 @@ void behaviorTask(void* parameters) {
 					behOutput.rv  = behOutput.rv + (RVcmd*10);
 				}else if(moveState == 1){		//Rotate
 					behOutput = behInactive;
-					GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd, 0);
+					GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
 				}else if(moveState == 2){		//Pivot
 					PIVOT_X =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L);
 					PIVOT_Y =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L);
-					GlobalTreePointOrbit(PIVOT_X, PIVOT_Y, &behOutput,  RVcmd, 0);
-				}else if(moveState == 3){		//Cycloid Motion
+					GlobalTreePointOrbit(PIVOT_X, PIVOT_Y, &behOutput,  RVcmd);
+				}else if(moveState == 4){		//Cycloid Motion
 					vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
 					vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
 					vecCOMtoTowerBearing = normalizeAngleMilliRad2(atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY));
@@ -289,14 +309,53 @@ void behaviorTask(void* parameters) {
 					}
 
 					if(osTaskGetTickCount() >= (navTowerTime + TOWER_WAIT_TIME)){
-						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  30, vecCOMtoTowerBearing);
+						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  30);
 						//rprintf("Cyliod Mod %d C %d %d v %d %d NNT\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
 					}else{
-						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier, vecCOMtoTowerBearing);
+						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier);
 						//rprintf("Cyliod Mod %d C %d %d v %d %d\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
 					}
 					behOutput.rv = behOutput.rv * 2;
+				}else if(moveState == 3){		//Alt Cycloid Motion
+					/*int16 translateBearing = 0;
+
+					if(osTaskGetTickCount() <= (navTowerTime + TOWER_WAIT_TIME)){*/
+					if(!translateBearing){
+						//vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
+						//vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
+						translateBearing = (atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY) - PI)/2;
+					}
+
+					int16 rotatBearing = atan2MilliRad((int32)COM_Y,(int32)COM_X) - PI;
+					int16 goalBearing;
+					if(!rotatBearing || !OMEGA_ROT){
+						goalBearing = translateBearing;
+					}else if(!translateBearing || !OMEGA_TRANS){
+						goalBearing = rotatBearing;
+					}else{
+						goalBearing = (OMEGA_ROT* rotatBearing + OMEGA_TRANS * translateBearing) / (OMEGA_ROT + OMEGA_TRANS);
+					}
+
+
+					//int32 distance = vectorMag((int32)COM_Y,(int32)COM_X);
+					//int32 TV = cyldoidSpeed * distance / 100;
+					int32 TV = 150 - 150* abs(goalBearing) / (PI/2);
+					if(TV < 0){
+						TV = 0;
+					}
+					if(abs(goalBearing) > 100){
+						if(goalBearing < 0){
+							behSetTvRv(&behOutput, TV/2, goalBearing/ 1);
+						} else{
+							behSetTvRv(&behOutput, TV/2, goalBearing/ 1);
+						}
+					}else{
+						behSetTvRv(&behOutput, TV, 0);
+					}
+					rprintf("%d %d %d\n", translateBearing,rotatBearing, goalBearing );
+
 				}
+
 			}
 			if(state == REMOTE){
 				behOutput = behInactive;
@@ -333,16 +392,6 @@ void behaviorTask(void* parameters) {
 					bounceGreen = 0;
 				}
 
-				if (!buttonsGet(BUTTON_BLUE)) {
-					bounceBlue = 1;
-				}
-				if (!buttonsGet(BUTTON_RED)) {
-					bounceRed = 1;
-				}
-				if (!buttonsGet(BUTTON_GREEN)) {
-					bounceGreen = 1;
-				}
-
 				if(comRed){
 					comMoveState++;
 					if(comMoveState >= 4){
@@ -357,7 +406,7 @@ void behaviorTask(void* parameters) {
 			/*** FINAL STUFF ***/
 			motorSetBeh(&behOutput);
 			neighborsPutMutex();
-
+			rprintfFlush();
 			// delay until the next behavior period
 			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 			lastWakeTime = osTaskGetTickCount();

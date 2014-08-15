@@ -207,7 +207,7 @@ void behaviorTask(void* parameters) {
 			nbrListCreate(&nbrList);
 			int32 VectorForce = bumpSensorsGetBearing();
 			if (printNow)
-				rprintf(" %d, %d, %d, %d, %d, %d  \n", leaderPosX, leaderPosY, tv, rv, VectorForce, ModeCoM);
+				//rprintf(" %d, %d, %d, %d, %d, %d  \n", leaderPosX, leaderPosY, tv, rv, VectorForce, ModeCoM);
 
 			broadcastMsgUpdate(&broadcastMessage, &nbrList);
 //			if (broadcastMessage.active == TRUE) {
@@ -415,6 +415,8 @@ void behaviorTask(void* parameters) {
 					waypointGoalPose.y = curY;
 					waypointGoalPose.theta = theta;
 					waypointMove(&waypointGoalPose, maxSpeed); //set goal pose
+					rprintf("%d, %d, %d\n",waypointGoalPose.x,waypointGoalPose.y, waypointGoalPose.theta);
+					rprintfFlush();
 				}
 				if (cycloidTime < cycloidPeriod) {
 					//perform cycloid motion during the cycloid period
