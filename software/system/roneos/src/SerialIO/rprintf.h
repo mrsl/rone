@@ -14,9 +14,9 @@
 
 /******** Defines ********/
 
-#define RPRINTF_TEXT_STRING_SIZE		CPRINTF_TEXT_STRING_SIZE
 #define RPRINTF_REMOTE					0
 #define RPRINTF_HOST					1
+
 #define RPRINTF_MAX_PACKETS				RADIO_COMMS_QUEUE_RECV_SIZE
 
 /******** Functions ********/
@@ -37,7 +37,9 @@ void rprintfInit(void);
  *
  *	@returns void
  */
-void rprintf(char* format, ...);
+void rprintf(const char* format, ...);
+
+void rprintfFlush();
 
 
 //TODO: Should this be public?
