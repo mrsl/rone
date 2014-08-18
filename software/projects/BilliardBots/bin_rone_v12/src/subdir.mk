@@ -4,13 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/irRangeTest.c 
+../src/cleanFlock.c 
 
 OBJS += \
-./src/irRangeTest.o 
+./src/cleanFlock.o 
 
 C_DEPS += \
-./src/irRangeTest.d 
+./src/cleanFlock.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes

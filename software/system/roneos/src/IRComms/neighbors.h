@@ -118,8 +118,11 @@ typedef struct NbrMsgRadio {
 //TODO Fill in missing field documentation
 typedef struct Nbr {
 	uint8 ID;												/**< Robot ID*/
-	int16 bearing;											/**< Robot bearing*/
+	int16 bearing;
+	int16 rawbearing;										/**< Robot bearing*/
 	int16 orientation;										/**< Robot orientation*/
+	int16 raworientation;
+	int16 rawrange;
 	int16 range;											/**< */
 	int16 bearingHistory[NBR_ANGLE_HISTORY];				/**< */
 	int16 orientationHistory[NBR_ANGLE_HISTORY];			/**< */
@@ -477,6 +480,11 @@ void nbrPrint(Nbr* nbr);
  */
 void nbrPrintData(Nbr* nbr, uint32 round);
 
+int16 nbrGetRawRange(Nbr* nbr);
+
+int16 nbrGetRawBearing(Nbr* nbr);
+
+int16 nbrGetRawOrientation(Nbr* nbr);
 
 /**
  * @brief Returns true if this neighbor is a beacon.

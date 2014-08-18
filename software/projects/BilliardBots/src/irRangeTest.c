@@ -20,9 +20,11 @@
 #define MOVE_IDLE 		0
 #define MOVE_ROTATE 	1
 #define MOVE_FORWARD 	2
+#define MOVE_STOP 		3
 #define FLOCKWAIT		2000
 #define FLOCKSPEED 		25
-#define PROBABILITYSTOP 1
+#define PROBABILITYSTOP 0
+#define NEIGHBOR_ROUND_TIME 300
 
 #define CHECK 0xCAFE // unique code to check for correct message
 
@@ -32,42 +34,32 @@ struct __attribute__((__packed__)) {
 	char pad[25];
 } typedef remoteControlMsg;
 
-
-char buffer[160];
-char *bufp;
-
 void behaviorTask(void* parameters) {
+
 	int state = STATE_IDLE;
 	int movementState;
-	int16 bumpBearing,rotateRV;
 	uint32 lastWakeTime = osTaskGetTickCount();
-	uint32 rotateTime, momentumTime;
 	NbrList nbrList;
 	Beh behOutput;
 	uint8 buttonRed, buttonGreen, buttonBlue;
-	boolean momementumActive, printNow;
+	boolean printNow;
 	uint32 neighborRound = 0;
-	int i, n;
-	uint32 nbrBearing, nbrOrientation, nbrRange;
+	int i;
+	uint32 nbrBearing, nbrOrientation, nbrRange, nbrRawRange, nbrRawBearing, nbrRawOrientation;
 	Nbr* nbrPtr;
-	uint32 tempWakeTime = 0;
 	RadioMessage radioMessageRX;
 	RadioMessage radioMessageTX;
 	RadioCmd radioCmdRemoteControl;
 	char* name = "remoteControl";
-	int comBlue = 0;
 	radioCommandAddQueue(&radioCmdRemoteControl, name, 1);
-	uint32 tickSeconds = osTaskGetTickCount();
-
-	rprintfSetSleepTime(10);
-	rprintfEnableRobot(ROBOT_ID_ALL, FALSE);
-	rprintfEnableRobot(95 , TRUE);
+	uint32 waitTime = 0;
+	Pose pose;
 
 	// Init nbr system
 	BroadcastMessage broadcastMessage;
 	broadcastMsgCreate(&broadcastMessage, 20);
 	radioCommandSetSubnet(1);
-    neighborsInit(300);
+    neighborsInit(NEIGHBOR_ROUND_TIME);
 
     // Create nbr data
 
@@ -82,16 +74,17 @@ void behaviorTask(void* parameters) {
 	nbrDataCreate16(&TV_H,&TV_L,"TV_H","TV_L",0);
 	nbrDataCreate16(&RV_H,&RV_L,"RV_H","RV_L",0);
 
+
 	for (;;) {
-//		if (rprintfIsHost) {
-//			osTaskDelay(1000);
-//			continue;
-//		}
+		if (rprintfIsHost()) {
+			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+			osTaskDelay(1000);
+			continue;
+		}
 		behOutput = behInactive;
 		printNow = neighborsNewRoundCheck(&neighborRound);
 		nbrListCreate(&nbrList);
 		broadcastMsgUpdate(&broadcastMessage, &nbrList);
-		radioCommandSetSubnet(1);
 
 		// read buttons
 		buttonRed = buttonsGet(BUTTON_RED);
@@ -146,7 +139,7 @@ void behaviorTask(void* parameters) {
 		}
 		case STATE_BOUNCE: {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
-			uint8* bitMatrix = irObstaclesGetBitMatrix();
+			//uint8* bitMatrix = irObstaclesGetBitMatrix();
 			movementState = MOVE_FORWARD;
 			break;
 		}
@@ -161,92 +154,80 @@ void behaviorTask(void* parameters) {
 		//Movement State Machine
 		switch (movementState) {
 		case MOVE_IDLE: {
-			momementumActive = 0;
-			behSetTvRv(&behOutput, 0, 0);
-			if (osTaskGetTickCount() - tickSeconds > FLOCKWAIT) {
-				movementState = MOVE_FORWARD;
-				tickSeconds = osTaskGetTickCount();
-			}
-			break;
-		}
-		case MOVE_ROTATE: {
-			momementumActive = 0;
-			behSetTvRv(&behOutput, 0, rotateRV);
-			if ((rotateTime + bumpBearing) < osTaskGetTickCount()) {
-				movementState = MOVE_FORWARD;
-				momentumTime = osTaskGetTickCount();
-			}
 			break;
 		}
 		case MOVE_FORWARD: {
-			momementumActive = 1;
-			behFlock(&behOutput, &nbrList, FLOCKSPEED);
-			if (osTaskGetTickCount() - tickSeconds > 1000) {
-				tickSeconds = osTaskGetTickCount();
-				if (rand() % 1000 <= PROBABILITYSTOP)
-					movementState = MOVE_IDLE;
-				else
-					behFlock(&behOutput, &nbrList, FLOCKSPEED);
+//			if (rand() % 3000 <= PROBABILITYSTOP) {
+//				movementState = MOVE_STOP;
+//			} else {
+				behFlock(&behOutput, &nbrList, FLOCKSPEED);
+//			}
+			break;
+		}
+		case MOVE_STOP:{
+			if(printNow)
+				waitTime += NEIGHBOR_ROUND_TIME;
+			if (waitTime > FLOCKWAIT) {
+				movementState = MOVE_FORWARD;
+				waitTime = 0;
 			}
+			break;
+			}
+		default: {
 			break;
 		}
 		}
-
 		// Set nbr data
 		nbrDataSet16(&TV_H,&TV_L,(int16)behOutput.tv);
 		nbrDataSet16(&RV_H,&RV_L,(int16)behOutput.rv);
 
 		// print neighbor list
 
+		// encoderPoseUpdate();
 
 		if (printNow) {
+			pose.x = 0;
+			pose.y = 0;
+			pose.theta = 0;
+			encoderGetPose(&pose);
+
+			rprintf("%d,%d,%d,", pose.x, pose.y, pose.theta);
+
 			for (i = 0; i < nbrList.size; i++) {
 				nbrPtr = nbrList.nbrs[i];
-				nbrBearing = nbrGetBearing(nbrPtr);
-				nbrOrientation = nbrGetOrientation(nbrPtr);
-				nbrRange = nbrGetRange(nbrPtr);
-
-				cprintf("%d,%d,%d,%d,%d,%d,", nbrPtr->ID,
-												  (int16) nbrBearing,
-												  (int16) nbrOrientation,
-												  (int16) nbrRange,
-												  (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
-												  (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
-
-			}
-
-		}
-
-//		if (printNow) {
-//			bufp = buffer;
-//			for (i = 0; i < nbrList.size; i++) {
-//				nbrPtr = nbrList.nbrs[i];
 //				nbrBearing = nbrGetBearing(nbrPtr);
 //				nbrOrientation = nbrGetOrientation(nbrPtr);
 //				nbrRange = nbrGetRange(nbrPtr);
-//
-//				n = sprintf(bufp, "%d,%d,%d,%d,%d,%d,", nbrPtr->ID,
-//												  (int16) nbrBearing,
-//												  (int16) nbrOrientation,
-//												  (int16) nbrRange,
-//												  (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
-//												  (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
-//				bufp += n;
-//			}
-//			n = sprintf(bufp - 1, "\n");
-//			fprintf(buffer);
-//		}
+				nbrRawRange = nbrGetRawRange(nbrPtr);
+				nbrRawOrientation = nbrGetRawOrientation(nbrPtr);
+				nbrRawBearing = nbrGetRawBearing(nbrPtr);
+
+
+				rprintf("%d,%d,%d,%d,%d,%d,",
+												  nbrPtr->ID,
+										  (int16) nbrRawBearing,
+										  (int16) nbrRawRange,
+										  (int16) nbrRawOrientation,
+										  (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr),
+										  (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr));
+			}
+			rprintf("\n");
+			rprintfFlush();
+		}
+
+
 
 		// set behavior and delay task
 		motorSetBeh(&behOutput);
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 		lastWakeTime = osTaskGetTickCount();
-	}
+
 }
 
 
 int main() {
-	systemInit();
+
+	ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_FAST);	systemInit();
 	systemPrintStartup();
 
 	behaviorSystemInit(behaviorTask, 4096);

@@ -412,8 +412,11 @@ static void processNbrMessage(IRCommsMessage* irMsgPtr) {
 				nbrPtr->orientation = orientation;
 			} else {
 				nbrPtr->range = filterIIR(nbrPtr->range, range, nbrRangeIIRTimeConstant);
+				nbrPtr->rawrange = filterIIR(nbrPtr->range, range, 0);
 				nbrPtr->bearing = filterIIRAngle(nbrPtr->bearing, bearing, nbrAnglesIIRTimeConstant);
+				nbrPtr->rawbearing = filterIIRAngle(nbrPtr->bearing, bearing, 0);
 				nbrPtr->orientation = filterIIRAngle(nbrPtr->orientation, orientation, nbrAnglesIIRTimeConstant);
+				nbrPtr->raworientation = filterIIRAngle(nbrPtr->orientation, orientation, 0);
 			}
 			nbrPtr->signalBits |= 1;
 		}
@@ -823,6 +826,31 @@ int32 nbrGetOrientation(Nbr* nbrPtr) {
 	}
 }
 
+int16 nbrGetRawRange(Nbr* nbrPtr){
+		if (nbrPtr) {
+			return nbrPtr->rawrange;
+		}else{
+			return 0;
+		}
+}
+
+
+int16 nbrGetRawOrientation(Nbr* nbrPtr){
+		if (nbrPtr) {
+			return nbrPtr->raworientation;
+		}else{
+			return 0;
+		}
+}
+
+
+int16 nbrGetRawBearing(Nbr* nbrPtr){
+		if (nbrPtr) {
+			return nbrPtr->rawbearing;
+		}else{
+			return 0;
+		}
+}
 /*
  * @brief Get neighbor range.
  *
