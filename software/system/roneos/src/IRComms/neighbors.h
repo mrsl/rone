@@ -34,7 +34,7 @@
 
 #define	ROBOT_ID_NULL					0
 #define	ROBOT_ID_MIN					1
-#define	ROBOT_ID_MAX					100
+#define	ROBOT_ID_MAX					130
 #define	ROBOT_ID_ALL					0xFF
 
 #define	MAX_PARENT_ID					0x7F

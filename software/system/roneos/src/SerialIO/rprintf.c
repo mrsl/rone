@@ -27,6 +27,7 @@
 
 // host radio message
 #define RPRINTF_MSG_PACKET_REQ_BITS_IDX 		0
+#define RPRINTF_MSG_PACKET_HOST_IDX		 		1
 
 // remote radio message
 #define RPRINTF_MSG_BUFFER_LENGTH_IDX 			0
@@ -92,9 +93,6 @@ void rprintf(const char *format, ...) {
 	n = vsnprintf((char *) rprintfWriteBuffer + rprintfWriteBufferLength,
 		maxLength, format, arguments);
 
-	// Unlock the write buffer
-	osSemaphoreGive(rprintfWriteMutex);
-
 	// Check for overflow
 	rprintfWriteBufferLength += n;
 	if (rprintfWriteBufferLength > RPRINTF_TEXT_STRING_SIZE) {
@@ -102,11 +100,20 @@ void rprintf(const char *format, ...) {
 		rprintfWriteBufferLength = RPRINTF_TEXT_STRING_SIZE;
 	}
 
+	// Unlock the write buffer
+	osSemaphoreGive(rprintfWriteMutex);
+
 	// Clean up arguments.
 	va_end(arguments);
 }
 
-
+/*
+ *	@brief Prints rprintf string to serial
+ *
+ *	Inserts newlines for multi-lined messages or improperly formatted strings
+ *
+ *	@returns void
+ */
 void rprintfStringOutput(const char *buffer, int length, int robotID) {
 	uint8 i;
 	char *bufp;
@@ -115,12 +122,14 @@ void rprintfStringOutput(const char *buffer, int length, int robotID) {
 	strncpy(bufferCopy, buffer, length);
 
 	bufp = bufferCopy;
+	// Iterate through each string line and output with prefix
 	for (i = 0; i <= length; i++) {
 		if (bufferCopy[i] == '\n') {
 			bufferCopy[i] = '\0';
 		}
 		if (bufferCopy[i] == '\0') {
 			if (bufp != &bufferCopy[i]) {
+				// rtd,ID Message...
 				cprintf("rtd,%d %s\n", robotID, bufp);
 				bufp = &bufferCopy[++i];
 			}
@@ -141,15 +150,20 @@ void rprintfFlush() {
 	// Copy the buffer over, plus one to include the null terminator
 	memcpy(rprintfSendBuffer, rprintfWriteBuffer, rprintfWriteBufferLength);
 
+	// Set the new buffer lengths
+	rprintfSendBufferLength = rprintfWriteBufferLength;
+	rprintfWriteBufferLength = 0;
+
+	// Reset number of retransmits remaining
+	rprintfSendNumTransmitsRemaining = RPRINTF_HOST_REQUESTS_MAX;
+
+	// Set new message ID number
+	rprintfMessageID = (rprintfMessageID + 1) % 100 + 1;
+
 	// Unlock the send buffer
 	osSemaphoreGive(rprintfSendMutex);
 	// Unlock the write buffer
 	osSemaphoreGive(rprintfWriteMutex);
-
-	rprintfSendBufferLength = rprintfWriteBufferLength;
-	rprintfWriteBufferLength = 0;
-	rprintfSendNumTransmitsRemaining = RPRINTF_HOST_REQUESTS_MAX;
-	rprintfMessageID = (rprintfMessageID + 1) % 100 + 1;
 }
 
 /*
@@ -158,12 +172,14 @@ void rprintfFlush() {
 void rprintfEnableRobot(uint8 robotID, boolean enable) {
 	uint16 i, startID, endID;
 
+	// Enable all robots
 	if (robotID == ROBOT_ID_ALL) {
 		startID = ROBOT_ID_MIN;
 		endID = ROBOT_ID_MAX;
+	// Do nothing
 	} else if (robotID == ROBOT_ID_NULL) {
-		// do nothing
 		return;
+	// Set range
 	} else {
 		startID = robotID;
 		endID = robotID;
@@ -201,7 +217,7 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 	uint8 messageID, packetNum, packetNumMax, remoteRobotState;
 	boolean queryComplete, val;
 
-	// Query the selected robot.
+	// Initialization
 	queryComplete = FALSE;
 	remoteRobotState = RPRINTF_REMOTE_ROBOT_STATE_INACTIVE;
 	requestAttempts = 0;
@@ -210,7 +226,10 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 	msgBitsReceived = 0;
 	packetNumMax = 0;
 	messageID = 0;
+	radioMsg.command.destinationID = remoteRobotID;
+	radioMsg.command.data[RPRINTF_MSG_PACKET_HOST_IDX] = roneID;
 
+	// Query the selected robot.
 	length = 0;
 	while ((requestAttempts++ < RPRINTF_HOST_REQUESTS_MAX) && (!queryComplete)) {
 		// Send an initial rprintf request to the remote robot.
@@ -221,31 +240,36 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 		val = radioCommandReceive(&radioCmdRprintfRemoteToHost, &radioMsg, RPRINTF_HOST_RESPONSE_TIMEOUT);
 		if (val) {
 			do {
+				// First message received, obtain metadata
 				if (remoteRobotState == RPRINTF_REMOTE_ROBOT_STATE_INACTIVE) {
 					// If we received a message from an inactive robot, label it active.
 					remoteRobotState = RPRINTF_REMOTE_ROBOT_STATE_ACTIVE;
+					// Obtain length and message ID
 					length = (uint8) radioMsg.command.data[RPRINTF_MSG_BUFFER_LENGTH_IDX];
 					messageID = (uint8) radioMsg.command.data[RPRINTF_MSG_DATA_IDX];
-					// Message ID is the same as before;
+					// Message ID is the same as before, this is a retransmission so ignore
 					if (messageID == rprintfRemoteRobotMessageID[remoteRobotID]) {
 						queryComplete = TRUE;
 						length = 0;
 						break;
 					}
+					// Compute number of packets needed to transmit message
 					packetNumMax = computeNumPackets(length);
 					for (i = 0; i < packetNumMax; ++i) {
 						msgBitsExpected |= (1 << i);
 					}
 				}
+				// Part of a message, fill in data
 				if (length > 0) {
-					// If we received part of a message, copy it over.
-					packetNum = (uint8) radioMsg.command.data[RPRINTF_MSG_PACKET_IDX];
-					// Message ID doesn't match
+					// Message ID doesn't match, drop this query
 					if (messageID != (uint8) radioMsg.command.data[RPRINTF_MSG_DATA_IDX]) {
 						queryComplete = TRUE;
 						length = 0;
 						break;
 					}
+					// If we received part of a message, copy it over.
+					packetNum = (uint8) radioMsg.command.data[RPRINTF_MSG_PACKET_IDX];
+
 					msgBitsReceived |= (1 << packetNum);
 					uint16 packetIdx;
 					uint16 msgIdx = packetNum * RPRINTF_MSG_DATA_PAYLOAD_LENGTH;
@@ -255,10 +279,11 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 						}
 					}
 				}
+				// Either we've gotten all the bits, or length = 0 and there is no data to receive: we're done.
 				if (msgBitsExpected == msgBitsReceived) {
-					// Either we've gotten all the bits, or length = 0 and there is no data to receive: we're done.
 					queryComplete = TRUE;
 					if(msgBitsExpected>0){
+						// do something??
 					}
 					break;
 				}
@@ -267,6 +292,7 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 			} while (radioCommandReceive(&radioCmdRprintfRemoteToHost, &radioMsg, RPRINTF_HOST_RESPONSE_TIMEOUT));
 		}
 	}
+	// Set state
 	rprintfRemoteRobotState[remoteRobotID] = remoteRobotState;
 	rprintfRemoteRobotMessageID[remoteRobotID] = messageID;
 
@@ -298,21 +324,25 @@ static void rprintfHostTask(void* parameters) {
 		if (rprintfMode == RPRINTF_HOST) {
 			activeTemp = 0;
 			rprintfRoundNum += 1;
+			// Query all active robots
 			for (remoteRobotID = ROBOT_ID_MIN; remoteRobotID <= ROBOT_ID_MAX; remoteRobotID++) {
 				status = rprintfRemoteRobotState[remoteRobotID];
 				if (status == RPRINTF_REMOTE_ROBOT_STATE_ACTIVE) {
 					activeTemp++;
-					//querying active robot
+					// Querying active robot
 					queryRobot(remoteRobotID, TRUE);
 				}
 			}
-			// query inactive robots
+			// Search through robot list for queryable inactive robot
 			remoteRobotIDInactive = remoteRobotIDInactiveOld + 1;
+			// Stop if we have wrapped around
 			while (remoteRobotIDInactive != remoteRobotIDInactiveOld) {
 				status = rprintfRemoteRobotState[remoteRobotIDInactive];
+				// Wrap around
 				if (remoteRobotIDInactive == ROBOT_ID_MAX) {
 					remoteRobotIDInactive = ROBOT_ID_MIN;
 				}
+				// Query if inactive
 				if (status == RPRINTF_REMOTE_ROBOT_STATE_INACTIVE) {
 					queryRobot(remoteRobotIDInactive, FALSE);
 					break;
@@ -321,11 +351,11 @@ static void rprintfHostTask(void* parameters) {
 			}
 			remoteRobotIDInactiveOld = remoteRobotIDInactive;
 			rprintfActiveRobotNum = activeTemp;
-			// Wait before the next robot to avoid collisions with local robot comms
-			// this will make it take a long time to query a large number of robots.  We need a better plan...
+			// Wait before the next robot to avoid collisions
 			osTaskDelay(rprintfHostInterRobotSleepTime);
+
+		// Wait before we check again.  Minimize CPU load for remote robots.
 		} else {
-			// Wait before we check again.  Minimize CPU load for remote robots.
 			osTaskDelay(200);
 		}
 	}
@@ -339,13 +369,16 @@ static void rprintfHostTask(void* parameters) {
  * the callback request.
  */
 static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
+	uint8 remoteHostID;
 	uint8 requestedBits, requestedBitsToXmit;
 	uint8 packetNum, packetNumMax;
 	RadioMessage radioResponseMsg;
 
-	// We are remote. Respond to the host with the contents of the rprintf buffer.
-	// Parse the request.
+	// We are remote. Respond to the host with the contents of the buffer.
 	requestedBits = msgPtr->command.data[RPRINTF_MSG_PACKET_REQ_BITS_IDX];
+
+	remoteHostID = msgPtr->command.data[RPRINTF_MSG_PACKET_HOST_IDX];
+	radioResponseMsg.command.destinationID = remoteHostID;
 
 	requestedBitsToXmit = requestedBits;
 	rprintfRemoteRequestTime = osTaskGetTickCount();
@@ -366,7 +399,7 @@ static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	packetNumMax = computeNumPackets(rprintfSendBufferLength);
 	radioResponseMsg.command.data[RPRINTF_MSG_BUFFER_LENGTH_IDX] = rprintfSendBufferLength;
 
-	// do we have anything to transmit at all?
+	// Do we have anything to transmit at all?
 	if (packetNumMax == 0) {
 		// You have nothing new to transmit. Send an ack back to the host.
 		radioCommandXmit(&radioCmdRprintfRemoteToHost, ROBOT_ID_ALL, &radioResponseMsg);
@@ -477,6 +510,7 @@ void rprintfSetSleepTime(uint32 val) {
  * @returns void
  */
 void rprintfInit(void) {
+	// Initialize variables
 	rprintfWriteMutex = osSemaphoreCreateMutex();
 	rprintfSendMutex = osSemaphoreCreateMutex();
 	rprintfOSInit = TRUE;
