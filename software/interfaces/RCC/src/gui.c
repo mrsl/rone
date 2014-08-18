@@ -265,12 +265,15 @@ void readChar(char character)
 		return;
 	}
 
+	mutexLock(&aprilTagURL.mutex);
 	switch (character)
 	{
 	case ('\r'):
 	case ('\n'): {
-		if (!aprilTagConnected)
-			connectAprilTag();
+		if (!aprilTagConnected) {
+			mutexUnlock(&aprilTagURL.mutex);
+			makeThread(&aprilTagHandler, NULL);
+		}
 		break;
 	}
 	/* Backspace handler */
@@ -293,6 +296,7 @@ void readChar(char character)
 		break;
 	}
 	}
+	mutexUnlock(&aprilTagURL.mutex);
 }
 
 /**
@@ -336,8 +340,9 @@ void processHits(GLint hits, GLuint buffer[])
 		/* Textbox */
 		case (TEXTBOX_ID): {
 			if (aprilTagConnected) {
-				if (clickMode == CONNECT)
+				if (clickMode == CONNECT) {
 					openClientConnection(0, -1);
+				}
 			} else {
 				aprilTagURL.isActive = 1;
 			}
@@ -1795,6 +1800,7 @@ void guiInit()
 	aprilTagURL.isActive = 0;
 	aprilTagURL.index = strlen(defaultATServerIP);
 	aprilTagURL.length = 21;
+	mutexInit(&aprilTagURL.mutex);
 	sprintf(aprilTagURL.message, defaultATServerIP);
 
 	glutMouseFunc(mouse);

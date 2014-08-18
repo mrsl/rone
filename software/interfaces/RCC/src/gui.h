@@ -129,6 +129,7 @@ struct textbox {
 	int isActive;
 	unsigned int length;
 	int index;
+	CRITICAL_SECTION mutex;									// Mutex
 	char message[MAX_TEXTBOX_LENGTH];
 };
 

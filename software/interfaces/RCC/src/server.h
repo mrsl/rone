@@ -67,10 +67,11 @@ SOCKET openClientFD(char *hostname, char *port);
 void incomingHandler(void *vargp);
 void connectionHandler(void *vargp);
 void initAprilTag();
-int connectAprilTag();
 void aprilTagHandler(void *vargp);
 int appendAprilTagData(char *buffer, int n, int aid);\
 int fetchData(char *buffer, int rid, int rhead, int aid, int ahead);
+
+void remoteRCCHandler(void *vargp);
 
 ssize_t socketWrite(int fd, char *usrbuf, size_t n);
 ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n);

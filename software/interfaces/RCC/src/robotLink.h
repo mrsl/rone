@@ -16,7 +16,8 @@
 #define LOCAL 		0
 #define REMOTE		1
 #define HOST		2
-#define UNKNOWN		3
+#define DISTANT		3
+#define UNKNOWN		4
 
 /**
  * Connection information

@@ -133,7 +133,7 @@ void commCommander(void *vargp)
 	int initialized = 0;				// Have we hand-shook with the robot?
 	int isHost = 0;						// Is this robot a rprintf host?
 	int subnet = -1;					// What is this robot's subnet?
-	int rid;							// Remote robot ID
+	int rid = -1;						// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
 	char *bufp = buffer;				// Pointer to buffers

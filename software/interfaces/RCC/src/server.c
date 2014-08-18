@@ -123,9 +123,6 @@ SOCKET openClientFD(char *hostname, char *port)
 
 	// Resolve the server address and port
 	if (getaddrinfo(hostname, port, NULL, &result) != 0) {
-		if (verbose) {
-			fprintf(stderr, "MAS: Bad AprilTag Address!\n");
-		}
 		return (INVALID_SOCKET);
 	}
 
@@ -249,6 +246,11 @@ void connectionHandler(void *vargp)
 			continue;
 		}
 
+		if (id == 10101) {
+			if (socketWrite(conn->fd, "HELLA\r\n", 7) < 0) {
+				break;
+			}
+		}
 		/* Handle bad numbers */
 		if (id >= MAXROBOTID || id < 0) {
 			id = -1;
@@ -459,12 +461,25 @@ void initAprilTag()
 	}
 }
 
-int connectAprilTag()
+void aprilTagHandler(void *vargp)
 {
 	SOCKET fd;
 	char *port, hostname[MAX_TEXTBOX_LENGTH];
-	struct Connection *conn;
+	int i, id, rid, n, oldhead;
+	int tid;						// Thread ID
+	struct socketIO socketio;		// Robust IO buffer for socket
+	char buffer[APRILTAG_BUFFERSIZE], *bufp;
+	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
+	fd_set read_set, ready_set;		// Read set for select
+	struct timeval tv = { 0, 1 };	// Timeout for select
+	GLfloat x, y, t;				// Data from server
+	int ts;							// Timestamp from server
 
+	if (aprilTagConnected) {
+		return;
+	}
+
+	mutexLock(&aprilTagURL.mutex);
 	strcpy(hostname, aprilTagURL.message);
 
 	/* Parse out port from hostname */
@@ -475,44 +490,24 @@ int connectAprilTag()
 	}
 
 	if ((fd = openClientFD(hostname, port)) == INVALID_SOCKET) {
-		return (-1);
+		mutexUnlock(&aprilTagURL.mutex);
+		return;
 	}
 
-	conn = Malloc(sizeof(struct Connection));
-	conn->fd = fd;
-	conn->n = 0;
+	tid = 0;
 
 	aprilTagConnected = 1;
 	robots[0].type = UNKNOWN;
 	robots[0].up = 1;
 	aprilTagURL.isActive = 0;
-	makeThread(&aprilTagHandler, conn);
-
-	return (0);
-}
-
-void aprilTagHandler(void *vargp)
-{
-	int i, id, rid, n, oldhead;
-	int tid;						// Thread ID
-	struct Connection *conn;		// Connection information
-	struct socketIO socketio;		// Robust IO buffer for socket
-	char buffer[APRILTAG_BUFFERSIZE], *bufp;
-	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
-	fd_set read_set, ready_set;		// Read set for select
-	struct timeval tv = { 0, 1 };	// Timeout for select
-	GLfloat x, y, t;				// Data from server
-	int ts;							// Timestamp from server
-
-	conn = (struct Connection *) vargp;
-	tid = conn->n;
+	mutexUnlock(&aprilTagURL.mutex);
 
 	if (verbose) {
 		printf("A%02d: Handler thread initialized\n", tid);
 	}
 
 	/* Initialize robust IO on the socket */
-	socketInitIO(&socketio, conn->fd);
+	socketInitIO(&socketio, fd);
 
 	if (verbose) {
 		printf("A%02d: Processing April Tag Data\n", tid);
@@ -520,19 +515,19 @@ void aprilTagHandler(void *vargp)
 
 	/* Initialize stuff for select */
 	FD_ZERO(&read_set);
-	FD_SET(conn->fd, &read_set);
+	FD_SET(fd, &read_set);
 
 	for (;;) {
 		memset(buffer, 0, APRILTAG_BUFFERSIZE);
 		ready_set = read_set;
 
 		/* Check if there is data available from the client. */
-		if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0) {
+		if (select(fd + 1, &ready_set, NULL, NULL, &tv) < 0) {
 			break;
 		}
 
 		/* Is there is data to be read? */
-		if (FD_ISSET(conn->fd, &ready_set)) {
+		if (FD_ISSET(fd, &ready_set)) {
 			if ((n = socketReadline(&socketio, buffer, APRILTAG_BUFFERSIZE - 1))
 				!= 0) {
 				/* Get the beginning of the remote message */
@@ -627,8 +622,7 @@ void aprilTagHandler(void *vargp)
 
 	/* Clean up */
 	aprilTagConnected = 0;
-	Close(conn->fd);
-	Free(conn);
+	Close(fd);
 
 	return;
 }
