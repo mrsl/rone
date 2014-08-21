@@ -162,6 +162,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aa08ed6de5c23bcd246e0d39389a3396a"><td class="memItemLeft" align="right" valign="top">uint8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="radio_command_8h.html#aa08ed6de5c23bcd246e0d39389a3396a">radioCommandGetSubnet</a> (<a class="el" href="union_radio_message.html">RadioMessage</a> *messagePtr)</td></tr>
 <tr class="memdesc:aa08ed6de5c23bcd246e0d39389a3396a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get radio command subnet.  <a href="#aa08ed6de5c23bcd246e0d39389a3396a">More...</a><br/></td></tr>
 <tr class="separator:aa08ed6de5c23bcd246e0d39389a3396a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed0d094ccf323de08bea0c67de804111"><td class="memItemLeft" align="right" valign="top">uint8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="radio_command_8h.html#aed0d094ccf323de08bea0c67de804111">radioCommandGetDestinationID</a> (<a class="el" href="union_radio_message.html">RadioMessage</a> *messagePtr)</td></tr>
+<tr class="memdesc:aed0d094ccf323de08bea0c67de804111"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get radio command destination ID.  <a href="#aed0d094ccf323de08bea0c67de804111">More...</a><br/></td></tr>
+<tr class="separator:aed0d094ccf323de08bea0c67de804111"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ddd0cc1cd1bf2385ff11602fff39de7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="radio_command_8h.html#a6ddd0cc1cd1bf2385ff11602fff39de7">radioCommandSetSubnet</a> (uint8 subnet)</td></tr>
 <tr class="memdesc:a6ddd0cc1cd1bf2385ff11602fff39de7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the radio command subnet.  <a href="#a6ddd0cc1cd1bf2385ff11602fff39de7">More...</a><br/></td></tr>
 <tr class="separator:a6ddd0cc1cd1bf2385ff11602fff39de7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -339,6 +342,31 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>pointer to data associated with the message </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="aed0d094ccf323de08bea0c67de804111"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8 radioCommandGetDestinationID </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="union_radio_message.html">RadioMessage</a> *&#160;</td>
+          <td class="paramname"><em>messagePtr</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get radio command destination ID. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">messagePtr</td><td>is the message to examine </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>radio command destination robot ID </dd></dl>
 
 </div>
 </div>
@@ -599,7 +627,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_77d854acc838a1a67c64a2c9ea49ff7a.html">InputOutput</a></li><li class="navelem"><a class="el" href="radio_command_8h.html">radioCommand.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:45 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:43 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

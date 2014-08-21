@@ -113,45 +113,59 @@ $(document).ready(function(){initNavTree('nbr_data_8h_source.html','');});
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="keywordtype">void</span> nbrDataCreate(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr, <span class="keyword">const</span> <span class="keywordtype">char</span>* name, uint8 size, uint8 value);</div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;<span class="keywordtype">void</span> nbrDataCreateIR(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr, <span class="keyword">const</span> <span class="keywordtype">char</span>* name, uint8 size, uint8 value);</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="keywordtype">void</span> nbrDataSet(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr, uint8 value);</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;uint8 nbrDataGet(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr);</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;uint8 nbrDataGetNbr(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr, <a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;<span class="keyword">const</span> <span class="keywordtype">char</span>* nbrDataGetName(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr);</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;uint8 nbrDataGetSize(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr);</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="keywordtype">void</span> nbrDataPrintNbr(<a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;<span class="keywordtype">void</span> nbrDataPrintNbrVerbose(<a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;</div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;<span class="keywordtype">void</span> nbrDataPrintHeaders(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;</div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;</div>
-<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;uint8 nbrDataCount(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="keywordtype">void</span> nbrDataCreate16(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrL, <span class="keyword">const</span> <span class="keywordtype">char</span>* nameH, <span class="keyword">const</span> <span class="keywordtype">char</span>* nameL, uint16 value);</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="keywordtype">void</span> nbrDataCreate32(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHL, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLL,</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        <span class="keyword">const</span> <span class="keywordtype">char</span>* nameHH, <span class="keyword">const</span> <span class="keywordtype">char</span>* nameHL, <span class="keyword">const</span> <span class="keywordtype">char</span>* nameLH, <span class="keyword">const</span> <span class="keywordtype">char</span>* nameLL, uint32 value);</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;<span class="keywordtype">void</span> nbrDataCreateIR(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr, <span class="keyword">const</span> <span class="keywordtype">char</span>* name, uint8 size, uint8 value);</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="keywordtype">void</span> nbrDataSet(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr, uint8 value);</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;<span class="keywordtype">void</span> nbrDataSet16(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrL, uint16 value);</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;<span class="keywordtype">void</span> nbrDataSet32(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHL, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLL,</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;        uint32 value);</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;uint8 nbrDataGet(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr);</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;uint16 nbrDataGet16(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrL);</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;uint32 nbrDataGet32(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHL, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLL);</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;uint8 nbrDataGetNbr(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr, <a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;uint16 nbrDataGetNbr16(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrL, <a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;uint32 nbrDataGetNbr32(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrHL, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLH, <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtrLL, <a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
 <div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* NBRDATA_H_ */</span><span class="preprocessor"></span></div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;<span class="keyword">const</span> <span class="keywordtype">char</span>* nbrDataGetName(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr);</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;</div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;</div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;uint8 nbrDataGetSize(<a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a>* nbrDataPtr);</div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;<span class="keywordtype">void</span> nbrDataPrintNbr(<a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;</div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;<span class="keywordtype">void</span> nbrDataPrintNbrVerbose(<a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;<span class="keywordtype">void</span> nbrDataPrintHeaders(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;uint8 nbrDataCount(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;</div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* NBRDATA_H_ */</span><span class="preprocessor"></span></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_cbe5c39f52144a7399f14412707c581a.html">IRComms</a></li><li class="navelem"><a class="el" href="nbr_data_8h.html">nbrData.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:45 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:42 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

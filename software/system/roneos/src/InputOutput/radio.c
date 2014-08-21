@@ -289,6 +289,15 @@ void radioIntHandler(void) {
 
 		// Receiving bootloader messages host reprogramming message
 		if ((message.command.type & RADIO_COMMAND_TYPE_MASK) >  RADIO_COMMAND_TYPE_REBOOT) {
+
+
+
+
+			//cprintf("\nAHHHHHHHHHHHHHHHHHHHHH\n");
+
+
+
+
 			// Select to right version
 #if defined(RONE_V9)
 			programTime = RADIO_COMMAND_TYPE_PROGRAM_TIME_V11;
@@ -311,12 +320,15 @@ void radioIntHandler(void) {
 			} else {
 				// If the robot receives non-'Program Time' bootloader commands, traps it
 				if ((message.command.type & RADIO_COMMAND_TYPE_MASK) < RADIO_COMMAND_TYPE_PROGRAM_TIME_V14) {
-					while (1) {
-						blinkyLedSet(1);
-						SysCtlDelay(5000000);
-						blinkyLedSet(0);
-						SysCtlDelay(5000000);
-					}
+//					while (1) {
+//						blinkyLedSet(1);
+//						SysCtlDelay(5000000);
+//						blinkyLedSet(0);
+//						SysCtlDelay(5000000);
+//						cprintf("\nAH\n");
+//					}
+					portEND_SWITCHING_ISR(taskWoken);
+					return;
 				}
 				// Put robot in limbo state if the host program is not meant for this robot (wrong subnet or version)
 				writeBootloaderState(BL_STATE_LIMBO);

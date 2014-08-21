@@ -129,9 +129,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a203cd79c0283c6c6d121c23f02910cd4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a203cd79c0283c6c6d121c23f02910cd4">systemShutdown</a> (void)</td></tr>
 <tr class="memdesc:a203cd79c0283c6c6d121c23f02910cd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Turn off the main power supply.  <a href="#a203cd79c0283c6c6d121c23f02910cd4">More...</a><br/></td></tr>
 <tr class="separator:a203cd79c0283c6c6d121c23f02910cd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07dc47c95d0dd31148886a5dffb3197c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a07dc47c95d0dd31148886a5dffb3197c">systemBootloader</a> (void)</td></tr>
-<tr class="memdesc:a07dc47c95d0dd31148886a5dffb3197c"><td class="mdescLeft">&#160;</td><td class="mdescRight">jumps to boot loader  <a href="#a07dc47c95d0dd31148886a5dffb3197c">More...</a><br/></td></tr>
-<tr class="separator:a07dc47c95d0dd31148886a5dffb3197c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a046eb297b673d5bce6b7b4247ff92e4e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a046eb297b673d5bce6b7b4247ff92e4e">systemPrintMemUsage</a> (void)</td></tr>
 <tr class="memdesc:a046eb297b673d5bce6b7b4247ff92e4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print the heap and stack usage.  <a href="#a046eb297b673d5bce6b7b4247ff92e4e">More...</a><br/></td></tr>
 <tr class="separator:a046eb297b673d5bce6b7b4247ff92e4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -142,11 +139,14 @@ Functions</h2></td></tr>
 <tr class="memdesc:a5ded872cab9c7f1b6e3c01d3f03e0c81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the robot ID.  <a href="#a5ded872cab9c7f1b6e3c01d3f03e0c81">More...</a><br/></td></tr>
 <tr class="separator:a5ded872cab9c7f1b6e3c01d3f03e0c81"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9fcbdfee6184fe652280dcb48e05e720"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a9fcbdfee6184fe652280dcb48e05e720">systemDelay</a> (uint32 delay)</td></tr>
-<tr class="memdesc:a9fcbdfee6184fe652280dcb48e05e720"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is a delay function to be used for simple tests.  <a href="#a9fcbdfee6184fe652280dcb48e05e720">More...</a><br/></td></tr>
+<tr class="memdesc:a9fcbdfee6184fe652280dcb48e05e720"><td class="mdescLeft">&#160;</td><td class="mdescRight">simple counting delay  <a href="#a9fcbdfee6184fe652280dcb48e05e720">More...</a><br/></td></tr>
 <tr class="separator:a9fcbdfee6184fe652280dcb48e05e720"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8a2c2e914b4c73fc39a1bcf9f1a0684"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#af8a2c2e914b4c73fc39a1bcf9f1a0684">setMSP430SPIOperationState</a> (uint8 state)</td></tr>
 <tr class="memdesc:af8a2c2e914b4c73fc39a1bcf9f1a0684"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets Operational state acodring to paramter.  <a href="#af8a2c2e914b4c73fc39a1bcf9f1a0684">More...</a><br/></td></tr>
 <tr class="separator:af8a2c2e914b4c73fc39a1bcf9f1a0684"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16859511f0141ed2f07024bfcadd53d9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a16859511f0141ed2f07024bfcadd53d9">bootOS</a> (uint32 ulStartAddr)</td></tr>
+<tr class="memdesc:a16859511f0141ed2f07024bfcadd53d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Branch to program or bootloader using starting address.  <a href="#a16859511f0141ed2f07024bfcadd53d9">More...</a><br/></td></tr>
+<tr class="separator:a16859511f0141ed2f07024bfcadd53d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac915bc68a10ad3f6254c56bb8034caa4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#ac915bc68a10ad3f6254c56bb8034caa4">systemBatteryVoltageUpdate</a> (uint8 val)</td></tr>
 <tr class="separator:ac915bc68a10ad3f6254c56bb8034caa4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca53788e41b72a939e2663a7a0cea2c8"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#aca53788e41b72a939e2663a7a0cea2c8">systemBatteryVoltageGet</a> (void)</td></tr>
@@ -168,11 +168,27 @@ Functions</h2></td></tr>
 <tr class="memdesc:ac58fa0e34f9bcd05b13e39e83cf681e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the power button value.  <a href="#ac58fa0e34f9bcd05b13e39e83cf681e9">More...</a><br/></td></tr>
 <tr class="separator:ac58fa0e34f9bcd05b13e39e83cf681e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a588cb747ceb834f13d42967364e546bc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a588cb747ceb834f13d42967364e546bc">systemMSPVersionUpdate</a> (uint8 val)</td></tr>
-<tr class="memdesc:a588cb747ceb834f13d42967364e546bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the MSP version. If update is same as prevVal and is not zero it will update mspVersion.  <a href="#a588cb747ceb834f13d42967364e546bc">More...</a><br/></td></tr>
+<tr class="memdesc:a588cb747ceb834f13d42967364e546bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update the MSP hardware and software version. If update is same as prevVal and is not zero it will update mspVersion.  <a href="#a588cb747ceb834f13d42967364e546bc">More...</a><br/></td></tr>
 <tr class="separator:a588cb747ceb834f13d42967364e546bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4197e1b7ec12478cdc6cd241ed511276"><td class="memItemLeft" align="right" valign="top">uint8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a4197e1b7ec12478cdc6cd241ed511276">systemMSPVersionGet</a> (void)</td></tr>
 <tr class="memdesc:a4197e1b7ec12478cdc6cd241ed511276"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the MSP version.  <a href="#a4197e1b7ec12478cdc6cd241ed511276">More...</a><br/></td></tr>
 <tr class="separator:a4197e1b7ec12478cdc6cd241ed511276"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6bae10312696f1e2cbc1e67c1bd7dbfd"><td class="memItemLeft" align="right" valign="top">uint8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a6bae10312696f1e2cbc1e67c1bd7dbfd">systemMSPVersionHardwareGet</a> (void)</td></tr>
+<tr class="memdesc:a6bae10312696f1e2cbc1e67c1bd7dbfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the MSP version.  <a href="#a6bae10312696f1e2cbc1e67c1bd7dbfd">More...</a><br/></td></tr>
+<tr class="separator:a6bae10312696f1e2cbc1e67c1bd7dbfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5cc94c9fa8cb2afad047e27565c75972"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a5cc94c9fa8cb2afad047e27565c75972">writeBootloaderState</a> (unsigned long state)</td></tr>
+<tr class="memdesc:a5cc94c9fa8cb2afad047e27565c75972"><td class="mdescLeft">&#160;</td><td class="mdescRight">Edit the bootloader state words (subnet and bootloader state)  <a href="#a5cc94c9fa8cb2afad047e27565c75972">More...</a><br/></td></tr>
+<tr class="separator:a5cc94c9fa8cb2afad047e27565c75972"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af42721d54e3fd03644dbab2f07701eb8"><td class="memItemLeft" align="right" valign="top">uint32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#af42721d54e3fd03644dbab2f07701eb8">readBootloaderState</a> ()</td></tr>
+<tr class="memdesc:af42721d54e3fd03644dbab2f07701eb8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the bootloader state word.  <a href="#af42721d54e3fd03644dbab2f07701eb8">More...</a><br/></td></tr>
+<tr class="separator:af42721d54e3fd03644dbab2f07701eb8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d23b4dac9cb3f573f143113e3a1c2c3"><td class="memItemLeft" align="right" valign="top">uint32&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#a7d23b4dac9cb3f573f143113e3a1c2c3">readBootloaderSubnet</a> ()</td></tr>
+<tr class="memdesc:a7d23b4dac9cb3f573f143113e3a1c2c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the bootloader state word.  <a href="#a7d23b4dac9cb3f573f143113e3a1c2c3">More...</a><br/></td></tr>
+<tr class="separator:a7d23b4dac9cb3f573f143113e3a1c2c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca7fd69e7cfa35e0c9e046cbe604ce01"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aca7fd69e7cfa35e0c9e046cbe604ce01"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="system_8h.html#aca7fd69e7cfa35e0c9e046cbe604ce01">bootloading</a> ()</td></tr>
+<tr class="memdesc:aca7fd69e7cfa35e0c9e046cbe604ce01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop all interfering subcomponents and branch to bootloader. <br/></td></tr>
+<tr class="separator:aca7fd69e7cfa35e0c9e046cbe604ce01"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><dl class="section since"><dt>Since</dt><dd>Mar 26, 2011 </dd></dl>
@@ -244,6 +260,67 @@ Functions</h2></td></tr>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a16859511f0141ed2f07024bfcadd53d9"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void bootOS </td>
+          <td>(</td>
+          <td class="paramtype">uint32&#160;</td>
+          <td class="paramname"><em>ulStartAddr</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Branch to program or bootloader using starting address. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">ulStartAddr</td><td>Starting address of the main robot program </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="af42721d54e3fd03644dbab2f07701eb8"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32 readBootloaderState </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read the bootloader state word. </p>
+<dl class="section return"><dt>Returns</dt><dd>the state value </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a7d23b4dac9cb3f573f143113e3a1c2c3"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint32 readBootloaderSubnet </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read the bootloader state word. </p>
+<dl class="section return"><dt>Returns</dt><dd>the state value </dd></dl>
 
 </div>
 </div>
@@ -351,25 +428,6 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a07dc47c95d0dd31148886a5dffb3197c"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void systemBootloader </td>
-          <td>(</td>
-          <td class="paramtype">void&#160;</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>jumps to boot loader </p>
-<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
-
-</div>
-</div>
 <a class="anchor" id="a9fcbdfee6184fe652280dcb48e05e720"></a>
 <div class="memitem">
 <div class="memproto">
@@ -384,7 +442,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>This is a delay function to be used for simple tests. </p>
+<p>simple counting delay </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">delay</td><td>the amount of time to delay the system </td></tr>
@@ -474,6 +532,25 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a6bae10312696f1e2cbc1e67c1bd7dbfd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8 systemMSPVersionHardwareGet </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the MSP version. </p>
+<dl class="section return"><dt>Returns</dt><dd>mspVersion the MSP version </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a588cb747ceb834f13d42967364e546bc"></a>
 <div class="memitem">
 <div class="memproto">
@@ -488,7 +565,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Update the MSP version. If update is same as prevVal and is not zero it will update mspVersion. </p>
+<p>Update the MSP hardware and software version. If update is same as prevVal and is not zero it will update mspVersion. </p>
 <dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
 
 </div>
@@ -640,13 +717,38 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="a5cc94c9fa8cb2afad047e27565c75972"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void writeBootloaderState </td>
+          <td>(</td>
+          <td class="paramtype">unsigned long&#160;</td>
+          <td class="paramname"><em>state</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Edit the bootloader state words (subnet and bootloader state) </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">state</td><td>The value of the bootloader state </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_9af51e3826d4f9e80d9103b2de543e84.html">System</a></li><li class="navelem"><a class="el" href="system_8h.html">system.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:46 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:43 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

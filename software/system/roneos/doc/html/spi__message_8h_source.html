@@ -111,54 +111,75 @@ $(document).ready(function(){initNavTree('spi__message_8h_source.html','');});
 <div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="preprocessor">#ifndef MSP430_H_</span></div>
 <div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define MSP430_H_</span></div>
 <div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment">/******** Functions ********/</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment">/******** Defines ********/</span></div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;</div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#ad1d4ce75fb5d7f8f834f1a61035f68f5" title="Initialize MSP430. ">msp430Init</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a156ba8634cefe4902172c6d440d26ae7" title="Enable MSP430 interrupt. ">msp430InterruptEnable</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="preprocessor">#define MSP430_PAYLOAD_LENGTH   22</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define EXPAND0_PAYLOAD_LENGTH  3</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="comment">/******** Functions ********/</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;</div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="comment">/*</span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment"> *  @brief Initialize MSP430</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment"> *</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="comment"> * This is a system function not a user function.  Do not call this from user code.</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="comment"> *</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="comment"> * use 400us interrupt for SPI comms.  This lets us xmit our 24-byte message in 9.6</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="comment"> * ms.  At the end, we use a 32us interrupt for SPI comms.  This is about as fast</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment"> * as the MSP430 can read bytes from the buffer.  This double byte signals the end of the</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="comment"> * message for synchronizing the two processors</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="comment"> * @returns void</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">*/</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="keywordtype">void</span> msp430Init(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a41f9e5cdd923cce0114c2f7560bed839" title="Disable MSP430 interrupt. ">msp430InterruptDisable</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a156ba8634cefe4902172c6d440d26ae7" title="Enable MSP430 interrupt. ">msp430InterruptEnable</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;</div>
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a30ea52904dcf922ff4dc2eb6e66d6c39" title="Build a command for MSP430 message and reset command. ">msp430SystemCommandBuildMessage</a>(uint8* msg);</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#adfa4beb130c4af2997241e4df160da34" title="Set the mode for MSP430 message. ">msp430SetModeBuildMessage</a>(uint8* data);</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a41f9e5cdd923cce0114c2f7560bed839" title="Disable MSP430 interrupt. ">msp430InterruptDisable</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a30ea52904dcf922ff4dc2eb6e66d6c39" title="Build a command for MSP430 message and reset command. ">msp430SystemCommandBuildMessage</a>(uint8* msg);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a63d8555d0e263943eb604052368042a1" title="Set the command to shutdown. ">msp430SystemShutdownCommand</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a63d8555d0e263943eb604052368042a1" title="Set the command to shutdown. ">msp430SystemShutdownCommand</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a5e46817f154c64251245bb85af878abb" title="Set the next command to the MSP430 to be to enter the boot-loader. ">msp430SystemReprogramCommand</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#ab8546d91ff3e9928ced4d1fb21c342b4" title="Set the command to reset. ">msp430SystemResetCommand</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;</div>
 <div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;uint8 <a class="code" href="spi__message_8h.html#af74f24c291638a17854250a707e0e78e">msp430SystemCommandMessageGet</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;uint8 <a class="code" href="spi__message_8h.html#abdfaa745cd63269f4cc81beb7ed69832" title="Get the command. ">msp430SystemGetCommandMessage</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;<span class="keywordtype">boolean</span> <a class="code" href="spi__message_8h.html#a4bf288d31d833a63eddd0cf072676246" title="Gets systemMSP430CommsValid. ">msp430GetCommsValid</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a7fbf2c042ed8f4a6553b97c306b854ba" title="Sets systemMSP430CommsValid. ">msp430SetCommsValid</a>(<span class="keywordtype">boolean</span> newCommsValid);</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;<span class="preprocessor">#ifdef SPI_MODES_ALLOWED</span></div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="keywordtype">void</span> msp430SystemSetModeCommand(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* MSP430_H_ */</span><span class="preprocessor"></span></div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a5e46817f154c64251245bb85af878abb" title="Set the next command to the MSP430 to be to enter the boot-loader. ">msp430SystemReprogramCommand</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;uint8 <a class="code" href="spi__message_8h.html#abdfaa745cd63269f4cc81beb7ed69832" title="Get the command. ">msp430SystemGetCommandMessage</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;<span class="keywordtype">boolean</span> <a class="code" href="spi__message_8h.html#a4bf288d31d833a63eddd0cf072676246" title="Gets systemMSP430CommsValid. ">msp430GetCommsValid</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a7fbf2c042ed8f4a6553b97c306b854ba" title="Sets systemMSP430CommsValid. ">msp430SetCommsValid</a>(<span class="keywordtype">boolean</span> newCommsValid);</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#af37ff9cdf072f17dc083903aa56d2c15" title="Initialize expand0 SPI. ">expand0Init</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#afb87773291b58e5433bdfb7cae930e01" title="Enables expand0 SPI. ">expand0Enable</a>();</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;</div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a203a88c7b8a04ba655858cee24deda89" title="Disables expand0 SPI. ">expand0Disable</a>();</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;</div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#ad92e0319bd5df25e1980d31d8a7033f7" title="Export incoming payload from expand0 board. ">expand0MsgRead</a>(uint8* msg);</div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;</div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;</div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;<span class="keywordtype">void</span> <a class="code" href="spi__message_8h.html#a0a4dd152eba76f7b78af0c060d84af11" title="Prepare the next outgoing message to be sent out. ">expand0MsgWrite</a>(uint8* msg);</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* MSP430_H_ */</span><span class="preprocessor"></span></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_9af51e3826d4f9e80d9103b2de543e84.html">System</a></li><li class="navelem"><a class="el" href="spi__message_8h.html">spi_message.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:45 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:43 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

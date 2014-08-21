@@ -27,7 +27,7 @@
 
 // host radio message
 #define RPRINTF_MSG_PACKET_REQ_BITS_IDX 		0
-#define RPRINTF_MSG_PACKET_HOST_IDX		 		1
+#define RPRINTF_MSG_PACKET_DATA_IDX	 			1
 
 // remote radio message
 #define RPRINTF_MSG_BUFFER_LENGTH_IDX 			0
@@ -45,8 +45,9 @@ static osSemaphoreHandle rprintfWriteMutex;	// Local write buffer mutex
 static osSemaphoreHandle rprintfSendMutex;		// Radio send buffer mutex
 
 static char rprintfWriteBuffer[RPRINTF_TEXT_STRING_SIZE];	// Local write buffer
-static char rprintfSendBuffer[RPRINTF_TEXT_STRING_SIZE + 1];	// Radio send buffer
-static char rprintfRecvBuffer[RPRINTF_TEXT_STRING_SIZE + 1];	// Radio receive buffer
+static char rprintfSendBuffer[RPRINTF_TEXT_STRING_SIZE];	// Radio send buffer
+static char rprintfRecvBuffer[RPRINTF_TEXT_STRING_SIZE];	// Radio receive buffer
+static char rprintfTempBuffer[RPRINTF_TEXT_STRING_SIZE];
 
 static int rprintfWriteBufferLength;	// Length of string in write buffer
 static int rprintfSendBufferLength;		// Length of string in send buffer
@@ -73,7 +74,9 @@ static uint8 rprintfMessageID;
  *	@returns void
  */
 void rprintf(const char *format, ...) {
-	int n, maxLength;
+	int32 i, potentialChars;
+	char tempBuffer[RPRINTF_TEXT_STRING_SIZE];
+
 	va_list arguments;
 
 	// If not initialized, return out
@@ -81,30 +84,35 @@ void rprintf(const char *format, ...) {
 		return;
 	}
 
-	va_start(arguments, format);
-
-	// Maximum length of a string that can still be inserted in the buffer
-	maxLength = RPRINTF_TEXT_STRING_SIZE - rprintfWriteBufferLength;
+	cprintf("\nrprintf!\n");
 
 	// Safely lock the write buffer
 	osSemaphoreTake(rprintfWriteMutex, portMAX_DELAY);
 
+	va_start(arguments, format);
+
 	// Write string with argument formatting into write buffer
-	n = vsnprintf((char *) rprintfWriteBuffer + rprintfWriteBufferLength,
-		maxLength, format, arguments);
+	potentialChars = vsnprintf(tempBuffer, RPRINTF_TEXT_STRING_SIZE - 1, format, arguments);
 
 	// Check for overflow
-	rprintfWriteBufferLength += n;
-	if (rprintfWriteBufferLength > RPRINTF_TEXT_STRING_SIZE) {
-		error("nrprintf buffer overflow");
-		rprintfWriteBufferLength = RPRINTF_TEXT_STRING_SIZE;
+	if (potentialChars >= (RPRINTF_TEXT_STRING_SIZE - 1)) {
+	} else {
+		for (i = 0; i < potentialChars; i++) {
+			if (rprintfWriteBufferLength < RPRINTF_TEXT_STRING_SIZE - 1) {
+				rprintfWriteBuffer[rprintfWriteBufferLength] = tempBuffer[i];
+				rprintfWriteBufferLength++;
+			} else {
+				break;
+			}
+		}
+		rprintfWriteBuffer[rprintfWriteBufferLength] = '\0';
 	}
-
-	// Unlock the write buffer
-	osSemaphoreGive(rprintfWriteMutex);
 
 	// Clean up arguments.
 	va_end(arguments);
+
+	// Unlock the write buffer
+	osSemaphoreGive(rprintfWriteMutex);
 }
 
 /*
@@ -115,29 +123,37 @@ void rprintf(const char *format, ...) {
  *	@returns void
  */
 void rprintfStringOutput(const char *buffer, int length, int robotID) {
-	uint8 i;
-	char *bufp;
-	char bufferCopy[length + 1];
-
-	strncpy(bufferCopy, buffer, length);
-
-	bufp = bufferCopy;
-	// Iterate through each string line and output with prefix
-	for (i = 0; i <= length; i++) {
-		if (bufferCopy[i] == '\n') {
-			bufferCopy[i] = '\0';
-		}
-		if (bufferCopy[i] == '\0') {
-			if (bufp != &bufferCopy[i]) {
-				// rtd,ID Message...
-				cprintf("rtd,%d %s\n", robotID, bufp);
-				bufp = &bufferCopy[++i];
-			}
-		}
-	}
+	cprintf("rtd,%d %s", robotID, buffer);
+//	uint8 i;
+//	char *bufp;
+//	char bufferCopy[length + 1];
+//
+//	strncpy(bufferCopy, buffer, length + 1);
+//
+//	bufp = bufferCopy;
+//	cprintf("rtd,%d %s", robotID, bufp);
+//
+//	bufp = bufferCopy;
+//	// Iterate through each string line and output with prefix
+//	for (i = 0; i <= length; i++) {
+//		if (bufferCopy[i] == '\n') {
+//			bufferCopy[i] = '\0';
+//		}
+//		if (bufferCopy[i] == '\0') {
+//			if (bufp != &bufferCopy[i]) {
+//				// rtd,ID Message...
+//				cprintf("rtd,%d %s\n", robotID, bufp);
+//				bufp = &bufferCopy[++i];
+//			}
+//		}
+//	}
 }
 
-
+/*
+ *	@brief Flushes the rprintf write buffer to be sent out
+ *
+ *	@returns void
+ */
 void rprintfFlush() {
 	// Safely lock the write buffer
 	osSemaphoreTake(rprintfWriteMutex, portMAX_DELAY);
@@ -147,8 +163,8 @@ void rprintfFlush() {
 	// Print over serial the buffer that will be sent out
 	rprintfStringOutput(rprintfWriteBuffer, rprintfWriteBufferLength, roneID);
 
-	// Copy the buffer over, plus one to include the null terminator
-	memcpy(rprintfSendBuffer, rprintfWriteBuffer, rprintfWriteBufferLength);
+	// Copy the buffer over
+	strncpy(rprintfSendBuffer, rprintfWriteBuffer, RPRINTF_TEXT_STRING_SIZE);
 
 	// Set the new buffer lengths
 	rprintfSendBufferLength = rprintfWriteBufferLength;
@@ -227,13 +243,14 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 	packetNumMax = 0;
 	messageID = 0;
 	radioMsg.command.destinationID = remoteRobotID;
-	radioMsg.command.data[RPRINTF_MSG_PACKET_HOST_IDX] = roneID;
 
 	// Query the selected robot.
 	length = 0;
 	while ((requestAttempts++ < RPRINTF_HOST_REQUESTS_MAX) && (!queryComplete)) {
 		// Send an initial rprintf request to the remote robot.
 		radioMsg.command.data[RPRINTF_MSG_PACKET_REQ_BITS_IDX] = msgBitsRequest;
+		radioMsg.command.data[RPRINTF_MSG_PACKET_DATA_IDX] = messageID;
+
 		radioCommandXmit(&radioCmdRprintfHostToRemote, remoteRobotID, &radioMsg);
 
 		// Wait for the remote robot to respond.
@@ -368,17 +385,20 @@ static void rprintfHostTask(void* parameters) {
  * msgPtr is the pointer to the radio message containing
  * the callback request.
  */
-static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
-	uint8 remoteHostID;
+void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	uint8 requestedBits, requestedBitsToXmit;
 	uint8 packetNum, packetNumMax;
+	uint8 bufferLength;
+	uint8 requestedMessageID;
 	RadioMessage radioResponseMsg;
+
+	osSemaphoreTake(rprintfSendMutex, portMAX_DELAY);
+
+	cprintf("\ncallback!\n");
 
 	// We are remote. Respond to the host with the contents of the buffer.
 	requestedBits = msgPtr->command.data[RPRINTF_MSG_PACKET_REQ_BITS_IDX];
-
-	remoteHostID = msgPtr->command.data[RPRINTF_MSG_PACKET_HOST_IDX];
-	radioResponseMsg.command.destinationID = remoteHostID;
+	requestedMessageID = msgPtr->command.data[RPRINTF_MSG_PACKET_DATA_IDX];
 
 	requestedBitsToXmit = requestedBits;
 	rprintfRemoteRequestTime = osTaskGetTickCount();
@@ -387,17 +407,21 @@ static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 		requestedBitsToXmit = 0xFF;
 	}
 
-	// Lock the radio buffer to check if there is something to transmit.
-	osSemaphoreTake(rprintfSendMutex, portMAX_DELAY);
-
 	// If max retransmits reached, get rid of buffer.
-	if (rprintfSendNumTransmitsRemaining-- == 0) {
-		rprintfSendBufferLength = 0;
+	if (rprintfSendNumTransmitsRemaining-- > 0) {
+		bufferLength = (uint8) strlen(rprintfSendBuffer);
+		strncpy(rprintfTempBuffer, rprintfSendBuffer, RPRINTF_TEXT_STRING_SIZE);
+	} else {
+		bufferLength = 0;
+	}
+
+	if (!(requestedMessageID == 0 || requestedMessageID == rprintfMessageID)) {
+		bufferLength = 0;
 	}
 
 	// Build the response and request a retransmit if needed.
-	packetNumMax = computeNumPackets(rprintfSendBufferLength);
-	radioResponseMsg.command.data[RPRINTF_MSG_BUFFER_LENGTH_IDX] = rprintfSendBufferLength;
+	packetNumMax = computeNumPackets(bufferLength);
+	radioResponseMsg.command.data[RPRINTF_MSG_BUFFER_LENGTH_IDX] = bufferLength;
 
 	// Do we have anything to transmit at all?
 	if (packetNumMax == 0) {
@@ -405,20 +429,23 @@ static void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 		radioCommandXmit(&radioCmdRprintfRemoteToHost, ROBOT_ID_ALL, &radioResponseMsg);
 	}
 
+	uint16 packetIdx;
+	uint16 msgIdx;
+	char c;
 	// Transmit the message.
 	for (packetNum = 0; packetNum < packetNumMax; packetNum++) {
 		if (requestedBitsToXmit & 0x01) {
 			radioResponseMsg.command.data[RPRINTF_MSG_PACKET_IDX] = packetNum;
 			radioResponseMsg.command.data[RPRINTF_MSG_DATA_IDX] = rprintfMessageID;
 
-			uint16 packetIdx;
-			uint16 msgIdx = packetNum * RPRINTF_MSG_DATA_PAYLOAD_LENGTH;
-			char c;
+			msgIdx = packetNum * RPRINTF_MSG_DATA_PAYLOAD_LENGTH;
+
 			for (packetIdx = 0; packetIdx < RPRINTF_MSG_DATA_PAYLOAD_LENGTH; packetIdx++) {
-				if (msgIdx < rprintfSendBufferLength) {
-					c = rprintfSendBuffer[msgIdx++];
+				if (msgIdx < bufferLength) {
+					c = rprintfTempBuffer[msgIdx];
+					msgIdx = msgIdx + 1;
 				} else {
-					c = 0;
+					c = '\0';
 				}
 				radioResponseMsg.command.data[RPRINTF_MSG_DATA_PAYLOAD_START + packetIdx] = c;
 			}

@@ -117,9 +117,6 @@ $(document).ready(function(){initNavTree('spi__message_8h.html','');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ad1d4ce75fb5d7f8f834f1a61035f68f5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#ad1d4ce75fb5d7f8f834f1a61035f68f5">msp430Init</a> (void)</td></tr>
-<tr class="memdesc:ad1d4ce75fb5d7f8f834f1a61035f68f5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize MSP430.  <a href="#ad1d4ce75fb5d7f8f834f1a61035f68f5">More...</a><br/></td></tr>
-<tr class="separator:ad1d4ce75fb5d7f8f834f1a61035f68f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a156ba8634cefe4902172c6d440d26ae7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#a156ba8634cefe4902172c6d440d26ae7">msp430InterruptEnable</a> (void)</td></tr>
 <tr class="memdesc:a156ba8634cefe4902172c6d440d26ae7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable MSP430 interrupt.  <a href="#a156ba8634cefe4902172c6d440d26ae7">More...</a><br/></td></tr>
 <tr class="separator:a156ba8634cefe4902172c6d440d26ae7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -129,17 +126,15 @@ Functions</h2></td></tr>
 <tr class="memitem:a30ea52904dcf922ff4dc2eb6e66d6c39"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#a30ea52904dcf922ff4dc2eb6e66d6c39">msp430SystemCommandBuildMessage</a> (uint8 *msg)</td></tr>
 <tr class="memdesc:a30ea52904dcf922ff4dc2eb6e66d6c39"><td class="mdescLeft">&#160;</td><td class="mdescRight">Build a command for MSP430 message and reset command.  <a href="#a30ea52904dcf922ff4dc2eb6e66d6c39">More...</a><br/></td></tr>
 <tr class="separator:a30ea52904dcf922ff4dc2eb6e66d6c39"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adfa4beb130c4af2997241e4df160da34"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#adfa4beb130c4af2997241e4df160da34">msp430SetModeBuildMessage</a> (uint8 *data)</td></tr>
-<tr class="memdesc:adfa4beb130c4af2997241e4df160da34"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the mode for MSP430 message.  <a href="#adfa4beb130c4af2997241e4df160da34">More...</a><br/></td></tr>
-<tr class="separator:adfa4beb130c4af2997241e4df160da34"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a63d8555d0e263943eb604052368042a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#a63d8555d0e263943eb604052368042a1">msp430SystemShutdownCommand</a> (void)</td></tr>
 <tr class="memdesc:a63d8555d0e263943eb604052368042a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the command to shutdown.  <a href="#a63d8555d0e263943eb604052368042a1">More...</a><br/></td></tr>
 <tr class="separator:a63d8555d0e263943eb604052368042a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8546d91ff3e9928ced4d1fb21c342b4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#ab8546d91ff3e9928ced4d1fb21c342b4">msp430SystemResetCommand</a> (void)</td></tr>
+<tr class="memdesc:ab8546d91ff3e9928ced4d1fb21c342b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the command to reset.  <a href="#ab8546d91ff3e9928ced4d1fb21c342b4">More...</a><br/></td></tr>
+<tr class="separator:ab8546d91ff3e9928ced4d1fb21c342b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e46817f154c64251245bb85af878abb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#a5e46817f154c64251245bb85af878abb">msp430SystemReprogramCommand</a> (void)</td></tr>
 <tr class="memdesc:a5e46817f154c64251245bb85af878abb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the next command to the MSP430 to be to enter the boot-loader.  <a href="#a5e46817f154c64251245bb85af878abb">More...</a><br/></td></tr>
 <tr class="separator:a5e46817f154c64251245bb85af878abb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af74f24c291638a17854250a707e0e78e"><td class="memItemLeft" align="right" valign="top">uint8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#af74f24c291638a17854250a707e0e78e">msp430SystemCommandMessageGet</a> (void)</td></tr>
-<tr class="separator:af74f24c291638a17854250a707e0e78e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdfaa745cd63269f4cc81beb7ed69832"><td class="memItemLeft" align="right" valign="top">uint8&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#abdfaa745cd63269f4cc81beb7ed69832">msp430SystemGetCommandMessage</a> (void)</td></tr>
 <tr class="memdesc:abdfaa745cd63269f4cc81beb7ed69832"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the command.  <a href="#abdfaa745cd63269f4cc81beb7ed69832">More...</a><br/></td></tr>
 <tr class="separator:abdfaa745cd63269f4cc81beb7ed69832"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -149,12 +144,132 @@ Functions</h2></td></tr>
 <tr class="memitem:a7fbf2c042ed8f4a6553b97c306b854ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#a7fbf2c042ed8f4a6553b97c306b854ba">msp430SetCommsValid</a> (boolean newCommsValid)</td></tr>
 <tr class="memdesc:a7fbf2c042ed8f4a6553b97c306b854ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets systemMSP430CommsValid.  <a href="#a7fbf2c042ed8f4a6553b97c306b854ba">More...</a><br/></td></tr>
 <tr class="separator:a7fbf2c042ed8f4a6553b97c306b854ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af37ff9cdf072f17dc083903aa56d2c15"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#af37ff9cdf072f17dc083903aa56d2c15">expand0Init</a> (void)</td></tr>
+<tr class="memdesc:af37ff9cdf072f17dc083903aa56d2c15"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize expand0 SPI.  <a href="#af37ff9cdf072f17dc083903aa56d2c15">More...</a><br/></td></tr>
+<tr class="separator:af37ff9cdf072f17dc083903aa56d2c15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb87773291b58e5433bdfb7cae930e01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#afb87773291b58e5433bdfb7cae930e01">expand0Enable</a> ()</td></tr>
+<tr class="memdesc:afb87773291b58e5433bdfb7cae930e01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables expand0 SPI.  <a href="#afb87773291b58e5433bdfb7cae930e01">More...</a><br/></td></tr>
+<tr class="separator:afb87773291b58e5433bdfb7cae930e01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a203a88c7b8a04ba655858cee24deda89"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#a203a88c7b8a04ba655858cee24deda89">expand0Disable</a> ()</td></tr>
+<tr class="memdesc:a203a88c7b8a04ba655858cee24deda89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disables expand0 SPI.  <a href="#a203a88c7b8a04ba655858cee24deda89">More...</a><br/></td></tr>
+<tr class="separator:a203a88c7b8a04ba655858cee24deda89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad92e0319bd5df25e1980d31d8a7033f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#ad92e0319bd5df25e1980d31d8a7033f7">expand0MsgRead</a> (uint8 *msg)</td></tr>
+<tr class="memdesc:ad92e0319bd5df25e1980d31d8a7033f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Export incoming payload from expand0 board.  <a href="#ad92e0319bd5df25e1980d31d8a7033f7">More...</a><br/></td></tr>
+<tr class="separator:ad92e0319bd5df25e1980d31d8a7033f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a4dd152eba76f7b78af0c060d84af11"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="spi__message_8h.html#a0a4dd152eba76f7b78af0c060d84af11">expand0MsgWrite</a> (uint8 *msg)</td></tr>
+<tr class="memdesc:a0a4dd152eba76f7b78af0c060d84af11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare the next outgoing message to be sent out.  <a href="#a0a4dd152eba76f7b78af0c060d84af11">More...</a><br/></td></tr>
+<tr class="separator:a0a4dd152eba76f7b78af0c060d84af11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>SPI commands for the MSP430. </p>
 <dl class="section since"><dt>Since</dt><dd>Apr 2, 2012 </dd></dl>
 <dl class="section author"><dt>Author</dt><dd>James McLurkin </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="a203a88c7b8a04ba655858cee24deda89"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void expand0Disable </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Disables expand0 SPI. </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="afb87773291b58e5433bdfb7cae930e01"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void expand0Enable </td>
+          <td>(</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enables expand0 SPI. </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="af37ff9cdf072f17dc083903aa56d2c15"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void expand0Init </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize expand0 SPI. </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="ad92e0319bd5df25e1980d31d8a7033f7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void expand0MsgRead </td>
+          <td>(</td>
+          <td class="paramtype">uint8 *&#160;</td>
+          <td class="paramname"><em>msg</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Export incoming payload from expand0 board. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">msg</td><td>Destination for the message export (no code and checksum, length = EXPAND0_PAYLOAD_LENGTH) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a0a4dd152eba76f7b78af0c060d84af11"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void expand0MsgWrite </td>
+          <td>(</td>
+          <td class="paramtype">uint8 *&#160;</td>
+          <td class="paramname"><em>msg</em>)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Prepare the next outgoing message to be sent out. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">msg</td><td>Source for the message export (no code and checksum, length = EXPAND0_PAYLOAD_LENGTH) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a4bf288d31d833a63eddd0cf072676246"></a>
 <div class="memitem">
 <div class="memproto">
@@ -171,26 +286,6 @@ Functions</h2></td></tr>
 
 <p>Gets systemMSP430CommsValid. </p>
 <dl class="section return"><dt>Returns</dt><dd>systemMSP430CommsValid </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ad1d4ce75fb5d7f8f834f1a61035f68f5"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void msp430Init </td>
-          <td>(</td>
-          <td class="paramtype">void&#160;</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Initialize MSP430. </p>
-<p>use 400us interrupt for SPI comms. This lets us xmit our 24-byte message in 9.6 ms. At the end, we use a 32us interrupt for SPI comms. This is about as fast as the MSP430 can read bytes from the buffer. This double byte signals the end of the message for synchronizing the two processors </p>
-<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
 
 </div>
 </div>
@@ -249,32 +344,7 @@ Functions</h2></td></tr>
 <p>Sets systemMSP430CommsValid. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">newCommsValid</td><td>- new boolean value to set systemMSP430CommsValid </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="adfa4beb130c4af2997241e4df160da34"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void msp430SetModeBuildMessage </td>
-          <td>(</td>
-          <td class="paramtype">uint8 *&#160;</td>
-          <td class="paramname"><em>data</em>)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Set the mode for MSP430 message. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">data</td><td>-sets to MSP430_MODE_C </td></tr>
+    <tr><td class="paramname">newCommsValid</td><td>new boolean value to set systemMSP430CommsValid </td></tr>
   </table>
   </dd>
 </dl>
@@ -298,23 +368,6 @@ Functions</h2></td></tr>
 
 <p>Build a command for MSP430 message and reset command. </p>
 <p>Used to build the command for the actual command sent to the MSP430 Reset the command to normal mode </p>
-<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="af74f24c291638a17854250a707e0e78e"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint8 msp430SystemCommandMessageGet </td>
-          <td>(</td>
-          <td class="paramtype">void&#160;</td>
-          <td class="paramname">)</td><td></td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
 <dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
 
 </div>
@@ -357,6 +410,25 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ab8546d91ff3e9928ced4d1fb21c342b4"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void msp430SystemResetCommand </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname">)</td><td></td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the command to reset. </p>
+<dl class="section return"><dt>Returns</dt><dd>void </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a63d8555d0e263943eb604052368042a1"></a>
 <div class="memitem">
 <div class="memproto">
@@ -382,7 +454,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_9af51e3826d4f9e80d9103b2de543e84.html">System</a></li><li class="navelem"><a class="el" href="spi__message_8h.html">spi_message.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:46 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:43 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

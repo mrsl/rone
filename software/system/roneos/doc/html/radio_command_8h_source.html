@@ -112,72 +112,101 @@ $(document).ready(function(){initNavTree('radio_command_8h_source.html','');});
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIOCMD_H_</span></div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment">/******** Defines ********/</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">/******** Structs ********/</span></div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="comment">//TODO Add field documentation</span></div>
-<div class="line"><a name="l00020"></a><span class="lineno"><a class="code" href="struct_radio_cmd.html">   20</a></span>&#160;<span class="comment"></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a> {</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;        uint8 type;                     </div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;        <span class="keyword">const</span> <span class="keywordtype">char</span>* name;       </div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;        void (*funcPtr)(<span class="keyword">struct </span><a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message);   </div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;        osQueueHandle messageQueue;     </div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;        uint32 lastTimeStamp;           </div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;        <span class="keywordtype">void</span>* externalDataPtr;          </div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;        <span class="keyword">struct </span><a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* nextPtr;       </div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;} <a class="code" href="radio_command_8h.html#afc1739f93369b45c4f9555ca16c9297a" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>;</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="comment">/******** Functions ********/</span></div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="keywordtype">void</span> radioCommandInit(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;<span class="keywordtype">void</span> radioCommandAddCallback(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <span class="keyword">const</span> <span class="keywordtype">char</span>* name, <span class="keywordtype">void</span>(*funcPtr)(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message));</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;<span class="keywordtype">void</span> radioCommandAddQueue(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <span class="keyword">const</span> <span class="keywordtype">char</span>* name, uint8 messageQueueSize);</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;<span class="keywordtype">void</span> radioCommandAdd(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr,</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;                <span class="keyword">const</span> <span class="keywordtype">char</span>* name,</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;                <span class="keywordtype">void</span>(*funcPtr)(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message),</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;                uint8 messageQueueSize,</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;                <span class="keywordtype">void</span>* externalDataPtr);</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="keywordtype">boolean</span> radioCommandReceive(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr, uint32 maxDelay);</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;<span class="keywordtype">boolean</span> radioCommandReceiveNonBlocking(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="keywordtype">void</span> radioCommandXmit(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, uint8 destinationID, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message);</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;</div>
-<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;<span class="keywordtype">boolean</span> radioCommandTimeout(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, uint32 timeout);</div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;</div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;uint8 radioCommandGetType(<a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment">// Command masks</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor">#define RADIO_COMMAND_DEFAULT_SUBNET    RADIO_SUBNET_1</span></div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_MASK                 0x3F</span></div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_SUBNET_MASK               0x03</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_SUBNET_SHIFTS             6</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="comment">// Bootloader commands</span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="preprocessor">#define RADIO_BOOTLOADER_COMMANDS                               10</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V11             0x3F</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V12             0x3E</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V13             0x3D</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_PROGRAM_TIME_V14             0x3C</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_CRC_TABLE                    0x3B</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_QUERY_REQUEST                0x3A</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_TYPE_SEGMENTS                             0x39</span></div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="preprocessor"></span><span class="comment">// ...</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="preprocessor">#define RADIO_COMMAND_TYPE_REBOOT                               0x36</span></div>
+<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="comment">/******** Structs ********/</span></div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="comment">//TODO Add field documentation</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno"><a class="code" href="struct_radio_cmd.html">   38</a></span>&#160;<span class="comment"></span><span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a> {</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        uint8 type;                     </div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;        <span class="keyword">const</span> <span class="keywordtype">char</span>* name;       </div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;        void (*funcPtr)(<span class="keyword">struct </span><a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message);   </div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;        osQueueHandle messageQueue;     </div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;        uint32 lastTimeStamp;           </div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        <span class="keywordtype">void</span>* externalDataPtr;          </div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;        <span class="keyword">struct </span><a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* nextPtr;       </div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;} <a class="code" href="radio_command_8h.html#afc1739f93369b45c4f9555ca16c9297a" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>;</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;<span class="comment">/******** Functions ********/</span></div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;<span class="keywordtype">void</span> radioCommandInit(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;<span class="keywordtype">void</span> radioCommandAddCallback(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <span class="keyword">const</span> <span class="keywordtype">char</span>* name, <span class="keywordtype">void</span>(*funcPtr)(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message));</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;<span class="keywordtype">void</span> radioCommandAddQueue(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <span class="keyword">const</span> <span class="keywordtype">char</span>* name, uint8 messageQueueSize);</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<span class="keywordtype">void</span> radioCommandAdd(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr,</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;                <span class="keyword">const</span> <span class="keywordtype">char</span>* name,</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;                <span class="keywordtype">void</span>(*funcPtr)(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message),</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;                uint8 messageQueueSize,</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;                <span class="keywordtype">void</span>* externalDataPtr);</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;<span class="keywordtype">boolean</span> radioCommandReceive(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr, uint32 maxDelay);</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;<span class="keywordtype">boolean</span> radioCommandReceiveNonBlocking(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
+<div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;<span class="keywordtype">void</span> radioCommandXmit(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, uint8 destinationID, <a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* message);</div>
 <div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;uint8 radioCommandGetSubnet(<a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;</div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;<span class="keywordtype">void</span> radioCommandSetSubnet(uint8 subnet);</div>
-<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;<span class="keywordtype">char</span>* radioCommandGetDataPtr(<a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;</div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;</div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;<span class="comment">//TODO: implement, delete, or debug?</span></div>
-<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;<span class="comment"></span><span class="comment">// * @brief Get radio command destination ID.</span></div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;<span class="comment">// *</span></div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;<span class="comment">// * @param messagePtr will contain the next message for the given radio command group</span></div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;<span class="comment">// * @returns radio command message destination ID</span></div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;<span class="comment">// */</span></div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;<span class="comment">//uint8 radioCommandGetDestID(RadioMessageRaw* messagePtr);</span></div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;<span class="comment">//void radioCommandXmit_internal(RadioCmd* radioCmdPtr, uint8 destinationID, RadioMessageRaw* radioMsgPtr);</span></div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;<span class="comment">//boolean radioCommandReceive_internal(RadioCmd* radioCmdPtr, RadioMessageRaw* messagePtr, uint32 maxDelay);</span></div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;<span class="comment">//boolean radioCommandReceiveNonBlocking_internal(RadioCmd* radioCmdPtr, RadioMessageRaw* messagePtr);</span></div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* RADIOCMD_H_ */</span><span class="preprocessor"></span></div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;<span class="keywordtype">boolean</span> radioCommandTimeout(<a class="code" href="struct_radio_cmd.html" title="A radio command is a linked list of the radio commands received. ">RadioCmd</a>* radioCmdPtr, uint32 timeout);</div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;</div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;uint8 radioCommandGetType(<a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;uint8 radioCommandGetSubnet(<a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;uint8 radioCommandGetDestinationID(<a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;</div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;<span class="keywordtype">void</span> radioCommandSetSubnet(uint8 subnet);</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;<span class="keywordtype">char</span>* radioCommandGetDataPtr(<a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a>* messagePtr);</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;<span class="comment">/*</span></div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;<span class="comment"> * @brief Get the local subnet</span></div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;<span class="comment"> *</span></div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;<span class="comment"> * @returns subnet for the current robot.</span></div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;<span class="comment"> */</span></div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;uint8 radioCommandGetLocalSubnet();</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;<span class="comment">//TODO: implement, delete, or debug?</span></div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;<span class="comment"></span><span class="comment">// * @brief Get radio command destination ID.</span></div>
+<div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;<span class="comment">// *</span></div>
+<div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;<span class="comment">// * @param messagePtr will contain the next message for the given radio command group</span></div>
+<div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;<span class="comment">// * @returns radio command message destination ID</span></div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="comment">// */</span></div>
+<div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;<span class="comment">//uint8 radioCommandGetDestID(RadioMessageRaw* messagePtr);</span></div>
+<div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;<span class="comment">//void radioCommandXmit_internal(RadioCmd* radioCmdPtr, uint8 destinationID, RadioMessageRaw* radioMsgPtr);</span></div>
+<div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;<span class="comment">//boolean radioCommandReceive_internal(RadioCmd* radioCmdPtr, RadioMessageRaw* messagePtr, uint32 maxDelay);</span></div>
+<div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;<span class="comment">//boolean radioCommandReceiveNonBlocking_internal(RadioCmd* radioCmdPtr, RadioMessageRaw* messagePtr);</span></div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;</div>
+<div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* RADIOCMD_H_ */</span><span class="preprocessor"></span></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_77d854acc838a1a67c64a2c9ea49ff7a.html">InputOutput</a></li><li class="navelem"><a class="el" href="radio_command_8h.html">radioCommand.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:45 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:42 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

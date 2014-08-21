@@ -120,17 +120,17 @@ $(document).ready(function(){initNavTree('neighbors_internal_8h_source.html','')
 <div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="keyword">extern</span> <a class="code" href="struct_nbr_data.html" title="Linked list of data on messages. ">NbrData</a> nbrMsgID;</div>
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;</div>
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment">/******** Internal Neighbor System Functions ********/</span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="keywordtype">void</span> neighborsTask(<span class="keywordtype">void</span>* parameters);</div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;</div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;uint8 neighborMessageUnpackID(uint8* message);</div>
-<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="keywordtype">void</span> nbrDataIRMessagePack(<a class="code" href="struct_i_r_comms_message.html" title="Message received over IR ring (contains the sending transmitter ID and receiving ID) ...">irCommsMessage</a> *irMessage);</div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="keywordtype">void</span> nbrDataIRMessageUnpack(<a class="code" href="struct_i_r_comms_message.html" title="Message received over IR ring (contains the sending transmitter ID and receiving ID) ...">irCommsMessage</a> *irMessage, <a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;</div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;uint8 neighborMessageUnpackID(uint8* message);</div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="keywordtype">void</span> nbrDataIRMessagePack(<a class="code" href="struct_i_r_comms_message.html" title="Message received over IR ring (contains the sending transmitter ID and receiving ID) ...">IRCommsMessage</a> *irMessage);</div>
+<div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="keywordtype">void</span> nbrDataIRMessageUnpack(<a class="code" href="struct_i_r_comms_message.html" title="Message received over IR ring (contains the sending transmitter ID and receiving ID) ...">IRCommsMessage</a> *irMessage, <a class="code" href="struct_nbr.html" title="Information stored on a network neighbor. ">Nbr</a>* nbrPtr);</div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;</div>
 <div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;</div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;</div>
-<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="keywordtype">void</span> nbrMsgRadioAddNbr(uint8 ID);</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="keywordtype">void</span> nbrMsgRadioRemoveNbr(uint8 ID);</div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="keywordtype">void</span> nbrMsgRadioXmit(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;</div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="keywordtype">void</span> nbrMsgRadioAddNbr(uint8 ID);</div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="keywordtype">void</span> nbrMsgRadioRemoveNbr(uint8 ID);</div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="keywordtype">void</span> nbrMsgRadioXmit(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;</div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="keywordtype">void</span> irCommsBeaconHighPower(<span class="keywordtype">boolean</span> highPower);</div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* NEIGHBORSINTERNAL_H_ */</span><span class="preprocessor"></span></div>
 </div><!-- fragment --></div><!-- contents -->
@@ -139,7 +139,7 @@ $(document).ready(function(){initNavTree('neighbors_internal_8h_source.html','')
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_cbe5c39f52144a7399f14412707c581a.html">IRComms</a></li><li class="navelem"><b>neighborsInternal.h</b></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:45 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:42 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

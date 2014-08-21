@@ -4,6 +4,7 @@ var searchData=
   ['radiocommandaddcallback',['radioCommandAddCallback',['../radio_command_8h.html#ab703c07b4ae7ae844bb723e333400ac3',1,'radioCommand.c']]],
   ['radiocommandaddqueue',['radioCommandAddQueue',['../radio_command_8h.html#a4c1cc48a1a9e8fad101ea6f79a251777',1,'radioCommand.c']]],
   ['radiocommandgetdataptr',['radioCommandGetDataPtr',['../radio_command_8h.html#a1ef2a09996808888d640b63e2a46ca03',1,'radioCommand.c']]],
+  ['radiocommandgetdestinationid',['radioCommandGetDestinationID',['../radio_command_8h.html#aed0d094ccf323de08bea0c67de804111',1,'radioCommand.c']]],
   ['radiocommandgetsubnet',['radioCommandGetSubnet',['../radio_command_8h.html#aa08ed6de5c23bcd246e0d39389a3396a',1,'radioCommand.c']]],
   ['radiocommandgettype',['radioCommandGetType',['../radio_command_8h.html#ace843ebcf05e0a5344f419c2004450b8',1,'radioCommand.c']]],
   ['radiocommandinit',['radioCommandInit',['../radio_command_8h.html#a46e13bb7cb7fe6ae5d643d0843dfd6e8',1,'radioCommand.c']]],
@@ -15,10 +16,14 @@ var searchData=
   ['radioinit',['radioInit',['../radio_8h.html#a639486221f2c1a1429c5cb12350498a4',1,'radio.c']]],
   ['radiointdisable',['radioIntDisable',['../radio_8h.html#a1defc90e00163c80d924376bb176a470',1,'radio.c']]],
   ['radiointenable',['radioIntEnable',['../radio_8h.html#a92c2aa2bf5b435eb419f70df375a52c0',1,'radio.c']]],
+  ['readbootloaderstate',['readBootloaderState',['../system_8h.html#af42721d54e3fd03644dbab2f07701eb8',1,'system.c']]],
+  ['readbootloadersubnet',['readBootloaderSubnet',['../system_8h.html#a7d23b4dac9cb3f573f143113e3a1c2c3',1,'system.c']]],
   ['rprintf',['rprintf',['../rprintf_8h.html#a0f043f563a3f6ae8f6764882edd65ea8',1,'rprintf.c']]],
+  ['rprintfenablerobot',['rprintfEnableRobot',['../rprintf_8h.html#ada510b6fb9f0e437bbc5d6bc415538e6',1,'rprintf.c']]],
   ['rprintfgetactiverobotsnum',['rprintfGetActiveRobotsNum',['../rprintf_8h.html#a93ef5a867e2f2587966166416c497278',1,'rprintf.c']]],
   ['rprintfgettotalbytesreceived',['rprintfGetTotalBytesReceived',['../rprintf_8h.html#adff629fb410a35eebadebe3e41d98eb1',1,'rprintf.c']]],
   ['rprintfinit',['rprintfInit',['../rprintf_8h.html#ae82607476d3827a778c8b124fb6a544a',1,'rprintf.c']]],
   ['rprintfishost',['rprintfIsHost',['../rprintf_8h.html#af0685954841b8d3791981bcb59e693f6',1,'rprintf.c']]],
-  ['rprintfprintactiverobotlist',['rprintfPrintActiveRobotList',['../rprintf_8h.html#a726023959bb2ec07d1fba09af4aba8ca',1,'rprintf.c']]]
+  ['rprintfprintactiverobotlist',['rprintfPrintActiveRobotList',['../rprintf_8h.html#a726023959bb2ec07d1fba09af4aba8ca',1,'rprintf.c']]],
+  ['rprintfsetsleeptime',['rprintfSetSleepTime',['../rprintf_8h.html#a03e8c97107f1dd7c1cfba28a20a36352',1,'rprintf.c']]]
 ];

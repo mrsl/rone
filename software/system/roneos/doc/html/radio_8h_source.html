@@ -116,53 +116,64 @@ $(document).ready(function(){initNavTree('radio_8h_source.html','');});
 <div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment">/******** Defines ********/</span></div>
 <div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;</div>
 <div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="preprocessor">#define RADIO_MESSAGE_LENGTH_RAW                32</span></div>
-<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_HEADER_LENGTH                             1</span></div>
+<div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_HEADER_LENGTH                             2</span></div>
 <div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMAND_MESSAGE_DATA_LENGTH               (RADIO_MESSAGE_LENGTH_RAW - RADIO_COMMAND_HEADER_LENGTH)</span></div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;</div>
-<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="comment">/******** Structs ********/</span></div>
-<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="comment">//TODO Add field descriptions</span></div>
-<div class="line"><a name="l00028"></a><span class="lineno"><a class="code" href="struct_radio_message_raw.html">   28</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_radio_message_raw.html" title="radio message and metrics ">RadioMessageRaw</a> {</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;        uint8 linkQuality;                                              </div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;    uint32 timeStamp;                                           </div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;    <span class="keywordtype">char</span> data[RADIO_MESSAGE_LENGTH_RAW];        </div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;} <a class="code" href="radio_8h.html#a75350a8438c8ab9c6114831a71e28927" title="radio message and metrics ">RadioMessageRaw</a>;</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="comment">//TODO Add field descriptions</span></div>
-<div class="line"><a name="l00043"></a><span class="lineno"><a class="code" href="struct_radio_message_command.html">   43</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_radio_message_command.html" title="radio message and metrics ">RadioMessageCommand</a> {</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;        uint8 linkQuality;                                                              </div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    uint32 timeStamp;                                                           </div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;    uint8 type;                                                                         </div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="keywordtype">char</span> data[RADIO_COMMAND_MESSAGE_DATA_LENGTH];       </div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;} <a class="code" href="radio_8h.html#a72236fb54a88201ba1b26362efd78a58" title="radio message and metrics ">RadioMessageCommand</a>;</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;</div>
-<div class="line"><a name="l00055"></a><span class="lineno"><a class="code" href="union_radio_message.html">   55</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">union </span><a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a> {</div>
-<div class="line"><a name="l00056"></a><span class="lineno"><a class="code" href="union_radio_message.html#adda59ac6ab283f69049ed321b8fa35c3">   56</a></span>&#160;        <a class="code" href="struct_radio_message_raw.html" title="radio message and metrics ">RadioMessageRaw</a> <a class="code" href="union_radio_message.html#adda59ac6ab283f69049ed321b8fa35c3">raw</a>;                    </div>
-<div class="line"><a name="l00057"></a><span class="lineno"><a class="code" href="union_radio_message.html#aff1e40ce9998fe5784fe72bcc1daa67d">   57</a></span>&#160;        <a class="code" href="struct_radio_message_command.html" title="radio message and metrics ">RadioMessageCommand</a> <a class="code" href="union_radio_message.html#aff1e40ce9998fe5784fe72bcc1daa67d">command</a>;    </div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;} <a class="code" href="radio_8h.html#af1d1aa9956ba609566a69162e58c524b" title="radio message and metrics union ">RadioMessage</a>;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;<span class="comment">/******** Functions ********/</span></div>
+<div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;<span class="preprocessor">#define RADIO_COMMS_QUEUE_RECV_SIZE             8</span></div>
+<div class="line"><a name="l00019"></a><span class="lineno">   19</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_COMMS_QUEUE_XMIT_SIZE             1</span></div>
+<div class="line"><a name="l00020"></a><span class="lineno">   20</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00021"></a><span class="lineno">   21</span>&#160;<span class="comment">// Subnets</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#define RADIO_SUBNET_ALL                                0</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_SUBNET_1                                  1</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_SUBNET_2                                  2</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define RADIO_SUBNET_3                                  3</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">/******** Structs ********/</span></div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;<span class="comment">//TODO Add field descriptions</span></div>
+<div class="line"><a name="l00038"></a><span class="lineno"><a class="code" href="struct_radio_message_raw.html">   38</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_radio_message_raw.html" title="radio message and metrics ">RadioMessageRaw</a> {</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;        uint8 linkQuality;                                              </div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    uint32 timeStamp;                                           </div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;    <span class="keywordtype">char</span> data[RADIO_MESSAGE_LENGTH_RAW];        </div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;} <a class="code" href="radio_8h.html#a75350a8438c8ab9c6114831a71e28927" title="radio message and metrics ">RadioMessageRaw</a>;</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="comment">//TODO Add field descriptions</span></div>
+<div class="line"><a name="l00053"></a><span class="lineno"><a class="code" href="struct_radio_message_command.html">   53</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">struct </span><a class="code" href="struct_radio_message_command.html" title="radio message and metrics ">RadioMessageCommand</a> {</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;        uint8 linkQuality;                                                              </div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    uint32 timeStamp;                                                           </div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    uint8 type;                                                                         </div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    uint8 destinationID;                                                        </div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <span class="keywordtype">char</span> data[RADIO_COMMAND_MESSAGE_DATA_LENGTH];       </div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;} <a class="code" href="radio_8h.html#a72236fb54a88201ba1b26362efd78a58" title="radio message and metrics ">RadioMessageCommand</a>;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;<span class="keywordtype">void</span> radioInit(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;<span class="keywordtype">void</span> radioIntEnable(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;<span class="keywordtype">void</span> radioIntDisable(<span class="keywordtype">void</span>);</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* RADIO_H_ */</span><span class="preprocessor"></span></div>
+<div class="line"><a name="l00066"></a><span class="lineno"><a class="code" href="union_radio_message.html">   66</a></span>&#160;<span class="keyword">typedef</span> <span class="keyword">union </span><a class="code" href="union_radio_message.html" title="radio message and metrics union ">RadioMessage</a> {</div>
+<div class="line"><a name="l00067"></a><span class="lineno"><a class="code" href="union_radio_message.html#adda59ac6ab283f69049ed321b8fa35c3">   67</a></span>&#160;        <a class="code" href="struct_radio_message_raw.html" title="radio message and metrics ">RadioMessageRaw</a> <a class="code" href="union_radio_message.html#adda59ac6ab283f69049ed321b8fa35c3">raw</a>;                    </div>
+<div class="line"><a name="l00068"></a><span class="lineno"><a class="code" href="union_radio_message.html#aff1e40ce9998fe5784fe72bcc1daa67d">   68</a></span>&#160;        <a class="code" href="struct_radio_message_command.html" title="radio message and metrics ">RadioMessageCommand</a> <a class="code" href="union_radio_message.html#aff1e40ce9998fe5784fe72bcc1daa67d">command</a>;    </div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;} <a class="code" href="radio_8h.html#af1d1aa9956ba609566a69162e58c524b" title="radio message and metrics union ">RadioMessage</a>;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;<span class="comment">/******** Functions ********/</span></div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;<span class="keywordtype">void</span> radioInit(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;<span class="keywordtype">void</span> radioIntEnable(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<span class="keywordtype">void</span> radioIntDisable(<span class="keywordtype">void</span>);</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;<span class="preprocessor">#endif </span><span class="comment">/* RADIO_H_ */</span><span class="preprocessor"></span></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_77d854acc838a1a67c64a2c9ea49ff7a.html">InputOutput</a></li><li class="navelem"><a class="el" href="radio_8h.html">radio.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:45 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:42 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>

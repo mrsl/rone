@@ -129,9 +129,9 @@ void outputCurrentNetworkData() {
 		}
 	}
 
-	if (!numRobots) {
-		return;
-	}
+//	if (!numRobots) {
+//		return;
+//	}
 
 	total = totalRecv + totalDrop;
 	bandwidth = calculateBandwidth(totalRecv, currentTime);

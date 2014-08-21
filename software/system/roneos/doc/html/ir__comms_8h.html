@@ -125,42 +125,46 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
 Typedefs</h2></td></tr>
-<tr class="memitem:ad1c935393c276e2d69b249ec0ed13624"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#ad1c935393c276e2d69b249ec0ed13624">irCommsMessage</a></td></tr>
-<tr class="memdesc:ad1c935393c276e2d69b249ec0ed13624"><td class="mdescLeft">&#160;</td><td class="mdescRight">Message received over IR ring (contains the sending transmitter ID and receiving ID)  <a href="#ad1c935393c276e2d69b249ec0ed13624">More...</a><br/></td></tr>
-<tr class="separator:ad1c935393c276e2d69b249ec0ed13624"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae667523055148ec49b2987fe2a7866ee"><td class="memItemLeft" align="right" valign="top">typedef struct <a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#ae667523055148ec49b2987fe2a7866ee">IRCommsMessage</a></td></tr>
+<tr class="memdesc:ae667523055148ec49b2987fe2a7866ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Message received over IR ring (contains the sending transmitter ID and receiving ID)  <a href="#ae667523055148ec49b2987fe2a7866ee">More...</a><br/></td></tr>
+<tr class="separator:ae667523055148ec49b2987fe2a7866ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:ab33b8cba6382379393bb97f3bae2bf5e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#ab33b8cba6382379393bb97f3bae2bf5e">irCommsSetSize</a> (uint8 size)</td></tr>
 <tr class="memdesc:ab33b8cba6382379393bb97f3bae2bf5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the size, in bits, of the IR comms message.  <a href="#ab33b8cba6382379393bb97f3bae2bf5e">More...</a><br/></td></tr>
 <tr class="separator:ab33b8cba6382379393bb97f3bae2bf5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af547bdf49aa870edd0497a83103dcdf4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#af547bdf49aa870edd0497a83103dcdf4">irCommsSetXmitPower</a> (uint16 power)</td></tr>
-<tr class="memdesc:af547bdf49aa870edd0497a83103dcdf4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets IR Comms xmit power.  <a href="#af547bdf49aa870edd0497a83103dcdf4">More...</a><br/></td></tr>
-<tr class="separator:af547bdf49aa870edd0497a83103dcdf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05e73b23c8930f3b77740785a5e1e51f"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#a05e73b23c8930f3b77740785a5e1e51f">irCommsSendMessage</a> (<a class="el" href="ir__comms_8h.html#ad1c935393c276e2d69b249ec0ed13624">irCommsMessage</a> *irMessagePtr)</td></tr>
-<tr class="memdesc:a05e73b23c8930f3b77740785a5e1e51f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends out a message through IR transmitters if RC mode isn't active. Message is 1-5 bytes of data, first byte is robot ID.  <a href="#a05e73b23c8930f3b77740785a5e1e51f">More...</a><br/></td></tr>
-<tr class="separator:a05e73b23c8930f3b77740785a5e1e51f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adda54b4490507eccd9b5df0ddf3c7b07"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#adda54b4490507eccd9b5df0ddf3c7b07">irCommsGetMessage</a> (<a class="el" href="ir__comms_8h.html#ad1c935393c276e2d69b249ec0ed13624">irCommsMessage</a> *irMessagePtr)</td></tr>
-<tr class="memdesc:adda54b4490507eccd9b5df0ddf3c7b07"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a message through IR transmitters if RC mode not engaged.  <a href="#adda54b4490507eccd9b5df0ddf3c7b07">More...</a><br/></td></tr>
-<tr class="separator:adda54b4490507eccd9b5df0ddf3c7b07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed421cc486229ceab6531b672c3fb7a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#aed421cc486229ceab6531b672c3fb7a6">irCommsOrientationBitMatrixPrint</a> (uint8 *orientationBitsMatrixPtr, uint8 *rangeBitsMatrixPtr)</td></tr>
-<tr class="memdesc:aed421cc486229ceab6531b672c3fb7a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prints orientation bit matrix.  <a href="#aed421cc486229ceab6531b672c3fb7a6">More...</a><br/></td></tr>
-<tr class="separator:aed421cc486229ceab6531b672c3fb7a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab22287d1be6c6fe5a4f4076a1a4999db"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#ab22287d1be6c6fe5a4f4076a1a4999db">irCommsSetXmitPower</a> (uint8 power)</td></tr>
+<tr class="memdesc:ab22287d1be6c6fe5a4f4076a1a4999db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets IR Comms xmit power.  <a href="#ab22287d1be6c6fe5a4f4076a1a4999db">More...</a><br/></td></tr>
+<tr class="separator:ab22287d1be6c6fe5a4f4076a1a4999db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a476aa9c2895b38e315d8f8e391973e"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#a5a476aa9c2895b38e315d8f8e391973e">irCommsSendMessage</a> (<a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a> *irMessagePtr)</td></tr>
+<tr class="memdesc:a5a476aa9c2895b38e315d8f8e391973e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sends out a message through IR transmitters if RC mode isn't active. Message is 1-5 bytes of data, first byte is robot ID.  <a href="#a5a476aa9c2895b38e315d8f8e391973e">More...</a><br/></td></tr>
+<tr class="separator:a5a476aa9c2895b38e315d8f8e391973e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af5dfa4af61c8a426f90ac60f0d3a8d25"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#af5dfa4af61c8a426f90ac60f0d3a8d25">irCommsGetMessage</a> (<a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a> *irMessagePtr)</td></tr>
+<tr class="memdesc:af5dfa4af61c8a426f90ac60f0d3a8d25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets a message through IR transmitters if RC mode not engaged.  <a href="#af5dfa4af61c8a426f90ac60f0d3a8d25">More...</a><br/></td></tr>
+<tr class="separator:af5dfa4af61c8a426f90ac60f0d3a8d25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ac5b43556cd2bfcf3d1f4288c0cd900"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#a9ac5b43556cd2bfcf3d1f4288c0cd900">irCommsOrientationBitMatrixPrint</a> (uint8 *orientationBitsMatrixPtr)</td></tr>
+<tr class="memdesc:a9ac5b43556cd2bfcf3d1f4288c0cd900"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prints orientation bit matrix.  <a href="#a9ac5b43556cd2bfcf3d1f4288c0cd900">More...</a><br/></td></tr>
+<tr class="separator:a9ac5b43556cd2bfcf3d1f4288c0cd900"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8b9cba67155dc26469b48a26b819e63"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#ab8b9cba67155dc26469b48a26b819e63">irCommsInit</a> (void)</td></tr>
 <tr class="memdesc:ab8b9cba67155dc26469b48a26b819e63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initializes IRComms.  <a href="#ab8b9cba67155dc26469b48a26b819e63">More...</a><br/></td></tr>
 <tr class="separator:ab8b9cba67155dc26469b48a26b819e63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe88612b12484876c82312e1d5cc654f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe88612b12484876c82312e1d5cc654f"></a>
+uint16&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="ir__comms_8h.html#afe88612b12484876c82312e1d5cc654f">irCommsComputeNbrRange</a> (uint32 rangeBits)</td></tr>
+<tr class="memdesc:afe88612b12484876c82312e1d5cc654f"><td class="mdescLeft">&#160;</td><td class="mdescRight">compute range from a single IR message, but seems useless <br/></td></tr>
+<tr class="separator:afe88612b12484876c82312e1d5cc654f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Handles IR communication between robots using the ring of IR transmitters/receivers. </p>
 <dl class="section since"><dt>Since</dt><dd>April 12, 2012 </dd></dl>
 <dl class="section author"><dt>Author</dt><dd>James McLurkin </dd></dl>
 </div><h2 class="groupheader">Typedef Documentation</h2>
-<a class="anchor" id="ad1c935393c276e2d69b249ec0ed13624"></a>
+<a class="anchor" id="ae667523055148ec49b2987fe2a7866ee"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef struct <a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a>  <a class="el" href="ir__comms_8h.html#ad1c935393c276e2d69b249ec0ed13624">irCommsMessage</a></td>
+          <td class="memname">typedef struct <a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a>  <a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -171,14 +175,14 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
-<a class="anchor" id="adda54b4490507eccd9b5df0ddf3c7b07"></a>
+<a class="anchor" id="af5dfa4af61c8a426f90ac60f0d3a8d25"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">boolean irCommsGetMessage </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="ir__comms_8h.html#ad1c935393c276e2d69b249ec0ed13624">irCommsMessage</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a> *&#160;</td>
           <td class="paramname"><em>irMessagePtr</em>)</td><td></td>
           <td></td>
         </tr>
@@ -216,7 +220,7 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="aed421cc486229ceab6531b672c3fb7a6"></a>
+<a class="anchor" id="a9ac5b43556cd2bfcf3d1f4288c0cd900"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -224,18 +228,8 @@ Functions</h2></td></tr>
           <td class="memname">void irCommsOrientationBitMatrixPrint </td>
           <td>(</td>
           <td class="paramtype">uint8 *&#160;</td>
-          <td class="paramname"><em>orientationBitsMatrixPtr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramname"><em>orientationBitsMatrixPtr</em>)</td><td></td>
           <td></td>
-          <td class="paramtype">uint8 *&#160;</td>
-          <td class="paramname"><em>rangeBitsMatrixPtr</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -252,14 +246,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="a05e73b23c8930f3b77740785a5e1e51f"></a>
+<a class="anchor" id="a5a476aa9c2895b38e315d8f8e391973e"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">boolean irCommsSendMessage </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="ir__comms_8h.html#ad1c935393c276e2d69b249ec0ed13624">irCommsMessage</a> *&#160;</td>
+          <td class="paramtype"><a class="el" href="struct_i_r_comms_message.html">IRCommsMessage</a> *&#160;</td>
           <td class="paramname"><em>irMessagePtr</em>)</td><td></td>
           <td></td>
         </tr>
@@ -301,14 +295,14 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="af547bdf49aa870edd0497a83103dcdf4"></a>
+<a class="anchor" id="ab22287d1be6c6fe5a4f4076a1a4999db"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">void irCommsSetXmitPower </td>
           <td>(</td>
-          <td class="paramtype">uint16&#160;</td>
+          <td class="paramtype">uint8&#160;</td>
           <td class="paramname"><em>power</em>)</td><td></td>
           <td></td>
         </tr>
@@ -332,7 +326,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_cbe5c39f52144a7399f14412707c581a.html">IRComms</a></li><li class="navelem"><a class="el" href="ir__comms_8h.html">ir_comms.h</a></li>
-    <li class="footer">Generated on Tue Jun 11 2013 14:40:45 for roneos by
+    <li class="footer">Generated on Mon Jul 7 2014 12:24:43 for roneos by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.4 </li>
   </ul>
