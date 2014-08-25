@@ -48,20 +48,23 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 			//If parent of nbr is me, Convert Center of mass to my cordinate frame average with other robots center of mass
 			if(nbrTreeParentId == roneID){
 				int16 x,y,xprime,yprime;
+				
+				//Use cooardiantes COM the nbr is broadcasting to find vector of nbr to COM
 				nbrPtr = nbrListGetNbr(&nbrList, i);
 				int32 nbrOrient = nbrGetOrientation(nbrPtr);
 				int32 nbrBear = nbrGetBearing(nbrPtr);
 
 				x = nbrDataGetNbr16(&posListPtr[j].X_H,&posListPtr[j].X_L,nbrPtr);
 				y = nbrDataGetNbr16(&posListPtr[j].Y_H,&posListPtr[j].Y_L,nbrPtr);
-
 				xprime = x*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
 				yprime = x*sinMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrOrient)/MILLIRAD_TRIG_SCALER;
+				
+				//Offset vector of nbr to COM using a set range
 				x = xprime;
-
 				//Range = nbrRangeLookUp(roneID, nbrGetID(nbrPtr));
 				y = yprime + Range;
-
+				
+				//Rotate COM based on bearing to nbr
 				xprime = x*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 				yprime = x*sinMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrBear)/MILLIRAD_TRIG_SCALER;
 
