@@ -297,7 +297,7 @@ void behaviorTask(void* parameters) {
 					PIVOT_X =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L);
 					PIVOT_Y =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L);
 					GlobalTreePointOrbit(PIVOT_X, PIVOT_Y, &behOutput,  RVcmd);
-				}else if(moveState == 4){		//Cycloid Motion
+				}/*else if(moveState == 4){		//Cycloid Motion
 					vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
 					vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
 					vecCOMtoTowerBearing = normalizeAngleMilliRad2(atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY));
@@ -315,18 +315,16 @@ void behaviorTask(void* parameters) {
 						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier);
 						//rprintf("Cyliod Mod %d C %d %d v %d %d\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
 					}
-					behOutput.rv = behOutput.rv * 2;
+					behOutput.rv = behOutput.rv * 2;*/
 				}else if(moveState == 3){		//Alt Cycloid Motion
 					/*int16 translateBearing = 0;
-
 					if(osTaskGetTickCount() <= (navTowerTime + TOWER_WAIT_TIME)){*/
-					if(!translateBearing){
-						//vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
-						//vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
-						translateBearing = (atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY) - PI)/2;
-					}
-
+					
+					//Calculate the bearing to the translate vector and rotate vector
+					translateBearing = (atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY) - PI)/2;
 					int16 rotatBearing = atan2MilliRad((int32)COM_Y,(int32)COM_X) - PI;
+					
+					//Average the rotate and translate bearings useing a wieghted average depending on the various omegas
 					int16 goalBearing;
 					if(!rotatBearing || !OMEGA_ROT){
 						goalBearing = translateBearing;
@@ -339,10 +337,13 @@ void behaviorTask(void* parameters) {
 
 					//int32 distance = vectorMag((int32)COM_Y,(int32)COM_X);
 					//int32 TV = cyldoidSpeed * distance / 100;
+					
+					//Translate depending on the distance from goal bearing
 					int32 TV = 150 - 150* abs(goalBearing) / (PI/2);
 					if(TV < 0){
 						TV = 0;
 					}
+					//Dead zone for bearing
 					if(abs(goalBearing) > 100){
 						if(goalBearing < 0){
 							behSetTvRv(&behOutput, TV/2, goalBearing/ 1);
