@@ -175,7 +175,7 @@ void GlobalTreePointOrbit(int16 COMX, int16 COMY, Beh* BehRotate, int32 TV){
 }
 
 /**
- * @brief A path for a sungle robot cycliod path.
+ * @brief A path for a single robot cycliod path.
  * @param	cycloidTime	- Time sent out by clock robot
  * 			cycloidPeriod - Period for full cyliod rotation
  * 			distCOM - distance to center of mass

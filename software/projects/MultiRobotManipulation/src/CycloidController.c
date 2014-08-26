@@ -1,8 +1,10 @@
 /*
- *	 globalRobotTree.c
- *  Created on: Jun 23, 2014
- *      Author: Mathew jellins
+ * CycloidController.c
+ *
+ *  Created on: Aug 25, 2014
+ *      Author: Golnaz
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -229,8 +231,18 @@ void behaviorTask(void* parameters) {
 				if(nbrNavTowerPtr) {
 					int16 x,y;
 					x = 0;
-					y = NAV_TOWER_DISTANCE;
+					y = NAV_TOWER_DISTANCE;  // G: if robot sees the leader,
 					translateBearing = nbrNavTowerPtr->bearing;
+
+					//G: rotation matrix , converts to its own coordinate, is it correct?
+
+
+					// to convert from (x2, y2) to (x1,y1) : M * [x2-x1 ; y2 -y1],
+					//M  is the rotational matrix : M = [cos (theta)  -sin (theta); sin(theta cos(theta)], theta is the angle from (x1,y1) to (x2,y2)
+					// theta = bearing + pi - orientation,  bearing and orientation is for the robot in (x1,y1)
+
+					// First: find the vector from centroid to nav tower robot : each robot knows the centroid, sees the nav tower
+					// second: find the normal vector of robot - centroid
 					vecCOMtoTowerX = x*cosMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER;
 					vecCOMtoTowerY = x*sinMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER;
 
@@ -247,8 +259,8 @@ void behaviorTask(void* parameters) {
 					int i;
 					for (i = 0; i < nbrList.size; i++){
 						nbrPtr = nbrList.nbrs[i];
-						vecCOMtoTowerX = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,nbrPtr);
-						vecCOMtoTowerY = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,nbrPtr);
+						vecCOMtoTowerY = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L,nbrPtr);
+						vecCOMtoTowerX = nbrDataGetNbr16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L,nbrPtr);
 						if(vecCOMtoTowerX || vecCOMtoTowerY){
 							int16 x,y,xprime,yprime;
 							int32 nbrOrient = nbrGetOrientation(nbrPtr);
@@ -268,7 +280,7 @@ void behaviorTask(void* parameters) {
 
 							nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_L,vecCOMtoTowerX);
 							nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,vecCOMtoTowerY);
-							navTowerTime = osTaskGetTickCount();
+					  		navTowerTime = osTaskGetTickCount();
 							break;
 						}
 					}
@@ -316,7 +328,7 @@ void behaviorTask(void* parameters) {
 						//rprintf("Cyliod Mod %d C %d %d v %d %d\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
 					}
 					behOutput.rv = behOutput.rv * 2;
-				}else if(moveState == 3){		//Alt Cycloid Motion
+				}else if(moveState == 3){		//Alt Cycloid Motion(new method)
 					/*int16 translateBearing = 0;
 
 					if(osTaskGetTickCount() <= (navTowerTime + TOWER_WAIT_TIME)){*/
@@ -339,7 +351,7 @@ void behaviorTask(void* parameters) {
 
 					//int32 distance = vectorMag((int32)COM_Y,(int32)COM_X);
 					//int32 TV = cyldoidSpeed * distance / 100;
-					int32 TV = 150 - 150* abs(goalBearing) / (PI/2);
+					int32 TV = 60 ; //  150 - 150* abs(goalBearing) / (PI/2);
 					if(TV < 0){
 						TV = 0;
 					}
@@ -360,7 +372,7 @@ void behaviorTask(void* parameters) {
 			if(state == REMOTE){
 				behOutput = behInactive;
 
-				//convrols tv and rv using accelarmotor sensors
+				//controls tv and rv using accelarmotor sensors
 				accX = (((int32)accelerometerGetValue(ACCELEROMETER_X) * ACCEL_IIR_GAIN) + (accX * (100 - ACCEL_IIR_GAIN))) / 100;
 				accY = (((int32)accelerometerGetValue(ACCELEROMETER_Y) * ACCEL_IIR_GAIN) + (accY * (100 - ACCEL_IIR_GAIN))) / 100;
 				accX = deadzone(accX, ACCEL_DEAD_ZONE);
@@ -430,3 +442,5 @@ int main(void) {
 	// should never get here.  If so, you have a bad memory problem in the scheduler
 	return 0;
 }
+
+
