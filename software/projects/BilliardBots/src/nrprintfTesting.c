@@ -19,7 +19,7 @@
 #define MOVE_STOP 			2
 
 #define FLOCKWAIT			3000
-#define FLOCKSPEED 			25
+#define FLOCKSPEED 			40
 #define PROBABILITYSTOP 	30
 #define NEIGHBOR_ROUND_TIME 300
 
@@ -87,6 +87,8 @@ void behaviorTask(void* parameters) {
 	radioCommandAddQueue(&radioCmdRemoteControl, "remoteControl", 1);
 	Pose mostRecentPose;
 	uint32 lastMoveTime;
+	int16 tv1, rv1;
+
 
 	serialCommandAdd(&serialCmdPS, "ps", serialCmdPSFunc);
 	radioCommandAddQueue(&radioCmdPS, "probSetter", 1);
@@ -223,63 +225,42 @@ void behaviorTask(void* parameters) {
 		}
 
 		if (printNow) {
-			int16 tv1, rv1;
-
 			encoderGetPose(&mostRecentPose);
-			rprintf("%d,%d,%d,%d", state == STATE_STOPPED,
-								   	  mostRecentPose.x,
-								   	  mostRecentPose.y,
-								   	  mostRecentPose.theta);
-			cprintf("%d,%d,%d,%d", state == STATE_STOPPED,
-								   	  mostRecentPose.x,
-								   	  mostRecentPose.y,
-								   	  mostRecentPose.theta);
+
+			rprintf("%d,%d,%d,%d", 	  state == STATE_STOPPED,
+									  mostRecentPose.x,
+									  mostRecentPose.y,
+									  mostRecentPose.theta);
 
 
-			for (i = 0; i < nbrList.size; i++) {
-				if ((nbrPtr = nbrList.nbrs[i])) {
-					id = nbrGetID(nbrPtr);
-					if (id != ROBOT_ID_NULL) {
-						nbrRawRange = nbrGetRange(nbrPtr);
-						nbrRawOrientation = nbrGetOrientation(nbrPtr);
-						nbrRawBearing = nbrGetBearing(nbrPtr);
-						tv1 = (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr);
-						rv1 = (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr);
-
-						cprintf(",%d,%d,%d,%d,%d,%d", id,
-													  nbrRawBearing,
-													  nbrRawRange,
-													  nbrRawOrientation,
-													  tv1,
-													  rv1);
-//
-
-		//				nbrRawRange = nbrGetRawRange(nbrPtr);
-//		//				nbrRawOrientation = nbrGetRawOrientation(nbrPtr);
-//		//				nbrRawBearing = nbrGetRawBearing(nbrPtr);
-
-//
-
-////
-						rprintf(",%d,%d,%d,%d,%d,%d", id,
-													  nbrRawBearing,
-													  nbrRawRange,
-													  nbrRawOrientation,
-													  tv1,
-													  rv1);
-
-//						nbrRawBearing = 1000;
-//						nbrRawRange = 1000;
-//						nbrRawOrientation = 1000;
-//						rprintf(",%d,%d,%d,%d", id,
-//												nbrRawBearing,
-//												nbrRawRange,
-//												nbrRawOrientation);
+			for (i = 0; i < 4; i++) {
+				if (i < nbrList.size) {
+					if ((nbrPtr = nbrList.nbrs[i])) {
+						id = nbrGetID(nbrPtr);
+						if (id != ROBOT_ID_NULL) {
+							nbrRawRange = nbrGetRawRange(nbrPtr);
+							nbrRawOrientation = nbrGetRawOrientation(nbrPtr);
+							nbrRawBearing = nbrGetRawBearing(nbrPtr);
+							tv1 = (int16) nbrDataGetNbr16(&TV_H, &TV_L, nbrPtr);
+							rv1 = (int16) nbrDataGetNbr16(&RV_H, &RV_L, nbrPtr);
+							rprintf(",%d", id);
+							rprintf(",%d", nbrRawBearing);
+							rprintf(",%d", nbrRawRange);
+							rprintf(",%d", nbrRawOrientation);
+							rprintf(",%d", tv1);
+							rprintf(",%d", rv1);
+						}
 					}
+				} else {
+					rprintf(",0");
+					rprintf(",0");
+					rprintf(",0");
+					rprintf(",0");
+					rprintf(",0");
+					rprintf(",0");
 				}
 			}
 			rprintf("\n");
-			cprintf("\n");
 			rprintfFlush();
 		}
 

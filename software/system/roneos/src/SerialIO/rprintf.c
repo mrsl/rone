@@ -84,8 +84,6 @@ void rprintf(const char *format, ...) {
 		return;
 	}
 
-	cprintf("\nrprintf!\n");
-
 	// Safely lock the write buffer
 	osSemaphoreTake(rprintfWriteMutex, portMAX_DELAY);
 
@@ -99,14 +97,13 @@ void rprintf(const char *format, ...) {
 	} else {
 		for (i = 0; i < potentialChars; i++) {
 			if (rprintfWriteBufferLength < RPRINTF_TEXT_STRING_SIZE - 1) {
-				rprintfWriteBuffer[rprintfWriteBufferLength] = tempBuffer[i];
-				rprintfWriteBufferLength++;
+				rprintfWriteBuffer[rprintfWriteBufferLength++] = tempBuffer[i];
 			} else {
 				break;
 			}
 		}
-		rprintfWriteBuffer[rprintfWriteBufferLength] = '\0';
 	}
+	rprintfWriteBuffer[rprintfWriteBufferLength] = '\0';
 
 	// Clean up arguments.
 	va_end(arguments);
@@ -155,6 +152,8 @@ void rprintfStringOutput(const char *buffer, int length, int robotID) {
  *	@returns void
  */
 void rprintfFlush() {
+	int i;
+
 	// Safely lock the write buffer
 	osSemaphoreTake(rprintfWriteMutex, portMAX_DELAY);
 	// Safely lock the send buffer
@@ -165,6 +164,10 @@ void rprintfFlush() {
 
 	// Copy the buffer over
 	strncpy(rprintfSendBuffer, rprintfWriteBuffer, RPRINTF_TEXT_STRING_SIZE);
+
+	for (i = 0; i < RPRINTF_TEXT_STRING_SIZE; i++) {
+		rprintfWriteBuffer[i] = '\0';
+	}
 
 	// Set the new buffer lengths
 	rprintfSendBufferLength = rprintfWriteBufferLength;
@@ -319,6 +322,10 @@ static void queryRobot(uint8 remoteRobotID, uint8 queryMode) {
 		rprintfRecvBuffer[length] = '\0';
 
 		rprintfStringOutput(rprintfRecvBuffer, length, remoteRobotID);
+
+		for (i = 0; i < RPRINTF_TEXT_STRING_SIZE; i++) {
+			rprintfRecvBuffer[i] = '\0';
+		}
 	}
 }
 
@@ -442,8 +449,7 @@ void rprintfRemoteCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 
 			for (packetIdx = 0; packetIdx < RPRINTF_MSG_DATA_PAYLOAD_LENGTH; packetIdx++) {
 				if (msgIdx < bufferLength) {
-					c = rprintfTempBuffer[msgIdx];
-					msgIdx = msgIdx + 1;
+					c = rprintfTempBuffer[msgIdx++];
 				} else {
 					c = '\0';
 				}

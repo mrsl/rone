@@ -121,6 +121,11 @@ typedef struct Nbr {
 	int16 bearing;											/**< Robot bearing*/
 	int16 orientation;										/**< Robot orientation*/
 	int16 range;											/**< */
+
+	int16 rawbearing;											/**< Robot bearing*/
+	int16 raworientation;										/**< Robot orientation*/
+	int16 rawrange;											/**< */
+
 	int16 bearingHistory[NBR_ANGLE_HISTORY];				/**< */
 	int16 orientationHistory[NBR_ANGLE_HISTORY];			/**< */
 	boolean orientationValid;								/**< */
