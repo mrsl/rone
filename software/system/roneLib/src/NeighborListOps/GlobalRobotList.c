@@ -12,6 +12,10 @@
 #include "ronelib.h"
 
 
+/**
+ * @brief create the list of trees for each robot, initialize all values to 0
+ */
+
 void globalRobotListCreate(GlobalRobotList* globalRobotListPtr) {
 	uint8 i;
 
@@ -27,7 +31,9 @@ void globalRobotListCreate(GlobalRobotList* globalRobotListPtr) {
 	globalRobotListPtr->nonce = 1;
 }
 
-
+/**
+ * @brief gets the information of the robot in tree with index idx
+ */
 GlobalRobotListElement* globalRobotListGetElt(GlobalRobotList* globalRobotListPtr, uint8 idx) {
 	if (idx < globalRobotListPtr->size) {
 		return &(globalRobotListPtr->list[idx]);
@@ -37,11 +43,17 @@ GlobalRobotListElement* globalRobotListGetElt(GlobalRobotList* globalRobotListPt
 }
 
 
-uint8 globalRobotListGetSize(GlobalRobotList* globalRobotListPtr) {
+
+/**
+ * @brief gets the size of the trees that robot is in
+ */
+uint8 globalRobotListGetSize(GlobalRobotList* globalRobotListPtr ) {
 	return globalRobotListPtr->size;
 }
 
-
+/**
+ * @brief finds the tree that robotID is the owner
+ */
 int8 globalRobotListGetIndex(GlobalRobotList* globalRobotListPtr, uint8 robotID) {
 	int j;
 	for (j = 0; j < GLOBAL_ROBOTLIST_MAX_SIZE; j++) {
@@ -57,6 +69,9 @@ int8 globalRobotListGetIndex(GlobalRobotList* globalRobotListPtr, uint8 robotID)
 }
 
 
+/**
+ * @brief gets the ID of the tree element
+ */
 
 uint8 grlEltGetID(GlobalRobotListElement* grlEltPtr) {
 	if (grlEltPtr) {
@@ -67,6 +82,12 @@ uint8 grlEltGetID(GlobalRobotListElement* grlEltPtr) {
 }
 
 
+
+
+/**
+ * @brief gets the nonce of the tree element
+ */
+
 uint8 grlEltGetNonce(GlobalRobotListElement* grlEltPtr) {
 	if (grlEltPtr) {
 		return nbrDataGet(&grlEltPtr->nonce);
@@ -75,6 +96,12 @@ uint8 grlEltGetNonce(GlobalRobotListElement* grlEltPtr) {
 	}
 }
 
+
+
+/**
+ * @brief gets the hops of the tree element
+ */
+
 uint8 grlEltGetHops(GlobalRobotListElement* grlEltPtr) {
 	if (grlEltPtr) {
 		return nbrDataGet(&grlEltPtr->Hops);
@@ -82,6 +109,12 @@ uint8 grlEltGetHops(GlobalRobotListElement* grlEltPtr) {
 		return 0;
 	}
 }
+
+
+
+/**
+ * @brief gets the ParentID of the tree element
+ */
 
 uint8 grlEltGetParentID(GlobalRobotListElement* grlEltPtr) {
 	if (grlEltPtr) {
@@ -92,6 +125,9 @@ uint8 grlEltGetParentID(GlobalRobotListElement* grlEltPtr) {
 }
 
 
+/**
+ * @brief gets the updateRound of the tree element
+ */
 uint32 grlEltGetTimeStamp(GlobalRobotListElement* grlEltPtr) {
 	if (grlEltPtr) {
 		return grlEltPtr->updateRound;
@@ -101,6 +137,10 @@ uint32 grlEltGetTimeStamp(GlobalRobotListElement* grlEltPtr) {
 }
 
 
+
+/**
+ * @brief update the grl list element for robotID
+ */
 void grlUpdateElt(GlobalRobotList* globalRobotListPtr, uint8 robotID, uint8 nonce) {
 	uint8 i;
 	GlobalRobotListElement* grlEltPtr;
@@ -116,7 +156,7 @@ void grlUpdateElt(GlobalRobotList* globalRobotListPtr, uint8 robotID, uint8 nonc
 				grlEltPtr->updateRound = neighborsGetRound();
 
 				//check to see if the nonce is different.  update the nonce
-				if (nonce > grlEltGetNonce(grlEltPtr) || (((100 > nonce) && (grlEltGetNonce(grlEltPtr) > 220)))) {
+				if (nonce > grlEltGetNonce(grlEltPtr) || (((100 > nonce) && (grlEltGetNonce(grlEltPtr) > 220)))) { // why ???
 					nbrDataSet(&grlEltPtr->nonce, nonce);
 				}
 				break;
@@ -137,10 +177,10 @@ void grlUpdateElt(GlobalRobotList* globalRobotListPtr, uint8 robotID, uint8 nonc
 				for(i = globalRobotListPtr->size; i > 0; i--){
 
 					grlEltPtr = globalRobotListGetElt(globalRobotListPtr, i-1);
-					grlEltPtr_Next = globalRobotListGetElt(globalRobotListPtr, i);
+					grlEltPtr_Next = globalRobotListGetElt(globalRobotListPtr, i);  // what happend to the data stored in idx  i ???
 
 					globalRobotListMove(globalRobotListPtr,i-1,i);
-
+					// if the new robot has the ID bigger
 					if ((grlEltGetID(grlEltPtr) < robotID) && (grlEltGetID(grlEltPtr) != 0)) {
 						nbrDataSet(&(grlEltPtr_Next->ID),robotID);
 						nbrDataSet(&(grlEltPtr_Next->nonce),nonce);
@@ -157,7 +197,7 @@ void grlUpdateElt(GlobalRobotList* globalRobotListPtr, uint8 robotID, uint8 nonc
 				nbrDataSet(&(grlEltPtr->ParentID),0);
 				grlEltPtr->updateRound = neighborsGetRound();
 				return;
-			}else{
+			}else{  // mean this is the first robot
 				grlEltPtr = globalRobotListGetElt(globalRobotListPtr, 0);
 				nbrDataSet(&(grlEltPtr->ID),robotID);
 				nbrDataSet(&(grlEltPtr->nonce),nonce);
@@ -170,6 +210,11 @@ void grlUpdateElt(GlobalRobotList* globalRobotListPtr, uint8 robotID, uint8 nonc
 }
 
 
+
+
+/**
+ * @brief update the grl list  based on nbr list
+ */
 void globalRobotListUpdate(GlobalRobotList* globalRobotListPtr, NbrList* nbrListPtr) {
 	int8 i, j;
 	Nbr* nbrPtr;
@@ -223,45 +268,55 @@ void globalRobotListUpdate(GlobalRobotList* globalRobotListPtr, NbrList* nbrList
 		}
 	}
 
-	//Go through list and Update each Tree
-
+	//Go through list and update each tree
 	GlobalRobotListElement* grlEltPtr;
 	for (j = 0; j < globalRobotListPtr->size; j++) {
 		grlEltPtr = globalRobotListGetElt(globalRobotListPtr, j);
-		if(grlEltGetID(grlEltPtr)==roneID){
+		// If this is our tree, set self as root (? Tree ID == root ?)
+		if(grlEltGetID(grlEltPtr) == roneID) {
 			nbrDataSet(&(grlEltPtr->Hops), 1);
 			nbrDataSet(&(grlEltPtr->ParentID), 0);
-		} else{
+		// Otherwise, update tree
+		} else {
 			globalRobotUpdateTree(globalRobotListPtr, *nbrListPtr, j);
 		}
 	}
 
 }
 
-
+/**
+ * @brief Updates a robot's position in a GRL Tree
+ */
 void globalRobotUpdateTree(GlobalRobotList* globalRobotListPtr, NbrList nbrListPtr, uint8 idx){
 	uint8 i,j,nbrPtrID;
 	Nbr* nbrPtr;
 	GlobalRobotListElement* SelfgrlEltPtr = globalRobotListGetElt(globalRobotListPtr, idx);
+	// Initialize hop count to null value
 	nbrDataSet(&(SelfgrlEltPtr->Hops), 0);
+
+	// Iterate through nbr list
 	for (i = 0; i < nbrListPtr.size; i++){
 		nbrPtr = nbrListPtr.nbrs[i];
 		nbrPtrID = nbrGetID(nbrPtr);
+		// If root is parent, best position found, return out
 		if(nbrPtrID == grlEltGetID(SelfgrlEltPtr)){
 			nbrDataSet(&(SelfgrlEltPtr->Hops), 2);
 			nbrDataSet(&(SelfgrlEltPtr->ParentID), nbrPtrID);
 			return;
 		}
+		// Otherwise, iterate through data in the GRL
 		for (j = 0; j < GLOBAL_ROBOTLIST_MAX_SIZE; j++) {
 			uint8 nbrRobotListID = nbrDataGetNbr(&(globalRobotListPtr->list[j].ID), nbrPtr);
 			uint8 nbrRobotListHops = nbrDataGetNbr(&(globalRobotListPtr->list[j].Hops), nbrPtr);
 			if(nbrRobotListID ==ROBOT_ID_NULL ){
-				//return;
-			} else if((nbrRobotListID == grlEltGetID(SelfgrlEltPtr)) && (nbrRobotListHops != 0) && !(nbrRobotListHops > 11) ){
+			// If this nbr is in the tree and has a valid hop count, check
+			} else if((nbrRobotListID == grlEltGetID(SelfgrlEltPtr)) && (nbrRobotListHops != 0) && !(nbrRobotListHops > 11) ){ //TODO: Use a hashdefine for maximum hops
+				// If not in the tree yet, insert self under nbr
 				if(nbrDataGet(&(SelfgrlEltPtr->Hops)) == 0){
 					nbrDataSet(&(SelfgrlEltPtr->Hops), nbrRobotListHops + 1);
 					nbrDataSet(&(SelfgrlEltPtr->ParentID), nbrPtrID);
-				}else if(nbrRobotListHops <= nbrDataGet(&(SelfgrlEltPtr->Hops))){
+				// Otherwise, if closer to root, update position in tree
+				} else if(nbrRobotListHops <= nbrDataGet(&(SelfgrlEltPtr->Hops))){
 					nbrDataSet(&(SelfgrlEltPtr->Hops), nbrRobotListHops + 1);
 					nbrDataSet(&(SelfgrlEltPtr->ParentID), nbrPtrID);
 				}
@@ -329,8 +384,11 @@ void globalRobotListDelete(GlobalRobotList* globalRobotListPtr, uint8 idx) {
 	}
 }
 
+
+/**
+ * @brief moves grl element  strtIdx to finIdx  */
 void globalRobotListMove(GlobalRobotList* globalRobotListPtr, uint8 strtIdx, uint8 finIdx){
-	if((strtIdx < GLOBAL_ROBOTLIST_MAX_SIZE)&&(strtIdx < GLOBAL_ROBOTLIST_MAX_SIZE)){
+	if((strtIdx < GLOBAL_ROBOTLIST_MAX_SIZE)&&(finIdx < GLOBAL_ROBOTLIST_MAX_SIZE)){
 		GlobalRobotListElement* grlEltPtr_Strt = globalRobotListGetElt(globalRobotListPtr, strtIdx);
 		GlobalRobotListElement* grlEltPtr_Fin = globalRobotListGetElt(globalRobotListPtr, finIdx);
 

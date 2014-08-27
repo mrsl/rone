@@ -15,8 +15,10 @@
 #define PI				3147
 #define ROTATE_STEPS	PI/20
 
+#define ROBOT_RANGE	100	// Set distance between robots, temporary until range is figured out
 
-void GlobalTreeCOMListCreate(PosistionCOM * posListPtr){
+
+void GlobalTreeCOMListCreate(PositionCOM * posListPtr){
 	int i;
 	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE + 1; i++){
 		nbrDataCreate16(&posListPtr[i].X_H,&posListPtr[i].X_L,"X_H", "X_L", 0);
@@ -33,14 +35,14 @@ void GlobalTreeCOMListCreate(PosistionCOM * posListPtr){
  * 			Range - defualt range until new way of finding range is created
  * @return void
  */
-void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, PosistionCOM* posListPtr, int Range, NbrData* LeaderHeading_H, NbrData* LeaderHeading_L){
+void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, PositionCOM* posListPtr, int Range, NbrData* LeaderHeading_H, NbrData* LeaderHeading_L){
 	Nbr* nbrPtr;
 	int j,i;
 	//For Every tree in the list
 	for (j = 0; j < globalRobotList.size; j++) {
 		int32 xtot = 0;
 		int32 ytot = 0;
-		uint8 weight = 0;
+		uint8 weight = 0; // counts the number of children
 		//For ever nbr
 		for (i = 0; i < nbrList.size; i++){
 			nbrPtr = nbrList.nbrs[i];
@@ -139,6 +141,83 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posis
 	}
 
 }
+
+void CentroidGRLUpdate(GlobalRobotList globalRobotList, NbrList nbrList, PositionCOM* posListPtr){
+	Nbr* nbrPtr;
+	int i, j;
+	//For Every tree in the list
+	for (j = 0; j < globalRobotList.size; j++) {
+		int32 xsum = roneID;
+		int32 xchd;
+		uint8 childNum = 0; // Counts the number of children
+
+		//For ever nbr
+		for (i = 0; i < nbrList.size; i++){
+			nbrPtr = nbrList.nbrs[i];
+			uint8 nbrTreeParentId = nbrDataGetNbr(&(globalRobotList.list[j].ParentID), nbrPtr);
+
+			// If we are the parent node in the tree, count and sum child nodes
+			if(nbrTreeParentId == roneID){
+				xchd = nbrDataGetNbr16(&posListPtr[j].X_H,&posListPtr[j].X_L,nbrPtr);
+
+				xsum += xchd;
+				childNum++;
+			}
+		}
+
+		// If no children, don't update sum
+		if(childNum == 0) {
+
+		} else {
+			nbrDataSet16(&posListPtr[j].X_H, &posListPtr[j].X_L, (int16) xsum);
+			nbrDataSet16(&posListPtr[j].Y_H, &posListPtr[j].Y_L, (int16) childNum);
+		}
+	}
+}
+
+void CentroidGRLPrintAllTrees(GlobalRobotList* globalRobotListPtr, NbrList* nbrListPtr, PositionCOM* posListPtr){
+	int8 i;
+	int16 xchd;
+	Nbr* nbrPtr;
+	CentroidGRLPrintSelfTree(globalRobotListPtr, posListPtr);
+	for (i = 0; i < nbrListGetSize(nbrListPtr); i++) {
+		// get a nbrptr from my neighbor list
+		nbrPtr = nbrListGetNbr(nbrListPtr, i);
+		if(nbrPtr!= NULL){
+			CentroidGRLPrintNbrTree(globalRobotListPtr, nbrPtr, posListPtr);
+		}
+	}
+	rprintf("\n");
+}
+
+void CentroidGRLPrintSelfTree(GlobalRobotList* globalRobotListPtr, PositionCOM* posListPtr) {
+	int j;
+	GlobalRobotListElement* grlEltPtr;
+	rprintf("%d", roneID);
+	for (j = 0; j < globalRobotListPtr->size; j++) {
+		grlEltPtr = globalRobotListGetElt(globalRobotListPtr, j);
+		uint8 nbrTotalRobotListRobotID = grlEltGetID(grlEltPtr);
+		rprintf(",%d,%d", nbrTotalRobotListRobotID, grlEltGetParentID(grlEltPtr));
+	}
+	rprintf("\n");
+} // todo: print our guess
+
+void CentroidGRLPrintNbrTree(GlobalRobotList* globalRobotListPtr, Nbr* nbrptr, PositionCOM* posListPtr){
+	int j;
+	rprintf("%d", nbrGetID(nbrptr));
+	for (j = 0; j < GLOBAL_ROBOTLIST_MAX_SIZE; j++) {
+		uint8 nbrRobotListID = nbrDataGetNbr(&(globalRobotListPtr->list[j].ID), nbrptr);
+		uint8 nbrRobotListParentID = nbrDataGetNbr(&(globalRobotListPtr->list[j].ParentID), nbrptr);
+		if (nbrRobotListID == ROBOT_ID_NULL) {
+			rprintf("\n");
+			return;
+		}
+		rprintf(",%d,%d", nbrRobotListID, nbrRobotListParentID);
+	}
+	rprintf(",%d", nbrDataGetNbr16(&posListPtr[j].X_H,&posListPtr[j].X_L, nbrptr));
+	rprintf("\n");
+}
+
 
 /*
  * @brief Orbits the given point in X,Y coordinates

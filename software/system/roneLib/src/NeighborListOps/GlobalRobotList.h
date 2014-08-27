@@ -11,6 +11,10 @@
 #define GLOBAL_ROBOTLIST_MAX_SIZE 				10
 #define GLOBAL_ROBOTLIST_ROUND_WAIT_TIME		10
 
+
+
+// each robot is an element of n trees (n = size of network) , ID is the ID of the tree ??? (the root may be???), each robot has a hop in each tree
+
 typedef struct GlobalRobotListElement {
 	NbrData ID;
 	NbrData nonce;
@@ -19,7 +23,7 @@ typedef struct GlobalRobotListElement {
 	uint32 updateRound;
 } GlobalRobotListElement;
 
-
+ // The list of trees
 typedef struct GlobalRobotList {
 	uint8 size;		/**< the size of the global robot list */
 	uint8 nonce;	/**< this robot's nonce */

@@ -120,7 +120,7 @@ void behaviorTask(void* parameters) {
 			globalRobotListUpdate(&globalRobotList, &nbrList);
 
 			if(printNow){
-				//globalRobotListPrintAllTree(&globalRobotListPtr, &nbrList);
+				globalRobotListPrintAllTree(&globalRobotListPtr, &nbrList);
 			}
 
 			/*** READ BUTTONS ***/
