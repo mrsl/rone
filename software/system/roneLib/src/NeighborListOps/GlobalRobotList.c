@@ -316,7 +316,7 @@ void globalRobotUpdateTree(GlobalRobotList* globalRobotListPtr, NbrList nbrListP
 					nbrDataSet(&(SelfgrlEltPtr->Hops), nbrRobotListHops + 1);
 					nbrDataSet(&(SelfgrlEltPtr->ParentID), nbrPtrID);
 				// Otherwise, if closer to root, update position in tree
-				} else if(nbrRobotListHops <= nbrDataGet(&(SelfgrlEltPtr->Hops))){
+				} else if(nbrRobotListHops < nbrDataGet(&(SelfgrlEltPtr->Hops))){
 					nbrDataSet(&(SelfgrlEltPtr->Hops), nbrRobotListHops + 1);
 					nbrDataSet(&(SelfgrlEltPtr->ParentID), nbrPtrID);
 				}

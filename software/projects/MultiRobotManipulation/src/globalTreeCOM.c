@@ -12,17 +12,23 @@
 #include "ronelib.h"
 #include "globalTreeCOM.h"
 
-#define PI				3147
 #define ROTATE_STEPS	PI/20
 
-#define ROBOT_RANGE	100	// Set distance between robots, temporary until range is figured out
-
+void createGRLscaleCoordinates(scaleCoordinate scaleCoordinateArray[]){
+	int i;
+	for (i = 0; i < GLOBAL_ROBOTLIST_MAX_SIZE + 1; i++) {
+		createScaleCoordinate(&scaleCoordinateArray[i]);
+	}
+}
 
 void GlobalTreeCOMListCreate(PositionCOM * posListPtr){
 	int i;
 	for(i = 0; i <GLOBAL_ROBOTLIST_MAX_SIZE + 1; i++){
 		nbrDataCreate16(&posListPtr[i].X_H,&posListPtr[i].X_L,"X_H", "X_L", 0);
 		nbrDataCreate16(&posListPtr[i].Y_H,&posListPtr[i].Y_L,"Y_H", "Y_L", 0);
+
+		nbrDataSet16(&posListPtr[i].X_H, &posListPtr[i].X_L, 0);
+		nbrDataSet16(&posListPtr[i].Y_H, &posListPtr[i].Y_L, 0);
 	}
 
 }
@@ -47,7 +53,7 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posit
 		for (i = 0; i < nbrList.size; i++){
 			nbrPtr = nbrList.nbrs[i];
 			uint8 nbrTreeParentId = nbrDataGetNbr(&(globalRobotList.list[j].ParentID), nbrPtr);
-			//If parent of nbr is me, Convert Center of mass to my cordinate frame average with other robots center of mass
+			//If parent of nbr is me, Convert Center of mass to my coordinate frame average with other robots center of mass
 			if(nbrTreeParentId == roneID){
 				int16 x,y,xprime,yprime;
 				nbrPtr = nbrListGetNbr(&nbrList, i);
@@ -142,14 +148,22 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posit
 
 }
 
-void CentroidGRLUpdate(GlobalRobotList globalRobotList, NbrList nbrList, PositionCOM* posListPtr){
+void centroidGRLUpdate(GlobalRobotList globalRobotList, NbrList nbrList, scaleCoordinate scaleCoordinateArray[]){
 	Nbr* nbrPtr;
 	int i, j;
-	//For Every tree in the list
+	int16 x, y;			// X and Y of neighbor coordinates
+	uint8 childCount;	// Child count of neighbors
+	int16 centroidX, centroidY;	// X and Y of centroid guess
+
+	//For every tree in the list
 	for (j = 0; j < globalRobotList.size; j++) {
-		int32 xsum = roneID;
-		int32 xchd;
-		uint8 childNum = 0; // Counts the number of children
+		int16 xSum = 0,				// Summed X and Y of children
+			  ySum = 0;
+		uint8 childCountSum = 0;	// Total amount of children from children
+
+		 GlobalRobotListElement* grlEltPtr = globalRobotListGetElt(&globalRobotList, j);
+		 uint16 TreeParentId = grlEltGetParentID(grlEltPtr);
+		 uint16 TreeId = grlEltGetID(grlEltPtr);
 
 		//For ever nbr
 		for (i = 0; i < nbrList.size; i++){
@@ -158,19 +172,24 @@ void CentroidGRLUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Positio
 
 			// If we are the parent node in the tree, count and sum child nodes
 			if(nbrTreeParentId == roneID){
-				xchd = nbrDataGetNbr16(&posListPtr[j].X_H,&posListPtr[j].X_L,nbrPtr);
-
-				xsum += xchd;
-				childNum++;
+				// Transform remote coordinate to local reference frame and add to sums
+				transformScaleCoordinate(&scaleCoordinateArray[j], nbrPtr, &x, &y, &childCount);
+				xSum += x;
+				ySum += y;
+				childCountSum += childCount;
 			}
 		}
 
-		// If no children, don't update sum
-		if(childNum == 0) {
+		updateScaleCoordinate(&scaleCoordinateArray[j], xSum, ySum, ++childCountSum);
 
-		} else {
-			nbrDataSet16(&posListPtr[j].X_H, &posListPtr[j].X_L, (int16) xsum);
-			nbrDataSet16(&posListPtr[j].Y_H, &posListPtr[j].Y_L, (int16) childNum);
+		// the robot is the root of the tree, it calculates the centroid
+		if (TreeParentId == 0) {
+			// Divide sum totals by the size of the tree to average
+			centroidX = xSum / childCountSum;
+			centroidY = ySum / childCountSum;
+
+			rprintf("%d,%d,%u,%d,%d,%u", xSum, ySum, globalRobotList.size, centroidX, centroidY, childCountSum);
+			rprintf("\n");
 		}
 	}
 }
@@ -197,7 +216,9 @@ void CentroidGRLPrintSelfTree(GlobalRobotList* globalRobotListPtr, PositionCOM* 
 	for (j = 0; j < globalRobotListPtr->size; j++) {
 		grlEltPtr = globalRobotListGetElt(globalRobotListPtr, j);
 		uint8 nbrTotalRobotListRobotID = grlEltGetID(grlEltPtr);
-		rprintf(",%d,%d", nbrTotalRobotListRobotID, grlEltGetParentID(grlEltPtr));
+		rprintf(",%d,%d,%d", nbrTotalRobotListRobotID, grlEltGetParentID(grlEltPtr), grlEltGetHops(grlEltPtr));
+		rprintf("\n");
+
 	}
 	rprintf("\n");
 } // todo: print our guess
@@ -213,10 +234,29 @@ void CentroidGRLPrintNbrTree(GlobalRobotList* globalRobotListPtr, Nbr* nbrptr, P
 			return;
 		}
 		rprintf(",%d,%d", nbrRobotListID, nbrRobotListParentID);
+		rprintf("\n");
+
 	}
-	rprintf(",%d", nbrDataGetNbr16(&posListPtr[j].X_H,&posListPtr[j].X_L, nbrptr));
+	//rprintf(",%d", nbrDataGetNbr16(&posListPtr[j].X_H,&posListPtr[j].X_L, nbrptr));
+	//rprintf("\n");
+}
+
+void CentroidGRLPrintEstimate(GlobalRobotList* globalRobotList, PositionCOM* posListPtr){
+		int  j;
+		//For Every tree in the list
+		for (j = 0; j < globalRobotList->size; j++) {
+
+				rprintf(",%d,%d,%d,%d ", &posListPtr[j].X_H, &posListPtr[j].X_L, &posListPtr[j].Y_H, &posListPtr[j].Y_L);
+				rprintf("\n");
+
+				}
 	rprintf("\n");
 }
+
+
+
+
+
 
 
 /*
