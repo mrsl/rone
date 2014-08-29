@@ -68,7 +68,7 @@ void behaviorTask(void* parameters) {
 	int16 COM_Y,COM_X,PIVOT_X,PIVOT_Y, cylciodModifier;
 	uint8 cycloidTime = 1;
 
-	PosistionCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+2]; // why +2?
+	PositionCOM treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+2]; // why +2?
 	GlobalTreeCOMListCreate(treeGuessCOM);
 
 	NbrData LeaderHeading_H;

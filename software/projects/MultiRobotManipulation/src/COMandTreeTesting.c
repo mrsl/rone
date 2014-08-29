@@ -14,7 +14,6 @@
 #define BEHAVIOR_TASK_PERIOD			50
 #define NEIGHBOR_ROUND_PERIOD			300
 
-
 void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
 
@@ -23,9 +22,7 @@ void behaviorTask(void* parameters) {
 	NbrList nbrList;
 	uint32 neighborRound;
 
-	boolean buttonRed,		// Buttons
-			buttonGreen,
-			buttonBlue;
+	navigationData navData;
 
 	// Initialization steps
 	systemPrintStartup();
@@ -43,6 +40,13 @@ void behaviorTask(void* parameters) {
 	GlobalRobotList globalRobotList;
 	globalRobotListCreate(&globalRobotList);
 
+	setLookup(8, 17, 4000, PI, -PI / 2);
+	setLookup(8, 31, 4000, -PI / 2, 0);
+	setLookup(8, 59, 5657, PI / 4 - PI, PI / 4);
+	setLookup(17, 31, 5657, PI / 4 - PI, PI / 4);
+	setLookup(17, 59, 4000, PI, PI / 2);
+	setLookup(31, 59, 4000, PI / 2, 0);
+
 	for (;;) {
 		// Default behavior is inactive
 		behOutput = behInactive;
@@ -51,57 +55,39 @@ void behaviorTask(void* parameters) {
 		if (rprintfIsHost()) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 		} else {
+			// Set LEDs based on state
+			if (isPivot) {
+				ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			} else if (roneID == GUIDE_ROBOT_ID) {
+				ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			} else {
+				ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			}
+
+			// Set to pivot if green button pressed
+			if (buttonsGet(BUTTON_GREEN)) {
+				isPivot = (isPivot) ? FALSE : TRUE;
+			}
+
 			neighborsGetMutex();
 
 			printNow = neighborsNewRoundCheck(&neighborRound);
-			nbrListCreate(&nbrList);
 
-			globalRobotListUpdate(&globalRobotList, &nbrList);
-			centroidGRLUpdate(globalRobotList, nbrList, GRLcentroidCooridates);
+			// If neighbor data has updated, print out new centroid estimate
+			if (printNow) {
+				nbrListCreate(&nbrList);
 
-			//CentroidGRLPrintAllTrees(&globalRobotList, &nbrList, &GRLcentroidCooridates);
-			//CentroidGRLPrintSelfTree(&globalRobotList, &GRLcentroidCooridates);
+				globalRobotListUpdate(&globalRobotList, &nbrList);
+				centroidGRLUpdate(&navData, globalRobotList, &nbrList, GRLcentroidCooridates);
 
-//			int16 x, y;
-//			int16 xCoor, yCoor;
-//			int32 orientation, bearing;
-//			uint8 childCount;
-//
-//			cprintf(" xResult | yResult |   xCoor |   yCoor |    xNbr |    yNbr |  orient. | bearing | childC. \n");
-//
-//			xCoor = 0, yCoor = 0;
-//			orientation = 0;
-//			bearing = 0;
-//			childCount = 1;
-//			applyTransformationMatrix(&x, &y, xCoor, yCoor, orientation, bearing, childCount);
-//			xCoor = 100;
-//			childCount = 2;
-//			applyTransformationMatrix(&x, &y, xCoor, yCoor, orientation, bearing, childCount);
-//			xCoor = -100;
-//			orientation = PI;
-//			bearing = PI;
-//			childCount = 2;
-//			applyTransformationMatrix(&x, &y, xCoor, yCoor, orientation, bearing, childCount);
-
-
-			//cprintf("\n");
-
-			rprintfFlush();
-
-			//CentroidGRLPrintEstimate(&globalRobotList, &GRLcentroidCooridates);
-			//rprintfFlush();
-
-
-			// Get buttons
-			buttonBlue = buttonsGet(BUTTON_BLUE);
-			buttonRed = buttonsGet(BUTTON_RED);
-			buttonGreen = buttonsGet(BUTTON_GREEN);
+				rprintf("(%d, %d)\n", navData.centroidX, navData.centroidY);
+				rprintfFlush();
+			}
 
 			neighborsPutMutex();
 		}
 
 		motorSetBeh(&behOutput);
-
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 		lastWakeTime = osTaskGetTickCount();
 	}

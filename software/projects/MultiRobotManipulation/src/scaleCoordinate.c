@@ -101,8 +101,14 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 	*childCount = getScaleCoordinateChildCount(toTransform, nbrPtr);
 
 	// Get angular position of neighbor
-	int32 orientation = nbrGetOrientation(nbrPtr);
-	int32 bearing = nbrGetBearing(nbrPtr);
+//	int32 orientation = nbrGetOrientation(nbrPtr);
+//	int32 bearing = nbrGetBearing(nbrPtr);
+
+	uint8 nbrId = nbrGetID(nbrPtr);
+
+	int32 orientation = lookupGetOrientation(roneID, nbrId);
+	int32 bearing = lookupGetBearing(roneID, nbrId);
+	int16 distance = lookupGetDistance(roneID, nbrId);
 
 	// Get centroid guess from neighbor
 	int16 xCoor, yCoor;
@@ -112,17 +118,19 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 
 	//cprintf("TSC:%d,%d,%d,%d,%d,%d,%d,%u\n", xCoor, yCoor, xNbr, yNbr, bearing, orientation, transformationAngle, *childCount);
 
-	applyTransformationMatrix(x, y, xCoor, yCoor, orientation, bearing, *childCount);
+	cprintf("ID:%u O:%d B:%d D:%d X:%d Y:%d C:%u\n", nbrId, orientation, bearing, distance, xCoor, yCoor, *childCount);
+	applyTransformationMatrix(x, y, xCoor, yCoor, orientation, bearing, distance, *childCount);
 }
 
 void applyTransformationMatrix(int16 *x, int16 *y,
 							   int16 xCoor, int16 yCoor,
 							   int32 orientation, int32 bearing,
+							   int16 distance,
 							   uint8 childCount) {
 
 	int16 xNbr, yNbr;
-	xNbr = ROBOT_RANGE * cosMilliRad(bearing) / MILLIRAD_TRIG_SCALER;
-	yNbr = ROBOT_RANGE * sinMilliRad(bearing) / MILLIRAD_TRIG_SCALER;
+	xNbr = distance * cosMilliRad(bearing) / MILLIRAD_TRIG_SCALER;
+	yNbr = distance * sinMilliRad(bearing) / MILLIRAD_TRIG_SCALER;
 
 	int32 transformationAngle = -normalizeAngleMilliRad2(PI - orientation + bearing);
 	int16 xTemp, yTemp;

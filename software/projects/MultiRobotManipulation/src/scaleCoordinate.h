@@ -8,7 +8,7 @@
 #ifndef SCALECOORDINATE_H_
 #define SCALECOORDINATE_H_
 
-#define ROBOT_RANGE	200	// Set distance between robots, temporary until range is figured out
+#define ROBOT_RANGE	4000	// Set distance between robots, temporary until range is figured out
 
 struct {
 	NbrData Xh;	// High bits of x coordinate
@@ -56,6 +56,7 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 void applyTransformationMatrix(int16 *x, int16 *y,
 							   int16 xCoor, int16 yCoor,
 							   int32 orientation, int32 bearing,
+							   int16 distance,
 							   uint8 childCount);
 
 #endif /* SCALECOORDINATE_H_ */

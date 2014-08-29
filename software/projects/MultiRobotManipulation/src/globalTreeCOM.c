@@ -14,6 +14,9 @@
 
 #define ROTATE_STEPS	PI/20
 
+
+boolean isPivot = FALSE;
+
 void createGRLscaleCoordinates(scaleCoordinate scaleCoordinateArray[]){
 	int i;
 	for (i = 0; i < GLOBAL_ROBOTLIST_MAX_SIZE + 1; i++) {
@@ -148,50 +151,85 @@ void GlobalTreeCOMUpdate(GlobalRobotList globalRobotList, NbrList nbrList, Posit
 
 }
 
-void centroidGRLUpdate(GlobalRobotList globalRobotList, NbrList nbrList, scaleCoordinate scaleCoordinateArray[]){
-	Nbr* nbrPtr;
-	int i, j;
-	int16 x, y;			// X and Y of neighbor coordinates
-	uint8 childCount;	// Child count of neighbors
-	int16 centroidX, centroidY;	// X and Y of centroid guess
+/**
+ * @brief Updates the GRL's centroid estimate, guide tower location, and pivot robot location
+ */
+void centroidGRLUpdate(navigationData *navDataPtr,
+					   GlobalRobotList globalRobotList,
+					   NbrList *nbrListPtr,
+					   scaleCoordinate scaleCoordinateArray[]) {
+	// Variables
+	int i;
+	navigationData tempNavData;			// Temporary coordinates
+	GlobalRobotListElement* grlEltPtr;	// Pointer to a GRL Tree (element)
+	uint16 treeId,						// Id of the Tree
+		   treeParentId;				// Id of the root of the Tree
 
-	//For every tree in the list
-	for (j = 0; j < globalRobotList.size; j++) {
-		int16 xSum = 0,				// Summed X and Y of children
-			  ySum = 0;
-		uint8 childCountSum = 0;	// Total amount of children from children
+	// For every tree in the GRL
+	for (i = 0; i < globalRobotList.size; i++) {
+		grlEltPtr = globalRobotListGetElt(&globalRobotList, i);
+		treeId = grlEltGetID(grlEltPtr);
+		treeParentId = grlEltGetParentID(grlEltPtr);
 
-		 GlobalRobotListElement* grlEltPtr = globalRobotListGetElt(&globalRobotList, j);
-		 uint16 TreeParentId = grlEltGetParentID(grlEltPtr);
-		 uint16 TreeId = grlEltGetID(grlEltPtr);
+		// If regular manipulator robot in the tree
+		if (treeId != GUIDE_ROBOT_ID) {
+			// Update the tree and find the centroid sums
+			centroidGRLListUpdate(&tempNavData, &globalRobotList.list[i], nbrListPtr, &scaleCoordinateArray[i]);
 
-		//For ever nbr
-		for (i = 0; i < nbrList.size; i++){
-			nbrPtr = nbrList.nbrs[i];
-			uint8 nbrTreeParentId = nbrDataGetNbr(&(globalRobotList.list[j].ParentID), nbrPtr);
-
-			// If we are the parent node in the tree, count and sum child nodes
-			if(nbrTreeParentId == roneID){
-				// Transform remote coordinate to local reference frame and add to sums
-				transformScaleCoordinate(&scaleCoordinateArray[j], nbrPtr, &x, &y, &childCount);
-				xSum += x;
-				ySum += y;
-				childCountSum += childCount;
+			// If we are the root of the tree, set our estimate
+			if (treeParentId == 0) {
+				navDataPtr->centroidX = tempNavData.centroidX;
+				navDataPtr->centroidY = tempNavData.centroidY;
 			}
-		}
-
-		updateScaleCoordinate(&scaleCoordinateArray[j], xSum, ySum, ++childCountSum);
-
-		// the robot is the root of the tree, it calculates the centroid
-		if (TreeParentId == 0) {
-			// Divide sum totals by the size of the tree to average
-			centroidX = xSum / childCountSum;
-			centroidY = ySum / childCountSum;
-
-			rprintf("%d,%d,%u,%d,%d,%u", xSum, ySum, globalRobotList.size, centroidX, centroidY, childCountSum);
-			rprintf("\n");
+		// If this is the guide robot's tree
+		} else if (treeId == GUIDE_ROBOT_ID) {
+			// TODO: Guide robot tree location
 		}
 	}
+}
+
+/**
+ * @brief Updates a single GRL tree (element) with new neighbor data
+ */
+void centroidGRLListUpdate(navigationData *navDataPtr,
+						   GlobalRobotListElement *grlElement,
+						   NbrList *nbrListPtr,
+						   scaleCoordinate *centroidEstimate) {
+	// Variables
+	int i;
+	int16 x,					// X and Y of a child
+		  y,
+		  xSum = 0,				// Summed X and Y of children
+		  ySum = 0;
+	uint8 childCount,			// Child count froma child
+		  childCountSum = 0;	// Total amount of children from children
+	Nbr *nbrPtr;
+	uint8 nbrId,				// Neighbor's ID
+		  nbrTreeParentId;		// ID of the neighbor's parent
+
+	for (i = 0; i < nbrListPtr->size; i++){
+		nbrPtr = nbrListPtr->nbrs[i];
+
+		//uint8 nbrTreeId = nbrDataGetNbr(&(grlElement->ID), nbrPtr);
+		nbrId = nbrGetID(nbrPtr);
+		nbrTreeParentId = nbrDataGetNbr(&(grlElement->ParentID), nbrPtr);
+
+		// If we are the parent node in the tree, count and sum child nodes
+		// Also, ignore the navigational guide robot
+		if(nbrTreeParentId == roneID && nbrId != GUIDE_ROBOT_ID){
+			// Transform remote coordinate to local reference frame and add to sums
+			transformScaleCoordinate(centroidEstimate, nbrPtr, &x, &y, &childCount);
+			xSum += x;
+			ySum += y;
+			childCountSum += childCount;
+		}
+	}
+	// Update our knowledge of centroid sums
+	updateScaleCoordinate(centroidEstimate, xSum, ySum, ++childCountSum);
+
+	// Set given data structure values to current centroid estimate
+	navDataPtr->centroidX = xSum / childCountSum;
+	navDataPtr->centroidY = ySum / childCountSum;
 }
 
 void CentroidGRLPrintAllTrees(GlobalRobotList* globalRobotListPtr, NbrList* nbrListPtr, PositionCOM* posListPtr){
