@@ -101,13 +101,13 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 	*childCount = getScaleCoordinateChildCount(toTransform, nbrPtr);
 
 	// Get angular position of neighbor
-//	int32 orientation = nbrGetOrientation(nbrPtr);
-//	int32 bearing = nbrGetBearing(nbrPtr);
+	int32 orientation = nbrGetOrientation(nbrPtr);
+	int32 bearing = nbrGetBearing(nbrPtr);
 
 	uint8 nbrId = nbrGetID(nbrPtr);
 
-	int32 orientation = lookupGetOrientation(roneID, nbrId);
-	int32 bearing = lookupGetBearing(roneID, nbrId);
+	//int32 orientation = lookupGetOrientation(roneID, nbrId);
+	//int32 bearing = lookupGetBearing(roneID, nbrId);
 	int16 distance = lookupGetDistance(roneID, nbrId);
 
 	// Get centroid guess from neighbor
@@ -118,7 +118,7 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 
 	//cprintf("TSC:%d,%d,%d,%d,%d,%d,%d,%u\n", xCoor, yCoor, xNbr, yNbr, bearing, orientation, transformationAngle, *childCount);
 
-	cprintf("ID:%u O:%d B:%d D:%d X:%d Y:%d C:%u\n", nbrId, orientation, bearing, distance, xCoor, yCoor, *childCount);
+	//cprintf("ID:%u O:%d B:%d D:%d X:%d Y:%d C:%u\n", nbrId, orientation, bearing, distance, xCoor, yCoor, *childCount);
 	applyTransformationMatrix(x, y, xCoor, yCoor, orientation, bearing, distance, *childCount);
 }
 
@@ -135,11 +135,9 @@ void applyTransformationMatrix(int16 *x, int16 *y,
 	int32 transformationAngle = -normalizeAngleMilliRad2(PI - orientation + bearing);
 	int16 xTemp, yTemp;
 	// Calculate X and Y of centroid guess from neighbor in local reference frame, considering children
-	xTemp = xCoor * (cosMilliRad(transformationAngle) / MILLIRAD_TRIG_SCALER)
-			- yCoor * (sinMilliRad(transformationAngle) / MILLIRAD_TRIG_SCALER)
+	xTemp = (xCoor * cosMilliRad(transformationAngle) - yCoor * sinMilliRad(transformationAngle))/ MILLIRAD_TRIG_SCALER
 			+ xNbr * (int16)childCount;
-	yTemp = xCoor * (sinMilliRad(transformationAngle) / MILLIRAD_TRIG_SCALER)
-			+ yCoor * (cosMilliRad(transformationAngle) / MILLIRAD_TRIG_SCALER)
+	yTemp = (xCoor * sinMilliRad(transformationAngle) + yCoor * cosMilliRad(transformationAngle)) / MILLIRAD_TRIG_SCALER
 			+ yNbr * (int16)childCount;
 
 	*x = xTemp;

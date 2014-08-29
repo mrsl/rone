@@ -172,7 +172,11 @@ void centroidGRLUpdate(navigationData *navDataPtr,
 		treeParentId = grlEltGetParentID(grlEltPtr);
 
 		// If regular manipulator robot in the tree
-		if (treeId != GUIDE_ROBOT_ID) {
+		if (treeId != GUIDE_ROBOT_ID && treeId != HOST_ROBOT_ID) {
+			cprintf("T: %u - ", treeId);
+			cprintf("Prn: %u -", treeParentId);
+
+
 			// Update the tree and find the centroid sums
 			centroidGRLListUpdate(&tempNavData, &globalRobotList.list[i], nbrListPtr, &scaleCoordinateArray[i]);
 
@@ -180,6 +184,7 @@ void centroidGRLUpdate(navigationData *navDataPtr,
 			if (treeParentId == 0) {
 				navDataPtr->centroidX = tempNavData.centroidX;
 				navDataPtr->centroidY = tempNavData.centroidY;
+				navDataPtr->childCountSum = tempNavData.childCountSum;
 			}
 		// If this is the guide robot's tree
 		} else if (treeId == GUIDE_ROBOT_ID) {
@@ -212,16 +217,20 @@ void centroidGRLListUpdate(navigationData *navDataPtr,
 
 		//uint8 nbrTreeId = nbrDataGetNbr(&(grlElement->ID), nbrPtr);
 		nbrId = nbrGetID(nbrPtr);
+
+		if (nbrId != roneID)
+				{
 		nbrTreeParentId = nbrDataGetNbr(&(grlElement->ParentID), nbrPtr);
 
 		// If we are the parent node in the tree, count and sum child nodes
 		// Also, ignore the navigational guide robot
-		if(nbrTreeParentId == roneID && nbrId != GUIDE_ROBOT_ID){
+		if(nbrTreeParentId == roneID && nbrId != GUIDE_ROBOT_ID && nbrId != HOST_ROBOT_ID){
 			// Transform remote coordinate to local reference frame and add to sums
 			transformScaleCoordinate(centroidEstimate, nbrPtr, &x, &y, &childCount);
 			xSum += x;
 			ySum += y;
 			childCountSum += childCount;
+			}
 		}
 	}
 	// Update our knowledge of centroid sums
@@ -230,6 +239,9 @@ void centroidGRLListUpdate(navigationData *navDataPtr,
 	// Set given data structure values to current centroid estimate
 	navDataPtr->centroidX = xSum / childCountSum;
 	navDataPtr->centroidY = ySum / childCountSum;
+	navDataPtr->childCountSum = childCountSum;
+
+	cprintf("(%d, %d) - %d\n", navDataPtr->centroidX, navDataPtr->centroidY, navDataPtr->childCountSum);
 }
 
 void CentroidGRLPrintAllTrees(GlobalRobotList* globalRobotListPtr, NbrList* nbrListPtr, PositionCOM* posListPtr){

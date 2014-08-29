@@ -40,12 +40,20 @@ void behaviorTask(void* parameters) {
 	GlobalRobotList globalRobotList;
 	globalRobotListCreate(&globalRobotList);
 
-	setLookup(8, 17, 4000, PI, -PI / 2);
-	setLookup(8, 31, 4000, -PI / 2, 0);
-	setLookup(8, 59, 5657, PI / 4 - PI, PI / 4);
-	setLookup(17, 31, 5657, PI / 4 - PI, PI / 4);
-	setLookup(17, 59, 4000, PI, PI / 2);
-	setLookup(31, 59, 4000, PI / 2, 0);
+//	setLookup(8, 17, 4000, PI, -PI / 2);
+//	setLookup(8, 31, 4000, -PI / 2, 0);
+//	setLookup(8, 59, 5657, PI / 4 - PI, PI / 4);
+//	setLookup(17, 31, 5657, PI / 4 - PI, PI / 4);
+//	setLookup(17, 59, 4000, PI, PI / 2);
+//	setLookup(31, 59, 4000, PI / 2, 0);
+
+
+	setLookup(25, 10, 4000, -PI / 2, PI / 2);
+	setLookup(25, 31, 4000, 0, PI);
+	setLookup(10, 02, 4000, 0, PI);
+	setLookup(31, 02, 4000, -PI / 2, PI / 2);
+	setLookup(02, 25, 5657, -PI / 2, PI / 2);
+	setLookup(31, 10, 5657, -PI / 2, PI / 2);
 
 	for (;;) {
 		// Default behavior is inactive
@@ -80,7 +88,7 @@ void behaviorTask(void* parameters) {
 				globalRobotListUpdate(&globalRobotList, &nbrList);
 				centroidGRLUpdate(&navData, globalRobotList, &nbrList, GRLcentroidCooridates);
 
-				rprintf("(%d, %d)\n", navData.centroidX, navData.centroidY);
+				rprintf("(%d, %d) - %d\n", navData.centroidX, navData.centroidY, navData.childCountSum);
 				rprintfFlush();
 			}
 

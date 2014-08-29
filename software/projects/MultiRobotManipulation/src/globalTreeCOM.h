@@ -16,6 +16,7 @@
 #define PI				3147
 
 #define GUIDE_ROBOT_ID		55
+#define HOST_ROBOT_ID		19
 
 typedef struct posCOM {
 	NbrData X_H;
@@ -31,6 +32,7 @@ struct {
 	int16 guideY;
 	int16 pivotX;
 	int16 pivotY;
+	uint8 childCountSum;
 } typedef navigationData;
 
 extern boolean isPivot;
