@@ -206,7 +206,7 @@ void centroidGRLListUpdate(navigationData *navDataPtr,
 		  y,
 		  xSum = 0,				// Summed X and Y of children
 		  ySum = 0;
-	uint8 childCount,			// Child count froma child
+	uint8 childCount,			// Child count from a child (Includes child)
 		  childCountSum = 0;	// Total amount of children from children
 	Nbr *nbrPtr;
 	uint8 nbrId,				// Neighbor's ID

@@ -48,12 +48,12 @@ void behaviorTask(void* parameters) {
 //	setLookup(31, 59, 4000, PI / 2, 0);
 
 
-	setLookup(25, 10, 4000, -PI / 2, PI / 2);
-	setLookup(25, 31, 4000, 0, PI);
-	setLookup(10, 02, 4000, 0, PI);
-	setLookup(31, 02, 4000, -PI / 2, PI / 2);
-	setLookup(02, 25, 5657, -PI / 2, PI / 2);
-	setLookup(31, 10, 5657, -PI / 2, PI / 2);
+	setLookup(98, 99, 4000, -PI / 2, PI / 2);
+	setLookup(104, 121, 4000, 0, PI);
+	setLookup(98, 104, 4000, 0, PI);
+	setLookup(99, 121, 4000, -PI / 2, PI / 2);
+	setLookup(98, 121, 5657, -PI / 2, PI / 2);
+	setLookup(99, 104, 5657, -PI / 2, PI / 2);
 
 	for (;;) {
 		// Default behavior is inactive
