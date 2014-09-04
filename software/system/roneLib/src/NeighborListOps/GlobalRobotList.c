@@ -280,6 +280,7 @@ void globalRobotListUpdate(GlobalRobotList* globalRobotListPtr, NbrList* nbrList
 		} else {
 			globalRobotUpdateTree(globalRobotListPtr, *nbrListPtr, j);
 		}
+		cprintf("H: %d TID: %d\n", nbrDataGet(&(grlEltPtr->Hops)), grlEltGetID(grlEltPtr));
 	}
 
 }
@@ -371,9 +372,10 @@ void globalRobotListDelete(GlobalRobotList* globalRobotListPtr, uint8 idx) {
 	int i,j;
 	globalRobotListPtr->size--;
 	for(i = idx; i <globalRobotListPtr->size; i++){
-		globalRobotListMove(globalRobotListPtr,i,i+1);
+		globalRobotListMove(globalRobotListPtr,i+1,i);
 
 	}
+
 	for(j = i; j < GLOBAL_ROBOTLIST_MAX_SIZE; j++){
 		grlEltPtr = globalRobotListGetElt(globalRobotListPtr,j);
 		nbrDataSet(&grlEltPtr->ID, ROBOT_ID_NULL);
