@@ -55,9 +55,13 @@ void behaviorTask(void* parameters) {
 	setLookup(98, 121, 5657, -PI / 2, PI / 2);
 	setLookup(99, 104, 5657, -PI / 2, PI / 2);
 
+	gripperBoardInit();
+
 	for (;;) {
 		// Default behavior is inactive
 		behOutput = behInactive;
+
+		gripperBoardSetServo(90);
 
 		// If host, do not do anything
 		if (rprintfIsHost()) {
