@@ -280,7 +280,6 @@ void globalRobotListUpdate(GlobalRobotList* globalRobotListPtr, NbrList* nbrList
 		} else {
 			globalRobotUpdateTree(globalRobotListPtr, *nbrListPtr, j);
 		}
-		cprintf("H: %d TID: %d\n", nbrDataGet(&(grlEltPtr->Hops)), grlEltGetID(grlEltPtr));
 	}
 
 }

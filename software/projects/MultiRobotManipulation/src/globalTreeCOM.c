@@ -173,10 +173,6 @@ void centroidGRLUpdate(navigationData *navDataPtr,
 
 		// If regular manipulator robot in the tree
 		if (treeId != GUIDE_ROBOT_ID && treeId != HOST_ROBOT_ID) {
-			cprintf("T: %u - ", treeId);
-			cprintf("Prn: %u -", treeParentId);
-
-
 			// Update the tree and find the centroid sums
 			centroidGRLListUpdate(&tempNavData, &globalRobotList.list[i], nbrListPtr, &scaleCoordinateArray[i]);
 
@@ -240,8 +236,6 @@ void centroidGRLListUpdate(navigationData *navDataPtr,
 	navDataPtr->centroidX = xSum / childCountSum;
 	navDataPtr->centroidY = ySum / childCountSum;
 	navDataPtr->childCountSum = childCountSum;
-
-	cprintf("(%d, %d) - %d\n", navDataPtr->centroidX, navDataPtr->centroidY, navDataPtr->childCountSum);
 }
 
 void CentroidGRLPrintAllTrees(GlobalRobotList* globalRobotListPtr, NbrList* nbrListPtr, PositionCOM* posListPtr){
