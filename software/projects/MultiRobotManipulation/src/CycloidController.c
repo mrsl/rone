@@ -96,6 +96,7 @@ void behaviorTask(void* parameters) {
 	int32 accX = 0;
 	int32 accY = 0;
 	radioCommandAddQueue(&radioCmdRemoteControl,name, 1);
+	navigationData navData;
 
 	//Cylciod Stuff
 
@@ -103,7 +104,8 @@ void behaviorTask(void* parameters) {
 	Nbr* nbrNavTowerPtr;
 	uint32 navTowerTime;
 	int16 vecCOMtoTowerY, vecCOMtoTowerX, vecCOMtoTowerBearing;
-
+	scaleCoordinate GRLcentroidCooridates[GLOBAL_ROBOTLIST_MAX_SIZE + 2];
+	createGRLscaleCoordinates(GRLcentroidCooridates);
 	Pose rotateWaypointPose,translateWaypointPose,goalWaypointPose, CurrPose;
 
 
@@ -241,12 +243,16 @@ void behaviorTask(void* parameters) {
 					//M  is the rotational matrix : M = [cos (theta)  -sin (theta); sin(theta cos(theta)], theta is the angle from (x1,y1) to (x2,y2)
 					// theta = bearing + pi - orientation,  bearing and orientation is for the robot in (x1,y1)
 
-					// First: find the vector from centroid to nav tower robot : each robot knows the centroid, sees the nav tower
+					// First: find the vector from centroid to nav tower robot : each robot knows the centroid, sees the nav tower(?)
 					// second: find the normal vector of robot - centroid
+
+
+
+
 					vecCOMtoTowerX = x*cosMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER - y*sinMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER;
 					vecCOMtoTowerY = x*sinMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER + y*cosMilliRad(nbrNavTowerPtr->bearing)/MILLIRAD_TRIG_SCALER;
 
-					//rprintf("COMtoTOWER X %d Y %d B %d CM %d\n",COMtoTowerX,COMtoTowerY, atan2MilliRad((int32)COMtoTowerX,(int32)COMtoTowerY), cylciodModifier);
+					//rprintf("COMtoTOWER X %d Y %d B %d CM %d\n",COMtoTower   X,COMtoTowerY, atan2MilliRad((int32)COMtoTowerX,(int32)COMtoTowerY), cylciodModifier);
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].X_L,vecCOMtoTowerX);
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,vecCOMtoTowerY);
 					//Todo: Assumes that nave tower is highest ID that will be seen, need to be changed if v15 are used
@@ -289,52 +295,26 @@ void behaviorTask(void* parameters) {
 					nbrDataSet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE+1].Y_L,0);
 				}
 
-				GlobalTreeCOMUpdate(globalRobotList, nbrList, treeGuessCOM, nbrEdgeDis, &LeaderHeading_H,&LeaderHeading_L);
-				int8 selfIdx = globalRobotListGetIndex(&globalRobotList,roneID);
-				if(selfIdx == -1){
-					COM_Y = 0;
-					COM_X = 0;
-				}else{
-					COM_Y =  nbrDataGet16(&treeGuessCOM[selfIdx].Y_H,&treeGuessCOM[selfIdx].Y_L);
-					COM_X =  nbrDataGet16(&treeGuessCOM[selfIdx].X_H,&treeGuessCOM[selfIdx].X_L);
-				}
+
+				globalRobotListUpdate(&globalRobotList, &nbrList);
+				centroidGRLUpdate(&navData, globalRobotList, &nbrList, GRLcentroidCooridates);
+
+
 				//rprintf("%d %d\n",COM_X,COM_Y);
-				if(moveState == 0){				//Transport
+				if(moveState == 0){				//Translate
 					behFlock_gain(&behOutput, &nbrList, TVcmd, FLOCK_RV_GAIN_MOVEOBJ);
 					behOutput.rv  = behOutput.rv + (RVcmd*10);
-				}else if(moveState == 1){		//Rotate
+				}else if(moveState == 1){		//Rotate around COM
 					behOutput = behInactive;
 					GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  RVcmd);
 				}else if(moveState == 2){		//Pivot
 					PIVOT_X =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].Y_L);
 					PIVOT_Y =  nbrDataGet16(&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_H,&treeGuessCOM[GLOBAL_ROBOTLIST_MAX_SIZE].X_L);
 					GlobalTreePointOrbit(PIVOT_X, PIVOT_Y, &behOutput,  RVcmd);
-				}else if(moveState == 4){		//Cycloid Motion
-					vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
-					vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
-					vecCOMtoTowerBearing = normalizeAngleMilliRad2(atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY));
-					cylciodModifier = abs(vecCOMtoTowerBearing) * (cyldoidSpeed - CYCLOID_ROTATION_MOD) / PI;
+				}else if(moveState == 3){		// Cycloid Motion
 
-					if((abs(COM_X) >= abs(vecCOMtoTowerX/2)) && (abs(COM_Y) >= abs(vecCOMtoTowerY/2))){
-						COM_X += vecCOMtoTowerX/2;
-						COM_Y += vecCOMtoTowerY/2;
-					}
+					if(!translateBearing){  // robot does not see the guide robot
 
-					if(osTaskGetTickCount() >= (navTowerTime + TOWER_WAIT_TIME)){
-						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  30);
-						//rprintf("Cyliod Mod %d C %d %d v %d %d NNT\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
-					}else{
-						GlobalTreePointOrbit(COM_X, COM_Y, &behOutput,  cyldoidSpeed - cylciodModifier);
-						//rprintf("Cyliod Mod %d C %d %d v %d %d\n",cylciodModifier, COM_X,COM_Y,vecCOMtoTowerX/2, vecCOMtoTowerY/2);
-					}
-					behOutput.rv = behOutput.rv * 2;
-				}else if(moveState == 3){		//Alt Cycloid Motion(new method)
-					/*int16 translateBearing = 0;
-
-					if(osTaskGetTickCount() <= (navTowerTime + TOWER_WAIT_TIME)){*/
-					if(!translateBearing){
-						//vecCOMtoTowerX = vecCOMtoTowerX - COM_X;
-						//vecCOMtoTowerY = vecCOMtoTowerY - COM_Y;
 						translateBearing = (atan2MilliRad((int32)vecCOMtoTowerX,(int32)vecCOMtoTowerY) - PI)/2;
 					}
 
@@ -369,51 +349,7 @@ void behaviorTask(void* parameters) {
 				}
 
 			}
-			if(state == REMOTE){
-				behOutput = behInactive;
 
-				//controls tv and rv using accelarmotor sensors
-				accX = (((int32)accelerometerGetValue(ACCELEROMETER_X) * ACCEL_IIR_GAIN) + (accX * (100 - ACCEL_IIR_GAIN))) / 100;
-				accY = (((int32)accelerometerGetValue(ACCELEROMETER_Y) * ACCEL_IIR_GAIN) + (accY * (100 - ACCEL_IIR_GAIN))) / 100;
-				accX = deadzone(accX, ACCEL_DEAD_ZONE);
-				accY = deadzone(accY, ACCEL_DEAD_ZONE);
-
-				TVcmd = -accX/ACCEL_SCALE;
-				RVcmd = -accY/ACCEL_SCALE;
-				if (abs(TVcmd) < TV_MIN) {			//Minimum TV
-					if(TVcmd > 0) {
-						TVcmd = TV_MIN;
-					} else {
-						TVcmd = -TV_MIN;
-					}
-				}
-
-				comBlue = 0;			//Tells robot to grip, moves SEEKER bot to GRIPPING
-				comRed = 0;				//Tells robot to release object, moves all robots from MOVE_OBJ to RELEASE mode
-				comGreen = 0;				//Sends comand to rotate based on TVcmd as rotational speed/direction
-				if (buttonsGet(BUTTON_BLUE) && bounceBlue) {
-					comBlue = 1;
-					bounceBlue = 0;
-				}
-				if (buttonsGet(BUTTON_RED) && bounceRed) {
-					comRed = 1;
-					bounceRed = 0;
-				}
-				if (buttonsGet(BUTTON_GREEN) && bounceGreen) {
-					comGreen = 1;
-					bounceGreen = 0;
-				}
-
-				if(comRed){
-					comMoveState++;
-					if(comMoveState >= 4){
-						comMoveState = 0;
-					}
-				}
-				//Sends commands over radio
-				sprintf(radioMessageTX.command.data,"%d,%d,%d,%d,%d,%d",TVcmd, RVcmd, comBlue, comRed, comGreen, comMoveState);
-				radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessageTX);
-			}
 
 			/*** FINAL STUFF ***/
 			motorSetBeh(&behOutput);

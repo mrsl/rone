@@ -216,10 +216,14 @@ void behaviorTask(void* parameters) {
 //	setLookup(107, 128, 3200);
 //	setLookup(124, 128, 1500);
 
+	gripperBoardInit();
+
 	for (;;) {
 		// Default behavior is inactive
 		behOutput = behInactive;
 		lastWakeTime = osTaskGetTickCount();
+
+		gripperBoardSetServo(90);
 
 		// If host, do not do anything
 		if (rprintfIsHost()) {
