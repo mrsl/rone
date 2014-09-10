@@ -568,7 +568,7 @@ void aprilTagHandler(void *vargp)
 					if (ATsatID != 0) {
 						if ((aprilTagData[id].up - aprilTagData[id].bcastTime > SAT_BCAST_TIME)
 							&& aprilTagData[id].rid != -1) {
-							sprintf(lbuffer, "at %d %d %d %d\n", aprilTagData[id].rid,
+							sprintf(lbuffer, "EP %d,%d,%d,%d\n", aprilTagData[id].rid,
 																 (int) round(x),
 																 (int) round(y),
 																 (int) round(t));
