@@ -371,6 +371,9 @@ void commCommander(void *vargp)
 
 	/* On close. */
 	if (id != 0) {
+		if (ATsatID == id) {
+			ATsatID = 0;
+		}
 		robots[id].hSerial = NULL;
 
 		robots[id].display = 0;
