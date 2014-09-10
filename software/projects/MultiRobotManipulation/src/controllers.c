@@ -10,14 +10,14 @@
 #define ROTATION_RV_CONST	1.2
 #define ROTATION_DEADZONE	200
 
-#define MRM_ALPHA			40
+#define MRM_ALPHA			50
 
 void mrmRotateCW(navigationData *navData, Beh *beh, int32 tvModifier) {
 	int32 centroidX = (int32) (navData->centroidX / 10);
 	int32 centroidY = (int32) (navData->centroidY / 10);
 
-	int32 oldTv = behGetTv(beh);
-	int32 oldRv = behGetRv(beh);
+	int32 tv = behGetTv(beh);
+	int32 rv = behGetRv(beh);
 
 	if (centroidX == 0 && centroidY == 0) {
 		behSetTvRv(beh, 0, 0);
@@ -37,22 +37,20 @@ void mrmRotateCW(navigationData *navData, Beh *beh, int32 tvModifier) {
 
 	int32 distance = vectorMag(centroidX, centroidY);
 
-	int32 tv = boundAbs(tvModifier * distance / 10, 60);
-	int32 rv = 0;
+	int32 goalTv = boundAbs(tvModifier * distance / 10, 60);
+	int32 goalRv = 0;
 
 	if (abs(bearing) > ROTATION_DEADZONE) {
-		rv = ROTATION_RV_CONST * bearing / 1.5;
+		goalRv = ROTATION_RV_CONST * bearing / 1.5;
 		//rv = boundAbs(rv, 1500);
 
-		tv /= 1.5;
+		goalTv /= 1.5;
 	}
 
-	tv = filterIIR(oldTv, tv, MRM_ALPHA);
-	rv = filterIIR(oldRv, rv, MRM_ALPHA);
+	int32 finalTv = filterIIR(goalTv, tv, MRM_ALPHA);
+	int32 finalRv = filterIIR(goalRv, rv, MRM_ALPHA);
 
-	tv = 0;
-
-	behSetTvRv(beh, tv, rv);
+	behSetTvRv(beh, finalTv, finalRv);
 }
 
 
@@ -66,7 +64,6 @@ void mrmDisperse(navigationData *navData, Beh *beh, int32 tvModifier) {
 	}
 
 	int32 bearing = atan2MilliRad(centroidY, centroidX) - PI;
-	//bearing = normalizeAngleMilliRad(bearing);
 
 	int32 distance = vectorMag(centroidX, centroidY);
 

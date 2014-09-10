@@ -25,7 +25,7 @@
 
 #define STATE_MAX		2
 
-#define CENTROID_ALPHA	60
+#define CENTROID_ALPHA	90
 
 struct __attribute__((__packed__)) {
 	uint32 check;
@@ -155,13 +155,13 @@ void setState(uint8 newState) {
 	}
 }
 
-void filterIIRNavData(navigationData *old, navigationData *new) {
-	new->centroidX = (int16) filterIIR(old->centroidX, new->centroidX, CENTROID_ALPHA);
-	new->centroidY = (int16) filterIIR(old->centroidY, new->centroidY, CENTROID_ALPHA);
-	new->guideX = (int16) filterIIR(old->guideX, new->guideX, CENTROID_ALPHA);
-	new->guideY = (int16) filterIIR(old->guideY, new->guideY, CENTROID_ALPHA);
-	new->pivotX = (int16) filterIIR(old->pivotX, new->pivotX, CENTROID_ALPHA);
-	new->pivotY = (int16) filterIIR(old->pivotY, new->pivotY, CENTROID_ALPHA);
+void filterIIRNavData(navigationData *goal, navigationData *new) {
+	new->centroidX = (int16) filterIIR(goal->centroidX, new->centroidX, CENTROID_ALPHA);
+	new->centroidY = (int16) filterIIR(goal->centroidY, new->centroidY, CENTROID_ALPHA);
+	new->guideX = (int16) filterIIR(goal->guideX, new->guideX, CENTROID_ALPHA);
+	new->guideY = (int16) filterIIR(goal->guideY, new->guideY, CENTROID_ALPHA);
+	new->pivotX = (int16) filterIIR(goal->pivotX, new->pivotX, CENTROID_ALPHA);
+	new->pivotY = (int16) filterIIR(goal->pivotY, new->pivotY, CENTROID_ALPHA);
 }
 
 void navDataInit(navigationData *navData) {
@@ -181,10 +181,10 @@ void behaviorTask(void* parameters) {
 	NbrList nbrList;
 
 	navigationData navData;
-	navigationData navDataOld;
+	navigationData navDataGoal;
 
 	navDataInit(&navData);
-	navDataInit(&navDataOld);
+	navDataInit(&navDataGoal);
 
 	// Initialization steps
 	systemPrintStartup();
@@ -207,18 +207,18 @@ void behaviorTask(void* parameters) {
 
 	for (;;) {
 		// Default behavior is inactive
-		behOutput = behInactive;
 		lastWakeTime = osTaskGetTickCount();
 
 		gripperBoardSetServo(90);
 
 		// If host, do not do anything
 		if (rprintfIsHost()) {
+			behOutput = behInactive;
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 		} else if (state == STATE_IDLE) {
+			behOutput = behInactive;
 			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 		} else {
-
 			neighborsGetMutex();
 
 			printNow = neighborsNewRoundCheck(&neighborRound);
@@ -226,24 +226,23 @@ void behaviorTask(void* parameters) {
 			// If neighbor data has updated, print out new centroid estimate
 			if (printNow) {
 				nbrListCreate(&nbrList);
-
-				//navDataOld = navData;
 				globalRobotListUpdate(&globalRobotList, &nbrList);
-				centroidGRLUpdate(&navData, globalRobotList, &nbrList, GRLcentroidCooridates);
+				centroidGRLUpdate(&navDataGoal, globalRobotList, &nbrList, GRLcentroidCooridates);
 
 				if (startNbrRound == 0) {
 					startNbrRound = neighborRound;
 				}
 
-				rprintf("%d, %d, %d, %u\n", navData.centroidX, navData.centroidY, navData.childCountSum, neighborRound - startNbrRound);
+				rprintf("%d, %d, %d, %u\n", navDataGoal.centroidX,
+											navDataGoal.centroidY,
+											navDataGoal.childCountSum,
+											neighborRound - startNbrRound);
 				rprintfFlush();
 			}
 
 			neighborsPutMutex();
 
-//			filterIIRNavData(&navDataOld, &navData);
-//			rprintf("    %d, %d\n", navData.centroidX, navData.centroidY);
-//			rprintfFlush();
+			filterIIRNavData(&navDataGoal, &navData);
 
 			// Set LEDs based on state
 			if (isPivot) {

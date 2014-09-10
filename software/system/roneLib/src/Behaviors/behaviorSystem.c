@@ -56,7 +56,7 @@ void motorSetBeh(Beh* behPtr) {
  * @param behPtr for behavior
  * @returns translational velocity of input behavior
  */
-uint8 behGetTv(Beh* behPtr) {
+int32 behGetTv(Beh* behPtr) {
 	return behPtr->tv;
 }
 
@@ -108,7 +108,7 @@ void behSetRv(Beh* behPtr, int32 rv) {
  *  @param behPtr for behavior
  *  @returns the rotational velocity of the input behavior
  */
-uint8 behGetRv(Beh* behPtr) {
+int32 behGetRv(Beh* behPtr) {
 	return behPtr->rv;
 }
 
