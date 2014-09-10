@@ -108,7 +108,11 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 
 	//int32 orientation = lookupGetOrientation(roneID, nbrId);
 	//int32 bearing = lookupGetBearing(roneID, nbrId);
-	int16 distance = lookupGetDistance(roneID, nbrId);
+
+
+	//int16 distance = lookupGetDistance(roneID, nbrId);
+
+	int16 distance = (int16) externalPoseGetNbrRange(nbrPtr) * 10;
 
 	// Get centroid guess from neighbor
 	int16 xCoor, yCoor;
