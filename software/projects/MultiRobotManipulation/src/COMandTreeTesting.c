@@ -201,7 +201,7 @@ void behaviorTask(void* parameters) {
 	createGRLscaleCoordinates(GRLcentroidCooridates);
 	globalRobotListCreate(&globalRobotList);
 
-<<<<<<< HEAD
+
 	setLookup(102, 98, 2300);
 	setLookup(102, 128, 4600);
 	setLookup(102, 106, 6440);
@@ -240,8 +240,7 @@ void behaviorTask(void* parameters) {
 	setLookup(97, 121, 2000);
 
 
-=======
->>>>>>> bae412c54070db9489e6dcee177143ce26bcdea2
+
 	gripperBoardInit();
 
 	externalPoseInit();
