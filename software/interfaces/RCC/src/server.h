@@ -14,7 +14,7 @@
 #define	APRILTAG_BUFFERSIZE		64
 #define NUMBUFFER_APRILTAG		64
 
-#define SAT_BCAST_TIME			1000
+#define SAT_BCAST_TIME			500
 
 
 /**

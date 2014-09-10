@@ -9,6 +9,8 @@ int showHelp = 0;
 int clickMode;
 int prevClick;
 
+int guiTick = 0;
+
 char *toasterText;
 CRITICAL_SECTION toasterMutex;
 long toasterTime;
@@ -355,6 +357,13 @@ void processHits(GLint hits, GLuint buffer[])
 			}
 			continue;
 		}
+		case (TEXTBOX_NAME): {
+			if (!aprilTagConnected) {
+				mutexUnlock(&aprilTagURL.mutex);
+				makeThread(&aprilTagHandler, NULL);
+			}
+			continue;
+		}
 		/* Toolbar buttons */
 		case (CONNECT_BUTTON): {
 			clickMode = CONNECT;
@@ -553,10 +562,12 @@ void processHits(GLint hits, GLuint buffer[])
 					break;
 				}
 				case (ATSAT): {
-					if (ATsatID != robotID) {
-						ATsatID = robotID;
-					} else if (ATsatID == robotID) {
-						ATsatID = 0;
+					if (robots[robotID].type == LOCAL) {
+						if (ATsatID != robotID) {
+							ATsatID = robotID;
+						} else if (ATsatID == robotID) {
+							ATsatID = 0;
+						}
 					}
 				}
 				default: {
@@ -765,7 +776,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 	glPushMatrix();
 	glTranslatef(x, y, 0);
 
-	GLfloat oscillator = sin(((clock() / 10) % 360) * PI / 180) * 0.1;
+	GLfloat oscillator = sin((guiTick % 360) * PI / 180) * 0.1;
 
 	if (robot->id == ATsatID) {
 		glPushMatrix();
@@ -816,7 +827,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 	/* Draw a local robot */
 	if (robot->type == LOCAL || robot->type == HOST) {
 		if (robot->type == HOST) {
-			GLfloat hostRadius = (HOST_RADIUS / scale); //+ 0.1 + 0.5 * oscillator;
+			GLfloat hostRadius = (HOST_RADIUS / scale);
 			glPushMatrix();
 				glTranslatef(0.05, -0.05, 0);
 				glColor3fv(color_darkgrey);
@@ -1331,8 +1342,6 @@ void drawAprilTagTextbox(GLenum mode)
 	GLfloat nameWidth = TEXT_MED * gmf[(int) 'm'].gmfCellIncX * 17;
 
 	glPushMatrix();
-	if (mode == GL_SELECT)
-		glLoadName(TEXTBOX_ID);
 
 	glColor3fv(color_black);
 	textSetAlignment(ALIGN_LEFT);
@@ -1340,12 +1349,18 @@ void drawAprilTagTextbox(GLenum mode)
 
 	glTranslatef(-TITLE_POS_X - textWidth - nameWidth, TITLE_POS_Y, 0);
 
+	if (mode == GL_SELECT)
+		glLoadName(TEXTBOX_NAME);
+
 	textPrintf(name);
 
 	glTranslatef(nameWidth, 0, 0);
 
 	glPushMatrix();
 		glTranslatef(textWidth / 2, TEXT_MED / 2, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(TEXTBOX_ID);
 
 		glPushMatrix();
 			glColor3fv(color_darkgrey);
@@ -1855,6 +1870,8 @@ void timerEnableDraw(int value)
 
 	if (showHelp)
 		drawHelp();
+
+	guiTick = (guiTick + 1) % 359;
 
 	/* Update */
 	glutSwapBuffers();

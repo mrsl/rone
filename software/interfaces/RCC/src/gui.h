@@ -94,6 +94,7 @@
 /* Textbox defines */
 #define MAX_TEXTBOX_LENGTH	21
 #define TEXTBOX_ID			10000
+#define TEXTBOX_NAME		10001
 
 /* Click modes */
 #define CONNECT		0

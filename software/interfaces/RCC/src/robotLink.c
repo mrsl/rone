@@ -79,9 +79,9 @@ void commManager(void *vargp)
 		if (aprilTagConnected) {
 			for (i = 0; i < MAX_APRILTAG; i++) {
 				mutexLock(&aprilTagData[i].mutex);
-				if (!robots[aprilTagData[i].rid].up) {
-					aprilTagData[i].rid = -1;
-				}
+//				if (!robots[aprilTagData[i].rid].up) {
+//					aprilTagData[i].rid = -1;
+//				}
 
 				if ((aprilTagData[i].up + GRACETIME < clock())
 					&& aprilTagData[i].active) {
