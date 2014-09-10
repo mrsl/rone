@@ -79,7 +79,7 @@ void scLTFunc(char* command) {
 	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 	osTaskDelay(100);
 
-	setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
 
 	// Spam out to be heard
 	for (i = 0; i < 5; i++) {
@@ -137,7 +137,7 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	if (newMessage->messageType == MSG_TYPE_LT) {
 		ledsSetPattern(LED_BLUE, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 		osTaskDelay(100);
-		setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+		//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
 	}
 
 	if (newMessage->messageType == MSG_TYPE_ST) {
@@ -201,22 +201,9 @@ void behaviorTask(void* parameters) {
 	createGRLscaleCoordinates(GRLcentroidCooridates);
 	globalRobotListCreate(&globalRobotList);
 
-//	setLookup(95, 102, 1500);
-//	setLookup(95, 107, 1500);
-//	setLookup(95, 121, 1500);
-//	setLookup(95, 128, 1500);
-//	setLookup(99, 102, 4500);
-//	setLookup(99, 107, 4500);
-//	setLookup(99, 128, 1500);
-//	setLookup(102, 121, 2000);
-//	setLookup(102, 124, 2000);
-//	setLookup(102, 128, 3200);
-//	setLookup(107, 121, 2000);
-//	setLookup(107, 124, 2000);
-//	setLookup(107, 128, 3200);
-//	setLookup(124, 128, 1500);
-
 	gripperBoardInit();
+
+	externalPoseInit();
 
 	for (;;) {
 		// Default behavior is inactive
@@ -231,6 +218,7 @@ void behaviorTask(void* parameters) {
 		} else if (state == STATE_IDLE) {
 			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 		} else {
+
 			neighborsGetMutex();
 
 			printNow = neighborsNewRoundCheck(&neighborRound);
