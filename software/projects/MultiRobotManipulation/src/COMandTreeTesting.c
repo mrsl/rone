@@ -201,6 +201,46 @@ void behaviorTask(void* parameters) {
 	createGRLscaleCoordinates(GRLcentroidCooridates);
 	globalRobotListCreate(&globalRobotList);
 
+//
+//	setLookup(102, 98, 2300);
+//	setLookup(102, 128, 4600);
+//	setLookup(102, 106, 6440);
+//	setLookup(102, 110, 8800);
+//	setLookup(102, 118, 8100);
+//	setLookup(102, 112, 6600);
+//	setLookup(102, 97, 4700);
+//	setLookup(102, 121, 5200);
+//	setLookup(98, 128, 2550);
+//	setLookup(98, 106, 4200);
+//	setLookup(98, 110, 6450);
+//	setLookup(98, 118, 5910);
+//	setLookup(98, 112, 4650);
+//	setLookup(98, 97, 4180);
+//	setLookup(98, 121, 5700);
+//	setLookup(128, 106, 2550);
+//	setLookup(128, 110, 4420);
+//	setLookup(128, 118, 3600);
+//	setLookup(128, 112, 2800);
+//	setLookup(128, 97, 3600);
+//	setLookup(128, 121, 4780);
+//	setLookup(106, 110, 2750);
+//	setLookup(106, 118, 3920);
+//	setLookup(106, 112, 4500);
+//	setLookup(106, 97, 5700);
+//	setLookup(106, 121, 7330);
+//	setLookup(110, 118, 2900);
+//	setLookup(110, 112, 4700);
+//	setLookup(110, 97, 6500);
+//	setLookup(110, 121, 8450);
+//	setLookup(118, 112, 2150);
+//	setLookup(118, 97, 4040);
+//	setLookup(118, 121, 6050);
+//	setLookup(112, 97, 1900);
+//	setLookup(112, 121, 3930);
+//	setLookup(97, 121, 2000);
+
+
+
 	gripperBoardInit();
 
 	externalPoseInit();
