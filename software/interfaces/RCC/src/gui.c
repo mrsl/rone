@@ -26,6 +26,7 @@ char hostName[20] =			"Make Radio Host";
 char infoName[20] =			"Extra Information";
 char logName[20] =			"Log Data";
 char guiName[20] =			"Connect to GUI";
+char satName[30] =			"Make AprilTag Satellite";
 char openlocalName[21] = 	"Opened Local Robots!";
 char openremoteName[22] = 	"Opened Remote Robots!";
 char timeOnName[21] = 		"Time-stamps enabled!";
@@ -249,10 +250,16 @@ void readChar(char character)
 			break;
 		}
 		case ('7'): {
+			clickMode = ATSAT;
+			setToaster(satName);
+			break;
+		}
+		case ('8'): {
 			clickMode = DISPLAY;
 			setToaster(infoName);
 			break;
 		}
+
 //		case ('8'): {
 //			clickMode = GUI;
 //			setToaster(guiName);
@@ -382,6 +389,11 @@ void processHits(GLint hits, GLuint buffer[])
 		case (INFO_BUTTON): {
 			clickMode = DISPLAY;
 			setToaster(infoName);
+			continue;
+		}
+		case (SAT_BUTTON): {
+			clickMode = ATSAT;
+			setToaster(satName);
 			continue;
 		}
 //		case (GUI_BUTTON): {
@@ -539,6 +551,13 @@ void processHits(GLint hits, GLuint buffer[])
 				case (GUI): {
 					guiConnect(robotID);
 					break;
+				}
+				case (ATSAT): {
+					if (ATsatID != robotID) {
+						ATsatID = robotID;
+					} else if (ATsatID == robotID) {
+						ATsatID = 0;
+					}
 				}
 				default: {
 					break;
@@ -746,18 +765,67 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 	glPushMatrix();
 	glTranslatef(x, y, 0);
 
-	/* Draw a local robot */
-	if (robot->type == LOCAL || robot->type == HOST) {
-		if (robot->type == HOST) {
+	GLfloat oscillator = sin(((clock() / 10) % 360) * PI / 180) * 0.1;
+
+	if (robot->id == ATsatID) {
+		glPushMatrix();
+			glTranslatef(-0.5, 0.5, 0);
+			glRotatef(45, 0, 0, 1);
 			glPushMatrix();
 				glTranslatef(0.05, -0.05, 0);
 				glColor3fv(color_darkgrey);
-				glScalef(HOST_RADIUS / scale, HOST_RADIUS / scale, 0);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_black);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glTranslatef(0, oscillator, 0);
+				glColor3fv(color_red);
+				glScalef(BOX_RADIUS / scale, 0.1 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+		glPopMatrix();
+
+		glPushMatrix();
+			glTranslatef(0.5, -0.5, 0);
+			glRotatef(45, 0, 0, 1);
+			glPushMatrix();
+				glTranslatef(0.05, -0.05, 0);
+				glColor3fv(color_darkgrey);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_black);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glTranslatef(0, -oscillator, 0);
+				glColor3fv(color_red);
+				glScalef(BOX_RADIUS / scale, 0.1 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+		glPopMatrix();
+	}
+
+	/* Draw a local robot */
+	if (robot->type == LOCAL || robot->type == HOST) {
+		if (robot->type == HOST) {
+			GLfloat hostRadius = (HOST_RADIUS / scale); //+ 0.1 + 0.5 * oscillator;
+			glPushMatrix();
+				glTranslatef(0.05, -0.05, 0);
+				glColor3fv(color_darkgrey);
+				glScalef(hostRadius, hostRadius, 0);
 				glCallList(LIST_CIRCLE_FILLED);
 			glPopMatrix();
 			glPushMatrix();
 				glColor3fv(color_red);
-				glScalef(HOST_RADIUS / scale, HOST_RADIUS / scale, 0);
+				glScalef(hostRadius, hostRadius, 0);
 				glCallList(LIST_CIRCLE_FILLED);
 			glPopMatrix();
 			glPushMatrix();
@@ -1421,6 +1489,21 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_black);
 		textSetSize(TEXT_NORMAL);
 		textPrintf("Apr");
+
+		/* AtS Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(SAT_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (clickMode == ATSAT)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_NORMAL);
+		textPrintf("AtS");
 
 		/* IN Button */
 		glTranslatef(0, BUTTONSPACE, 0);

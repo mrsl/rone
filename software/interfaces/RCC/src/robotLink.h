@@ -17,7 +17,8 @@
 #define REMOTE		1
 #define HOST		2
 #define DISTANT		3
-#define UNKNOWN		4
+#define SATELLITE	4
+#define UNKNOWN		5
 
 /**
  * Connection information
@@ -57,6 +58,8 @@ extern struct commCon robots[MAXROBOTID];	// Robot data
 extern int timestamps;						// Use timestamps?
 extern int logging;							// Log data?
 extern int hostData;						// Filter host robot data?
+
+extern int ATsatID;
 
 void initRobots();
 void commManager(void *vargp);

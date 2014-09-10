@@ -246,11 +246,6 @@ void connectionHandler(void *vargp)
 			continue;
 		}
 
-		if (id == 10101) {
-			if (socketWrite(conn->fd, "HELLA\r\n", 7) < 0) {
-				break;
-			}
-		}
 		/* Handle bad numbers */
 		if (id >= MAXROBOTID || id < 0) {
 			id = -1;
@@ -453,6 +448,7 @@ void initAprilTag()
 	for (i = 0; i < MAX_APRILTAG; i++) {
 		aprilTagData[i].id = i;
 		aprilTagData[i].up = 0;
+		aprilTagData[i].bcastTime = 0;
 		aprilTagData[i].rid = -1;
 		aprilTagData[i].display = 0;
 		aprilTagData[i].head = 0;
@@ -562,10 +558,24 @@ void aprilTagHandler(void *vargp)
 				aprilTagData[id].active = 1;
 				strcpy(aprilTagData[id].buffer[aprilTagData[id].head], bufp);
 
+				aprilTagData[id].up = clock();
+
 				if (sscanf(bufp, "%f, %f, %f, %d", &x, &y, &t, &ts) == 4) {
 					aprilTagData[id].x = x;
 					aprilTagData[id].y = y;
 					aprilTagData[id].t = t;
+
+					if (ATsatID != 0) {
+						if ((aprilTagData[id].up - aprilTagData[id].bcastTime > SAT_BCAST_TIME)
+							&& aprilTagData[id].rid != -1) {
+							sprintf(lbuffer, "at %d %d %d %d\n", aprilTagData[id].rid,
+																 (int) round(x),
+																 (int) round(y),
+																 (int) round(t));
+							hprintf(robots[ATsatID].hSerial, lbuffer);
+							aprilTagData[id].bcastTime = aprilTagData[id].up;
+						}
+					}
 
 					if (x > 2 * aprilTagX) {
 						aprilTagX = ((int) (aprilTagData[id].x / 2) + 50) / 100
@@ -579,8 +589,6 @@ void aprilTagHandler(void *vargp)
 						aprilTagY += (aprilTagY < aprilTagData[id].y) ? 50 : 0;
 					}
 				}
-
-				aprilTagData[id].up = clock();
 
 				oldhead = aprilTagData[id].head;
 				aprilTagData[id].head = (aprilTagData[id].head + 1)

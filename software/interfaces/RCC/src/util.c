@@ -51,6 +51,11 @@ void datestr(char *buffer)
     	st.wYear, st.wMonth, st.wDay,  st.wHour, st.wMinute, st.wSecond);
 }
 
+
+//int round(GLfloat x) {
+//	return ((x) >= 0 ? (int) ((x) + 0.5) : (int) ((x) - 0.5));
+//}
+
 /**
  * Insert character into the string at the position.
  * There should be room in the string.

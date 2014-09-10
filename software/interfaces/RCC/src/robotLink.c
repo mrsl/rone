@@ -11,6 +11,8 @@ int timestamps = 1;
 int logging = 0;
 int hostData = 1;
 
+int ATsatID = 0;
+
 /**
  * Initialize the robot buffers
  */

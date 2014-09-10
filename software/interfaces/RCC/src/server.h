@@ -14,6 +14,9 @@
 #define	APRILTAG_BUFFERSIZE		64
 #define NUMBUFFER_APRILTAG		64
 
+#define SAT_BCAST_TIME			1000
+
+
 /**
  * Connection information struct that is passed to the handlers
  */
@@ -31,6 +34,7 @@ struct aprilTag
 	int id;
 	int rid;												// Robot ID linked
 	time_t up;
+	time_t bcastTime;										// Time last broadcasted
 	int active;												// Been seen?
 	int head;												// Head of buffer
 	char buffer[NUMBUFFER_APRILTAG][APRILTAG_BUFFERSIZE]; 	// Buffer
