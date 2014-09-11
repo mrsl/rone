@@ -19,11 +19,12 @@
 #define MSG_TYPE_LT		0
 #define MSG_TYPE_ST		1
 
-#define STATE_IDLE		0
-#define STATE_CGUESS	1
-#define STATE_ROTATE	2
+#define STATE_IDLE				0
+#define STATE_STATIC_GUESSING	1
+#define STATE_DYNAMIC_GUESSING	2
+#define STATE_CENTROID_ROTATE	3
 
-#define STATE_MAX		2
+#define STATE_MAX		3
 
 #define CENTROID_ALPHA	90
 
@@ -45,7 +46,7 @@ RadioCmd rcSend;
 uint32 neighborRound;
 uint32 startNbrRound = 0;
 
-uint8 state = STATE_IDLE;
+uint8 state = STATE_IDLE ;
 
 
 // Set up centroid and GRL
@@ -84,6 +85,14 @@ void scLTFunc(char* command) {
 	// Spam out to be heard
 	for (i = 0; i < 5; i++) {
 		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+	}
+}
+
+void setState(uint8 newState) {
+	state = newState;
+
+	if (newState == STATE_IDLE) {
+		startNbrRound = 0;
 	}
 }
 
@@ -147,14 +156,6 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	}
 }
 
-void setState(uint8 newState) {
-	state = newState;
-
-	if (newState == STATE_IDLE) {
-		startNbrRound = 0;
-	}
-}
-
 void filterIIRNavData(navigationData *goal, navigationData *new) {
 	new->centroidX = (int16) filterIIR(goal->centroidX, new->centroidX, CENTROID_ALPHA);
 	new->centroidY = (int16) filterIIR(goal->centroidY, new->centroidY, CENTROID_ALPHA);
@@ -200,46 +201,6 @@ void behaviorTask(void* parameters) {
 
 	createGRLscaleCoordinates(GRLcentroidCooridates);
 	globalRobotListCreate(&globalRobotList);
-
-//
-//	setLookup(102, 98, 2300);
-//	setLookup(102, 128, 4600);
-//	setLookup(102, 106, 6440);
-//	setLookup(102, 110, 8800);
-//	setLookup(102, 118, 8100);
-//	setLookup(102, 112, 6600);
-//	setLookup(102, 97, 4700);
-//	setLookup(102, 121, 5200);
-//	setLookup(98, 128, 2550);
-//	setLookup(98, 106, 4200);
-//	setLookup(98, 110, 6450);
-//	setLookup(98, 118, 5910);
-//	setLookup(98, 112, 4650);
-//	setLookup(98, 97, 4180);
-//	setLookup(98, 121, 5700);
-//	setLookup(128, 106, 2550);
-//	setLookup(128, 110, 4420);
-//	setLookup(128, 118, 3600);
-//	setLookup(128, 112, 2800);
-//	setLookup(128, 97, 3600);
-//	setLookup(128, 121, 4780);
-//	setLookup(106, 110, 2750);
-//	setLookup(106, 118, 3920);
-//	setLookup(106, 112, 4500);
-//	setLookup(106, 97, 5700);
-//	setLookup(106, 121, 7330);
-//	setLookup(110, 118, 2900);
-//	setLookup(110, 112, 4700);
-//	setLookup(110, 97, 6500);
-//	setLookup(110, 121, 8450);
-//	setLookup(118, 112, 2150);
-//	setLookup(118, 97, 4040);
-//	setLookup(118, 121, 6050);
-//	setLookup(112, 97, 1900);
-//	setLookup(112, 121, 3930);
-//	setLookup(97, 121, 2000);
-
-
 
 	gripperBoardInit();
 
@@ -301,10 +262,22 @@ void behaviorTask(void* parameters) {
 				isPivot = (isPivot) ? FALSE : TRUE;
 			}
 
-			 if (state == STATE_CGUESS) {
-			 } else if (state == STATE_ROTATE) {
-				 mrmRotateCW(&navData, &behOutput, 8);
-			 }
+			// Set movement
+			switch (state) {
+			case (STATE_DYNAMIC_GUESSING): {
+				mrmRandomRotate(&behOutput);
+				break;
+			}
+			case (STATE_CENTROID_ROTATE): {
+				mrmRotateCentroid(&navData, &behOutput, 8);
+				break;
+			}
+			case (STATE_STATIC_GUESSING):
+			case (STATE_IDLE):
+			defaut: {
+				break;
+			}
+			}
 		}
 
 		motorSetBeh(&behOutput);

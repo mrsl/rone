@@ -110,7 +110,7 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 	//int32 bearing = lookupGetBearing(roneID, nbrId);
 
 
-	int16 distance = (int16) externalPoseGetNbrRange(nbrPtr) * 10;
+	int16 distance = (int16) externalPoseGetNbrRange(nbrPtr) * MRM_COORDINATE_SCALAR;
 
 	if (distance == 0) {
 		distance = lookupGetDistance(roneID, nbrId);

@@ -8,6 +8,7 @@
 #ifndef GLOBALTREECOM_H_
 #define GLOBALTREECOM_H_
 
+#include <stdlib.h>
 #include "roneos.h"
 #include "ronelib.h"
 #include "scaleCoordinate.h"

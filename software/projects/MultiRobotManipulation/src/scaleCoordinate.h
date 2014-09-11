@@ -10,6 +10,8 @@
 
 #define ROBOT_RANGE	4000	// Set distance between robots, temporary until range is figured out
 
+
+#define MRM_COORDINATE_SCALAR	100
 struct {
 	NbrData Xh;	// High bits of x coordinate
 	NbrData Xl;	// Low bits of x coordinate
