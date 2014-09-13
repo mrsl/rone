@@ -12,7 +12,7 @@
 #include "globalTreeCOM.h"
 
 #define BEHAVIOR_TASK_PERIOD			50
-#define NEIGHBOR_ROUND_PERIOD			1000
+#define NEIGHBOR_ROUND_PERIOD			2000
 
 #define CHECKVAL		0xDADA
 
@@ -26,7 +26,17 @@
 
 #define STATE_MAX		3
 
-#define CENTROID_ALPHA	90
+#define RAVG_SIZE		10
+
+
+struct {
+	int16 x;
+	int16 y;
+} typedef coor;
+
+coor ravg[RAVG_SIZE];
+uint8 ravg_ind = 0;
+uint8 ravg_size = 0;
 
 struct __attribute__((__packed__)) {
 	uint32 check;
@@ -80,7 +90,7 @@ void scLTFunc(char* command) {
 	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 	osTaskDelay(100);
 
-	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+	setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
 
 	// Spam out to be heard
 	for (i = 0; i < 5; i++) {
@@ -146,7 +156,7 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	if (newMessage->messageType == MSG_TYPE_LT) {
 		ledsSetPattern(LED_BLUE, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 		osTaskDelay(100);
-		//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+		setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
 	}
 
 	if (newMessage->messageType == MSG_TYPE_ST) {
@@ -156,13 +166,20 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	}
 }
 
-void filterIIRNavData(navigationData *goal, navigationData *new) {
-	new->centroidX = (int16) filterIIR(goal->centroidX, new->centroidX, CENTROID_ALPHA);
-	new->centroidY = (int16) filterIIR(goal->centroidY, new->centroidY, CENTROID_ALPHA);
-	new->guideX = (int16) filterIIR(goal->guideX, new->guideX, CENTROID_ALPHA);
-	new->guideY = (int16) filterIIR(goal->guideY, new->guideY, CENTROID_ALPHA);
-	new->pivotX = (int16) filterIIR(goal->pivotX, new->pivotX, CENTROID_ALPHA);
-	new->pivotY = (int16) filterIIR(goal->pivotY, new->pivotY, CENTROID_ALPHA);
+void rollingAverageCentroid(navigationData *new, navigationData *avg) {
+	uint8 i;
+
+	ravg[(ravg_ind = (ravg_ind + 1) % RAVG_SIZE)] = (coor) {new->centroidX, new->centroidY};
+	ravg_size = (ravg_size < RAVG_SIZE) ? ravg_size + 1 : ravg_size;
+
+	avg->centroidX = 0;
+	avg->centroidY = 0;
+	for (i = 0; i < ravg_size; i++) {
+		avg->centroidX += ravg[i].x;
+		avg->centroidY += ravg[i].y;
+	}
+	avg->centroidX /= ravg_size;
+	avg->centroidY /= ravg_size;
 }
 
 void navDataInit(navigationData *navData) {
@@ -181,11 +198,11 @@ void behaviorTask(void* parameters) {
 	boolean printNow;
 	NbrList nbrList;
 
-	navigationData navData;
-	navigationData navDataGoal;
+	navigationData navDataAvg;
+	navigationData navDataNew;
 
-	navDataInit(&navData);
-	navDataInit(&navDataGoal);
+	navDataInit(&navDataAvg);
+	navDataInit(&navDataNew);
 
 	// Initialization steps
 	systemPrintStartup();
@@ -228,22 +245,26 @@ void behaviorTask(void* parameters) {
 			if (printNow) {
 				nbrListCreate(&nbrList);
 				globalRobotListUpdate(&globalRobotList, &nbrList);
-				centroidGRLUpdate(&navDataGoal, globalRobotList, &nbrList, GRLcentroidCooridates);
+				centroidGRLUpdate(&navDataNew, globalRobotList, &nbrList, GRLcentroidCooridates);
 
 				if (startNbrRound == 0) {
 					startNbrRound = neighborRound;
 				}
 
-				rprintf("%d, %d, %d, %u\n", navDataGoal.centroidX,
-											navDataGoal.centroidY,
-											navDataGoal.childCountSum,
-											neighborRound - startNbrRound);
+				rprintf("%d, %d, %d, %d, %d, %d\n", navDataNew.centroidX,
+													navDataNew.centroidY,
+													navDataAvg.centroidX,
+													navDataAvg.centroidY,
+													navDataNew.childCountSum,
+													neighborRound - startNbrRound);
 				rprintfFlush();
+
+
 			}
 
 			neighborsPutMutex();
 
-			filterIIRNavData(&navDataGoal, &navData);
+			rollingAverageCentroid(&navDataNew, &navDataAvg);
 
 			// Set LEDs based on state
 			if (isPivot) {
@@ -269,7 +290,7 @@ void behaviorTask(void* parameters) {
 				break;
 			}
 			case (STATE_CENTROID_ROTATE): {
-				mrmRotateCentroid(&navData, &behOutput, 8);
+				mrmRotateCentroid(&navDataAvg, &behOutput, 8);
 				break;
 			}
 			case (STATE_STATIC_GUESSING):

@@ -112,10 +112,6 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 
 	int16 distance = (int16) externalPoseGetNbrRange(nbrPtr) * MRM_COORDINATE_SCALAR;
 
-	if (distance == 0) {
-		distance = lookupGetDistance(roneID, nbrId);
-	}
-
 	// Get centroid guess from neighbor
 	int16 xCoor, yCoor;
 	getScaleCoordinate(toTransform, nbrPtr, &xCoor, &yCoor);

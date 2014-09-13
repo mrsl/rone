@@ -208,24 +208,23 @@ void centroidGRLListUpdate(navigationData *navDataPtr,
 	uint8 nbrId,				// Neighbor's ID
 		  nbrTreeParentId;		// ID of the neighbor's parent
 
-	for (i = 0; i < nbrListPtr->size; i++){
+	for (i = 0; i < nbrListPtr->size; i++) {
 		nbrPtr = nbrListPtr->nbrs[i];
 
 		//uint8 nbrTreeId = nbrDataGetNbr(&(grlElement->ID), nbrPtr);
 		nbrId = nbrGetID(nbrPtr);
 
-		if (nbrId != roneID)
-				{
-		nbrTreeParentId = nbrDataGetNbr(&(grlElement->ParentID), nbrPtr);
+		if (nbrId != roneID) {
+			nbrTreeParentId = nbrDataGetNbr(&(grlElement->ParentID), nbrPtr);
 
-		// If we are the parent node in the tree, count and sum child nodes
-		// Also, ignore the navigational guide robot
-		if(nbrTreeParentId == roneID && nbrId != GUIDE_ROBOT_ID && nbrId != HOST_ROBOT_ID){
-			// Transform remote coordinate to local reference frame and add to sums
-			transformScaleCoordinate(centroidEstimate, nbrPtr, &x, &y, &childCount);
-			xSum += x;
-			ySum += y;
-			childCountSum += childCount;
+			// If we are the parent node in the tree, count and sum child nodes
+			// Also, ignore the navigational guide robot
+			if (nbrTreeParentId == roneID&& nbrId != GUIDE_ROBOT_ID && nbrId != HOST_ROBOT_ID) {
+				// Transform remote coordinate to local reference frame and add to sums
+				transformScaleCoordinate(centroidEstimate, nbrPtr, &x, &y, &childCount);
+				xSum += x;
+				ySum += y;
+				childCountSum += childCount;
 			}
 		}
 	}

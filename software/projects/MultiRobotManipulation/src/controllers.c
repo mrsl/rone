@@ -10,16 +10,28 @@
 #define MRM_ROTATION_RV_CONST		1.2
 #define MRM_ROTATION_DEADZONE		200
 #define MRM_ROTATION_FORWARD_BIAS	300
+#define MRM_RANDOM_ROTATE_BASE		100
 
 #define MRM_ALPHA			50
 
-int32 rrGoalRv = -200;
+int32 rrGoalRv = MRM_RANDOM_ROTATE_BASE;
 
 void mrmRandomRotate(Beh *beh) {
 	int32 rv = behGetRv(beh);
+	int16 r = rand() % 1000;
 
-	if (rand() % 1000 < 10) {
-		rrGoalRv = -rrGoalRv;
+	if (r < 10) {
+		if (rrGoalRv != 0) {
+			rrGoalRv = -rrGoalRv;
+		} else {
+			rrGoalRv = MRM_RANDOM_ROTATE_BASE;
+		}
+	} else if (r < 20) {
+		if (rrGoalRv == 0) {
+			rrGoalRv = -MRM_RANDOM_ROTATE_BASE;
+		} else {
+			rrGoalRv = 0;
+		}
 	}
 
 	rv = filterIIR(rrGoalRv, rv, MRM_ALPHA);
