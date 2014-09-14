@@ -265,6 +265,7 @@ void behaviorTask(void* parameters) {
 													navDataRead.childCountSum,
 													neighborRound - startNbrRound);
 				rprintfFlush();
+				cprintf("pt %d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidY / 10);
 			}
 
 			neighborsPutMutex();
