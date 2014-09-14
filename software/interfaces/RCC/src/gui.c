@@ -1317,7 +1317,7 @@ void drawAprilTags(GLenum mode)
 
 						glRotatef(activeTags[i]->t + 90, 0, 0, 1);
 
-						glTranslatef(-yi, xi, 0);
+						glTranslatef(yi, xi, 0);
 
 						glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
 
