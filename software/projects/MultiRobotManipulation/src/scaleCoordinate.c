@@ -101,20 +101,26 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 	*childCount = getScaleCoordinateChildCount(toTransform, nbrPtr);
 
 	// Get angular position of neighbor
-	int32 orientation = nbrGetOrientation(nbrPtr);
-	int32 bearing = nbrGetBearing(nbrPtr);
-
 	uint8 nbrId = nbrGetID(nbrPtr);
 
 	//int32 orientation = lookupGetOrientation(roneID, nbrId);
 	//int32 bearing = lookupGetBearing(roneID, nbrId);
 
+	NbrPose nbrPose;
+	if (!externalPoseGetRelativePose(nbrPtr, &nbrPose)) {
+		return;
+	}
 
+	int32 orientation = nbrGetOrientation(nbrPtr);
+	int32 bearing = nbrGetBearing(nbrPtr);
 	int16 distance = (int16) externalPoseGetNbrRange(nbrPtr) * 10;
 
-	if (distance == 0) {
-		distance = lookupGetDistance(roneID, nbrId);
-	}
+//	int16 distance = nbrPose.distance * 10;
+//	int32 bearing = (int32) nbrPose.bearing;
+//	int32 orientation = (int32) nbrPose.orientation;
+//
+//	cprintf("ID:%d (%d,%d)(%d,%d,%d)(%d,%d)\n", nbrId, nbrPose.theta2, nbrPose.theta, distance, bearing, orientation, nbrGetBearing(nbrPtr), nbrGetOrientation(nbrPtr));
+
 
 	// Get centroid guess from neighbor
 	int16 xCoor, yCoor;

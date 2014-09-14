@@ -82,4 +82,7 @@ boolean externalPoseIsHost(void);
  */
 boolean externalPoseIsActive(void);
 
+
+boolean externalPoseGetRelativePose(Nbr *nbrPtr, NbrPose *nbrPose);
+
 #endif /* EXTERNALPOSE_H_ */

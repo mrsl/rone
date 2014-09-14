@@ -45,6 +45,14 @@ typedef struct Pose {
 	int32 theta;	/**< typically in milli-radians */
 } Pose;
 
+typedef struct NbrPose {
+	int16 distance; 	/**< typically in milli-meters */
+	int16 theta; 		/**< typically in milli-radians */
+	int16 theta2; 		/**< typically in milli-radians */
+	int16 bearing; 		/**< typically in milli-radians */
+	int16 orientation;	/**< typically in milli-radians */
+} NbrPose;
+
 extern Pose poseOrigin;
 
 

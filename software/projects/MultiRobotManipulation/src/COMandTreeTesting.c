@@ -47,6 +47,40 @@ uint32 startNbrRound = 0;
 
 uint8 state = STATE_IDLE;
 
+#define RAVG_SIZE		50
+
+struct {
+	int16 x;
+	int16 y;
+} typedef coorAvg;
+
+coorAvg ravg[RAVG_SIZE];
+int ravg_ind = 0;
+int ravg_size = 0;
+
+void rollingAverageCentroid(navigationData *new, navigationData *avg) {
+	int i;
+	int32 x, y;
+
+	ravg[ravg_ind].x = new->centroidX;
+	ravg[ravg_ind].y = new->centroidY;
+
+	ravg_ind = (ravg_ind + 1) % RAVG_SIZE;
+
+	if (ravg_size < RAVG_SIZE) {
+		ravg_size++;
+	}
+
+	x = 0;
+	y = 0;
+	for (i = 0; i < ravg_size; i++) {
+		x += (int32) ravg[i].x;
+		y += (int32) ravg[i].y;
+	}
+	avg->centroidX = (int16) (x / ravg_size);
+	avg->centroidY = (int16) (y / ravg_size);
+}
+
 
 // Set up centroid and GRL
 scaleCoordinate GRLcentroidCooridates[GLOBAL_ROBOTLIST_MAX_SIZE + 2];
@@ -155,15 +189,6 @@ void setState(uint8 newState) {
 	}
 }
 
-void filterIIRNavData(navigationData *goal, navigationData *new) {
-	new->centroidX = (int16) filterIIR(goal->centroidX, new->centroidX, CENTROID_ALPHA);
-	new->centroidY = (int16) filterIIR(goal->centroidY, new->centroidY, CENTROID_ALPHA);
-	new->guideX = (int16) filterIIR(goal->guideX, new->guideX, CENTROID_ALPHA);
-	new->guideY = (int16) filterIIR(goal->guideY, new->guideY, CENTROID_ALPHA);
-	new->pivotX = (int16) filterIIR(goal->pivotX, new->pivotX, CENTROID_ALPHA);
-	new->pivotY = (int16) filterIIR(goal->pivotY, new->pivotY, CENTROID_ALPHA);
-}
-
 void navDataInit(navigationData *navData) {
 	navData->centroidX = 0;
 	navData->centroidY = 0;
@@ -180,11 +205,11 @@ void behaviorTask(void* parameters) {
 	boolean printNow;
 	NbrList nbrList;
 
-	navigationData navData;
-	navigationData navDataGoal;
+	navigationData navDataAvg;
+	navigationData navDataRead;
 
-	navDataInit(&navData);
-	navDataInit(&navDataGoal);
+	navDataInit(&navDataAvg);
+	navDataInit(&navDataRead);
 
 	// Initialization steps
 	systemPrintStartup();
@@ -227,22 +252,24 @@ void behaviorTask(void* parameters) {
 			if (printNow) {
 				nbrListCreate(&nbrList);
 				globalRobotListUpdate(&globalRobotList, &nbrList);
-				centroidGRLUpdate(&navDataGoal, globalRobotList, &nbrList, GRLcentroidCooridates);
+				centroidGRLUpdate(&navDataRead, globalRobotList, &nbrList, GRLcentroidCooridates);
 
 				if (startNbrRound == 0) {
 					startNbrRound = neighborRound;
 				}
 
-				rprintf("%d, %d, %d, %u\n", navDataGoal.centroidX,
-											navDataGoal.centroidY,
-											navDataGoal.childCountSum,
-											neighborRound - startNbrRound);
+				rprintf("%d, %d, %d, %d, %d, %u\n", navDataRead.centroidX,
+													navDataRead.centroidY,
+													navDataAvg.centroidX,
+													navDataAvg.centroidY,
+													navDataRead.childCountSum,
+													neighborRound - startNbrRound);
 				rprintfFlush();
 			}
 
 			neighborsPutMutex();
 
-			filterIIRNavData(&navDataGoal, &navData);
+			rollingAverageCentroid(&navDataRead, &navDataAvg);
 
 			// Set LEDs based on state
 			if (isPivot) {
@@ -263,7 +290,7 @@ void behaviorTask(void* parameters) {
 
 			 if (state == STATE_CGUESS) {
 			 } else if (state == STATE_ROTATE) {
-				 mrmRotateCW(&navData, &behOutput, 8);
+				 mrmRotateCW(&navDataAvg, &behOutput, 8);
 			 }
 		}
 
@@ -273,7 +300,7 @@ void behaviorTask(void* parameters) {
 }
 
 int main(void) {
-	systemInit();
+  	systemInit();
 	behaviorSystemInit(behaviorTask, 4096);
 	osTaskStartScheduler();
 	return 0;
