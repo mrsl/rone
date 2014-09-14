@@ -35,6 +35,9 @@ void initRobots()
 		robots[i].count = 0;
 		robots[i].type = UNKNOWN;
 		robots[i].subnet = -1;
+		robots[i].xP = 0.0;
+		robots[i].yP = 0.0;
+		robots[i].upP = 0;
 		mutexInit(&robots[i].mutex);
 	}
 
@@ -60,6 +63,11 @@ void commManager(void *vargp)
 				&& robots[i].type == REMOTE) {
 				robots[i].up = 0;
 				robots[i].head = 0;
+			}
+
+			/* If a remote robot has been inactive for a while, deactivate. */
+			if (robots[i].upP + GRACETIME < clock()) {
+				robots[i].upP = 0;
 			}
 
 			/* Ping all host robots for updated remote robots. */
@@ -361,6 +369,23 @@ void commCommander(void *vargp)
 			} else {
 				mutexUnlock(&robots[rid].mutex);
 			}
+
+			bufp = buffer;
+		} else if (strncmp(buffer, "pt", 2) == 0) {
+			int x, y;
+
+			if (sscanf(buffer, "pt %d,%d", &x, &y) != 2) {
+				bufp = buffer;
+				continue;
+			}
+
+			mutexLock(&robots[id].mutex);
+
+			robots[id].xP = (GLfloat) x;
+			robots[id].yP = (GLfloat) y;
+			robots[id].upP = clock();
+
+			mutexUnlock(&robots[id].mutex);
 
 			bufp = buffer;
 		} else {

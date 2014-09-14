@@ -51,6 +51,9 @@ struct commCon
 	float bps[NUMBUFFER]; 						// transfer speeds buffer
 	int head;									// Head of buffer
 	int count;									// Items in buffer
+	GLfloat xP;
+	GLfloat yP;
+	long upP;
 	CRITICAL_SECTION mutex;						// Mutex for this robot
 };
 

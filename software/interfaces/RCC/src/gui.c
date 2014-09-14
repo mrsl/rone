@@ -1081,7 +1081,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 void drawAprilTags(GLenum mode)
 {
-	int i;
+	int i, rid;
 	int numAprilTags = 0;
 	struct aprilTag *activeTags[MAX_APRILTAG];
 	GLfloat xi, yi;
@@ -1308,9 +1308,39 @@ void drawAprilTags(GLenum mode)
 					textPrintf("T:%.2f", activeTags[i]->t);
 				glPopMatrix();
 			}
+
+			if ((rid = activeTags[i]->rid) != -1) {
+				if (robots[rid].upP) {
+					glPushMatrix();
+						xi = xs * robots[rid].xP / aprilTagX;
+						yi = -ys * robots[rid].yP / aprilTagY;
+
+						glRotatef(activeTags[i]->t + 90, 0, 0, 1);
+
+						glTranslatef(-yi, xi, 0);
+
+						glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
+
+						glColor3fv(color_red);
+
+						glPushMatrix();
+							glScalef(0.1, 0.1, 0);
+							glCallList(LIST_CIRCLE_FILLED);
+						glPopMatrix();
+
+						glTranslatef(0, 0.2, 0);
+
+						textSetSize(TEXT_TINY);
+						textSetAlignment(ALIGN_CENTER);
+						textPrintf("%02d", rid);
+					glPopMatrix();
+				}
+			}
+
 		glPopMatrix();
 		mutexUnlock(&activeTags[i]->mutex);
 	}
+
 	glPopMatrix();
 
 	/* Draw dividing bar */
