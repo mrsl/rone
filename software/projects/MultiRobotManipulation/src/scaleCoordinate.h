@@ -22,11 +22,13 @@ struct {
  * @brief Initializes a scale coordinate
  */
 void createScaleCoordinate(scaleCoordinate *toCreate);
+void createScaleCoordinateSansChild(scaleCoordinate *toCreate);
 
 /**
  * @brief Updates the neighbor data of a scale coordinate
  */
 void updateScaleCoordinate(scaleCoordinate *toUpdate, int16 newX, int16 newY, uint8 childCount);
+void updateScaleCoordinateSansChild(scaleCoordinate *toUpdate, int16 newX, int16 newY);
 
 /**
  * @brief Returns the current X value of the scale coordinate for a neighbor

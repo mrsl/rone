@@ -28,7 +28,6 @@ void updateScaleCoordinate(scaleCoordinate *toUpdate, int16 newX, int16 newY, ui
 	nbrDataSet(&toUpdate->childCount, childCount);
 }
 
-
 /**
  * @brief Returns the current X value of the scale coordinate for a neighbor
  */

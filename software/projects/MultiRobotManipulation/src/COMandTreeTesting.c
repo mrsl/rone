@@ -25,7 +25,13 @@
 
 #define STATE_MAX		2
 
-#define CENTROID_ALPHA	90
+void setState(uint8 newState);
+
+// Callback variables
+SerialCmd scLT;
+SerialCmd scST;
+RadioMessage rmSend;
+RadioCmd rcSend;
 
 struct __attribute__((__packed__)) {
 	uint32 check;
@@ -37,82 +43,74 @@ struct __attribute__((__packed__)) {
 	char pad[20];
 } typedef controlMsg;
 
-void setState(uint8 newState);
-
-SerialCmd scLT;
-SerialCmd scST;
-RadioMessage rmSend;
-RadioCmd rcSend;
-
-uint32 neighborRound;
+// State machine stuff
 uint32 startNbrRound = 0;
-
 uint8 state = STATE_IDLE;
 
-//#define RAVG_SIZE		10
-//
-//navigationData ravg[RAVG_SIZE];
-//int ravg_ind = 0;
-//int ravg_size = 0;
-//
-//void copyNavData(navigationData *toCopy, navigationData *toMe) {
-//	toMe->centroidX = toCopy->centroidX;
-//	toMe->centroidY = toCopy->centroidY;
-//	toMe->guideX = toCopy->guideX;
-//	toMe->guideY = toCopy->guideY;
-//	toMe->pivotX = toCopy->pivotX;
-//	toMe->pivotY = toCopy->pivotY;
-//	toMe->childCountSum = toCopy->childCountSum;
-//}
-//
-//void rollingAverageNavData(navigationData *new, navigationData *avg) {
-//	int i;
-//	int32 x, y;
-//
-//	copyNavData(new, &ravg[ravg_ind]);
-//
-//	ravg_ind = (ravg_ind + 1) % RAVG_SIZE;
-//
-//	if (ravg_size < RAVG_SIZE) {
-//		ravg_size++;
-//	}
-//
-//	x = 0;
-//	y = 0;
-//	for (i = 0; i < ravg_size; i++) {
-//		x += (int32) ravg[i].centroidX;
-//		y += (int32) ravg[i].centroidY;
-//	}
-//	avg->centroidX = (int16) (x / ravg_size);
-//	avg->centroidY = (int16) (y / ravg_size);
-//
-//	x = 0;
-//	y = 0;
-//	for (i = 0; i < ravg_size; i++) {
-//		x += (int32) ravg[i].pivotX;
-//		y += (int32) ravg[i].pivotY;
-//	}
-//	avg->pivotX = (int16) (x / ravg_size);
-//	avg->pivotY = (int16) (y / ravg_size);
-//
-//	x = 0;
-//	y = 0;
-//	for (i = 0; i < ravg_size; i++) {
-//		x += (int32) ravg[i].guideX;
-//		y += (int32) ravg[i].guideY;
-//	}
-//	avg->guideX = (int16) (x / ravg_size);
-//	avg->guideY = (int16) (y / ravg_size);
-//}
-
-
-// Set up centroid and GRL
+// Position estimation coordinates
 scaleCoordinate GRLcentroidCooridates[GLOBAL_ROBOTLIST_MAX_SIZE];
 scaleCoordinate GRLpivotCoordinate;
 scaleCoordinate GRLguideCoordinate;
 
+// Global robot list (GRL)
 GlobalRobotList globalRobotList;
 boolean GRLinit = FALSE;
+
+#define RAVG_SIZE		50
+
+navigationData ravg[RAVG_SIZE];
+int ravg_ind = 0;
+int ravg_size = 0;
+
+void copyNavData(navigationData *toCopy, navigationData *toMe) {
+	toMe->centroidX = toCopy->centroidX;
+	toMe->centroidY = toCopy->centroidY;
+	toMe->guideX = toCopy->guideX;
+	toMe->guideY = toCopy->guideY;
+	toMe->pivotX = toCopy->pivotX;
+	toMe->pivotY = toCopy->pivotY;
+	toMe->childCountSum = toCopy->childCountSum;
+}
+
+void rollingAverageNavData(navigationData *new, navigationData *avg) {
+	int i;
+	int32 x, y;
+
+	copyNavData(new, &ravg[ravg_ind]);
+
+	ravg_ind = (ravg_ind + 1) % RAVG_SIZE;
+
+	if (ravg_size < RAVG_SIZE) {
+		ravg_size++;
+	}
+
+	x = 0;
+	y = 0;
+	for (i = 0; i < ravg_size; i++) {
+		x += (int32) ravg[i].centroidX;
+		y += (int32) ravg[i].centroidY;
+	}
+	avg->centroidX = (int16) (x / ravg_size);
+	avg->centroidY = (int16) (y / ravg_size);
+
+	x = 0;
+	y = 0;
+	for (i = 0; i < ravg_size; i++) {
+		x += (int32) ravg[i].pivotX;
+		y += (int32) ravg[i].pivotY;
+	}
+	avg->pivotX = (int16) (x / ravg_size);
+	avg->pivotY = (int16) (y / ravg_size);
+
+	x = 0;
+	y = 0;
+	for (i = 0; i < ravg_size; i++) {
+		x += (int32) ravg[i].guideX;
+		y += (int32) ravg[i].guideY;
+	}
+	avg->guideX = (int16) (x / ravg_size);
+	avg->guideY = (int16) (y / ravg_size);
+}
 
 /**
  * Serial input function, changes values of a lookup table and then broadcasts
@@ -190,6 +188,7 @@ void scSTFunc(char* command) {
 void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	controlMsg *newMessage = (controlMsg *) radioCommandGetDataPtr(msgPtr);
 
+	// If not a valid message, throw it out
 	if (newMessage->check != CHECKVAL) {
 		return;
 	}
@@ -208,6 +207,9 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	}
 }
 
+/**
+ * Sets our state for the FSM
+ */
 void setState(uint8 newState) {
 	state = newState;
 
@@ -216,6 +218,9 @@ void setState(uint8 newState) {
 	}
 }
 
+/**
+ * Initialize a navigationData struct
+ */
 void navDataInit(navigationData *navData) {
 	navData->centroidX = 0;
 	navData->centroidY = 0;
@@ -226,93 +231,92 @@ void navDataInit(navigationData *navData) {
 }
 
 void behaviorTask(void* parameters) {
-	uint32 lastWakeTime;
+	uint32 lastWakeTime;	// The last time this task was woken
 
-	Beh behOutput;
-	boolean printNow;
-	NbrList nbrList;
+	Beh behOutput;			// Output motion behavior
 
+	boolean nbrUpdate;		// Has the neighbor system updated?
+	NbrList nbrList;		// The neighbor list
+	uint32 neighborRound;	// The current neighbor round
+
+	// Initialize point coordinates
 	navigationData navDataAvg;
 	navigationData navDataRead;
-
-	cprintf("1\n");
 
 	navDataInit(&navDataAvg);
 	navDataInit(&navDataRead);
 
-	cprintf("2\n");
-
+	// Initialize neighbor subsystem
 	radioCommandSetSubnet(1);
-
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 
-	cprintf("3\n");
-
+	// Initialize callback hooks for serial and radio messages
 	serialCommandAdd(&scLT, "lt", scLTFunc);
 	serialCommandAdd(&scST, "st", scSTFunc);
 	radioCommandAddCallback(&rcSend, "RC", rcCallback);
 
-	cprintf("4\n");
-
-
+	// Initialize GRL and centroid, pivot, and guide robot position estimations
 	createGRLscaleCoordinates(GRLcentroidCooridates);
-
-	cprintf("5\n");
 	createGRLpivotCoordinate(&GRLpivotCoordinate);
-
-	cprintf("6\n");
 	createGRLguideCoordinate(&GRLguideCoordinate);
 
-	cprintf("7\n");
 	globalRobotListCreate(&globalRobotList);
 
-	cprintf("8\n");
+	// Initialize the external pose subsystem for location
 	externalPoseInit();
 
-	ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-
-	// Initialization steps
+	// Status check
 	systemPrintStartup();
 	systemPrintMemUsage();
 
 	for (;;) {
-		// Default behavior is inactive
-		lastWakeTime = osTaskGetTickCount();
+		lastWakeTime = osTaskGetTickCount();	// We have woken
 
-		// Set to pivot if green button pressed
+		// Set robot to pivot robot if green button pressed
 		if (buttonsGet(BUTTON_GREEN)) {
 			setGRLpivot(roneID);
+		// Set robot to guide robot if blue button pressed
 		} else if (buttonsGet(BUTTON_BLUE)) {
 			setGRLguide(roneID);
 		}
 
-		// If host, do not do anything
+		// If host, don't do anything
 		if (rprintfIsHost() || externalPoseIsHost()) {
 			behOutput = behInactive;
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+		// If in idle state, also don't do anything
 		} else if (state == STATE_IDLE) {
 			behOutput = behInactive;
 			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+		// If we are active
 		} else {
+			// Lock the neighbor list
 			neighborsGetMutex();
 
-			printNow = neighborsNewRoundCheck(&neighborRound);
+			// Check for update
+			nbrUpdate = neighborsNewRoundCheck(&neighborRound);
 
-			// If neighbor data has updated, print out new centroid estimate
-			if (printNow) {
+			// If neighbor data has updated, update our guesses
+			if (nbrUpdate) {
 				nbrListCreate(&nbrList);
 
+				// Update pivot and guide robot IDs
 				updatePivotandGuide(&nbrList);
 
+				// Update the GRL
 				globalRobotListUpdate(&globalRobotList, &nbrList);
+
+				// Update our position estimations
 				centroidGRLUpdate(&navDataRead, &globalRobotList, &nbrList, GRLcentroidCooridates);
 				pivotGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLpivotCoordinate);
 				guideGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLguideCoordinate);
 
+				// If this is the first neighbor round we are active, set our start
 				if (startNbrRound == 0) {
 					startNbrRound = neighborRound;
 				}
 
+				// Print out some data
 				rprintf("%d, %d, %d, %d, %d, %d\n", navDataRead.centroidX,
 													navDataRead.centroidY,
 													navDataAvg.centroidX,
@@ -326,9 +330,11 @@ void behaviorTask(void* parameters) {
 				//cprintf("pt %d,%d\n", navDataAvg.guideX / 10, navDataAvg.guideY / 10);
 			}
 
+			// Unlock the neighbor list
 			neighborsPutMutex();
 
-			//rollingAverageNavData(&navDataRead, &navDataAvg);
+			// Calculate rolling average of estimates
+			rollingAverageNavData(&navDataRead, &navDataAvg);
 
 			// Set LEDs based on state
 			if (roneID == getPivotRobot()) {
@@ -342,13 +348,16 @@ void behaviorTask(void* parameters) {
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 			}
 
-			 if (state == STATE_CGUESS) {
-			 } else if (state == STATE_ROTATE) {
-				 mrmRotateCentroid(&navDataAvg, &behOutput, 8);
-			 }
+			// Set motion based on state
+			if (state == STATE_CGUESS) {
+			} else if (state == STATE_ROTATE) {
+				mrmRotateCentroid(&navDataAvg, &behOutput, 8);
+		 	}
 		}
 
+		// Set motion output
 		motorSetBeh(&behOutput);
+		// Delay task until next time
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 	}
 }

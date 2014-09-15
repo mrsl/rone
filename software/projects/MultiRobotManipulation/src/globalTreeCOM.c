@@ -26,7 +26,7 @@ NbrData guideNonce;
 void createGRLscaleCoordinates(scaleCoordinate scaleCoordinateArray[]){
 	int i;
 
-	for (i = 0; i < GLOBAL_ROBOTLIST_MAX_SIZE + 1; i++) {
+	for (i = 0; i < GLOBAL_ROBOTLIST_MAX_SIZE; i++) {
 		createScaleCoordinate(&scaleCoordinateArray[i]);
 	}
 }
