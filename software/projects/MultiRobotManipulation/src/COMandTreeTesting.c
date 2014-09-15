@@ -37,6 +37,8 @@ struct __attribute__((__packed__)) {
 	char pad[20];
 } typedef controlMsg;
 
+void setState(uint8 newState);
+
 SerialCmd scLT;
 SerialCmd scST;
 RadioMessage rmSend;
@@ -47,43 +49,68 @@ uint32 startNbrRound = 0;
 
 uint8 state = STATE_IDLE;
 
-#define RAVG_SIZE		50
-
-struct {
-	int16 x;
-	int16 y;
-} typedef coorAvg;
-
-coorAvg ravg[RAVG_SIZE];
-int ravg_ind = 0;
-int ravg_size = 0;
-
-void rollingAverageCentroid(navigationData *new, navigationData *avg) {
-	int i;
-	int32 x, y;
-
-	ravg[ravg_ind].x = new->centroidX;
-	ravg[ravg_ind].y = new->centroidY;
-
-	ravg_ind = (ravg_ind + 1) % RAVG_SIZE;
-
-	if (ravg_size < RAVG_SIZE) {
-		ravg_size++;
-	}
-
-	x = 0;
-	y = 0;
-	for (i = 0; i < ravg_size; i++) {
-		x += (int32) ravg[i].x;
-		y += (int32) ravg[i].y;
-	}
-	avg->centroidX = (int16) (x / ravg_size);
-	avg->centroidY = (int16) (y / ravg_size);
-}
+//#define RAVG_SIZE		10
+//
+//navigationData ravg[RAVG_SIZE];
+//int ravg_ind = 0;
+//int ravg_size = 0;
+//
+//void copyNavData(navigationData *toCopy, navigationData *toMe) {
+//	toMe->centroidX = toCopy->centroidX;
+//	toMe->centroidY = toCopy->centroidY;
+//	toMe->guideX = toCopy->guideX;
+//	toMe->guideY = toCopy->guideY;
+//	toMe->pivotX = toCopy->pivotX;
+//	toMe->pivotY = toCopy->pivotY;
+//	toMe->childCountSum = toCopy->childCountSum;
+//}
+//
+//void rollingAverageNavData(navigationData *new, navigationData *avg) {
+//	int i;
+//	int32 x, y;
+//
+//	copyNavData(new, &ravg[ravg_ind]);
+//
+//	ravg_ind = (ravg_ind + 1) % RAVG_SIZE;
+//
+//	if (ravg_size < RAVG_SIZE) {
+//		ravg_size++;
+//	}
+//
+//	x = 0;
+//	y = 0;
+//	for (i = 0; i < ravg_size; i++) {
+//		x += (int32) ravg[i].centroidX;
+//		y += (int32) ravg[i].centroidY;
+//	}
+//	avg->centroidX = (int16) (x / ravg_size);
+//	avg->centroidY = (int16) (y / ravg_size);
+//
+//	x = 0;
+//	y = 0;
+//	for (i = 0; i < ravg_size; i++) {
+//		x += (int32) ravg[i].pivotX;
+//		y += (int32) ravg[i].pivotY;
+//	}
+//	avg->pivotX = (int16) (x / ravg_size);
+//	avg->pivotY = (int16) (y / ravg_size);
+//
+//	x = 0;
+//	y = 0;
+//	for (i = 0; i < ravg_size; i++) {
+//		x += (int32) ravg[i].guideX;
+//		y += (int32) ravg[i].guideY;
+//	}
+//	avg->guideX = (int16) (x / ravg_size);
+//	avg->guideY = (int16) (y / ravg_size);
+//}
 
 
 // Set up centroid and GRL
-scaleCoordinate GRLcentroidCooridates[GLOBAL_ROBOTLIST_MAX_SIZE + 2];
+scaleCoordinate GRLcentroidCooridates[GLOBAL_ROBOTLIST_MAX_SIZE];
+scaleCoordinate GRLpivotCoordinate;
+scaleCoordinate GRLguideCoordinate;
+
 GlobalRobotList globalRobotList;
 boolean GRLinit = FALSE;
 
@@ -208,36 +235,59 @@ void behaviorTask(void* parameters) {
 	navigationData navDataAvg;
 	navigationData navDataRead;
 
+	cprintf("1\n");
+
 	navDataInit(&navDataAvg);
 	navDataInit(&navDataRead);
 
-	// Initialization steps
-	systemPrintStartup();
-	systemPrintMemUsage();
+	cprintf("2\n");
 
 	radioCommandSetSubnet(1);
 
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 
+	cprintf("3\n");
+
 	serialCommandAdd(&scLT, "lt", scLTFunc);
 	serialCommandAdd(&scST, "st", scSTFunc);
 	radioCommandAddCallback(&rcSend, "RC", rcCallback);
 
+	cprintf("4\n");
+
+
 	createGRLscaleCoordinates(GRLcentroidCooridates);
+
+	cprintf("5\n");
+	createGRLpivotCoordinate(&GRLpivotCoordinate);
+
+	cprintf("6\n");
+	createGRLguideCoordinate(&GRLguideCoordinate);
+
+	cprintf("7\n");
 	globalRobotListCreate(&globalRobotList);
 
-	gripperBoardInit();
-
+	cprintf("8\n");
 	externalPoseInit();
+
+	ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+
+	// Initialization steps
+	systemPrintStartup();
+	systemPrintMemUsage();
 
 	for (;;) {
 		// Default behavior is inactive
 		lastWakeTime = osTaskGetTickCount();
 
-		gripperBoardSetServo(90);
+		// Set to pivot if green button pressed
+		if (buttonsGet(BUTTON_GREEN)) {
+			setGRLpivot(roneID);
+		} else if (buttonsGet(BUTTON_BLUE)) {
+			setGRLguide(roneID);
+		}
 
 		// If host, do not do anything
-		if (rprintfIsHost()) {
+		if (rprintfIsHost() || externalPoseIsHost()) {
 			behOutput = behInactive;
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 		} else if (state == STATE_IDLE) {
@@ -251,32 +301,40 @@ void behaviorTask(void* parameters) {
 			// If neighbor data has updated, print out new centroid estimate
 			if (printNow) {
 				nbrListCreate(&nbrList);
+
+				updatePivotandGuide(&nbrList);
+
 				globalRobotListUpdate(&globalRobotList, &nbrList);
-				centroidGRLUpdate(&navDataRead, globalRobotList, &nbrList, GRLcentroidCooridates);
+				centroidGRLUpdate(&navDataRead, &globalRobotList, &nbrList, GRLcentroidCooridates);
+				pivotGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLpivotCoordinate);
+				guideGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLguideCoordinate);
 
 				if (startNbrRound == 0) {
 					startNbrRound = neighborRound;
 				}
 
-				rprintf("%d, %d, %d, %d, %d, %u\n", navDataRead.centroidX,
+				rprintf("%d, %d, %d, %d, %d, %d\n", navDataRead.centroidX,
 													navDataRead.centroidY,
 													navDataAvg.centroidX,
 													navDataAvg.centroidY,
 													navDataRead.childCountSum,
 													neighborRound - startNbrRound);
 				rprintfFlush();
-				cprintf("pt %d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidY / 10);
+
+				//cprintf("pt %d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidY / 10);
+				cprintf("pt %d,%d\n", navDataRead.pivotX / 10, navDataRead.pivotY / 10);
+				//cprintf("pt %d,%d\n", navDataAvg.guideX / 10, navDataAvg.guideY / 10);
 			}
 
 			neighborsPutMutex();
 
-			rollingAverageCentroid(&navDataRead, &navDataAvg);
+			//rollingAverageNavData(&navDataRead, &navDataAvg);
 
 			// Set LEDs based on state
-			if (isPivot) {
+			if (roneID == getPivotRobot()) {
 				ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			} else if (roneID == GUIDE_ROBOT_ID) {
+			} else if (roneID == getGuideRobot()) {
 				ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 			} else {
@@ -284,14 +342,9 @@ void behaviorTask(void* parameters) {
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 			}
 
-			// Set to pivot if green button pressed
-			if (buttonsGet(BUTTON_GREEN)) {
-				isPivot = (isPivot) ? FALSE : TRUE;
-			}
-
 			 if (state == STATE_CGUESS) {
 			 } else if (state == STATE_ROTATE) {
-				 mrmRotateCW(&navDataAvg, &behOutput, 8);
+				 mrmRotateCentroid(&navDataAvg, &behOutput, 8);
 			 }
 		}
 

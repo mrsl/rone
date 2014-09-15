@@ -43,6 +43,9 @@ int16 getScaleCoordinateY(scaleCoordinate *toGet, Nbr *nbrPtr);
  */
 void getScaleCoordinate(scaleCoordinate *toGet, Nbr *nbrPtr, int16 *x, int16 *y);
 
+
+void scShiftNbrReferenceFrame(scaleCoordinate *toRotate, Nbr *nbrPtr, int16 *x, int16 *y);
+
 /**
  * @brief Rotates an X and Y coordinate by the angle
  */
