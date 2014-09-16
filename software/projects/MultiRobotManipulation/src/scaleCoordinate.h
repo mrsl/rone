@@ -8,8 +8,6 @@
 #ifndef SCALECOORDINATE_H_
 #define SCALECOORDINATE_H_
 
-#define ROBOT_RANGE	4000	// Set distance between robots, temporary until range is figured out
-
 struct {
 	NbrData Xh;	// High bits of x coordinate
 	NbrData Xl;	// Low bits of x coordinate

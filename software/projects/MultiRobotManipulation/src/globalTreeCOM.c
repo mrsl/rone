@@ -189,55 +189,6 @@ void centroidGRLListUpdate(navigationData *navDataPtr,
 	navDataPtr->childCountSum = childCountSum;
 }
 
-//void pivotGRLUpdate(navigationData *navDataPtr,
-//				    GlobalRobotList *globalRobotList,
-//				    NbrList *nbrListPtr,
-//				    scaleCoordinate *pivotCoordinate) {
-//	// Variables
-//	int i;
-//	GlobalRobotListElement* grlEltPtr = NULL; // Pointer to a GRL Tree (element)
-//	int16 x = 0, y = 0;
-//
-//	// If we are the pivot set location to ourselves
-//	if (isPivot) {
-//		updateScaleCoordinate(pivotCoordinate, 0, 0, 0);
-//
-//		navDataPtr->pivotX = x;
-//		navDataPtr->pivotY = y;
-//
-//	// Use the tree rooted on the provided robot
-//	} else {
-//		// Find the pivot tree
-//		for (i = 0; i < globalRobotList->size; i++) {
-//			grlEltPtr = globalRobotListGetElt(globalRobotList, i);
-//			if (grlEltGetID(grlEltPtr) == nbrDataGet(&pivotRobot)) {
-//				break;
-//			}
-//		}
-//		if (grlEltPtr == NULL) {
-//			return; // error
-//		}
-//
-//		Nbr *nbrPtr;
-//		uint8 nbrId;
-//		uint8 myParent = nbrDataGet(&(grlEltPtr->ParentID));
-//
-//		for (i = 0; i < nbrListPtr->size; i++){
-//			nbrPtr = nbrListPtr->nbrs[i];
-//			nbrId = nbrGetID(nbrPtr);
-//
-//			if (nbrId == myParent) {
-//				scShiftNbrReferenceFrame(pivotCoordinate, nbrPtr, &x, &y);
-//				updateScaleCoordinate(pivotCoordinate, x, y, 0);
-//
-//				navDataPtr->pivotX = x;
-//				navDataPtr->pivotY = y;
-//				return;
-//			}
-//		}
-//	}
-//}
-
 void pivotGRLUpdate(navigationData *navDataPtr,
 				    GlobalRobotList *globalRobotList,
 				    NbrList *nbrListPtr,
@@ -308,14 +259,55 @@ void rootedLocationTreeUpdate(GlobalRobotList *globalRobotList,
 	updateScaleCoordinate(sc, *x, *y, 0);
 }
 
+//void pivotGRLUpdate(navigationData *navDataPtr,
+//				    GlobalRobotList *globalRobotList,
+//				    NbrList *nbrListPtr,
+//				    scaleCoordinate *pivotCoordinate) {
+//	// Variables
+//	int i;
+//	GlobalRobotListElement* grlEltPtr = NULL; // Pointer to a GRL Tree (element)
+//	int16 x = 0, y = 0;
+//
+//	// If we are the pivot set location to ourselves
+//	if (isPivot) {
+//		updateScaleCoordinate(pivotCoordinate, 0, 0, 0);
+//
+//		navDataPtr->pivotX = x;
+//		navDataPtr->pivotY = y;
+//
+//	// Use the tree rooted on the provided robot
+//	} else {
+//		// Find the pivot tree
+//		for (i = 0; i < globalRobotList->size; i++) {
+//			grlEltPtr = globalRobotListGetElt(globalRobotList, i);
+//			if (grlEltGetID(grlEltPtr) == nbrDataGet(&pivotRobot)) {
+//				break;
+//			}
+//		}
+//		if (grlEltPtr == NULL) {
+//			return; // error
+//		}
+//
+//		Nbr *nbrPtr;
+//		uint8 nbrId;
+//		uint8 myParent = nbrDataGet(&(grlEltPtr->ParentID));
+//
+//		for (i = 0; i < nbrListPtr->size; i++){
+//			nbrPtr = nbrListPtr->nbrs[i];
+//			nbrId = nbrGetID(nbrPtr);
+//
+//			if (nbrId == myParent) {
+//				scShiftNbrReferenceFrame(pivotCoordinate, nbrPtr, &x, &y);
+//				updateScaleCoordinate(pivotCoordinate, x, y, 0);
+//
+//				navDataPtr->pivotX = x;
+//				navDataPtr->pivotY = y;
+//				return;
+//			}
+//		}
+//	}
+//}
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 //void CentroidGRLPrintAllTrees(GlobalRobotList* globalRobotListPtr, NbrList* nbrListPtr, PositionCOM* posListPtr){
 //	int8 i;

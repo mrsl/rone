@@ -12,22 +12,22 @@
 
 #define MRM_ALPHA			50
 
-void mrmRotateCentroid(navigationData *navData, Beh *beh, int32 tvModifier) {
-	mrmPointRotate(beh,
-				  (int32) (navData->centroidX / 10),
-				  (int32) (navData->centroidY / 10),
-				  tvModifier);
+void mrmOrbitCentroid(navigationData *navData, Beh *beh, int32 tvModifier) {
+	mrmPointOrbit(beh,
+				 (int32) (navData->centroidX / 10),
+				 (int32) (navData->centroidY / 10),
+				 tvModifier);
 }
 
 void mrmRotatePivot(navigationData *navData, Beh *beh, int32 tvModifier) {
-	mrmPointRotate(beh,
-				  (int32) (navData->pivotX / 10),
-				  (int32) (navData->pivotY / 10),
-				  tvModifier);
+	mrmPointOrbit(beh,
+				 (int32) (navData->pivotX / 10),
+				 (int32) (navData->pivotY / 10),
+				 tvModifier);
 }
 
 
-void mrmPointRotate(Beh *beh, int32 x, int32 y, int32 tvModifier) {
+void mrmPointOrbit(Beh *beh, int32 x, int32 y, int32 tvModifier) {
 	int32 tv = behGetTv(beh);
 	int32 rv = behGetRv(beh);
 
