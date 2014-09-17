@@ -130,7 +130,7 @@ void behaviorTask(void* parameters) {
 				}
 				}
 
-				cprintf("pt %d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidX / 10);
+				cprintf("pt %d,%d\n", navDataRead.centroidX / 10, navDataRead.centroidX / 10);
 			}
 
 			// Unlock the neighbor list
@@ -171,9 +171,9 @@ void behaviorTask(void* parameters) {
 			// Set motion based on state
 			if (getState() == STATE_CGUESS) {
 			} else if (getState() == STATE_ROTATE) {
-				mrmOrbitCentroid(&navDataAvg, &behOutput, MRM_TV_GAIN);
+				mrmOrbitCentroid(&navDataRead, &behOutput, MRM_TV_GAIN);
 		 	} else if (getState() == STATE_ROTATE) {
-		 		mrmOrbitPivot(&navDataAvg, &behOutput, MRM_TV_GAIN);
+		 		mrmOrbitPivot(&navDataRead, &behOutput, MRM_TV_GAIN);
 		 	}
 		}
 

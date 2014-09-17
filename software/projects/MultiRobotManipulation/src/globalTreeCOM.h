@@ -32,7 +32,7 @@
 
 #define RAVG_SIZE		50
 
-#define MRM_TV_GAIN	8
+#define MRM_TV_GAIN		7
 
 typedef struct posCOM {
 	NbrData X_H;
