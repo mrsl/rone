@@ -374,31 +374,42 @@ int32 externalPoseGetNbrRange(Nbr* nbrPtr) {
 
 
 boolean externalPoseGetRelativePose(Nbr *nbrPtr, NbrPose *nbrPose) {
-	int32 theta;
-	int32 dx, dy;
+	//int32 theta;
+	int32 dx1, dx2, dy1, dy2;
 	ExternalPose poseExt;
 	ExternalPose nbrPoseExt;
 
 	if (nbrPtr) {
 		if (externalPoseGet(&poseExt) && externalPoseGetNbr(&nbrPoseExt, nbrPtr)) {
-			dx = poseExt.pose.x - nbrPoseExt.pose.x;
-			dy = poseExt.pose.y - nbrPoseExt.pose.y;
-			nbrPose->distance = sqrtInt(dx * dx + dy * dy);
+			//dx = poseExt.pose.x - nbrPoseExt.pose.x;
+			//dy = poseExt.pose.y - nbrPoseExt.pose.y;
 
-			if (nbrPoseExt.pose.y > poseExt.pose.y) {
-				dy = nbrPoseExt.pose.y - poseExt.pose.y;
-				dx = poseExt.pose.x - nbrPoseExt.pose.x;
-			} else {
-				dy = poseExt.pose.y - nbrPoseExt.pose.y;
-				dx =  nbrPoseExt.pose.x - poseExt.pose.x;
-			}
-			nbrPose->theta2 = atan2MilliRad(dy, dx);
-			nbrPose->theta = normalizeAngleMilliRad2(nbrPose->theta2);
+//			if (nbrPoseExt.pose.y > poseExt.pose.y) {
+//				dy = nbrPoseExt.pose.y - poseExt.pose.y;
+//				dx = poseExt.pose.x - nbrPoseExt.pose.x;
+//			} else {
+//				dy = poseExt.pose.y - nbrPoseExt.pose.y;
+//				dx =  nbrPoseExt.pose.x - poseExt.pose.x;
+//			}
+
+
+			dy1 =  nbrPoseExt.pose.y - poseExt.pose.y;
+			dx1 =  poseExt.pose.x -nbrPoseExt.pose.x;
+
+			nbrPose->distance = sqrtInt(dx1 * dx1 + dy1 * dy1);
+
+			dy2 = poseExt.pose.y - nbrPoseExt.pose.y;
+			dx2 =  nbrPoseExt.pose.x - poseExt.pose.x;
+
+			//nbrPose->theta2 = atan2MilliRad(dy1, dx1);
+			nbrPose->theta = normalizeAngleMilliRad2(atan2MilliRad(dy1, dx1));
+			nbrPose->theta2 = normalizeAngleMilliRad2(atan2MilliRad(dy2, dx2));
 
 
 		//	nbrPose->bearing = normalizeAngleMilliRad(nbrPose->theta + poseExt.pose.theta) - MILLIRAD_PI;
-			nbrPose->bearing = normalizeAngleMilliRad2(nbrPose->theta - poseExt.pose.theta);
-			nbrPose->orientation = normalizeAngleMilliRad2(-MILLIRAD_PI + nbrPose->theta - nbrPoseExt.pose.theta);
+			nbrPose->bearing = (
+					(int32) nbrPose->theta - poseExt.pose.theta);
+			nbrPose->orientation = ((int32) nbrPose->theta2 - nbrPoseExt.pose.theta);
 			return TRUE;
 		}
 	}
