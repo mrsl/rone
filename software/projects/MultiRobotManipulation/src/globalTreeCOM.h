@@ -15,7 +15,7 @@
 #include "scaleCoordinate.h"
 
 #define BEHAVIOR_TASK_PERIOD	50
-#define NEIGHBOR_ROUND_PERIOD	1000
+#define NEIGHBOR_ROUND_PERIOD	1500
 
 #define CHECKVAL		0xDADA
 
@@ -26,13 +26,12 @@
 #define STATE_CGUESS	1
 #define STATE_ROTATE	2
 #define STATE_PIVOT 	3
-#define STATE_GUIDE 	4
 
-#define STATE_MAX		4
+#define STATE_MAX		3
 
 #define RAVG_SIZE		50
 
-#define MRM_TV_GAIN		7
+#define MRM_TV_GAIN		6
 
 typedef struct posCOM {
 	NbrData X_H;
@@ -55,8 +54,8 @@ struct {
 void createGRLscaleCoordinates(scaleCoordinate scaleCoordinateArray[]);
 void createGRLpivotCoordinate(scaleCoordinate *pivot);
 void createGRLguideCoordinate(scaleCoordinate *guide);
-void setGRLpivot();
-void setGRLguide();
+void setGRLpivot(uint8 id);
+void setGRLguide(uint8 id);
 
 uint8 getPivotRobot();
 uint8 getGuideRobot();

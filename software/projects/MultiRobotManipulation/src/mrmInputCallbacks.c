@@ -48,13 +48,14 @@ void scLTFunc(char* command) {
 	newMessage->messageType = MSG_TYPE_LT;
 
 	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
-	osTaskDelay(100);
+	osTaskDelay(50);
 
 	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
 
 	// Spam out to be heard
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 7; i++) {
 		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
 	}
 }
 
@@ -84,13 +85,14 @@ void scSTFunc(char* command) {
 	newMessage->messageType = MSG_TYPE_ST;
 
 	ledsSetPattern(LED_ALL, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
-	osTaskDelay(100);
+	osTaskDelay(50);
 
 	setState(newMessage->state);
 
 	// Spam out to be heard
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < 7; i++) {
 		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
 	}
 }
 
@@ -108,13 +110,13 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 	// Set the lookup table
 	if (newMessage->messageType == MSG_TYPE_LT) {
 		ledsSetPattern(LED_BLUE, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
-		osTaskDelay(100);
+		osTaskDelay(50);
 		//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
 	}
 
 	if (newMessage->messageType == MSG_TYPE_ST) {
 		ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
-		osTaskDelay(100);
+		osTaskDelay(50);
 		setState(newMessage->state);
 	}
 }
