@@ -2,7 +2,7 @@
  * globalTreeCOM.h
  *
  *  Created on: Jun 27, 2014
- *      Author: MaJellins
+ *      Author: Zak
  */
 
 #ifndef GLOBALTREECOM_H_
@@ -25,8 +25,10 @@
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
 #define STATE_ROTATE	2
+#define STATE_PIVOT 	3
+#define STATE_GUIDE 	4
 
-#define STATE_MAX		2
+#define STATE_MAX		4
 
 #define RAVG_SIZE		50
 
@@ -53,8 +55,8 @@ struct {
 void createGRLscaleCoordinates(scaleCoordinate scaleCoordinateArray[]);
 void createGRLpivotCoordinate(scaleCoordinate *pivot);
 void createGRLguideCoordinate(scaleCoordinate *guide);
-void setGRLpivot(uint8 id);
-void setGRLguide(uint8 id);
+void setGRLpivot();
+void setGRLguide();
 
 uint8 getPivotRobot();
 uint8 getGuideRobot();
@@ -91,7 +93,7 @@ void rootedLocationTreeUpdate(GlobalRobotList *globalRobotList,
 
 // Controllers
 void mrmOrbitCentroid(navigationData *navData, Beh *beh, int32 tvModifier);
-void mrmRotatePivot(navigationData *navData, Beh *beh, int32 tvModifier);
+void mrmOrbitPivot(navigationData *navData, Beh *beh, int32 tvModifier);
 void mrmPointOrbit(Beh *beh, int32 x, int32 y, int32 tvModifier);
 
 // Input callbacks

@@ -4,7 +4,7 @@
  * @brief Functions and structures to manipulate local and remote coordinates
  *
  *  Created on: Aug 27, 2014
- *      Author: Zak K.
+ *      Author: Zak
  */
 
 #include "roneos.h"

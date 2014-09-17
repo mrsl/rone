@@ -2,7 +2,7 @@
  * globalTreeCOM.c
  *
  *  Created on: Jun 27, 2014
- *      Author: MaJellins
+ *      Author: Zak
  */
 
 #include <stdio.h>
@@ -52,16 +52,16 @@ void createGRLguideCoordinate(scaleCoordinate *guide) {
 /**
  * Sets a new pivot robot for the network
  */
-void setGRLpivot(uint8 id) {
-	nbrDataSet(&pivotRobot, id);
+void setGRLpivot() {
+	nbrDataSet(&pivotRobot, roneID);
 	nbrDataSet(&pivotNonce, nbrDataGet(&pivotNonce) + 1);
 }
 
 /**
  * Sets a new guide robot for the network
  */
-void setGRLguide(uint8 id) {
-	nbrDataSet(&guideRobot, id);
+void setGRLguide() {
+	nbrDataSet(&guideRobot, roneID);
 	nbrDataSet(&guideNonce, nbrDataGet(&guideNonce) + 1);
 }
 

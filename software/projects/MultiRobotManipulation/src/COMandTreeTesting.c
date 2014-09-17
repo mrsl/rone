@@ -62,10 +62,10 @@ void behaviorTask(void* parameters) {
 
 		// Set robot to pivot robot if green button pressed
 		if (buttonsGet(BUTTON_GREEN)) {
-			setGRLpivot(roneID);
+			setGRLpivot();
 		// Set robot to guide robot if blue button pressed
 		} else if (buttonsGet(BUTTON_BLUE)) {
-			setGRLguide(roneID);
+			setGRLguide();
 		}
 
 		// If host, don't do anything
@@ -105,13 +105,32 @@ void behaviorTask(void* parameters) {
 				}
 
 				// Print out some data
-				rprintf("%d,%d,%d,%d,%d,%d\n", navDataRead.centroidX,
-											   navDataRead.centroidY,
-											   navDataAvg.centroidX,
-											   navDataAvg.centroidY,
-											   navDataRead.childCountSum,
-											   getDeltaStartNbrRound(neighborRound));
-				rprintfFlush();
+				switch (getState()) {
+				case (STATE_CGUESS): {
+					rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
+										     navDataRead.centroidY,
+										     navDataRead.childCountSum,
+										     getDeltaStartNbrRound(neighborRound));
+					rprintfFlush();
+					break;
+				}
+				case (STATE_ROTATE):
+				case (STATE_PIVOT): {
+					rprintf("%d,%d,%d,%d,%d,%d\n", navDataRead.centroidX,
+												   navDataRead.centroidY,
+												   behGetTv(&behOutput),
+												   behGetRv(&behOutput),
+												   navDataRead.childCountSum,
+												   getDeltaStartNbrRound(neighborRound));
+					rprintfFlush();
+					break;
+				}
+				default: {
+					break;
+				}
+				}
+
+				cprintf("pt %d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidX / 10);
 			}
 
 			// Unlock the neighbor list
@@ -127,15 +146,34 @@ void behaviorTask(void* parameters) {
 			} else if (roneID == getGuideRobot()) {
 				ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			} else {
-				ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
+			} else if (roneID == getPivotRobot() && roneID == getGuideRobot()) {
+				ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			} else {
+				switch (getState()) {
+				case (STATE_CGUESS): {
+					ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
+						LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+					break;
+				}
+				case (STATE_ROTATE):
+				case (STATE_PIVOT):{
+					ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+						LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+					break;
+				}
+				default: {
+					break;
+				}
+				}
 			}
 
 			// Set motion based on state
 			if (getState() == STATE_CGUESS) {
 			} else if (getState() == STATE_ROTATE) {
 				mrmOrbitCentroid(&navDataAvg, &behOutput, MRM_TV_GAIN);
+		 	} else if (getState() == STATE_ROTATE) {
+		 		mrmOrbitPivot(&navDataAvg, &behOutput, MRM_TV_GAIN);
 		 	}
 		}
 

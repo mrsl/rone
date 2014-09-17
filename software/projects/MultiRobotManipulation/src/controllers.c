@@ -19,7 +19,7 @@ void mrmOrbitCentroid(navigationData *navData, Beh *beh, int32 tvModifier) {
 				 tvModifier);
 }
 
-void mrmRotatePivot(navigationData *navData, Beh *beh, int32 tvModifier) {
+void mrmOrbitPivot(navigationData *navData, Beh *beh, int32 tvModifier) {
 	mrmPointOrbit(beh,
 				 (int32) (navData->pivotX / 10),
 				 (int32) (navData->pivotY / 10),
