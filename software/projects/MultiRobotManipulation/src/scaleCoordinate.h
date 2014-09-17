@@ -8,8 +8,6 @@
 #ifndef SCALECOORDINATE_H_
 #define SCALECOORDINATE_H_
 
-#define ROBOT_RANGE	4000	// Set distance between robots, temporary until range is figured out
-
 struct {
 	NbrData Xh;	// High bits of x coordinate
 	NbrData Xl;	// Low bits of x coordinate
@@ -22,11 +20,13 @@ struct {
  * @brief Initializes a scale coordinate
  */
 void createScaleCoordinate(scaleCoordinate *toCreate);
+void createScaleCoordinateSansChild(scaleCoordinate *toCreate);
 
 /**
  * @brief Updates the neighbor data of a scale coordinate
  */
 void updateScaleCoordinate(scaleCoordinate *toUpdate, int16 newX, int16 newY, uint8 childCount);
+void updateScaleCoordinateSansChild(scaleCoordinate *toUpdate, int16 newX, int16 newY);
 
 /**
  * @brief Returns the current X value of the scale coordinate for a neighbor
@@ -42,6 +42,9 @@ int16 getScaleCoordinateY(scaleCoordinate *toGet, Nbr *nbrPtr);
  * @brief Sets given X and Y pointers to the value of the scale coordinate for a neighbor
  */
 void getScaleCoordinate(scaleCoordinate *toGet, Nbr *nbrPtr, int16 *x, int16 *y);
+
+
+void scShiftNbrReferenceFrame(scaleCoordinate *toRotate, Nbr *nbrPtr, int16 *x, int16 *y);
 
 /**
  * @brief Rotates an X and Y coordinate by the angle

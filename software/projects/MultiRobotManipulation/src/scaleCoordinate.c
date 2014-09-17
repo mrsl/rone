@@ -4,7 +4,7 @@
  * @brief Functions and structures to manipulate local and remote coordinates
  *
  *  Created on: Aug 27, 2014
- *      Author: Zak K.
+ *      Author: Zak
  */
 
 #include "roneos.h"
@@ -27,7 +27,6 @@ void updateScaleCoordinate(scaleCoordinate *toUpdate, int16 newX, int16 newY, ui
 	nbrDataSet16(&toUpdate->Yh, &toUpdate->Yl, newY);
 	nbrDataSet(&toUpdate->childCount, childCount);
 }
-
 
 /**
  * @brief Returns the current X value of the scale coordinate for a neighbor
@@ -62,7 +61,7 @@ void getScaleCoordinate(scaleCoordinate *toGet, Nbr *nbrPtr, int16 *x, int16 *y)
 /**
  * @brief Rotates an X and Y coordinate by the angle
  */
-void rotateXYOld(int16 *x, int16 *y, int32 angle) {
+void rotateXY(int16 *x, int16 *y, int32 angle) {
 	int16 tempX, tempY;
 	tempX = *x * cosMilliRad(angle) / MILLIRAD_TRIG_SCALER
 			- *y * sinMilliRad(angle) / MILLIRAD_TRIG_SCALER;
@@ -76,7 +75,7 @@ void rotateXYOld(int16 *x, int16 *y, int32 angle) {
 /**
  * @brief Transforms a scale coordinate of a neighbor into local reference frame, and sets given X and Y
  */
-void transformScaleCoordinateOld(scaleCoordinate *toRotate, Nbr *nbrPtr, int16 *x, int16 *y) {
+void scShiftNbrReferenceFrame(scaleCoordinate *toRotate, Nbr *nbrPtr, int16 *x, int16 *y) {
 	int32 orientation = nbrGetOrientation(nbrPtr);
 	int32 bearing = nbrGetBearing(nbrPtr);
 
@@ -84,7 +83,7 @@ void transformScaleCoordinateOld(scaleCoordinate *toRotate, Nbr *nbrPtr, int16 *
 
 	rotateXY(x, y, orientation);
 
-	*x += ROBOT_RANGE;
+	*x += (int16) externalPoseGetNbrRange(nbrPtr) * 10;
 
 	rotateXY(x, y, bearing);
 }
@@ -101,15 +100,15 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 	*childCount = getScaleCoordinateChildCount(toTransform, nbrPtr);
 
 	// Get angular position of neighbor
-	uint8 nbrId = nbrGetID(nbrPtr);
+	// uint8 nbrId = nbrGetID(nbrPtr);
 
 	//int32 orientation = lookupGetOrientation(roneID, nbrId);
 	//int32 bearing = lookupGetBearing(roneID, nbrId);
 
-	NbrPose nbrPose;
-	if (!externalPoseGetRelativePose(nbrPtr, &nbrPose)) {
-		return;
-	}
+//	NbrPose nbrPose;
+//	if (!externalPoseGetRelativePose(nbrPtr, &nbrPose)) {
+//		return;
+//	}
 
 	//int32 orientation = nbrGetOrientation(nbrPtr);
 	//int32 bearing = nbrGetBearing(nbrPtr);
@@ -144,7 +143,7 @@ void applyTransformationMatrix(int16 *x, int16 *y,
 	xNbr = distance * cosMilliRad(bearing) / MILLIRAD_TRIG_SCALER;
 	yNbr = distance * sinMilliRad(bearing) / MILLIRAD_TRIG_SCALER;
 
-	int32 transformationAngle = -normalizeAngleMilliRad2(PI - orientation + bearing);
+	int32 transformationAngle = -normalizeAngleMilliRad2(MILLIRAD_PI - orientation + bearing);
 	int16 xTemp, yTemp;
 	// Calculate X and Y of centroid guess from neighbor in local reference frame, considering children
 	xTemp = (xCoor * cosMilliRad(transformationAngle) - yCoor * sinMilliRad(transformationAngle))/ MILLIRAD_TRIG_SCALER
