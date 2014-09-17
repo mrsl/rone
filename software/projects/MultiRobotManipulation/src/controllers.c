@@ -28,15 +28,19 @@ void mrmOrbitPivot(navigationData *navData, Beh *beh, int32 tvModifier) {
 
 
 void mrmPointOrbit(Beh *beh, int32 x, int32 y, int32 tvModifier) {
-	int32 tv = behGetTv(beh);
-	int32 rv = behGetRv(beh);
-
+	// Just stay put
 	if (x == 0 && y == 0) {
 		behSetTvRv(beh, 0, 0);
 		return;
 	}
 
+	int32 tv = behGetTv(beh);
+	int32 rv = behGetRv(beh);
+
+	// Get bearing towards point
 	int32 bearing = atan2MilliRad(y, x);
+
+	// Decided whether to drive forwards or backwards
 	int32 bearingLeft = normalizeAngleMilliRad(bearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
 	int32 bearingRight = normalizeAngleMilliRad(bearing + MILLIRAD_PI / 2) - MILLIRAD_PI;
 
@@ -47,6 +51,7 @@ void mrmPointOrbit(Beh *beh, int32 x, int32 y, int32 tvModifier) {
 		tvModifier = -tvModifier;
 	}
 
+	// Proportional tv and rv control
 	int32 distance = vectorMag(x, y);
 
 	int32 goalTv = boundAbs(tvModifier * distance / 10, 60);
@@ -57,6 +62,7 @@ void mrmPointOrbit(Beh *beh, int32 x, int32 y, int32 tvModifier) {
 		goalTv /= 1.5;
 	}
 
+	// Filter from previous state
 	int32 finalTv = filterIIR(goalTv, tv, MRM_ALPHA);
 	int32 finalRv = filterIIR(goalRv, rv, MRM_ALPHA);
 

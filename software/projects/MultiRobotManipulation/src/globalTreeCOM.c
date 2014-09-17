@@ -52,16 +52,16 @@ void createGRLguideCoordinate(scaleCoordinate *guide) {
 /**
  * Sets a new pivot robot for the network
  */
-void setGRLpivot() {
-	nbrDataSet(&pivotRobot, roneID);
+void setGRLpivot(uint8 id) {
+	nbrDataSet(&pivotRobot, id);
 	nbrDataSet(&pivotNonce, nbrDataGet(&pivotNonce) + 1);
 }
 
 /**
  * Sets a new guide robot for the network
  */
-void setGRLguide() {
-	nbrDataSet(&guideRobot, roneID);
+void setGRLguide(uint8 id) {
+	nbrDataSet(&guideRobot, id);
 	nbrDataSet(&guideNonce, nbrDataGet(&guideNonce) + 1);
 }
 
@@ -193,7 +193,9 @@ void pivotGRLUpdate(navigationData *navDataPtr,
 				    GlobalRobotList *globalRobotList,
 				    NbrList *nbrListPtr,
 				    scaleCoordinate *pivotCoordinate) {
-	int16 x, y;
+	int16 x = 0,
+		  y = 0;
+
 	rootedLocationTreeUpdate(globalRobotList,
 							 nbrListPtr,
 							 getPivotRobot(),
@@ -208,7 +210,9 @@ void guideGRLUpdate(navigationData *navDataPtr,
 				    GlobalRobotList *globalRobotList,
 				    NbrList *nbrListPtr,
 				    scaleCoordinate *guideCoordinate) {
-	int16 x, y;
+	int16 x = 0,
+		  y = 0;
+
 	rootedLocationTreeUpdate(globalRobotList,
 							 nbrListPtr,
 							 getGuideRobot(),
