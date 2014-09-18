@@ -20,6 +20,9 @@ NbrData pivotNonce;
 NbrData guideRobot;
 NbrData guideNonce;
 
+NbrData stateInfo;
+NbrData stateNonce;
+
 /**
  * Creates the scale coordinate array for centroid locations
  */
@@ -50,6 +53,14 @@ void createGRLguideCoordinate(scaleCoordinate *guide) {
 }
 
 /**
+ * Creates the scale coordinate for the guide
+ */
+void createStateInformation() {
+	nbrDataCreate(&stateInfo, "state", 8, 0);
+	nbrDataCreate(&stateNonce, "stateNonce", 8, 0);
+}
+
+/**
  * Sets a new pivot robot for the network
  */
 void setGRLpivot(uint8 id) {
@@ -73,11 +84,26 @@ uint8 getGuideRobot() {
 	return nbrDataGet(&guideRobot);
 }
 
+/**
+ * Sets our state for the FSM
+ */
+void setState(uint8 newState) {
+	nbrDataSet(&stateInfo, newState);
+	nbrDataSet(&stateNonce, nbrDataGet(&stateNonce) + 1);
+
+	if (newState == STATE_IDLE) {
+		setStartNbrRound(0);
+	}
+}
+
+uint8 getState() {
+	return nbrDataGet(&stateInfo);
+}
 
 /**
  * Updates pivot and guide robot knowledge
  */
-void updatePivotandGuide(NbrList *nbrListPtr) {
+void updateDistributedInformation(NbrList *nbrListPtr) {
 	int i;
 	Nbr *nbrPtr;
 
@@ -97,6 +123,14 @@ void updatePivotandGuide(NbrList *nbrListPtr) {
 			if (nbrDataGetNbr(&guideNonce, nbrPtr) >= nbrDataGet(&guideNonce)) {
 				nbrDataSet(&guideRobot, nbrDataGetNbr(&guideRobot, nbrPtr));
 				nbrDataSet(&guideNonce, nbrDataGetNbr(&guideNonce, nbrPtr));
+			}
+		}
+
+		// Check for new guide
+		if (nbrDataGetNbr(&stateInfo, nbrPtr) != nbrDataGet(&stateInfo)) {
+			if (nbrDataGetNbr(&stateNonce, nbrPtr) >= nbrDataGet(&stateNonce)) {
+				nbrDataSet(&stateInfo, nbrDataGetNbr(&stateInfo, nbrPtr));
+				nbrDataSet(&stateNonce, nbrDataGetNbr(&stateNonce, nbrPtr));
 			}
 		}
 	}

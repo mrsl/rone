@@ -28,12 +28,18 @@ void mrmBehaviorInit() {
 	radioCommandSetSubnet(1);
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 
+	// Initialize rprintf time to slower value
+	rprintfSetSleepTime(RPRINTF_SLEEP_TIME);
+
 	mrmInitCallbacks();
 
 	// Initialize GRL and centroid, pivot, and guide robot position estimations
 	createGRLscaleCoordinates(GRLcentroidCooridates);
 	createGRLpivotCoordinate(&GRLpivotCoordinate);
 	createGRLguideCoordinate(&GRLguideCoordinate);
+
+	// Create distributed state information
+	createStateInformation();
 
 	globalRobotListCreate(&globalRobotList);
 
@@ -67,6 +73,10 @@ void behaviorTask(void* parameters) {
 		// Set robot to guide robot if blue button pressed
 		} else if (buttonsGet(BUTTON_BLUE)) {
 			(roneID != getGuideRobot()) ? setGRLguide(roneID) : setGRLguide(0);
+
+		// Increment through states
+		} else if (buttonsGet(BUTTON_RED)) {
+			setState((getState() + 1) % (STATE_MAX + 1));
 		}
 
 		// If host, don't do anything
@@ -75,11 +85,6 @@ void behaviorTask(void* parameters) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 
 		// If in idle state, also don't do anything
-		} else if (getState() == STATE_IDLE) {
-			behOutput = behInactive;
-			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-
-		// If we are active
 		} else {
 			// Lock the neighbor list
 			neighborsGetMutex();
@@ -91,98 +96,107 @@ void behaviorTask(void* parameters) {
 			if (nbrUpdate) {
 				nbrListCreate(&nbrList);
 
-				// Update pivot and guide robot IDs
-				updatePivotandGuide(&nbrList);
-
-				// Update the GRL
-				globalRobotListUpdate(&globalRobotList, &nbrList);
-
-				// Update our position estimations
-				centroidGRLUpdate(&navDataRead, &globalRobotList, &nbrList, GRLcentroidCooridates);
-				pivotGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLpivotCoordinate);
-				guideGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLguideCoordinate);
-
-				// If this is the first neighbor round we are active, set our start
-				if (!isInitStartNbrRound()) {
-					setStartNbrRound(neighborRound);
-				}
-
-				// Print out some data
-				switch (getState()) {
-				case (STATE_CGUESS): {
-					rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
-										     navDataRead.centroidY,
-										     navDataRead.childCountSum,
-										     getDeltaStartNbrRound(neighborRound));
-					rprintfFlush();
-					break;
-				}
-				case (STATE_ROTATE):
-				case (STATE_PIVOT): {
-					rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
-										     navDataRead.centroidY,
-											 navDataRead.childCountSum,
-											 getDeltaStartNbrRound(neighborRound));
-					rprintfFlush();
-					break;
-				}
-				default: {
-					break;
-				}
-				}
-
-				cprintf("pt %d,%d\n", navDataRead.centroidX, navDataRead.centroidY);
+				// Update pivot and guide robot IDs, as well as state
+				updateDistributedInformation(&nbrList);
 			}
 
-			// Unlock the neighbor list
-			neighborsPutMutex();
+			// If we are idle
+			if (getState() == STATE_IDLE) {
+				behOutput = behInactive;
+				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
-			// Calculate rolling average of estimates
-			rollingAverageNavData(&navDataRead, &navDataAvg);
-
-			// Set LEDs based on state
-			if (roneID == getPivotRobot() && roneID == getGuideRobot()) {
-				ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE,
-					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			} else if (roneID == getGuideRobot()) {
-				ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
-					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			} else if (roneID == getPivotRobot()) {
-				ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE,
-					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			// If we are active
 			} else {
-				switch (getState()) {
-				case (STATE_CGUESS): {
-					ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
+				if (nbrUpdate) {
+					// Update the GRL
+					globalRobotListUpdate(&globalRobotList, &nbrList);
+
+					// Update our position estimations
+					centroidGRLUpdate(&navDataRead, &globalRobotList, &nbrList, GRLcentroidCooridates);
+					pivotGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLpivotCoordinate);
+					guideGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLguideCoordinate);
+
+					// If this is the first neighbor round we are active, set our start
+					if (!isInitStartNbrRound()) {
+						setStartNbrRound(neighborRound);
+					}
+
+					// Print out some data
+					switch (getState()) {
+					case (STATE_CGUESS): {
+						rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
+												 navDataRead.centroidY,
+												 navDataRead.childCountSum,
+												 getDeltaStartNbrRound(neighborRound));
+						rprintfFlush();
+						break;
+					}
+					case (STATE_ROTATE): {
+						rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
+												 navDataRead.centroidY,
+												 navDataRead.childCountSum,
+												 getDeltaStartNbrRound(neighborRound));
+						rprintfFlush();
+						break;
+					}
+					case (STATE_PIVOT):
+					default: {
+						break;
+					}
+					}
+
+					cprintf("pt %d,%d\n", navDataRead.centroidX, navDataRead.centroidY);
+				}
+
+				// Calculate rolling average of estimates
+				rollingAverageNavData(&navDataRead, &navDataAvg);
+
+				// Set LEDs based on state
+				if (roneID == getPivotRobot() && roneID == getGuideRobot()) {
+					ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE,
 						LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-					break;
-				}
-				case (STATE_ROTATE): {
-					ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+				} else if (roneID == getGuideRobot()) {
+					ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
 						LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-					break;
+				} else if (roneID == getPivotRobot()) {
+					ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE,
+						LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+				} else {
+					switch (getState()) {
+					case (STATE_CGUESS): {
+						ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
+							LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+						break;
+					}
+					case (STATE_ROTATE): {
+						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+							LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+						break;
+					}
+					case (STATE_PIVOT): {
+						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+							LED_BRIGHTNESS_LOW, LED_RATE_MED);
+						break;
+					}
+					default: {
+						break;
+					}
+					}
 				}
-				case (STATE_PIVOT): {
-					ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
-						LED_BRIGHTNESS_LOW, LED_RATE_MED);
-					break;
-				}
-				default: {
-					break;
-				}
+
+				// Set motion based on state
+				if (getState() == STATE_ROTATE) {
+					mrmOrbitCentroid(&navDataRead, &behOutput, MRM_TV_GAIN);
+				} else if (getState() == STATE_PIVOT) {
+					mrmOrbitPivot(&navDataRead, &behOutput, MRM_TV_GAIN);
+				} else if (getState() == STATE_CGUESS) {
+					behOutput = behInactive;
 				}
 			}
-
-			// Set motion based on state
-			if (getState() == STATE_ROTATE) {
-				mrmOrbitCentroid(&navDataRead, &behOutput, MRM_TV_GAIN);
-		 	} else if (getState() == STATE_PIVOT) {
-		 		mrmOrbitPivot(&navDataRead, &behOutput, MRM_TV_GAIN);
-		 	} else if (getState() == STATE_CGUESS) {
-		 		behOutput = behInactive;
-		 	}
 		}
 
+		// Unlock the neighbor list
+		neighborsPutMutex();
 		// Set motion output
 		motorSetBeh(&behOutput);
 		// Delay task until next time

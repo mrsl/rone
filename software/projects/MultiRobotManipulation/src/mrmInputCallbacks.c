@@ -53,7 +53,7 @@ void scLTFunc(char* command) {
 	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
 
 	// Spam out to be heard
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < 4; i++) {
 		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
 		osTaskDelay(25);
 	}
@@ -90,7 +90,7 @@ void scSTFunc(char* command) {
 	setState(newMessage->state);
 
 	// Spam out to be heard
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < 4; i++) {
 		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
 		osTaskDelay(25);
 	}

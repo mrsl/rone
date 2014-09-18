@@ -15,21 +15,6 @@ navigationData ravg[RAVG_SIZE];
 int ravg_ind = 0;
 int ravg_size = 0;
 
-/**
- * Sets our state for the FSM
- */
-void setState(uint8 newState) {
-	mrmFSMState = newState;
-
-	if (newState == STATE_IDLE) {
-		setStartNbrRound(0);
-	}
-}
-
-uint8 getState() {
-	return mrmFSMState;
-}
-
 void setStartNbrRound(uint32 nbrRound) {
 	startNbrRound = nbrRound;
 }

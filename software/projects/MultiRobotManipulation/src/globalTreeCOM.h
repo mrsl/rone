@@ -16,6 +16,7 @@
 
 #define BEHAVIOR_TASK_PERIOD	50
 #define NEIGHBOR_ROUND_PERIOD	1500
+#define RPRINTF_SLEEP_TIME		200
 
 #define CHECKVAL		0xDADA
 
@@ -60,7 +61,7 @@ void setGRLguide(uint8 id);
 uint8 getPivotRobot();
 uint8 getGuideRobot();
 
-void updatePivotandGuide(NbrList *nbrListPtr);
+void updateDistributedInformation(NbrList *nbrListPtr);
 
 
 void centroidGRLUpdate(navigationData *navDataPtr,
