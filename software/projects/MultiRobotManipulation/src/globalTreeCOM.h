@@ -19,8 +19,8 @@
 
 #define CHECKVAL		0xDADA
 
-#define MSG_TYPE_LT	0
-#define MSG_TYPE_ST	1
+#define MSG_TYPE_LT		0
+#define MSG_TYPE_ST		1
 
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
@@ -31,7 +31,7 @@
 
 #define RAVG_SIZE		50
 
-#define MRM_TV_GAIN		6
+#define MRM_TV_GAIN		5
 
 typedef struct posCOM {
 	NbrData X_H;

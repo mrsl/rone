@@ -119,15 +119,10 @@ void behaviorTask(void* parameters) {
 				}
 				case (STATE_ROTATE):
 				case (STATE_PIVOT): {
-					int32 tv, rv;
-					motorGetTVRV(&tv, &rv);
-
-					rprintf("%d,%d,%d,%d,%d,%d\n", navDataRead.centroidX,
-												   navDataRead.centroidY,
-												   tv,
-												   rv,
-												   navDataRead.childCountSum,
-												   getDeltaStartNbrRound(neighborRound));
+					rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
+										     navDataRead.centroidY,
+											 navDataRead.childCountSum,
+											 getDeltaStartNbrRound(neighborRound));
 					rprintfFlush();
 					break;
 				}
@@ -135,6 +130,8 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				}
+
+				cprintf("pt %d,%d\n", navDataRead.centroidX, navDataRead.centroidY);
 			}
 
 			// Unlock the neighbor list
