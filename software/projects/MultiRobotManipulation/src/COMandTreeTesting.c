@@ -49,8 +49,8 @@ void mrmBehaviorInit() {
 	externalPoseInit();
 
 	// Gripper stuff
-//	gripperBoardInit();
-//	gripperCalibratServo();
+	gripperBoardInit();
+	gripperCalibratServo();
 
 	// Status check
 	systemPrintStartup();
@@ -72,15 +72,15 @@ void behaviorTask(void* parameters) {
 	mrmBehaviorInit();
 
 	for (;;) {
-//		if(!gripperServoCalibratFinish() && !gripperEscape){
-//			if (buttonsGet(BUTTON_RED)) {
-//				gripperEscape = 1;
-//			}
-//			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
-//			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
-//			lastWakeTime = osTaskGetTickCount();
-//			continue;
-//		}
+		if(!gripperServoCalibratFinish() && !gripperEscape){
+			if (buttonsGet(BUTTON_RED)) {
+				gripperEscape = 1;
+			}
+			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
+			lastWakeTime = osTaskGetTickCount();
+			continue;
+		}
 
 		lastWakeTime = osTaskGetTickCount();	// We have woken
 
@@ -97,17 +97,17 @@ void behaviorTask(void* parameters) {
 			setState((getState() + 1) % (STATE_MAX + 1));
 		}
 
-//		if (!gripperBoardGetGripped()) {
-//			if (gripPos != ATTEMPTING) {
-//				gripperGripUntilGripped();
-//				gripPos = ATTEMPTING;
-//			}
-//		} else {
-//			gripPos = CLKWISE;
-//			if (gripperBoardGetServo() > 100) {
-//				gripPos = CNTCLK;
-//			}
-//		}
+		if (!gripperBoardGetGripped()) {
+			if (gripPos != ATTEMPTING) {
+				gripperGripUntilGripped();
+				gripPos = ATTEMPTING;
+			}
+		} else {
+			gripPos = CLKWISE;
+			if (gripperBoardGetServo() > 100) {
+				gripPos = CNTCLK;
+			}
+		}
 
 		// If host, don't do anything
 		if (rprintfIsHost() || externalPoseIsHost()) {

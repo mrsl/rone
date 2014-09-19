@@ -378,6 +378,8 @@ boolean externalPoseGetRelativePose(Nbr *nbrPtr, NbrPose *nbrPose) {
 	int32 dx1, dx2, dy1, dy2;
 	ExternalPose poseExt;
 	ExternalPose nbrPoseExt;
+	int32 posethetaRadian  = 0;
+	int32 nbrposethetaRadian  = 0;
 
 	if (nbrPtr) {
 		if (externalPoseGet(&poseExt) && externalPoseGetNbr(&nbrPoseExt, nbrPtr)) {
@@ -407,9 +409,10 @@ boolean externalPoseGetRelativePose(Nbr *nbrPtr, NbrPose *nbrPose) {
 
 
 		//	nbrPose->bearing = normalizeAngleMilliRad(nbrPose->theta + poseExt.pose.theta) - MILLIRAD_PI;
-			int32 posethetaRadian = (MILLIRAD_PI* poseExt.pose.theta /scale_degree);
+			posethetaRadian = (MILLIRAD_PI* poseExt.pose.theta /scale_degree);
+			nbrposethetaRadian = (MILLIRAD_PI* nbrPoseExt.pose.theta /scale_degree);
 			nbrPose->bearing = ((int32) nbrPose->theta - posethetaRadian);
-			nbrPose->orientation = ((int32) nbrPose->theta2 -  (nbrPoseExt.pose.theta));
+			nbrPose->orientation = ((int32) nbrPose->theta2 - nbrposethetaRadian);
 			return TRUE;
 		}
 	}
