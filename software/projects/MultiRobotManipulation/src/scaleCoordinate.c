@@ -105,18 +105,18 @@ void transformScaleCoordinate(scaleCoordinate *toTransform, Nbr *nbrPtr, int16 *
 	//int32 orientation = lookupGetOrientation(roneID, nbrId);
 	//int32 bearing = lookupGetBearing(roneID, nbrId);
 
-//	NbrPose nbrPose;
-//	if (!externalPoseGetRelativePose(nbrPtr, &nbrPose)) {
-//		return;
-//	}
+	NbrPose nbrPose;
+	if (!externalPoseGetRelativePose(nbrPtr, &nbrPose)) {
+		return;
+	}
 
-	int32 orientation = nbrGetOrientation(nbrPtr);
-	int32 bearing = nbrGetBearing(nbrPtr);
-	int16 distance = (int16) externalPoseGetNbrRange(nbrPtr) * 10;
+//	int32 orientation = nbrGetOrientation(nbrPtr);
+//	int32 bearing = nbrGetBearing(nbrPtr);
+//	int16 distance = (int16) externalPoseGetNbrRange(nbrPtr) * 10;
 
-	//int16 distance = nbrPose.distance * 10;
-	//int32 bearing = (int32) nbrPose.bearing;
-	//int32 orientation = (int32) nbrPose.orientation;
+	int16 distance = nbrPose.distance * 10;
+	int32 bearing = (int32) nbrPose.bearing;
+	int32 orientation = (int32) nbrPose.orientation;
 
 	//cprintf("ID:%d (%d,%d)(%d,%d,%d)(%d,%d)\n", nbrId, nbrPose.theta, nbrPose.theta2, distance, bearing, orientation, nbrGetBearing(nbrPtr), nbrGetOrientation(nbrPtr));
 

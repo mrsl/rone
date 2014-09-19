@@ -12,7 +12,7 @@
 // Servo mode
 /* SPI message */
 
-#define GRIPPER_PERIOD_LENGTH	50
+#define GRIPPER_PERIOD_LENGTH	75
 
 #define GRIPPER_CODE_LENGTH		3		// 3 code bytes for syncing
 #define GRIPPER_PAYLOAD_LENGTH	EXPAND0_PAYLOAD_LENGTH		// 8 data bytes

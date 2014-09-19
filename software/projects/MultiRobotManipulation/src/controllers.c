@@ -52,9 +52,9 @@ void mrmPointOrbit(Beh *beh, int32 x, int32 y, int32 tvModifier) {
 	}
 
 	// Proportional tv and rv control
-	int32 distance = vectorMag(x, y);
+	int32 distance = vectorMag(x, y) / 10; // In AprilTag units
 
-	int32 goalTv = boundAbs(tvModifier * distance / 10, 60);
+	int32 goalTv = boundAbs(tvModifier * distance, MRM_MAX_TV);
 	int32 goalRv = 0;
 
 	if (abs(bearing) > ROTATION_DEADZONE) {

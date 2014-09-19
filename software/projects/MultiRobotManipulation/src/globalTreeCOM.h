@@ -25,14 +25,22 @@
 
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
-#define STATE_ROTATE	2
-#define STATE_PIVOT 	3
+#define STATE_ALIGN		2
+#define STATE_ROTATE	3
+#define STATE_PIVOT 	4
 
-#define STATE_MAX		3
+#define STATE_MAX		STATE_PIVOT
+
+#define CNTCLK			1
+#define CLKWISE			2
+#define REST			0
+#define ATTEMPTING		3
 
 #define RAVG_SIZE		50
 
-#define MRM_TV_GAIN		5
+#define MRM_ROTATE_TV_GAIN		5
+#define MRM_PIVOT_TV_GAIN		5
+#define MRM_MAX_TV				60
 
 typedef struct posCOM {
 	NbrData X_H;
@@ -55,6 +63,7 @@ struct {
 void createGRLscaleCoordinates(scaleCoordinate scaleCoordinateArray[]);
 void createGRLpivotCoordinate(scaleCoordinate *pivot);
 void createGRLguideCoordinate(scaleCoordinate *guide);
+void createStateInformation();
 void setGRLpivot(uint8 id);
 void setGRLguide(uint8 id);
 

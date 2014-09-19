@@ -50,7 +50,7 @@ void gripperBoardInit() {
 	// serial IO gripper information
 	serialCommandAdd(&serialCmdSG, "sg", serialCmdSGFunc);
 	// Create gripper task
-	osTaskCreate(gripperTask, "gripper", 2048, NULL, NEIGHBORS_TASK_PRIORITY);
+	osTaskCreate(gripperTask, "gripper", 1024, NULL, NEIGHBORS_TASK_PRIORITY);
 }
 
 void gripperDataInit() {
