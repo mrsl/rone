@@ -7,10 +7,12 @@
 
 #include "globalTreeCOM.h"
 
-#define MRM_RV_GAIN		40
-#define ROTATION_DEADZONE	200
+//#define MRM_RV_GAIN		40
+#define MRM_RV_GAIN				1.1
+#define ROTATION_DEADZONE		200
+#define MRM_ROTATE_LEFT_BIAS	300
 
-#define MRM_ALPHA			50
+#define MRM_ALPHA				50
 
 /**
  * Orbit the centroid, rotating the object about the centroid
@@ -39,16 +41,19 @@ void mrmOrbitPivot(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
  * @return Tv modifier so if driving backwards, inverts tv.
  */
 int32 mrmChooseRotationDirection(int32 *bearingPtr) {
-	int32 bearingLeft = normalizeAngleMilliRad(*bearingPtr) - MILLIRAD_PI;
-	int32 bearingRight = normalizeAngleMilliRad(*bearingPtr + MILLIRAD_PI) - MILLIRAD_PI;
+//	int32 bearingLeft = normalizeAngleMilliRad(*bearingPtr) - MILLIRAD_PI;
+//	int32 bearingRight = normalizeAngleMilliRad(*bearingPtr + MILLIRAD_PI) - MILLIRAD_PI;
+//
+//	if (abs(bearingLeft) < (abs(bearingRight) + MRM_ROTATE_LEFT_BIAS)) {
+//		*bearingPtr = bearingLeft;
+//		return 1;
+//	} else {
+//		*bearingPtr = bearingRight;
+//		return -1;
+//	}
 
-	if (abs(bearingLeft) < abs(bearingRight)) {
-		*bearingPtr = bearingLeft;
-		return 1;
-	} else {
-		*bearingPtr = bearingRight;
-		return -1;
-	}
+	*bearingPtr = normalizeAngleMilliRad(*bearingPtr) - MILLIRAD_PI;
+	return (int32) 1;
 }
 
 /**
@@ -63,7 +68,7 @@ int32 mrmFlockAngle(NbrList* nbrListPtr) {
 	for (i = 0; i < nbrListPtr->size; ++i) {
 		nbrPtr = nbrListPtr->nbrs[i];
 		// Skip if guide robot
-		if (nbrGetId(nbrPtr) == getGuideRobot()) {
+		if (nbrGetID(nbrPtr) == getGuideRobot()) {
 			continue;
 		}
 
@@ -116,13 +121,16 @@ void mrmPointOrbit(Beh *behPtr, int32 x, int32 y, int32 tvModifier) {
 	// Proportional tv and rv control
 	int32 distance = vectorMag(x, y) / 10; // In AprilTag units
 
-	int32 goalTv = boundAbs(tvModifier * distance, MRM_MAX_TV);
-	int32 goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_GAIN / 100;
+//	int32 goalTv = boundAbs(tvModifier * distance, MRM_MAX_TV);
+//	int32 goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_GAIN / 100;
 
-//	if (abs(bearing) > ROTATION_DEADZONE) {
-//		goalRv = MRM_RV_GAIN * bearing / 1.5;
-//		goalTv /= 1.5;
-//	}
+	int32 goalTv = boundAbs(tvModifier * distance, MRM_MAX_TV);
+	int32 goalRv = 0;
+
+	if (abs(bearing) > ROTATION_DEADZONE) {
+		goalRv = MRM_RV_GAIN * bearing / 1.5;
+		goalTv /= 1.5;
+	}
 
 	// Filter from previous state
 	int32 finalTv = filterIIR(goalTv, tv, MRM_ALPHA);
@@ -152,29 +160,35 @@ void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
 		tvModifier *= -1;
 
 	} else {
-		Nbr *nbrPtr;
-		int32 alpha = 0;
-		int32 x = 0, y = 0;
-
-		// Check if pivot robot in our neighbor list
-		if ((nbrPtr = nbrsGetWithID(getPivotRobot())) != NULL) {
-			alpha = normalizeAngleMilliRad(
-				(int32) (nbrPtr->bearing + MILLIRAD_PI - nbrPtr->orientation));
-
-			x = cosMilliRad(alpha);
-			y = sinMilliRad(alpha);
-
-			bearing = normalizeAngleMilliRad2(atan2MilliRad(y, x));
-
-		//
-		} else {
+//		Nbr *nbrPtr;
+//		int32 alpha = 0;
+//		int32 x = 0, y = 0;
+//
+//		// Check if pivot robot in our neighbor list
+//		if ((nbrPtr = nbrsGetWithID(getPivotRobot())) != NULL) {
+//			alpha = normalizeAngleMilliRad(
+//				(int32) (nbrPtr->bearing + MILLIRAD_PI - nbrPtr->orientation));
+//
+//			x = cosMilliRad(alpha);
+//			y = sinMilliRad(alpha);
+//
+//			bearing = normalizeAngleMilliRad2(atan2MilliRad(y, x));
+//
+//		//
+//		} else {
 			bearing = mrmFlockAngle(nbrListPtr);
-		}
+//		}
 	}
 
 	// Rotate and translate towards guide
 	goalTv = tvModifier * mrmChooseRotationDirection(&bearing);
-	goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_GAIN / 100;
+	//goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_GAIN / 100;
+	goalRv = 0;
+
+	if (abs(bearing) > ROTATION_DEADZONE) {
+		goalRv = MRM_RV_GAIN * bearing / 1.5;
+		goalTv /= 1.5;
+	}
 
 	// Filter from previous state
 	int32 finalTv = filterIIR(goalTv, tv, MRM_ALPHA);

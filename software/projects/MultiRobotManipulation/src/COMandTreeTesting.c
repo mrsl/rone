@@ -256,42 +256,45 @@ void behaviorTask(void* parameters) {
 				}
 
 				// Set motion based on state
-				switch (getState()) {
-				case (STATE_CGUESS): {
-					behOutput = behInactive;
-					break;
+				if (roneID != getGuideRobot()) {
+					switch (getState()) {
+					case (STATE_CGUESS): {
+						behOutput = behInactive;
+						break;
+					}
+					case (STATE_RALIGN): {
+						mrmOrbitPivot(&navDataRead, &behOutput, 0);
+						break;
+					}
+					case (STATE_ROTATE): {
+						mrmOrbitCentroid(&navDataRead, &behOutput, MRM_ROTATE_TV_GAIN);
+						break;
+					}
+					case (STATE_PALIGN): {
+						mrmOrbitPivot(&navDataRead, &behOutput, 0);
+						break;
+					}
+					case (STATE_PIVOT): {
+						mrmOrbitPivot(&navDataRead, &behOutput, MRM_PIVOT_TV_GAIN);
+						break;
+					}
+					case (STATE_TALIGN): {
+						mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
+							&behOutput, 0);
+						break;
+					}
+					case (STATE_TRANS): {
+						mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
+							&behOutput, MRM_TRANS_TV_GAIN);
+						break;
+					}
+					default: {
+						behOutput = behInactive;
+						break;
+					}
+					}
 				}
-				case (STATE_RALIGN): {
-					mrmOrbitPivot(&navDataRead, &behOutput, 0);
-					break;
-				}
-				case (STATE_ROTATE): {
-					mrmOrbitCentroid(&navDataRead, &behOutput, MRM_ROTATE_TV_GAIN);
-					break;
-				}
-				case (STATE_PALIGN): {
-					mrmOrbitPivot(&navDataRead, &behOutput, 0);
-					break;
-				}
-				case (STATE_PIVOT): {
-					mrmOrbitPivot(&navDataRead, &behOutput, MRM_PIVOT_TV_GAIN);
-					break;
-				}
-				case (STATE_TALIGN): {
-					mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
-						&behOutput, 0);
-					break;
-				}
-				case (STATE_TRANS): {
-					mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
-						&behOutput, MRM_TRANS_TV_GAIN);
-					break;
-				}
-				default: {
-					behOutput = behInactive;
-					break;
-				}
-				}
+
 			}
 		}
 
