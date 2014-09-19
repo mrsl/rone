@@ -20,8 +20,8 @@
 
 #define CHECKVAL		0xDADA
 
-#define MSG_TYPE_LT		0
-#define MSG_TYPE_ST		1
+#define MSG_TYPE_LT	0
+#define MSG_TYPE_ST	1
 
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
@@ -34,16 +34,16 @@
 
 #define STATE_MAX		STATE_TRANS
 
-#define CNTCLK			1
-#define CLKWISE			2
 #define REST			0
+#define CNTCLK			1
+#define CLKWISE		2
 #define ATTEMPTING		3
 
 #define RAVG_SIZE		50
 
 #define MRM_ROTATE_TV_GAIN		5
 #define MRM_PIVOT_TV_GAIN		5
-#define MRM_TRANS_TV_GAIN		5
+#define MRM_TRANS_TV_GAIN		40
 #define MRM_MAX_TV				60
 
 typedef struct posCOM {
@@ -53,6 +53,7 @@ typedef struct posCOM {
 	NbrData Y_L;
 } PositionCOM;
 
+// Data structure to contain all our current location estimations
 struct {
 	int16 centroidX;
 	int16 centroidY;

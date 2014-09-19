@@ -7,7 +7,7 @@
 
 #include "globalTreeCOM.h"
 
-#define MRM_RV_GAIN	1.2
+#define MRM_RV_GAIN		40
 #define ROTATION_DEADZONE	200
 
 #define MRM_ALPHA			50
@@ -23,7 +23,7 @@ void mrmOrbitCentroid(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 }
 
 /**
- * Orbit the pivot robot, rotatating the object about the pivot
+ * Orbit the pivot robot, rotating the object about the pivot
  */
 void mrmOrbitPivot(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
 	mrmPointOrbit(behPtr,
@@ -51,6 +51,37 @@ int32 mrmChooseRotationDirection(int32 *bearingPtr) {
 	}
 }
 
+/**
+ * Custom flocking function to overlook guide robot
+ */
+int32 mrmFlockAngle(NbrList* nbrListPtr) {
+	int32 i, x, y, alpha;
+	Nbr* nbrPtr;
+
+	x = 0;
+	y = 0;
+	for (i = 0; i < nbrListPtr->size; ++i) {
+		nbrPtr = nbrListPtr->nbrs[i];
+		// Skip if guide robot
+		if (nbrGetId(nbrPtr) == getGuideRobot()) {
+			continue;
+		}
+
+		if(nbrPtr->orientationValid) {
+			alpha = normalizeAngleMilliRad((int32)(nbrPtr->bearing + MILLIRAD_PI - nbrPtr->orientation));
+			x += cosMilliRad(alpha);
+			y += sinMilliRad(alpha);
+		}
+	}
+
+	if (nbrListPtr->size > 0) {
+		alpha = normalizeAngleMilliRad2(atan2MilliRad(y, x));
+	} else {
+		alpha = 0;
+	}
+
+	return alpha;
+}
 
 /**
  * Orbit an arbitrary point in the robot's local reference frame.
@@ -118,6 +149,7 @@ void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
 	if (roneID == getPivotRobot()) {
 		// Get bearing towards guide
 		bearing = atan2MilliRad(guideY, guideX);
+		tvModifier *= -1;
 
 	} else {
 		Nbr *nbrPtr;
@@ -134,8 +166,9 @@ void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
 
 			bearing = normalizeAngleMilliRad2(atan2MilliRad(y, x));
 
+		//
 		} else {
-			bearing = behFlockAngle(nbrListPtr);
+			bearing = mrmFlockAngle(nbrListPtr);
 		}
 	}
 
