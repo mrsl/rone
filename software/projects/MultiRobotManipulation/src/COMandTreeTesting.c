@@ -72,11 +72,13 @@ void behaviorTask(void* parameters) {
 	mrmBehaviorInit();
 
 	for (;;) {
+//		// Calibrate gripper
 //		if(!gripperServoCalibratFinish() && !gripperEscape){
 //			if (buttonsGet(BUTTON_RED)) {
 //				gripperEscape = 1;
 //			}
-//			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+//			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE,
+//				LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 //			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 //			lastWakeTime = osTaskGetTickCount();
 //			continue;
@@ -97,6 +99,7 @@ void behaviorTask(void* parameters) {
 			setState((getState() + 1) % (STATE_MAX + 1));
 		}
 
+//		// Attempt to grip until you are gripped, then stay gripped
 //		if (!gripperBoardGetGripped()) {
 //			if (gripPos != ATTEMPTING) {
 //				gripperGripUntilGripped();
@@ -109,10 +112,11 @@ void behaviorTask(void* parameters) {
 //			}
 //		}
 
-		// If host, don't do anything
+		// If a host, don't do anything
 		if (rprintfIsHost() || externalPoseIsHost()) {
 			behOutput = behInactive;
-			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
+				LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 
 		// If in idle state, also don't do anything
 		} else {
@@ -133,18 +137,25 @@ void behaviorTask(void* parameters) {
 			// If we are idle
 			if (getState() == STATE_IDLE) {
 				behOutput = behInactive;
-				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE,
+					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
 			// If we are active
 			} else {
+				// Only run the update on new neighbor data
 				if (nbrUpdate) {
 					// Update the GRL
 					globalRobotListUpdate(&globalRobotList, &nbrList);
 
 					// Update our position estimations
-					centroidGRLUpdate(&navDataRead, &globalRobotList, &nbrList, GRLcentroidCooridates);
-					pivotGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLpivotCoordinate);
-					guideGRLUpdate(&navDataRead, &globalRobotList, &nbrList, &GRLguideCoordinate);
+					centroidGRLUpdate(&navDataRead, &globalRobotList,
+						&nbrList, GRLcentroidCooridates);
+
+					pivotGRLUpdate(&navDataRead, &globalRobotList,
+						&nbrList, &GRLpivotCoordinate);
+
+					guideGRLUpdate(&navDataRead, &globalRobotList,
+						&nbrList, &GRLguideCoordinate);
 
 					// If this is the first neighbor round we are active, set our start
 					if (!isInitStartNbrRound()) {
@@ -161,7 +172,7 @@ void behaviorTask(void* parameters) {
 						rprintfFlush();
 						break;
 					}
-					case (STATE_ALIGN):
+					case (STATE_RALIGN):
 					case (STATE_ROTATE): {
 						rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
 												 navDataRead.centroidY,
@@ -170,7 +181,14 @@ void behaviorTask(void* parameters) {
 						rprintfFlush();
 						break;
 					}
-					case (STATE_PIVOT):
+					case (STATE_PALIGN):
+					case (STATE_PIVOT): {
+						break;
+					}
+					case (STATE_TALIGN):
+					case (STATE_TRANS): {
+						break;
+					}
 					default: {
 						break;
 					}
@@ -196,12 +214,12 @@ void behaviorTask(void* parameters) {
 					switch (getState()) {
 					case (STATE_CGUESS): {
 						ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
-							LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+							LED_BRIGHTNESS_LOW, LED_RATE_MED);
 						break;
 					}
-					case (STATE_ALIGN): {
+					case (STATE_RALIGN): {
 						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
-							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+							LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 						break;
 					}
 					case (STATE_ROTATE): {
@@ -209,26 +227,70 @@ void behaviorTask(void* parameters) {
 							LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 						break;
 					}
+					case (STATE_PALIGN): {
+						ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE,
+							LED_BRIGHTNESS_LOW, LED_RATE_MED);
+						break;
+					}
 					case (STATE_PIVOT): {
 						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
 							LED_BRIGHTNESS_LOW, LED_RATE_MED);
 						break;
 					}
+					case (STATE_TALIGN): {
+						ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE,
+							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+						break;
+					}
+					case (STATE_TRANS): {
+						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+						break;
+					}
 					default: {
+						ledsSetPattern(LED_ALL, LED_PATTERN_PULSE,
+							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 						break;
 					}
 					}
 				}
 
 				// Set motion based on state
-				if (getState() == STATE_ROTATE) {
-					mrmOrbitCentroid(&navDataRead, &behOutput, MRM_ROTATE_TV_GAIN);
-				} else if (getState() == STATE_ALIGN) {
-					mrmOrbitPivot(&navDataRead, &behOutput, 0);
-				} else if (getState() == STATE_PIVOT) {
-					mrmOrbitPivot(&navDataRead, &behOutput, MRM_PIVOT_TV_GAIN);
-				} else if (getState() == STATE_CGUESS) {
+				switch (getState()) {
+				case (STATE_CGUESS): {
 					behOutput = behInactive;
+					break;
+				}
+				case (STATE_RALIGN): {
+					mrmOrbitPivot(&navDataRead, &behOutput, 0);
+					break;
+				}
+				case (STATE_ROTATE): {
+					mrmOrbitCentroid(&navDataRead, &behOutput, MRM_ROTATE_TV_GAIN);
+					break;
+				}
+				case (STATE_PALIGN): {
+					mrmOrbitPivot(&navDataRead, &behOutput, 0);
+					break;
+				}
+				case (STATE_PIVOT): {
+					mrmOrbitPivot(&navDataRead, &behOutput, MRM_PIVOT_TV_GAIN);
+					break;
+				}
+				case (STATE_TALIGN): {
+					mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
+						&behOutput, 0);
+					break;
+				}
+				case (STATE_TRANS): {
+					mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
+						&behOutput, MRM_TRANS_TV_GAIN);
+					break;
+				}
+				default: {
+					behOutput = behInactive;
+					break;
+				}
 				}
 			}
 		}

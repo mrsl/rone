@@ -25,11 +25,14 @@
 
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
-#define STATE_ALIGN		2
+#define STATE_RALIGN	2
 #define STATE_ROTATE	3
-#define STATE_PIVOT 	4
+#define STATE_PALIGN	4
+#define STATE_PIVOT 	5
+#define STATE_TALIGN	6
+#define STATE_TRANS 	7
 
-#define STATE_MAX		STATE_PIVOT
+#define STATE_MAX		STATE_TRANS
 
 #define CNTCLK			1
 #define CLKWISE			2
@@ -40,6 +43,7 @@
 
 #define MRM_ROTATE_TV_GAIN		5
 #define MRM_PIVOT_TV_GAIN		5
+#define MRM_TRANS_TV_GAIN		5
 #define MRM_MAX_TV				60
 
 typedef struct posCOM {
@@ -104,6 +108,8 @@ void rootedLocationTreeUpdate(GlobalRobotList *globalRobotList,
 void mrmOrbitCentroid(navigationData *navData, Beh *beh, int32 tvModifier);
 void mrmOrbitPivot(navigationData *navData, Beh *beh, int32 tvModifier);
 void mrmPointOrbit(Beh *beh, int32 x, int32 y, int32 tvModifier);
+void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
+									Beh *behPtr, int32 tvModifier);
 
 // Input callbacks
 void mrmInitCallbacks();
