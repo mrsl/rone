@@ -65,7 +65,7 @@ void createStateInformation() {
  */
 void setGRLpivot(uint8 id) {
 	nbrDataSet(&pivotRobot, id);
-	nbrDataSet(&pivotNonce, nbrDataGet(&pivotNonce) + 1);
+	nbrDataSet(&pivotNonce, (nbrDataGet(&pivotNonce) + 1) % 100 + 1);
 }
 
 /**
@@ -73,7 +73,7 @@ void setGRLpivot(uint8 id) {
  */
 void setGRLguide(uint8 id) {
 	nbrDataSet(&guideRobot, id);
-	nbrDataSet(&guideNonce, nbrDataGet(&guideNonce) + 1);
+	nbrDataSet(&guideNonce, (nbrDataGet(&guideNonce) + 1) % 100 + 1);
 }
 
 uint8 getPivotRobot() {
@@ -89,7 +89,7 @@ uint8 getGuideRobot() {
  */
 void setState(uint8 newState) {
 	nbrDataSet(&stateInfo, newState);
-	nbrDataSet(&stateNonce, nbrDataGet(&stateNonce) + 1);
+	nbrDataSet(&stateNonce, (nbrDataGet(&stateNonce) + 1) % 100 + 1);
 
 	if (newState == STATE_IDLE) {
 		setStartNbrRound(0);
@@ -112,7 +112,8 @@ void updateDistributedInformation(NbrList *nbrListPtr) {
 
 		// Check for new pivot
 		if (nbrDataGetNbr(&pivotRobot, nbrPtr) != nbrDataGet(&pivotRobot)) {
-			if (nbrDataGetNbr(&pivotNonce, nbrPtr) >= nbrDataGet(&pivotNonce)) {
+			if (nbrDataGetNbr(&pivotNonce, nbrPtr) >= nbrDataGet(&pivotNonce) ||
+				nbrDataGetNbr(&pivotNonce, nbrPtr) < nbrDataGet(&pivotNonce) - 70) {
 				nbrDataSet(&pivotRobot, nbrDataGetNbr(&pivotRobot, nbrPtr));
 				nbrDataSet(&pivotNonce, nbrDataGetNbr(&pivotNonce, nbrPtr));
 			}
@@ -120,7 +121,8 @@ void updateDistributedInformation(NbrList *nbrListPtr) {
 
 		// Check for new guide
 		if (nbrDataGetNbr(&guideRobot, nbrPtr) != nbrDataGet(&guideRobot)) {
-			if (nbrDataGetNbr(&guideNonce, nbrPtr) >= nbrDataGet(&guideNonce)) {
+			if (nbrDataGetNbr(&guideNonce, nbrPtr) >= nbrDataGet(&guideNonce) ||
+				nbrDataGetNbr(&guideNonce, nbrPtr) < nbrDataGet(&guideNonce) - 70) {
 				nbrDataSet(&guideRobot, nbrDataGetNbr(&guideRobot, nbrPtr));
 				nbrDataSet(&guideNonce, nbrDataGetNbr(&guideNonce, nbrPtr));
 			}
@@ -128,7 +130,8 @@ void updateDistributedInformation(NbrList *nbrListPtr) {
 
 		// Check for new guide
 		if (nbrDataGetNbr(&stateInfo, nbrPtr) != nbrDataGet(&stateInfo)) {
-			if (nbrDataGetNbr(&stateNonce, nbrPtr) >= nbrDataGet(&stateNonce)) {
+			if (nbrDataGetNbr(&stateNonce, nbrPtr) >= nbrDataGet(&stateNonce) ||
+				nbrDataGetNbr(&stateNonce, nbrPtr) < nbrDataGet(&stateNonce) - 70) {
 				nbrDataSet(&stateInfo, nbrDataGetNbr(&stateInfo, nbrPtr));
 				nbrDataSet(&stateNonce, nbrDataGetNbr(&stateNonce, nbrPtr));
 			}

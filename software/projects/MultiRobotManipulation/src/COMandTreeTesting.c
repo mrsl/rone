@@ -58,12 +58,12 @@ void mrmBehaviorInit() {
 }
 
 void behaviorTask(void* parameters) {
-	uint32 lastWakeTime;	// The last time this task was woken
+	uint32 lastWakeTime;		// The last time this task was woken
 
-	Beh behOutput;			// Output motion behavior
+	Beh behOutput;				// Output motion behavior
 
-	boolean nbrUpdate;		// Has the neighbor system updated?
-	NbrList nbrList;		// The neighbor list
+	boolean nbrUpdate;			// Has the neighbor system updated?
+	NbrList nbrList;			// The neighbor list
 	uint32 neighborRound;	// The current neighbor round
 
 	uint8 gripperEscape = 0;
@@ -123,12 +123,13 @@ void behaviorTask(void* parameters) {
 			// Lock the neighbor list
 			neighborsGetMutex();
 
+			nbrListCreate(&nbrList);
+
 			// Check for update
 			nbrUpdate = neighborsNewRoundCheck(&neighborRound);
 
 			// If neighbor data has updated, update our guesses
 			if (nbrUpdate) {
-				nbrListCreate(&nbrList);
 
 				// Update pivot and guide robot IDs, as well as state
 				updateDistributedInformation(&nbrList);
@@ -186,7 +187,8 @@ void behaviorTask(void* parameters) {
 						break;
 					}
 					case (STATE_TALIGN):
-					case (STATE_TRANS): {
+					case (STATE_FTRANS):
+					case (STATE_BTRANS): {
 						break;
 					}
 					default: {
@@ -242,7 +244,8 @@ void behaviorTask(void* parameters) {
 							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 						break;
 					}
-					case (STATE_TRANS): {
+					case (STATE_FTRANS):
+					case (STATE_BTRANS): {
 						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
 							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 						break;
@@ -283,7 +286,12 @@ void behaviorTask(void* parameters) {
 							&behOutput, 0);
 						break;
 					}
-					case (STATE_TRANS): {
+					case (STATE_FTRANS): {
+						mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
+							&behOutput, -MRM_TRANS_TV_GAIN);
+						break;
+					}
+					case (STATE_BTRANS): {
 						mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
 							&behOutput, MRM_TRANS_TV_GAIN);
 						break;

@@ -16,12 +16,12 @@
 
 #define BEHAVIOR_TASK_PERIOD	50
 #define NEIGHBOR_ROUND_PERIOD	1500
-#define RPRINTF_SLEEP_TIME		200
+#define RPRINTF_SLEEP_TIME		100
 
 #define CHECKVAL		0xDADA
 
-#define MSG_TYPE_LT	0
-#define MSG_TYPE_ST	1
+#define MSG_TYPE_LT		0
+#define MSG_TYPE_ST		1
 
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
@@ -30,13 +30,14 @@
 #define STATE_PALIGN	4
 #define STATE_PIVOT 	5
 #define STATE_TALIGN	6
-#define STATE_TRANS 	7
+#define STATE_FTRANS 	7
+#define STATE_BTRANS 	8
 
-#define STATE_MAX		STATE_TRANS
+#define STATE_MAX		STATE_BTRANS
 
 #define REST			0
 #define CNTCLK			1
-#define CLKWISE		2
+#define CLKWISE			2
 #define ATTEMPTING		3
 
 #define RAVG_SIZE		50
@@ -123,6 +124,7 @@ void setStartNbrRound(uint32 nbrRound);
 boolean isInitStartNbrRound();
 uint32 getDeltaStartNbrRound(uint32 nbrRound);
 
+int32 mrmIIR(int32 currentVal, int32 newVal, int32 alpha);
 void navDataInit(navigationData *navData);
 void copyNavData(navigationData *toCopy, navigationData *toMe);
 void rollingAverageNavData(navigationData *new, navigationData *avg);

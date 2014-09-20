@@ -8,7 +8,8 @@
 #include "globalTreeCOM.h"
 
 //#define MRM_RV_GAIN		40
-#define MRM_RV_GAIN				1.1
+#define MRM_RV_GAIN				1.2
+#define MRM_RV_FLOCK_GAIN		50
 #define ROTATION_DEADZONE		200
 #define MRM_ROTATE_LEFT_BIAS	300
 
@@ -35,28 +36,6 @@ void mrmOrbitPivot(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
 }
 
 /**
- * Chooses whether or not to rotate to face backwards or forwards depending on
- * motion constraints. Modifies goal bearing in place.
- *
- * @return Tv modifier so if driving backwards, inverts tv.
- */
-int32 mrmChooseRotationDirection(int32 *bearingPtr) {
-//	int32 bearingLeft = normalizeAngleMilliRad(*bearingPtr) - MILLIRAD_PI;
-//	int32 bearingRight = normalizeAngleMilliRad(*bearingPtr + MILLIRAD_PI) - MILLIRAD_PI;
-//
-//	if (abs(bearingLeft) < (abs(bearingRight) + MRM_ROTATE_LEFT_BIAS)) {
-//		*bearingPtr = bearingLeft;
-//		return 1;
-//	} else {
-//		*bearingPtr = bearingRight;
-//		return -1;
-//	}
-
-	*bearingPtr = normalizeAngleMilliRad(*bearingPtr) - MILLIRAD_PI;
-	return (int32) 1;
-}
-
-/**
  * Custom flocking function to overlook guide robot
  */
 int32 mrmFlockAngle(NbrList* nbrListPtr) {
@@ -71,9 +50,8 @@ int32 mrmFlockAngle(NbrList* nbrListPtr) {
 		if (nbrGetID(nbrPtr) == getGuideRobot()) {
 			continue;
 		}
-
 		if(nbrPtr->orientationValid) {
-			alpha = normalizeAngleMilliRad((int32)(nbrPtr->bearing + MILLIRAD_PI - nbrPtr->orientation));
+			alpha = normalizeAngleMilliRad((int32)nbrPtr->bearing + (int32)MILLIRAD_PI - (int32)nbrPtr->orientation);
 			x += cosMilliRad(alpha);
 			y += sinMilliRad(alpha);
 		}
@@ -104,19 +82,19 @@ void mrmPointOrbit(Beh *behPtr, int32 x, int32 y, int32 tvModifier) {
 	// Get bearing towards point
 	int32 bearing = atan2MilliRad(y, x);
 
-	bearing -= MILLIRAD_HALF_PI;
-	tvModifier *= mrmChooseRotationDirection(&bearing);
+//	bearing -= MILLIRAD_HALF_PI;
+//	tvModifier *= mrmChooseRotationDirection(&bearing);
 
 	// Decided whether to drive forwards or backwards
-//	int32 bearingLeft = normalizeAngleMilliRad(bearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
-//	int32 bearingRight = normalizeAngleMilliRad(bearing + MILLIRAD_PI / 2) - MILLIRAD_PI;
-//
-//	if (abs(bearingLeft) < abs(bearingRight)) {
-//		bearing = bearingLeft;
-//	} else {
-//		bearing = bearingRight;
-//		tvModifier = -tvModifier;
-//	}
+	int32 bearingLeft = normalizeAngleMilliRad(bearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
+	int32 bearingRight = normalizeAngleMilliRad(bearing + MILLIRAD_PI / 2) - MILLIRAD_PI;
+
+	if (abs(bearingLeft) < abs(bearingRight)) {
+		bearing = bearingLeft;
+	} else {
+		bearing = bearingRight;
+		tvModifier = -tvModifier;
+	}
 
 	// Proportional tv and rv control
 	int32 distance = vectorMag(x, y) / 10; // In AprilTag units
@@ -133,8 +111,8 @@ void mrmPointOrbit(Beh *behPtr, int32 x, int32 y, int32 tvModifier) {
 	}
 
 	// Filter from previous state
-	int32 finalTv = filterIIR(goalTv, tv, MRM_ALPHA);
-	int32 finalRv = filterIIR(goalRv, rv, MRM_ALPHA);
+	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA);
+	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA);
 
 	behSetTvRv(behPtr, finalTv, finalRv);
 }
@@ -149,50 +127,40 @@ void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
 
 	int32 goalTv, goalRv;
 
-	Beh behFlock;
-
 	int32 tv = behGetTv(behPtr);
 	int32 rv = behGetRv(behPtr);
 
 	if (roneID == getPivotRobot()) {
 		// Get bearing towards guide
 		bearing = atan2MilliRad(guideY, guideX);
-		tvModifier *= -1;
-
 	} else {
-//		Nbr *nbrPtr;
-//		int32 alpha = 0;
-//		int32 x = 0, y = 0;
-//
-//		// Check if pivot robot in our neighbor list
-//		if ((nbrPtr = nbrsGetWithID(getPivotRobot())) != NULL) {
-//			alpha = normalizeAngleMilliRad(
-//				(int32) (nbrPtr->bearing + MILLIRAD_PI - nbrPtr->orientation));
-//
-//			x = cosMilliRad(alpha);
-//			y = sinMilliRad(alpha);
-//
-//			bearing = normalizeAngleMilliRad2(atan2MilliRad(y, x));
-//
-//		//
-//		} else {
-			bearing = mrmFlockAngle(nbrListPtr);
-//		}
+		bearing = mrmFlockAngle(nbrListPtr);
 	}
 
+	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
+
 	// Rotate and translate towards guide
-	goalTv = tvModifier * mrmChooseRotationDirection(&bearing);
-	//goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_GAIN / 100;
+	goalTv = tvModifier;
 	goalRv = 0;
 
+	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
 	if (abs(bearing) > ROTATION_DEADZONE) {
-		goalRv = MRM_RV_GAIN * bearing / 1.5;
+		goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_FLOCK_GAIN / 100;
 		goalTv /= 1.5;
 	}
 
+//	goalTv = tvModifier;
+//	goalRv = 0;
+//
+//	if (abs(bearing) > ROTATION_DEADZONE) {
+//		goalRv = MRM_RV_GAIN * bearing / 1.5;
+//		goalTv /= 1.5;
+//	}
+
+
 	// Filter from previous state
-	int32 finalTv = filterIIR(goalTv, tv, MRM_ALPHA);
-	int32 finalRv = filterIIR(goalRv, rv, MRM_ALPHA);
+	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA);
+	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA);
 
 	behSetTvRv(behPtr, finalTv, finalRv);
 }
