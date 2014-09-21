@@ -49,6 +49,11 @@ void copyNavData(navigationData *toCopy, navigationData *toMe) {
 	toMe->childCountSum = toCopy->childCountSum;
 }
 
+int32 mrmIIR(int32 currentVal, int32 newVal, int32 alpha) {
+	int32 temp = (newVal * alpha) + ((100 - alpha) * currentVal);
+	return temp / 100;
+}
+
 void rollingAverageNavData(navigationData *new, navigationData *avg) {
 	int i;
 	int32 x, y;

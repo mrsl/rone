@@ -33,7 +33,7 @@
 #define NEIGHBOR_XMIT_MIN_DELAY	    	50
 
 #define	ROBOT_ID_NULL					0
-#define	ROBOT_ID_MIN					1
+#define	ROBOT_ID_MIN					60
 #define	ROBOT_ID_MAX					130
 #define	ROBOT_ID_ALL					0xFF
 
