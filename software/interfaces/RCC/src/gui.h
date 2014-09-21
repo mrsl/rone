@@ -152,6 +152,9 @@ extern const float color_grey[COLOR_SIZE];
 extern const float color_darkgrey[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
 
+extern const GLfloat *color_array[NUMROBOT_POINTS];
+extern const GLfloat *lightcolor_array[NUMROBOT_POINTS];
+
 /* GUI functions and drawing functions */
 void display();
 void reshape(int w, int h);

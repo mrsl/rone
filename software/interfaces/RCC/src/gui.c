@@ -1207,7 +1207,7 @@ void drawAprilTags(GLenum mode)
 
 							glRotatef(activeTags[i]->t + 90, 0, 0, 1);
 
-							glColor3fv(color_lightred);
+							glColor3fv(lightcolor_array[j]);
 							glBegin(GL_LINES);
 								glVertex2f(0, 0);
 								glVertex2f(yit, xit);
@@ -1371,16 +1371,10 @@ void drawAprilTags(GLenum mode)
 							glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
 
 							glPushMatrix();
-								glColor3fv(color_red);
+								glColor3fv(color_array[j]);
 								glScalef(0.1, 0.1, 0);
 								glCallList(LIST_CIRCLE_FILLED);
 							glPopMatrix();
-
-							glTranslatef(0, 0.2, 0);
-
-							textSetSize(TEXT_TINY);
-							textSetAlignment(ALIGN_CENTER);
-							textPrintf("%02d", rid);
 						glPopMatrix();
 					}
 				}

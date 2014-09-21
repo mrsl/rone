@@ -7,6 +7,22 @@
 
 const GLfloat color_red[COLOR_SIZE] = { 0.9, 0.0, 0.0 };
 const GLfloat color_lightred[COLOR_SIZE] = { 0.9, 0.5, 0.5 };
+
+const GLfloat color_blue[COLOR_SIZE] = { 0.2, 0.4, 1.0 };
+const GLfloat color_lightblue[COLOR_SIZE] = { 0.2, 0.7, 1 };
+
+const GLfloat color_purple[COLOR_SIZE] = { 0.8, 0.2, 1.0 };
+const GLfloat color_lightpurple[COLOR_SIZE] = { 0.8, 0.7, 1.0 };
+
+const GLfloat color_pink[COLOR_SIZE] = { 1.0, 0.2, 0.8 };
+const GLfloat color_lightpink[COLOR_SIZE] = { 1.0, 0.7, 0.8 };
+
+const GLfloat color_orange[COLOR_SIZE] = { 1.0, 0.4, 0.2 };
+const GLfloat color_lightorange[COLOR_SIZE] = { 1.0, 0.7, 0.5 };
+
+const GLfloat *color_array[NUMROBOT_POINTS] = {color_red, color_blue, color_purple, color_pink, color_orange};
+const GLfloat *lightcolor_array[NUMROBOT_POINTS] = {color_lightred, color_lightblue, color_lightpurple, color_lightpink, color_lightorange};
+
 const GLfloat color_black[COLOR_SIZE] = { 0.1, 0.1, 0.1 };
 const GLfloat color_grey[COLOR_SIZE] = { 0.8, 0.8, 0.8 };
 const GLfloat color_darkgrey[COLOR_SIZE] = { 0.5, 0.5, 0.5 };
