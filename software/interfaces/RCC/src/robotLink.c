@@ -383,7 +383,7 @@ void commCommander(void *vargp)
 				continue;
 			}
 
-			if (ind > 0 && ind < NUMROBOT_POINTS) {
+			if (ind >= 0 && ind < NUMROBOT_POINTS) {
 				mutexLock(&robots[id].mutex);
 
 				robots[id].xP[ind] = (GLfloat) x;
