@@ -9,11 +9,12 @@
 
 //#define MRM_RV_GAIN		40
 #define MRM_RV_GAIN				1.2
-#define MRM_RV_FLOCK_GAIN		50
+#define MRM_RV_FLOCK_GAIN		15
 #define ROTATION_DEADZONE		200
 #define MRM_ROTATE_LEFT_BIAS	300
 
-#define MRM_ALPHA				50
+#define MRM_ALPHA1				50
+#define MRM_ALPHA2				85
 
 /**
  * Orbit the centroid, rotating the object about the centroid
@@ -111,8 +112,8 @@ void mrmPointOrbit(Beh *behPtr, int32 x, int32 y, int32 tvModifier) {
 	}
 
 	// Filter from previous state
-	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA);
-	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA);
+	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA1);
+	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA1);
 
 	behSetTvRv(behPtr, finalTv, finalRv);
 }
@@ -145,7 +146,7 @@ void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
 
 	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
 	if (abs(bearing) > ROTATION_DEADZONE) {
-		goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_FLOCK_GAIN / 100;
+		goalRv = smallestAngleDifference(0, bearing) * MRM_RV_FLOCK_GAIN / 100;
 		goalTv /= 1.5;
 	}
 
@@ -159,12 +160,112 @@ void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
 
 
 	// Filter from previous state
-	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA);
-	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA);
+	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA1);
+	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA1);
 
 	behSetTvRv(behPtr, finalTv, finalRv);
 }
 
+void mrmTranslateLeaderToGuideVector(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
+
+	int32 guideX = navDataPtr->guideX;
+	int32 guideY = navDataPtr->guideY;
+	int32 centroidX = navDataPtr->centroidX;
+	int32 centroidY = navDataPtr->centroidY;
+
+	int32 bearing;
+
+	int32 goalTv, goalRv;
+
+	int32 tv = behGetTv(behPtr);
+	int32 rv = behGetRv(behPtr);
+
+	int32 x = guideX - centroidX;
+	int32 y = guideY - centroidY;
+
+	if (x == 0 && y == 0) {
+		behSetTvRv(behPtr, 0, 0);
+		return;
+	}
+
+	bearing = atan2MilliRad(y, x);
+
+	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
+
+	// Rotate and translate towards guide
+	goalTv = tvModifier;
+	goalRv = 0;
+
+	goalRv = smallestAngleDifference(0, bearing) * MRM_RV_FLOCK_GAIN / 100;
+	if (abs(bearing) > ROTATION_DEADZONE) {
+		goalTv /= 1.5;
+	}
+
+//	goalTv = tvModifier;
+//	goalRv = 0;
+//
+//	if (abs(bearing) > ROTATION_DEADZONE) {
+//		goalRv = MRM_RV_GAIN * bearing / 1.5;
+//		goalTv /= 1.5;
+//	}
+
+	// Filter from previous state
+//	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA2);
+//	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA2);
+//
+//	behSetTvRv(behPtr, finalTv, finalRv);
+	behSetTvRv(behPtr, goalTv, goalRv);
+}
+
+void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
+	int32 guideX = navDataPtr->guideX;
+	int32 guideY = navDataPtr->guideY;
+	int32 centroidX = navDataPtr->centroidX;
+	int32 centroidY = navDataPtr->centroidY;
+
+	// Find vector normal to the centroid vector (Clockwise)
+	int32 rotationX = centroidX;
+	int32 rotationY = centroidY;
+
+	rotateXY32(&rotationX, &rotationY, -MILLIRAD_HALF_PI);
+
+	// Find vector towards guide robot parallel to centroid-guide line (Look at translate)
+	int32 translationX = guideX - centroidX;
+	int32 translationY = guideY - centroidY;
+
+	// Take the vector addition of these vectors
+	int32 x = rotationX + translationX;
+	int32 y = rotationY + translationY;
+
+	if (x == 0 && y == 0) {
+		behSetTvRv(behPtr, 0, 0);
+		return;
+	}
+
+	// Find bearing
+	int32 bearing = atan2MilliRad(y, x);
+	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
+
+	int32 distance = vectorMag(x, y) / 10; // In AprilTag units
+	// Rotate and translate towards guide
+	int32 goalTv = boundAbs(tvModifier * distance, MRM_MAX_TV);
+	int32 goalRv = 0;
+
+	goalRv = smallestAngleDifference(0, bearing) * MRM_RV_FLOCK_GAIN / 100;
+	if (abs(bearing) > ROTATION_DEADZONE) {
+		goalTv /= 1.5;
+	}
+
+	int32 tv = behGetTv(behPtr);
+	int32 rv = behGetRv(behPtr);
+
+	// Filter from previous state
+	//	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA2);
+	//	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA2);
+	//
+	//	behSetTvRv(behPtr, finalTv, finalRv);
+	behSetTvRv(behPtr, goalTv, goalRv);
+}
 
 //void mrmDisperse(navigationData *navData, Beh *beh, int32 tvModifier) {
 //	int32 centroidX = (int32) (navData->centroidX / 10);

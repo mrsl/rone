@@ -72,6 +72,17 @@ void rotateXY(int16 *x, int16 *y, int32 angle) {
 	*y = tempY;
 }
 
+void rotateXY32(int32 *x, int32 *y, int32 angle) {
+	int32 tempX, tempY;
+	tempX = *x * cosMilliRad(angle) / MILLIRAD_TRIG_SCALER
+			- *y * sinMilliRad(angle) / MILLIRAD_TRIG_SCALER;
+	tempY = *x * sinMilliRad(angle) / MILLIRAD_TRIG_SCALER
+			+ *y * cosMilliRad(angle) / MILLIRAD_TRIG_SCALER;
+
+	*x = tempX;
+	*y = tempY;
+}
+
 /**
  * @brief Transforms a scale coordinate of a neighbor into local reference frame, and sets given X and Y
  */

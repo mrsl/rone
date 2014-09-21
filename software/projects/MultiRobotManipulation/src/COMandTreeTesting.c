@@ -138,7 +138,7 @@ void behaviorTask(void* parameters) {
 			// If we are idle
 			if (getState() == STATE_IDLE) {
 				behOutput = behInactive;
-				ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE,
+				ledsSetPattern(LED_GREEN, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
 			// If we are active
@@ -191,6 +191,17 @@ void behaviorTask(void* parameters) {
 					case (STATE_BTRANS): {
 						break;
 					}
+					case (STATE_CALIGN):
+					case (STATE_CYCLD): {
+						rprintf("%d,%d,%d,%d,%d,%d\n", navDataRead.centroidX,
+													   navDataRead.centroidY,
+													   navDataRead.guideX,
+													   navDataRead.guideY,
+													   navDataRead.childCountSum,
+													   getDeltaStartNbrRound(neighborRound));
+						rprintfFlush();
+						break;
+					}
 					default: {
 						break;
 					}
@@ -220,38 +231,48 @@ void behaviorTask(void* parameters) {
 						break;
 					}
 					case (STATE_RALIGN): {
-						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+						ledsSetPattern(LED_RED, LED_PATTERN_ON,
 							LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 						break;
 					}
 					case (STATE_ROTATE): {
-						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+						ledsSetPattern(LED_RED, LED_PATTERN_ON,
 							LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 						break;
 					}
 					case (STATE_PALIGN): {
-						ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE,
+						ledsSetPattern(LED_BLUE, LED_PATTERN_ON,
 							LED_BRIGHTNESS_LOW, LED_RATE_MED);
 						break;
 					}
 					case (STATE_PIVOT): {
-						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+						ledsSetPattern(LED_RED, LED_PATTERN_ON,
 							LED_BRIGHTNESS_LOW, LED_RATE_MED);
 						break;
 					}
 					case (STATE_TALIGN): {
-						ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE,
+						ledsSetPattern(LED_BLUE, LED_PATTERN_ON,
 							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 						break;
 					}
 					case (STATE_FTRANS):
 					case (STATE_BTRANS): {
-						ledsSetPattern(LED_RED, LED_PATTERN_PULSE,
+						ledsSetPattern(LED_RED, LED_PATTERN_ON,
+							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+						break;
+					}
+					case (STATE_CALIGN): {
+						ledsSetPattern(LED_BLUE, LED_PATTERN_ON,
+							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+						break;
+					}
+					case (STATE_CYCLD): {
+						ledsSetPattern(LED_RED, LED_PATTERN_ON,
 							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 						break;
 					}
 					default: {
-						ledsSetPattern(LED_ALL, LED_PATTERN_PULSE,
+						ledsSetPattern(LED_ALL, LED_PATTERN_ON,
 							LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 						break;
 					}
@@ -266,34 +287,44 @@ void behaviorTask(void* parameters) {
 						break;
 					}
 					case (STATE_RALIGN): {
-						mrmOrbitPivot(&navDataRead, &behOutput, 0);
+						mrmOrbitPivot(&navDataAvg, &behOutput, 0);
 						break;
 					}
 					case (STATE_ROTATE): {
-						mrmOrbitCentroid(&navDataRead, &behOutput, MRM_ROTATE_TV_GAIN);
+						mrmOrbitCentroid(&navDataAvg, &behOutput, MRM_ROTATE_TV_GAIN);
 						break;
 					}
 					case (STATE_PALIGN): {
-						mrmOrbitPivot(&navDataRead, &behOutput, 0);
+						mrmOrbitPivot(&navDataAvg, &behOutput, 0);
 						break;
 					}
 					case (STATE_PIVOT): {
-						mrmOrbitPivot(&navDataRead, &behOutput, MRM_PIVOT_TV_GAIN);
+						mrmOrbitPivot(&navDataAvg, &behOutput, MRM_PIVOT_TV_GAIN);
 						break;
 					}
 					case (STATE_TALIGN): {
-						mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
+						mrmTranslateLeaderToGuideVector(&navDataAvg,
 							&behOutput, 0);
 						break;
 					}
 					case (STATE_FTRANS): {
-						mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
-							&behOutput, -MRM_TRANS_TV_GAIN);
+						mrmTranslateLeaderToGuideVector(&navDataAvg,
+							&behOutput, MRM_TRANS_TV_GAIN);
 						break;
 					}
 					case (STATE_BTRANS): {
-						mrmTranslateLeaderToGuide(&navDataRead, &nbrList,
+						mrmTranslateLeaderToGuideVector(&navDataAvg,
 							&behOutput, MRM_TRANS_TV_GAIN);
+						break;
+					}
+					case (STATE_CALIGN): {
+						mrmCycloidMotion(&navDataAvg,
+							&behOutput, 0);
+						break;
+					}
+					case (STATE_CYCLD): {
+						mrmCycloidMotion(&navDataAvg,
+							&behOutput, MRM_CYCLD_TV_GAIN);
 						break;
 					}
 					default: {
@@ -301,6 +332,8 @@ void behaviorTask(void* parameters) {
 						break;
 					}
 					}
+				} else {
+					behOutput = behInactive;
 				}
 
 			}

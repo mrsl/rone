@@ -15,7 +15,7 @@
 #include "scaleCoordinate.h"
 
 #define BEHAVIOR_TASK_PERIOD	50
-#define NEIGHBOR_ROUND_PERIOD	1500
+#define NEIGHBOR_ROUND_PERIOD	500
 #define RPRINTF_SLEEP_TIME		100
 
 #define CHECKVAL		0xDADA
@@ -32,8 +32,10 @@
 #define STATE_TALIGN	6
 #define STATE_FTRANS 	7
 #define STATE_BTRANS 	8
+#define STATE_CALIGN 	9
+#define STATE_CYCLD 	10
 
-#define STATE_MAX		STATE_BTRANS
+#define STATE_MAX		STATE_CYCLD
 
 #define REST			0
 #define CNTCLK			1
@@ -45,7 +47,9 @@
 #define MRM_ROTATE_TV_GAIN		5
 #define MRM_PIVOT_TV_GAIN		5
 #define MRM_TRANS_TV_GAIN		40
+#define MRM_CYCLD_TV_GAIN		0.1
 #define MRM_MAX_TV				60
+#define MRM_MAX_TV_CYCLOID		50
 
 typedef struct posCOM {
 	NbrData X_H;
