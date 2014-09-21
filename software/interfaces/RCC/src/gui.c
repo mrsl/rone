@@ -1192,10 +1192,6 @@ void drawAprilTags(GLenum mode)
 	/* Draw each aprilTag */
 	for (i = 0; i < numAprilTags; i++) {
 		glPushMatrix();
-			/* Load aprilTag ID */
-			if (mode == GL_SELECT)
-				glLoadName(2000 + activeTags[i]->id);
-
 			/* Scale coordinate */
 			xi = xs * ((activeTags[i]->x - aprilTagX) / aprilTagX);
 			yi = -ys * ((activeTags[i]->y - aprilTagY) / aprilTagY);
@@ -1222,7 +1218,21 @@ void drawAprilTags(GLenum mode)
 					}
 				}
 			}
+		glPopMatrix();
+	}
 
+	/* Draw each aprilTag */
+	for (i = 0; i < numAprilTags; i++) {
+		glPushMatrix();
+			/* Load aprilTag ID */
+			if (mode == GL_SELECT)
+				glLoadName(2000 + activeTags[i]->id);
+
+			/* Scale coordinate */
+			xi = xs * ((activeTags[i]->x - aprilTagX) / aprilTagX);
+			yi = -ys * ((activeTags[i]->y - aprilTagY) / aprilTagY);
+
+			glTranslatef(xi, yi, 0);
 			glPushMatrix();
 				glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
 				glRotatef(activeTags[i]->t, 0, 0, 1);
@@ -1330,6 +1340,22 @@ void drawAprilTags(GLenum mode)
 					textPrintf("T:%.2f", activeTags[i]->t);
 				glPopMatrix();
 			}
+		glPopMatrix();
+	}
+
+	/* Draw each aprilTag */
+	for (i = 0; i < numAprilTags; i++) {
+		glPushMatrix();
+			/* Load aprilTag ID */
+			if (mode == GL_SELECT)
+				glLoadName(2000 + activeTags[i]->id);
+
+
+			/* Scale coordinate */
+			xi = xs * ((activeTags[i]->x - aprilTagX) / aprilTagX);
+			yi = -ys * ((activeTags[i]->y - aprilTagY) / aprilTagY);
+
+			glTranslatef(xi, yi, 0);
 
 			if ((rid = activeTags[i]->rid) != -1) {
 				for (j = 0; j < NUMROBOT_POINTS; j++) {
@@ -1344,9 +1370,8 @@ void drawAprilTags(GLenum mode)
 
 							glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
 
-							glColor3fv(color_red);
-
 							glPushMatrix();
+								glColor3fv(color_red);
 								glScalef(0.1, 0.1, 0);
 								glCallList(LIST_CIRCLE_FILLED);
 							glPopMatrix();
@@ -1360,8 +1385,8 @@ void drawAprilTags(GLenum mode)
 					}
 				}
 			}
-
 		glPopMatrix();
+
 		mutexUnlock(&activeTags[i]->mutex);
 	}
 
