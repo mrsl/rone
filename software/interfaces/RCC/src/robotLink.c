@@ -18,7 +18,7 @@ int ATsatID = 0;
  */
 void initRobots()
 {
-	int i;
+	int i, j;
 
 	/* Initialize values in the struct */
 	for (i = 0; i < MAXROBOTID; i++) {
@@ -35,9 +35,11 @@ void initRobots()
 		robots[i].count = 0;
 		robots[i].type = UNKNOWN;
 		robots[i].subnet = -1;
-		robots[i].xP = 0.0;
-		robots[i].yP = 0.0;
-		robots[i].upP = 0;
+		for (j = 0; j < NUMROBOT_POINTS; j++) {
+			robots[i].xP[j] = 0;
+			robots[i].yP[j] = 0;
+			robots[i].upP[j] = 0;
+		}
 		mutexInit(&robots[i].mutex);
 	}
 
@@ -49,7 +51,7 @@ void initRobots()
  */
 void commManager(void *vargp)
 {
-	int i;
+	int i, j;
 
 	vargp = (void *) vargp;
 
@@ -65,9 +67,11 @@ void commManager(void *vargp)
 				robots[i].head = 0;
 			}
 
-			/* If a remote robot has been inactive for a while, deactivate. */
-			if (robots[i].upP + GRACETIME < clock()) {
-				robots[i].upP = 0;
+			/* If robot drawing point has been inactive, deactivate */
+			for (j = 0; j < NUMROBOT_POINTS; j++) {
+				if (robots[i].upP[j] + PTTIME < clock()) {
+					robots[i].upP[j] = 0;
+				}
 			}
 
 			/* Ping all host robots for updated remote robots. */
@@ -372,20 +376,22 @@ void commCommander(void *vargp)
 
 			bufp = buffer;
 		} else if (strncmp(buffer, "pt", 2) == 0) {
-			int x, y;
+			int x, y, ind;
 
-			if (sscanf(buffer, "pt %d,%d", &x, &y) != 2) {
+			if (sscanf(buffer, "pt %d,%d,%d", &ind, &x, &y) != 3) {
 				bufp = buffer;
 				continue;
 			}
 
-			mutexLock(&robots[id].mutex);
+			if (ind > 0 && ind < NUMROBOT_POINTS) {
+				mutexLock(&robots[id].mutex);
 
-			robots[id].xP = (GLfloat) x;
-			robots[id].yP = (GLfloat) y;
-			robots[id].upP = clock();
+				robots[id].xP[ind] = (GLfloat) x;
+				robots[id].yP[ind] = (GLfloat) y;
+				robots[id].upP[ind] = clock();
 
-			mutexUnlock(&robots[id].mutex);
+				mutexUnlock(&robots[id].mutex);
+			}
 
 			bufp = buffer;
 		} else {

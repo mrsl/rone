@@ -1081,7 +1081,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 void drawAprilTags(GLenum mode)
 {
-	int i, rid;
+	int i, j, rid;
 	int numAprilTags = 0;
 	struct aprilTag *activeTags[MAX_APRILTAG];
 	GLfloat xi, yi;
@@ -1201,6 +1201,28 @@ void drawAprilTags(GLenum mode)
 			yi = -ys * ((activeTags[i]->y - aprilTagY) / aprilTagY);
 
 			glTranslatef(xi, yi, 0);
+
+			if ((rid = activeTags[i]->rid) != -1) {
+				for (j = 0; j < NUMROBOT_POINTS; j++) {
+					if (robots[rid].upP[j]) {
+						glPushMatrix();
+							GLfloat xit = xs * robots[rid].xP[j] / aprilTagX;
+							GLfloat yit = -ys * robots[rid].yP[j] / aprilTagY;
+
+							glRotatef(activeTags[i]->t + 90, 0, 0, 1);
+
+							glColor3fv(color_lightred);
+							glBegin(GL_LINES);
+								glVertex2f(0, 0);
+								glVertex2f(yit, xit);
+							glEnd();
+
+							glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
+						glPopMatrix();
+					}
+				}
+			}
+
 			glPushMatrix();
 				glTranslatef(DROPSHADOW_DIST, -DROPSHADOW_DIST, 0);
 				glRotatef(activeTags[i]->t, 0, 0, 1);
@@ -1310,30 +1332,32 @@ void drawAprilTags(GLenum mode)
 			}
 
 			if ((rid = activeTags[i]->rid) != -1) {
-				if (robots[rid].upP) {
-					glPushMatrix();
-						xi = xs * robots[rid].xP / aprilTagX;
-						yi = -ys * robots[rid].yP / aprilTagY;
-
-						glRotatef(activeTags[i]->t + 90, 0, 0, 1);
-
-						glTranslatef(yi, xi, 0);
-
-						glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
-
-						glColor3fv(color_red);
-
+				for (j = 0; j < NUMROBOT_POINTS; j++) {
+					if (robots[rid].upP[j]) {
 						glPushMatrix();
-							glScalef(0.1, 0.1, 0);
-							glCallList(LIST_CIRCLE_FILLED);
+							xi = xs * robots[rid].xP[j] / aprilTagX;
+							yi = -ys * robots[rid].yP[j] / aprilTagY;
+
+							glRotatef(activeTags[i]->t + 90, 0, 0, 1);
+
+							glTranslatef(yi, xi, 0);
+
+							glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
+
+							glColor3fv(color_red);
+
+							glPushMatrix();
+								glScalef(0.1, 0.1, 0);
+								glCallList(LIST_CIRCLE_FILLED);
+							glPopMatrix();
+
+							glTranslatef(0, 0.2, 0);
+
+							textSetSize(TEXT_TINY);
+							textSetAlignment(ALIGN_CENTER);
+							textPrintf("%02d", rid);
 						glPopMatrix();
-
-						glTranslatef(0, 0.2, 0);
-
-						textSetSize(TEXT_TINY);
-						textSetAlignment(ALIGN_CENTER);
-						textPrintf("%02d", rid);
-					glPopMatrix();
+					}
 				}
 			}
 

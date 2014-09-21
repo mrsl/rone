@@ -11,6 +11,7 @@
 #define SBUFSIZE 256
 #define SLEEPTIME 3000
 #define GRACETIME 15000
+#define PTTIME 5000
 
 /* Robot states */
 #define LOCAL 		0
@@ -19,6 +20,8 @@
 #define DISTANT		3
 #define SATELLITE	4
 #define UNKNOWN		5
+
+#define NUMROBOT_POINTS	5
 
 /**
  * Connection information
@@ -51,9 +54,9 @@ struct commCon
 	float bps[NUMBUFFER]; 						// transfer speeds buffer
 	int head;									// Head of buffer
 	int count;									// Items in buffer
-	GLfloat xP;
-	GLfloat yP;
-	long upP;
+	GLfloat xP[NUMROBOT_POINTS];
+	GLfloat yP[NUMROBOT_POINTS];
+	long upP[NUMROBOT_POINTS];
 	CRITICAL_SECTION mutex;						// Mutex for this robot
 };
 
