@@ -14,39 +14,39 @@
  * @brief Initializes a scale coordinate
  */
 void createScaleCoordinate(scaleCoordinate *toCreate) {
-	nbrDataCreate16(&toCreate->Xh, &toCreate->Xl, "scXhigh", "scXlow", 0);
-	nbrDataCreate16(&toCreate->Yh, &toCreate->Yl, "scYhigh", "scYlow", 0);
-	nbrDataCreate(&toCreate->childCount, "childC", 8, 0);
+	nbrDataCreate16(&(toCreate->Xh), &(toCreate->Xl), "scXhigh", "scXlow", 0);
+	nbrDataCreate16(&(toCreate->Yh), &(toCreate->Yl), "scYhigh", "scYlow", 0);
+	nbrDataCreate(&(toCreate->childCount), "childC", 8, 0);
 }
 
 /**
  * @brief Updates the neighbor data of a scale coordinate
  */
 void updateScaleCoordinate(scaleCoordinate *toUpdate, int16 newX, int16 newY, uint8 childCount) {
-	nbrDataSet16(&toUpdate->Xh, &toUpdate->Xl, newX);
-	nbrDataSet16(&toUpdate->Yh, &toUpdate->Yl, newY);
-	nbrDataSet(&toUpdate->childCount, childCount);
+	nbrDataSet16(&(toUpdate->Xh), &(toUpdate->Xl), newX);
+	nbrDataSet16(&(toUpdate->Yh), &(toUpdate->Yl), newY);
+	nbrDataSet(&(toUpdate->childCount), childCount);
 }
 
 /**
  * @brief Returns the current X value of the scale coordinate for a neighbor
  */
 int16 getScaleCoordinateX(scaleCoordinate *toGet, Nbr *nbrPtr) {
-	 return nbrDataGetNbr16(&toGet->Xh, &toGet->Xl, nbrPtr);
+	 return nbrDataGetNbr16(&(toGet->Xh), &(toGet->Xl), nbrPtr);
 }
 
 /**
  * @brief Returns the current Y value of the scale coordinate for a neighbor
  */
 int16 getScaleCoordinateY(scaleCoordinate *toGet, Nbr *nbrPtr) {
-	 return nbrDataGetNbr16(&toGet->Yh, &toGet->Yl, nbrPtr);
+	 return nbrDataGetNbr16(&(toGet->Yh), &(toGet->Yl), nbrPtr);
 }
 
 /**
  * @brief Returns the current Y value of the scale coordinate for a neighbor
  */
 uint8 getScaleCoordinateChildCount(scaleCoordinate *toGet, Nbr *nbrPtr) {
-	 return nbrDataGetNbr(&toGet->childCount, nbrPtr);
+	 return nbrDataGetNbr(&(toGet->childCount), nbrPtr);
 }
 
 

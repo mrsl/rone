@@ -8,13 +8,44 @@
 #include "globalTreeCOM.h"
 
 //#define MRM_RV_GAIN		40
-#define MRM_RV_GAIN				5  // old = 8
+#define MRM_RV_GAIN				200  // old = 8
+#define MRM_TV_GAIN				50  // old = 8
 #define MRM_RV_FLOCK_GAIN		15
 #define ROTATION_DEADZONE		200  // old = 200
 #define MRM_ROTATE_LEFT_BIAS	300
 
-#define MRM_ALPHA1				50
+#define MRM_ALPHA1				4
 #define MRM_ALPHA2				20
+
+int32 rvGain = MRM_RV_GAIN;
+int32 tvGain = MRM_TV_GAIN;
+
+int32 alpha = MRM_ALPHA1;
+
+void setRVGain(int32 newRVGain) {
+	rvGain = newRVGain;
+}
+
+int32 getRVGain() {
+	return rvGain;
+}
+
+void setTVGain(int32 newTVGain) {
+	tvGain = newTVGain;
+}
+
+int32 getTVGain() {
+	return tvGain;
+}
+
+void setBehFilter(int32 newAlpha) {
+	alpha = newAlpha;
+}
+
+int32 getBehFilter() {
+	return alpha;
+}
+
 
 /**
  * Orbit the centroid, rotating the object about the centroid
@@ -104,17 +135,17 @@ void mrmPointOrbit(Beh *behPtr, int32 x, int32 y, int32 tvModifier) {
 //	int32 goalTv = boundAbs(tvModifier * distance, MRM_MAX_TV);
 //	int32 goalRv = -smallestAngleDifference(0, bearing) * MRM_RV_GAIN / 100;
 
-	int32 goalTv = boundAbs(tvModifier * distance, MRM_MAX_TV);
+	int32 goalTv = (getTVGain() / 100) * boundAbs(tvModifier * distance, MRM_MAX_TV);
 	int32 goalRv = 0;
 
 	if (abs(bearing) > ROTATION_DEADZONE) {
-		goalRv = MRM_RV_GAIN * bearing / 10;
-		goalTv = goalTv * 10/15;
+		goalRv = (getRVGain() / 100) * bearing / 10;
+		goalTv = goalTv * 100 / 150;
 	}
 
 	// Filter from previous state
-	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA1);
-	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA1);
+	int32 finalTv = mrmIIR(goalTv, tv, getBehFilter());
+	int32 finalRv = mrmIIR(goalRv, rv, getBehFilter());
 
 	behSetTvRv(behPtr, finalTv, finalRv);
 }

@@ -23,6 +23,11 @@
 #define MSG_TYPE_LT		0
 #define MSG_TYPE_ST		1
 #define MSG_TYPE_PT		2
+#define MSG_TYPE_RV		3
+#define MSG_TYPE_NB		4
+#define MSG_TYPE_AL		5
+#define MSG_TYPE_GD		6
+#define MSG_TYPE_TV		7
 
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
@@ -43,7 +48,7 @@
 #define CLKWISE			2
 #define ATTEMPTING		3
 
-#define RAVG_SIZE		50
+#define RAVG_SIZE		75
 
 #define MRM_ALIGNMENT_TIME		10000
 

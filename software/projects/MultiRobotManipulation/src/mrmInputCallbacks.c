@@ -15,13 +15,21 @@ struct __attribute__((__packed__)) {
 	uint8 theirId;
 	int16 distance;
 	uint8 state;
-	char pad[20];
+	int32 rv;
+	int32 alpha;
+	uint32 nbtime;
+	char pad[8];
 } typedef controlMsg;
 
 // Callback variables
 SerialCmd scLT;
 SerialCmd scPT;
+SerialCmd scGD;
+SerialCmd scRV;
 SerialCmd scST;
+SerialCmd scNB;
+SerialCmd scAL;
+SerialCmd scTV;
 RadioMessage rmSend;
 RadioCmd rcSend;
 
@@ -61,9 +69,6 @@ void scLTFunc(char* command) {
 }
 
 /**
- * Serial input function, changes values of a lookup table and then broadcasts
- * out to other robots.
- *
  * Format is:
  *     pt ID
  */
@@ -80,6 +85,149 @@ void scPTFunc(char* command) {
 	}
 
 	newMessage->messageType = MSG_TYPE_PT;
+
+	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+	osTaskDelay(50);
+	setGRLpivot(newMessage->myId);
+
+	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+
+	// Spam out to be heard
+	for (i = 0; i < 4; i++) {
+		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
+	}
+}
+
+void scGDFunc(char* command) {
+	int i;
+	controlMsg *newMessage = (controlMsg *) radioCommandGetDataPtr(&rmSend);
+
+	command += 2;
+	newMessage->check = CHECKVAL;
+
+	if (sscanf(command, "%u", (unsigned int *)&newMessage->myId) != 1) {
+		cprintf("Invalid command.");
+		return;
+	}
+
+	newMessage->messageType = MSG_TYPE_GD;
+
+	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+	osTaskDelay(50);
+	setGRLguide(newMessage->myId);
+
+	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+
+	// Spam out to be heard
+	for (i = 0; i < 4; i++) {
+		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
+	}
+}
+
+void scALFunc(char* command) {
+	int i;
+	controlMsg *newMessage = (controlMsg *) radioCommandGetDataPtr(&rmSend);
+
+	command += 2;
+	newMessage->check = CHECKVAL;
+
+	if (sscanf(command, "%d", (int *)&newMessage->alpha) != 1) {
+		cprintf("Invalid command.");
+		return;
+	}
+
+	newMessage->messageType = MSG_TYPE_AL;
+
+	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+	osTaskDelay(50);
+
+	setBehFilter(newMessage->alpha);
+
+	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+
+	// Spam out to be heard
+	for (i = 0; i < 4; i++) {
+		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
+	}
+}
+
+void scNBFunc(char* command) {
+	int i;
+	controlMsg *newMessage = (controlMsg *) radioCommandGetDataPtr(&rmSend);
+
+	command += 2;
+	newMessage->check = CHECKVAL;
+
+	if (sscanf(command, "%u", (unsigned int *)&newMessage->nbtime) != 1) {
+		cprintf("Invalid command.");
+		return;
+	}
+
+	newMessage->messageType = MSG_TYPE_NB;
+
+	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+	osTaskDelay(50);
+	neighborsSetPeriod(newMessage->nbtime);
+
+	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+
+	// Spam out to be heard
+	for (i = 0; i < 4; i++) {
+		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
+	}
+}
+
+/**
+ * Serial input function, changes values of a lookup table and then broadcasts
+ * out to other robots.
+ *
+ * Format is:
+ *     rv rv
+ */
+void scRVFunc(char* command) {
+	int i;
+	controlMsg *newMessage = (controlMsg *) radioCommandGetDataPtr(&rmSend);
+
+	command += 2;
+	newMessage->check = CHECKVAL;
+
+	if (sscanf(command, "%d", (int *)&newMessage->rv) != 1) {
+		cprintf("Invalid command.");
+		return;
+	}
+
+	newMessage->messageType = MSG_TYPE_RV;
+	setRVGain(newMessage->rv);
+
+	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+	osTaskDelay(50);
+
+	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+
+	// Spam out to be heard
+	for (i = 0; i < 4; i++) {
+		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
+	}
+}
+void scTVFunc(char* command) {
+	int i;
+	controlMsg *newMessage = (controlMsg *) radioCommandGetDataPtr(&rmSend);
+
+	command += 2;
+	newMessage->check = CHECKVAL;
+
+	if (sscanf(command, "%d", (int *)&newMessage->rv) != 1) {
+		cprintf("Invalid command.");
+		return;
+	}
+
+	newMessage->messageType = MSG_TYPE_TV;
+	setTVGain(newMessage->rv);
 
 	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 	osTaskDelay(50);
@@ -121,18 +269,6 @@ void scSTFunc(char* command) {
 	ledsSetPattern(LED_ALL, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 	osTaskDelay(50);
 
-	uint8 nextState = 0;
-
-	if (newMessage->state == STATE_ROTATE) {
-		newMessage->state = STATE_RALIGN;
-		nextState = STATE_ROTATE;
-	}
-	if (newMessage->state == STATE_PIVOT) {
-		newMessage->state = STATE_PALIGN;
-		nextState = STATE_PIVOT;
-	}
-
-
 	setState(newMessage->state);
 
 	// Spam out to be heard
@@ -141,16 +277,36 @@ void scSTFunc(char* command) {
 		osTaskDelay(25);
 	}
 
-	if (nextState) {
-		osTaskDelay(MRM_ALIGNMENT_TIME);
-		setState((newMessage->state = nextState));
-
-		// Spam out to be heard
-		for (i = 0; i < 4; i++) {
-			radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
-			osTaskDelay(25);
-		}
-	}
+//	uint8 nextState = 0;
+//
+//	if (newMessage->state == STATE_ROTATE) {
+//		newMessage->state = STATE_RALIGN;
+//		nextState = STATE_ROTATE;
+//	}
+//	if (newMessage->state == STATE_PIVOT) {
+//		newMessage->state = STATE_PALIGN;
+//		nextState = STATE_PIVOT;
+//	}
+//
+//
+//	setState(newMessage->state);
+//
+//	// Spam out to be heard
+//	for (i = 0; i < 4; i++) {
+//		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+//		osTaskDelay(25);
+//	}
+//
+//	if (nextState) {
+//		osTaskDelay(MRM_ALIGNMENT_TIME);
+//		setState((newMessage->state = nextState));
+//
+//		// Spam out to be heard
+//		for (i = 0; i < 4; i++) {
+//			radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+//			osTaskDelay(25);
+//		}
+//	}
 }
 
 /**
@@ -182,6 +338,36 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 		osTaskDelay(50);
 		setGRLpivot(newMessage->myId);
 	}
+
+	if (newMessage->messageType == MSG_TYPE_GD) {
+		ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+		osTaskDelay(50);
+		setGRLguide(newMessage->myId);
+	}
+
+	if (newMessage->messageType == MSG_TYPE_RV) {
+		ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+		osTaskDelay(50);
+		setRVGain(newMessage->rv);
+	}
+
+	if (newMessage->messageType == MSG_TYPE_TV) {
+		ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+		osTaskDelay(50);
+		setTVGain(newMessage->rv);
+	}
+
+	if (newMessage->messageType == MSG_TYPE_NB) {
+		ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+		osTaskDelay(50);
+		neighborsSetPeriod(newMessage->nbtime);
+	}
+
+	if (newMessage->messageType == MSG_TYPE_AL) {
+		ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+		osTaskDelay(50);
+		setBehFilter(newMessage->alpha);
+	}
 }
 
 /**
@@ -190,6 +376,11 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 void mrmInitCallbacks() {
 	serialCommandAdd(&scLT, "lt", scLTFunc);
 	serialCommandAdd(&scST, "st", scSTFunc);
-	serialCommandAdd(&scPT, "pt", scSTFunc);
+	serialCommandAdd(&scPT, "pt", scPTFunc);
+	serialCommandAdd(&scGD, "gd", scGDFunc);
+	serialCommandAdd(&scRV, "rv", scRVFunc);
+	serialCommandAdd(&scTV, "tv", scTVFunc);
+	serialCommandAdd(&scAL, "al", scALFunc);
+	serialCommandAdd(&scNB, "nb", scNBFunc);
 	radioCommandAddCallback(&rcSend, "RC", rcCallback);
 }

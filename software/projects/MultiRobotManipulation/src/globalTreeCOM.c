@@ -41,6 +41,8 @@ void createGRLpivotCoordinate(scaleCoordinate *pivot) {
 	createScaleCoordinate(pivot);
 	nbrDataCreate(&pivotRobot, "pivot", 8, 0);
 	nbrDataCreate(&pivotNonce, "pivotNonce", 8, 0);
+
+	nbrDataSet(&(pivot->childCount), 1);
 }
 
 /**
@@ -50,6 +52,8 @@ void createGRLguideCoordinate(scaleCoordinate *guide) {
 	createScaleCoordinate(guide);
 	nbrDataCreate(&guideRobot, "guide", 8, 0);
 	nbrDataCreate(&guideNonce, "guideNonce", 8, 0);
+
+	nbrDataSet(&(guide->childCount), 1);
 }
 
 /**
@@ -268,6 +272,7 @@ void rootedLocationTreeUpdate(GlobalRobotList *globalRobotList,
 	// Variables
 	int i;
 	GlobalRobotListElement* grlEltPtr = NULL; // Pointer to a GRL Tree (element)
+	uint8 childCount = 1;
 
 	// If we are the root set location to ourselves
 	*x = 0;
@@ -292,12 +297,13 @@ void rootedLocationTreeUpdate(GlobalRobotList *globalRobotList,
 		nbrPtr = nbrListPtr->nbrs[i];
 
 		if (nbrGetID(nbrPtr) == myParent) {
-			scShiftNbrReferenceFrame(sc, nbrPtr, x, y);
+			//scShiftNbrReferenceFrame(sc, nbrPtr, x, y);
+			transformScaleCoordinate(sc, nbrPtr, x, y, &childCount);
 			break;
 		}
 	}
 
-	updateScaleCoordinate(sc, *x, *y, 0);
+	updateScaleCoordinate(sc, *x, *y, 1);
 }
 
 //void pivotGRLUpdate(navigationData *navDataPtr,
