@@ -20,6 +20,7 @@ struct __attribute__((__packed__)) {
 
 // Callback variables
 SerialCmd scLT;
+SerialCmd scPT;
 SerialCmd scST;
 RadioMessage rmSend;
 RadioCmd rcSend;
@@ -46,6 +47,39 @@ void scLTFunc(char* command) {
 	}
 
 	newMessage->messageType = MSG_TYPE_LT;
+
+	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+	osTaskDelay(50);
+
+	//setLookup(newMessage->myId, newMessage->theirId, newMessage->distance);
+
+	// Spam out to be heard
+	for (i = 0; i < 4; i++) {
+		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+		osTaskDelay(25);
+	}
+}
+
+/**
+ * Serial input function, changes values of a lookup table and then broadcasts
+ * out to other robots.
+ *
+ * Format is:
+ *     pt ID
+ */
+void scPTFunc(char* command) {
+	int i;
+	controlMsg *newMessage = (controlMsg *) radioCommandGetDataPtr(&rmSend);
+
+	command += 2;
+	newMessage->check = CHECKVAL;
+
+	if (sscanf(command, "%u", (unsigned int *)&newMessage->myId) != 1) {
+		cprintf("Invalid command.");
+		return;
+	}
+
+	newMessage->messageType = MSG_TYPE_PT;
 
 	ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 	osTaskDelay(50);
@@ -87,12 +121,35 @@ void scSTFunc(char* command) {
 	ledsSetPattern(LED_ALL, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 	osTaskDelay(50);
 
+	uint8 nextState = 0;
+
+	if (newMessage->state == STATE_ROTATE) {
+		newMessage->state = STATE_RALIGN;
+		nextState = STATE_ROTATE;
+	}
+	if (newMessage->state == STATE_PIVOT) {
+		newMessage->state = STATE_PALIGN;
+		nextState = STATE_PIVOT;
+	}
+
+
 	setState(newMessage->state);
 
 	// Spam out to be heard
 	for (i = 0; i < 4; i++) {
 		radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
 		osTaskDelay(25);
+	}
+
+	if (nextState) {
+		osTaskDelay(MRM_ALIGNMENT_TIME);
+		setState((newMessage->state = nextState));
+
+		// Spam out to be heard
+		for (i = 0; i < 4; i++) {
+			radioCommandXmit(&rcSend, ROBOT_ID_ALL, &rmSend);
+			osTaskDelay(25);
+		}
 	}
 }
 
@@ -119,6 +176,12 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 		osTaskDelay(50);
 		setState(newMessage->state);
 	}
+
+	if (newMessage->messageType == MSG_TYPE_PT) {
+		ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+		osTaskDelay(50);
+		setGRLpivot(newMessage->myId);
+	}
 }
 
 /**
@@ -127,5 +190,6 @@ void rcCallback(RadioCmd* radioCmdPtr, RadioMessage* msgPtr) {
 void mrmInitCallbacks() {
 	serialCommandAdd(&scLT, "lt", scLTFunc);
 	serialCommandAdd(&scST, "st", scSTFunc);
+	serialCommandAdd(&scPT, "pt", scSTFunc);
 	radioCommandAddCallback(&rcSend, "RC", rcCallback);
 }

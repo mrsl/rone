@@ -15,13 +15,14 @@
 #include "scaleCoordinate.h"
 
 #define BEHAVIOR_TASK_PERIOD	50
-#define NEIGHBOR_ROUND_PERIOD	500
+#define NEIGHBOR_ROUND_PERIOD	2000
 #define RPRINTF_SLEEP_TIME		100
 
 #define CHECKVAL		0xDADA
 
 #define MSG_TYPE_LT		0
 #define MSG_TYPE_ST		1
+#define MSG_TYPE_PT		2
 
 #define STATE_IDLE		0
 #define STATE_CGUESS	1
@@ -44,10 +45,12 @@
 
 #define RAVG_SIZE		50
 
+#define MRM_ALIGNMENT_TIME		10000
+
 #define MRM_ROTATE_TV_GAIN		5
 #define MRM_PIVOT_TV_GAIN		5
 #define MRM_TRANS_TV_GAIN		40
-#define MRM_CYCLD_TV_GAIN		0.1
+#define MRM_CYCLD_TV_GAIN		MRM_TRANS_TV_GAIN
 #define MRM_MAX_TV				60
 #define MRM_MAX_TV_CYCLOID		50
 
