@@ -61,10 +61,14 @@ void mrmOrbitCentroid(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
  * Orbit the pivot robot, rotating the object about the pivot
  */
 void mrmOrbitPivot(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
-	mrmPointOrbit(behPtr,
-				 (int32) (navDataPtr->pivotX / 10),
-				 (int32) (navDataPtr->pivotY / 10),
-				 tvModifier);
+	if (roneID == getPivotRobot()) {
+		behSetTvRv(behPtr, 0, -200);
+	} else {
+		mrmPointOrbit(behPtr,
+					 (int32) (navDataPtr->pivotX / 10),
+					 (int32) (navDataPtr->pivotY / 10),
+					 tvModifier);
+	}
 }
 
 /**
@@ -220,8 +224,31 @@ void mrmTranslateLeaderToGuideVector(navigationData *navDataPtr, Beh *behPtr, in
 		return;
 	}
 
-	cprintf("pt 3,%d,%d\n", x, y);
+	//cprintf("pt 3,%d,%d\n", x, y);
 
+	// Get bearing towards point
+	int32 bearing = atan2MilliRad(y, x);
+
+	// Decided whether to drive forwards or backwards
+	int32 bearingLeft = normalizeAngleMilliRad(bearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
+	bearing = bearingLeft;
+
+	// Proportional tv and rv control
+	int32 distance = vectorMag(x, y) / 10; // In AprilTag units
+
+	int32 goalTv = (getTVGain() / 100) * boundAbs(tvModifier * distance, MRM_MAX_TV);
+	int32 goalRv = 0;
+
+	if (abs(bearing) > ROTATION_DEADZONE) {
+		goalRv = (getRVGain() / 100) * bearing / 10;
+		goalTv = goalTv * 100 / 150;
+	}
+
+	// Filter from previous state
+	int32 finalTv = mrmIIR(goalTv, tv, getBehFilter());
+	int32 finalRv = mrmIIR(goalRv, rv, getBehFilter());
+
+	behSetTvRv(behPtr, finalTv, finalRv);
 
 //	bearing = atan2MilliRad(y, x);
 //
