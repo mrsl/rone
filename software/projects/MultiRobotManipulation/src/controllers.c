@@ -154,53 +154,53 @@ void mrmPointOrbit(Beh *behPtr, int32 x, int32 y, int32 tvModifier) {
 	behSetTvRv(behPtr, finalTv, finalRv);
 }
 
-void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
-									Beh *behPtr, int32 tvModifier) {
-
-	int32 guideX = navDataPtr->guideX;
-	int32 guideY = navDataPtr->guideY;
-
-	int32 bearing;
-
-	int32 goalTv, goalRv;
-
-	int32 tv = behGetTv(behPtr);
-	int32 rv = behGetRv(behPtr);
-
-	if (roneID == getPivotRobot()) {
-		// Get bearing towards guide
-		bearing = atan2MilliRad(guideY, guideX);
-	} else {
-		bearing = mrmFlockAngle(nbrListPtr);
-	}
-
-	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
-
-	// Rotate and translate towards guide
-	goalTv = tvModifier;
-	goalRv = 0;
-
-	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
-	if (abs(bearing) > ROTATION_DEADZONE) {
-		goalRv = smallestAngleDifference(0, bearing) * MRM_RV_FLOCK_GAIN / 100;
-		goalTv /= 1.5;
-	}
-
+//void mrmTranslateLeaderToGuide(navigationData *navDataPtr, NbrList *nbrListPtr,
+//									Beh *behPtr, int32 tvModifier) {
+//
+//	int32 guideX = navDataPtr->guideX;
+//	int32 guideY = navDataPtr->guideY;
+//
+//	int32 bearing;
+//
+//	int32 goalTv, goalRv;
+//
+//	int32 tv = behGetTv(behPtr);
+//	int32 rv = behGetRv(behPtr);
+//
+//	if (roneID == getPivotRobot()) {
+//		// Get bearing towards guide
+//		bearing = atan2MilliRad(guideY, guideX);
+//	} else {
+//		bearing = mrmFlockAngle(nbrListPtr);
+//	}
+//
+//	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
+//
+//	// Rotate and translate towards guide
 //	goalTv = tvModifier;
 //	goalRv = 0;
 //
+//	bearing = normalizeAngleMilliRad(bearing) - MILLIRAD_PI;
 //	if (abs(bearing) > ROTATION_DEADZONE) {
-//		goalRv = MRM_RV_GAIN * bearing / 1.5;
+//		goalRv = smallestAngleDifference(0, bearing) * MRM_RV_FLOCK_GAIN / 100;
 //		goalTv /= 1.5;
 //	}
-
-
-	// Filter from previous state
-	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA1);
-	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA1);
-
-	behSetTvRv(behPtr, finalTv, finalRv);
-}
+//
+////	goalTv = tvModifier;
+////	goalRv = 0;
+////
+////	if (abs(bearing) > ROTATION_DEADZONE) {
+////		goalRv = MRM_RV_GAIN * bearing / 1.5;
+////		goalTv /= 1.5;
+////	}
+//
+//
+//	// Filter from previous state
+//	int32 finalTv = mrmIIR(goalTv, tv, MRM_ALPHA1);
+//	int32 finalRv = mrmIIR(goalRv, rv, MRM_ALPHA1);
+//
+//	behSetTvRv(behPtr, finalTv, finalRv);
+//}
 
 void mrmTranslateLeaderToGuideVector(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
 
@@ -208,10 +208,6 @@ void mrmTranslateLeaderToGuideVector(navigationData *navDataPtr, Beh *behPtr, in
 	int32 guideY = navDataPtr->guideY;
 	int32 centroidX = navDataPtr->centroidX;
 	int32 centroidY = navDataPtr->centroidY;
-
-	int32 bearing;
-
-	int32 goalTv, goalRv;
 
 	int32 tv = behGetTv(behPtr);
 	int32 rv = behGetRv(behPtr);
@@ -230,17 +226,17 @@ void mrmTranslateLeaderToGuideVector(navigationData *navDataPtr, Beh *behPtr, in
 	int32 bearing = atan2MilliRad(y, x);
 
 	// Decided whether to drive forwards or backwards
-	int32 bearingLeft = normalizeAngleMilliRad(bearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
+	int32 bearingLeft = normalizeAngleMilliRad(bearing - MILLIRAD_PI) - MILLIRAD_PI;
 	bearing = bearingLeft;
 
 	// Proportional tv and rv control
 	int32 distance = vectorMag(x, y) / 10; // In AprilTag units
 
-	int32 goalTv = (getTVGain() / 100) * boundAbs(tvModifier * distance, MRM_MAX_TV);
+	int32 goalTv = getTVGain() * boundAbs(tvModifier * distance, MRM_MAX_TV) / 100;
 	int32 goalRv = 0;
 
 	if (abs(bearing) > ROTATION_DEADZONE) {
-		goalRv = (getRVGain() / 100) * bearing / 10;
+		goalRv = getRVGain() * bearing / 10 / 100;
 		goalTv = goalTv * 100 / 150;
 	}
 
@@ -279,13 +275,70 @@ void mrmTranslateLeaderToGuideVector(navigationData *navDataPtr, Beh *behPtr, in
 //	behSetTvRv(behPtr, goalTv, goalRv);
 }
 
+//void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
+//	if (roneID == getPivotRobot()) {
+//		mrmTranslateLeaderToGuideVector(navDataPtr, behPtr, tvModifier);
+//	} else {
+//		mrmOrbitPivot(navDataPtr, behPtr, tvModifier / 10);
+//	}
+//}
+
+
 void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
-	if (roneID == getPivotRobot()) {
-		mrmTranslateLeaderToGuideVector(navDataPtr, behPtr, tvModifier);
-	} else {
-		mrmOrbitPivot(navDataPtr, behPtr, tvModifier / 10);
+	int32 guideX = navDataPtr->guideX;
+	int32 guideY = navDataPtr->guideY;
+	int32 centroidX = navDataPtr->centroidX;
+	int32 centroidY = navDataPtr->centroidY;
+
+	if ((guideX == 0 && guideY == 0) || (centroidX == 0 && centroidY == 0)) {
+		behSetTvRv(behPtr, 0, 0);
+		return;
 	}
+
+	// Get vector towards guide
+	int32 Tx = (guideX - centroidX) / 10;
+	int32 Ty = (guideY - centroidY) / 10;
+
+	// Get bearing towards guide
+	int32 Tbearing = atan2MilliRad(Ty, Tx);
+
+	// Normalize bearing to translational vector
+	Tbearing = normalizeAngleMilliRad(Tbearing - MILLIRAD_PI) - MILLIRAD_PI;
+
+	// Get bearing towards centroid
+	int32 Rbearing = atan2MilliRad(centroidY, centroidX);
+
+	// Normalize bearing perpendicular to the centroid
+	Rbearing = normalizeAngleMilliRad(Rbearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
+
+
+	// Get bearing towards cycloid path
+	int32 Cbearing = averageAngles(Tbearing, Rbearing);
+
+	// Find distance to centroid for velocity scaling
+	int32 Vmagnitude = vectorMag(centroidX, centroidY) / 10;
+
+	cprintf("pt 0,%d,%d\n", Vmagnitude * cosMilliRad(Cbearing), Vmagnitude * sinMilliRad(Cbearing));
+
+	// Calculate velocities
+	int32 tv = behGetTv(behPtr);
+	int32 rv = behGetRv(behPtr);
+
+	int32 goalTv = getTVGain() * boundAbs(tvModifier * Vmagnitude, MRM_MAX_TV) / 100;
+	int32 goalRv = 0;
+
+	if (abs(Cbearing) > ROTATION_DEADZONE) {
+		goalRv = getRVGain() * Cbearing / 10 / 100;
+		goalTv = goalTv * 100 / 150;
+	}
+
+	// Filter from previous state
+	int32 finalTv = mrmIIR(goalTv, tv, getBehFilter());
+	int32 finalRv = mrmIIR(goalRv, rv, getBehFilter());
+
+	behSetTvRv(behPtr, finalTv, finalRv);
 }
+
 
 //void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
 //	int32 guideX = navDataPtr->guideX;

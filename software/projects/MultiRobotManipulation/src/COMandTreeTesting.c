@@ -207,7 +207,7 @@ void behaviorTask(void* parameters) {
 					}
 					}
 
-					cprintf("pt 0,%d,%d\n", navDataRead.centroidX / 10, navDataRead.centroidY / 10);
+					//cprintf("pt 0,%d,%d\n", navDataRead.centroidX / 10, navDataRead.centroidY / 10);
 					//cprintf("pt 1,%d,%d\n", navDataRead.pivotX / 10, navDataRead.pivotY / 10);
 					//cprintf("pt 1,%d,%d\n", navDataRead.guideX / 10, navDataRead.guideY / 10);
 
@@ -216,7 +216,7 @@ void behaviorTask(void* parameters) {
 				// Calculate rolling average of estimates
 				rollingAverageNavData(&navDataRead, &navDataAvg);
 				cprintf("pt 3,%d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidY / 10);
-				//cprintf("pt 4,%d,%d\n", navDataAvg.pivotX / 10, navDataAvg.pivotY / 10);
+				cprintf("pt 4,%d,%d\n", navDataAvg.guideX / 10, navDataAvg.guideY / 10);
 
 				// Set LEDs based on state
 				if (roneID == getPivotRobot() && roneID == getGuideRobot()) {
