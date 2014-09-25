@@ -130,7 +130,6 @@ void behaviorTask(void* parameters) {
 
 			// If neighbor data has updated, update our guesses
 			if (nbrUpdate) {
-
 				// Update pivot and guide robot IDs, as well as state
 				updateDistributedInformation(&nbrList);
 			}
