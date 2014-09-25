@@ -7,12 +7,16 @@
 
 #include "globalTreeCOM.h"
 
-//#define MRM_RV_GAIN		40
-#define MRM_RV_GAIN				200  // old = 8
-#define MRM_TV_GAIN				50  // old = 8
+#define MRM_RV_GAIN				100
+#define MRM_TV_GAIN				100
 #define MRM_RV_FLOCK_GAIN		15
-#define ROTATION_DEADZONE		200  // old = 200
+#define ROTATION_DEADZONE		200
 #define MRM_ROTATE_LEFT_BIAS	300
+
+
+#define MRM_MAX_CENTROID_DIST	150
+
+#define MRM_MAX_CYCLOID_DIST	(MRM_MAX_CENTROID_DIST * 2)
 
 #define MRM_ALPHA1				4
 #define MRM_ALPHA2				20
@@ -290,20 +294,29 @@ void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 	int32 centroidX = navDataPtr->centroidX;
 	int32 centroidY = navDataPtr->centroidY;
 
+	guideX = 500;
+	guideY = 0;
+
+	centroidX = 100;
+	centroidY = 0;
+
 	if ((guideX == 0 && guideY == 0) || (centroidX == 0 && centroidY == 0)) {
 		behSetTvRv(behPtr, 0, 0);
 		return;
 	}
 
 	// Get vector towards guide
-	int32 Tx = (guideX - centroidX) / 10;
-	int32 Ty = (guideY - centroidY) / 10;
+	int32 transX = (guideX - centroidX) / 10;
+	int32 transY = (guideY - centroidY) / 10;
 
 	// Get bearing towards guide
-	int32 Tbearing = atan2MilliRad(Ty, Tx);
+	int32 Tbearing = atan2MilliRad(transY, transX);
 
 	// Normalize bearing to translational vector
 	Tbearing = normalizeAngleMilliRad(Tbearing - MILLIRAD_PI) - MILLIRAD_PI;
+
+	// Find distance to centroid for velocity scaling
+	//int32 Tmagnitude = vectorMag(transX, transY);
 
 	// Get bearing towards centroid
 	int32 Rbearing = atan2MilliRad(centroidY, centroidX);
@@ -311,20 +324,28 @@ void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 	// Normalize bearing perpendicular to the centroid
 	Rbearing = normalizeAngleMilliRad(Rbearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
 
+	// Find distance to centroid for velocity scaling
+	int32 Rmagnitude = vectorMag(centroidX, centroidY);
+
+	int32 rX = Rmagnitude * cosMilliRad(Rbearing) / MILLIRAD_TRIG_SCALER;
+	int32 rY = Rmagnitude * sinMilliRad(Rbearing) / MILLIRAD_TRIG_SCALER;
+
+	int32 tX = Rmagnitude * cosMilliRad(Tbearing) / MILLIRAD_TRIG_SCALER;
+	int32 tY = Rmagnitude * sinMilliRad(Tbearing) / MILLIRAD_TRIG_SCALER;
+
+	int32 Vmagnitude = vectorMag(rX + tX, rY + tY);
 
 	// Get bearing towards cycloid path
+	// TODO: Scale Translation to Rotation
 	int32 Cbearing = averageAngles(Tbearing, Rbearing);
 
-	// Find distance to centroid for velocity scaling
-	int32 Vmagnitude = vectorMag(centroidX, centroidY) / 10;
-
-	cprintf("pt 0,%d,%d\n", Vmagnitude * cosMilliRad(Cbearing), Vmagnitude * sinMilliRad(Cbearing));
+	//cprintf("pt 0,%d,%d\n", Vmagnitude * cosMilliRad(Cbearing), Vmagnitude * sinMilliRad(Cbearing));
 
 	// Calculate velocities
 	int32 tv = behGetTv(behPtr);
 	int32 rv = behGetRv(behPtr);
 
-	int32 goalTv = getTVGain() * boundAbs(tvModifier * Vmagnitude, MRM_MAX_TV) / 100;
+	int32 goalTv = boundAbs(Vmagnitude * MRM_MAX_TV  / MRM_MAX_CYCLOID_DIST * getTVGain() / 100, MRM_MAX_TV);
 	int32 goalRv = 0;
 
 	if (abs(Cbearing) > ROTATION_DEADZONE) {
@@ -332,12 +353,79 @@ void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 		goalTv = goalTv * 100 / 150;
 	}
 
+	//cprintf("%d, %d, %d\n", Vmagnitude, goalTv, goalRv);
+
 	// Filter from previous state
 	int32 finalTv = mrmIIR(goalTv, tv, getBehFilter());
 	int32 finalRv = mrmIIR(goalRv, rv, getBehFilter());
 
 	behSetTvRv(behPtr, finalTv, finalRv);
 }
+
+//void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
+//	int32 guideX = navDataPtr->guideX;
+//	int32 guideY = navDataPtr->guideY;
+//	int32 centroidX = navDataPtr->centroidX;
+//	int32 centroidY = navDataPtr->centroidY;
+//
+//	guideX = 500;
+//	guideY = 0;
+//
+//	centroidX = 200;
+//	centroidY = 0;
+//
+//	if ((guideX == 0 && guideY == 0) || (centroidX == 0 && centroidY == 0)) {
+//		behSetTvRv(behPtr, 0, 0);
+//		return;
+//	}
+//
+//	// Get vector towards guide
+//	int32 Tx = (guideX - centroidX) / 10;
+//	int32 Ty = (guideY - centroidY) / 10;
+//
+//	// Get bearing towards guide
+//	int32 Tbearing = atan2MilliRad(Ty, Tx);
+//
+//	// Normalize bearing to translational vector
+//	Tbearing = normalizeAngleMilliRad(Tbearing - MILLIRAD_PI) - MILLIRAD_PI;
+//
+//	// Get bearing towards centroid
+//	int32 Rbearing = atan2MilliRad(centroidY, centroidX);
+//
+//	// Normalize bearing perpendicular to the centroid
+//	Rbearing = normalizeAngleMilliRad(Rbearing - MILLIRAD_PI / 2) - MILLIRAD_PI;
+//
+//
+//	// Get bearing towards cycloid path
+//	// TODO: Scale Translation to Rotation
+//	int32 Cbearing = averageAngles(Tbearing, Rbearing);
+//
+//	// Find distance to centroid for velocity scaling
+//	int32 Vmagnitude = vectorMag(centroidX, centroidY);
+//
+//	//cprintf("pt 0,%d,%d\n", Vmagnitude * cosMilliRad(Cbearing), Vmagnitude * sinMilliRad(Cbearing));
+//
+//	// Calculate velocities
+//	int32 tv = behGetTv(behPtr);
+//	int32 rv = behGetRv(behPtr);
+//
+//	int32 goalTv = boundAbs(Vmagnitude * MRM_MAX_TV  / MRM_MAX_CENTROID_DIST * getTVGain() / 100, MRM_MAX_TV);
+//	int32 goalRv = 0;
+//
+//	if (abs(Cbearing) > ROTATION_DEADZONE) {
+//		goalRv = getRVGain() * Cbearing / 10 / 100;
+//		goalTv = goalTv * 100 / 150;
+//	}
+//
+//	cprintf("%d, %d, %d\n", Vmagnitude, goalTv, goalRv);
+//
+//	// Filter from previous state
+//	int32 finalTv = mrmIIR(goalTv, tv, getBehFilter());
+//	int32 finalRv = mrmIIR(goalRv, rv, getBehFilter());
+//
+//	behSetTvRv(behPtr, finalTv, finalRv);
+//}
+
 
 
 //void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {

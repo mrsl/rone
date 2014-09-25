@@ -60,7 +60,7 @@ void createGRLguideCoordinate(scaleCoordinate *guide) {
  * Creates the scale coordinate for the guide
  */
 void createStateInformation() {
-	nbrDataCreate(&stateInfo, "state", 8, 0);
+	nbrDataCreate(&stateInfo, "state", 8, STATE_CALIGN);
 	nbrDataCreate(&stateNonce, "stateNonce", 8, 0);
 }
 
