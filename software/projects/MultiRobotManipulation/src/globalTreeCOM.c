@@ -14,14 +14,16 @@
 
 #define ROTATE_STEPS	PI/20
 
-NbrData pivotRobot;
-NbrData pivotNonce;
+//NbrData pivotRobot;
+//NbrData pivotNonce;
+//
+//NbrData guideRobot;
+//NbrData guideNonce;
+//
+//NbrData stateInfo;
+//NbrData stateNonce;
 
-NbrData guideRobot;
-NbrData guideNonce;
-
-NbrData stateInfo;
-NbrData stateNonce;
+uint8 pivotRobot, guideRobot, stateInfo;
 
 /**
  * Creates the scale coordinate array for centroid locations
@@ -39,8 +41,10 @@ void createGRLscaleCoordinates(scaleCoordinate scaleCoordinateArray[]){
  */
 void createGRLpivotCoordinate(scaleCoordinate *pivot) {
 	createScaleCoordinate(pivot);
-	nbrDataCreate(&pivotRobot, "pivot", 8, 0);
-	nbrDataCreate(&pivotNonce, "pivotNonce", 8, 0);
+//	nbrDataCreate(&pivotRobot, "pivot", 8, 0);
+//	nbrDataCreate(&pivotNonce, "pivotNonce", 8, 0);
+
+	pivotRobot = 0;
 
 	nbrDataSet(&(pivot->childCount), 1);
 }
@@ -50,8 +54,9 @@ void createGRLpivotCoordinate(scaleCoordinate *pivot) {
  */
 void createGRLguideCoordinate(scaleCoordinate *guide) {
 	createScaleCoordinate(guide);
-	nbrDataCreate(&guideRobot, "guide", 8, 0);
-	nbrDataCreate(&guideNonce, "guideNonce", 8, 0);
+//	nbrDataCreate(&guideRobot, "guide", 8, 0);
+//	nbrDataCreate(&guideNonce, "guideNonce", 8, 0);
+	guideRobot = 0;
 
 	nbrDataSet(&(guide->childCount), 1);
 }
@@ -60,40 +65,52 @@ void createGRLguideCoordinate(scaleCoordinate *guide) {
  * Creates the scale coordinate for the guide
  */
 void createStateInformation() {
-	nbrDataCreate(&stateInfo, "state", 8, STATE_CALIGN);
-	nbrDataCreate(&stateNonce, "stateNonce", 8, 0);
+//	nbrDataCreate(&stateInfo, "state", 8, 0);
+//	nbrDataCreate(&stateNonce, "stateNonce", 8, 0);
+
+	stateInfo = STATE_IDLE;
 }
 
 /**
  * Sets a new pivot robot for the network
  */
 void setGRLpivot(uint8 id) {
-	nbrDataSet(&pivotRobot, id);
-	nbrDataSet(&pivotNonce, (nbrDataGet(&pivotNonce) + 1) % 100 + 1);
+//	nbrDataSet(&pivotRobot, id);
+//	nbrDataSet(&pivotNonce, (nbrDataGet(&pivotNonce) + 1) % 100 + 1);
+
+	pivotRobot = id;
 }
 
 /**
  * Sets a new guide robot for the network
  */
 void setGRLguide(uint8 id) {
-	nbrDataSet(&guideRobot, id);
-	nbrDataSet(&guideNonce, (nbrDataGet(&guideNonce) + 1) % 100 + 1);
+//	nbrDataSet(&guideRobot, id);
+//	nbrDataSet(&guideNonce, (nbrDataGet(&guideNonce) + 1) % 100 + 1);
+
+	guideRobot = id;
 }
 
 uint8 getPivotRobot() {
-	return nbrDataGet(&pivotRobot);
+//	return nbrDataGet(&pivotRobot);
+
+	return pivotRobot;
 }
 
 uint8 getGuideRobot() {
-	return nbrDataGet(&guideRobot);
+//	return nbrDataGet(&guideRobot);
+
+	return guideRobot;
 }
 
 /**
  * Sets our state for the FSM
  */
 void setState(uint8 newState) {
-	nbrDataSet(&stateInfo, newState);
-	nbrDataSet(&stateNonce, (nbrDataGet(&stateNonce) + 1) % 100 + 1);
+//	nbrDataSet(&stateInfo, newState);
+//	nbrDataSet(&stateNonce, (nbrDataGet(&stateNonce) + 1) % 100 + 1);
+
+	stateInfo = newState;
 
 	if (newState == STATE_IDLE) {
 		setStartNbrRound(0);
@@ -101,46 +118,45 @@ void setState(uint8 newState) {
 }
 
 uint8 getState() {
-	return nbrDataGet(&stateInfo);
+//	return nbrDataGet(&stateInfo);
+
+	return stateInfo;
 }
 
 /**
  * Updates pivot and guide robot knowledge
  */
 void updateDistributedInformation(NbrList *nbrListPtr) {
-	int i;
-	Nbr *nbrPtr;
-
-	for (i = 0; i < nbrListGetSize(nbrListPtr); i++) {
-		nbrPtr = nbrListGetNbr(nbrListPtr, i);
-
-		// Check for new pivot
-		if (nbrDataGetNbr(&pivotRobot, nbrPtr) != nbrDataGet(&pivotRobot)) {
-			if (nbrDataGetNbr(&pivotNonce, nbrPtr) >= nbrDataGet(&pivotNonce) ||
-				nbrDataGetNbr(&pivotNonce, nbrPtr) < nbrDataGet(&pivotNonce) - 70) {
-				nbrDataSet(&pivotRobot, nbrDataGetNbr(&pivotRobot, nbrPtr));
-				nbrDataSet(&pivotNonce, nbrDataGetNbr(&pivotNonce, nbrPtr));
-			}
-		}
-
-		// Check for new guide
-		if (nbrDataGetNbr(&guideRobot, nbrPtr) != nbrDataGet(&guideRobot)) {
-			if (nbrDataGetNbr(&guideNonce, nbrPtr) >= nbrDataGet(&guideNonce) ||
-				nbrDataGetNbr(&guideNonce, nbrPtr) < nbrDataGet(&guideNonce) - 70) {
-				nbrDataSet(&guideRobot, nbrDataGetNbr(&guideRobot, nbrPtr));
-				nbrDataSet(&guideNonce, nbrDataGetNbr(&guideNonce, nbrPtr));
-			}
-		}
-
-		// Check for new guide
-		if (nbrDataGetNbr(&stateInfo, nbrPtr) != nbrDataGet(&stateInfo)) {
-			if (nbrDataGetNbr(&stateNonce, nbrPtr) >= nbrDataGet(&stateNonce) ||
-				nbrDataGetNbr(&stateNonce, nbrPtr) < nbrDataGet(&stateNonce) - 70) {
-				nbrDataSet(&stateInfo, nbrDataGetNbr(&stateInfo, nbrPtr));
-				nbrDataSet(&stateNonce, nbrDataGetNbr(&stateNonce, nbrPtr));
-			}
-		}
-	}
+//	int i;
+//	Nbr *nbrPtr;
+//
+//	for (i = 0; i < nbrListGetSize(nbrListPtr); i++) {
+//		nbrPtr = nbrListGetNbr(nbrListPtr, i);
+//
+//		// Check for new pivot
+//		if (nbrDataGetNbr(&pivotRobot, nbrPtr) != nbrDataGet(&pivotRobot)) {
+//			if (nbrDataGetNbr(&pivotNonce, nbrPtr) >= nbrDataGet(&pivotNonce)) {
+//				nbrDataSet(&pivotRobot, nbrDataGetNbr(&pivotRobot, nbrPtr));
+//				nbrDataSet(&pivotNonce, nbrDataGetNbr(&pivotNonce, nbrPtr));
+//			}
+//		}
+//
+//		// Check for new guide
+//		if (nbrDataGetNbr(&guideRobot, nbrPtr) != nbrDataGet(&guideRobot)) {
+//			if (nbrDataGetNbr(&guideNonce, nbrPtr) >= nbrDataGet(&guideNonce)) {
+//				nbrDataSet(&guideRobot, nbrDataGetNbr(&guideRobot, nbrPtr));
+//				nbrDataSet(&guideNonce, nbrDataGetNbr(&guideNonce, nbrPtr));
+//			}
+//		}
+//
+//		// Check for new guide
+//		if (nbrDataGetNbr(&stateInfo, nbrPtr) != nbrDataGet(&stateInfo)) {
+//			if (nbrDataGetNbr(&stateNonce, nbrPtr) >= nbrDataGet(&stateNonce)) {
+//				nbrDataSet(&stateInfo, nbrDataGetNbr(&stateInfo, nbrPtr));
+//				nbrDataSet(&stateNonce, nbrDataGetNbr(&stateNonce, nbrPtr));
+//			}
+//		}
+//	}
 }
 
 /**

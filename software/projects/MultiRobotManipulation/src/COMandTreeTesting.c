@@ -128,11 +128,11 @@ void behaviorTask(void* parameters) {
 			// Check for update
 			nbrUpdate = neighborsNewRoundCheck(&neighborRound);
 
-			// If neighbor data has updated, update our guesses
-			if (nbrUpdate) {
-				// Update pivot and guide robot IDs, as well as state
-				updateDistributedInformation(&nbrList);
-			}
+//			// If neighbor data has updated, update our guesses
+//			if (nbrUpdate) {
+//				// Update pivot and guide robot IDs, as well as state
+//				updateDistributedInformation(&nbrList);
+//			}
 
 			// If we are idle
 			if (getState() == STATE_IDLE) {
@@ -192,13 +192,13 @@ void behaviorTask(void* parameters) {
 					}
 					case (STATE_CALIGN):
 					case (STATE_CYCLD): {
-						rprintf("%d,%d,%d,%d,%d,%d\n", navDataRead.centroidX,
-													   navDataRead.centroidY,
-													   navDataRead.guideX,
-													   navDataRead.guideY,
-													   navDataRead.childCountSum,
-													   getDeltaStartNbrRound(neighborRound));
-						rprintfFlush();
+//						rprintf("%d,%d,%d,%d,%d,%d\n", navDataRead.centroidX,
+//													   navDataRead.centroidY,
+//													   navDataRead.guideX,
+//													   navDataRead.guideY,
+//													   navDataRead.childCountSum,
+//													   getDeltaStartNbrRound(neighborRound));
+//						rprintfFlush();
 						break;
 					}
 					default: {
@@ -214,8 +214,8 @@ void behaviorTask(void* parameters) {
 
 				// Calculate rolling average of estimates
 				rollingAverageNavData(&navDataRead, &navDataAvg);
-				cprintf("pt 3,%d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidY / 10);
-				cprintf("pt 4,%d,%d\n", navDataAvg.guideX / 10, navDataAvg.guideY / 10);
+//				cprintf("pt 3,%d,%d\n", navDataAvg.centroidX / 10, navDataAvg.centroidY / 10);
+//				cprintf("pt 4,%d,%d\n", navDataAvg.guideX / 10, navDataAvg.guideY / 10);
 
 				// Set LEDs based on state
 				if (roneID == getPivotRobot() && roneID == getGuideRobot()) {
@@ -328,7 +328,7 @@ void behaviorTask(void* parameters) {
 					}
 					case (STATE_CYCLD): {
 						mrmCycloidMotion(&navDataAvg,
-							&behOutput, MRM_CYCLD_TV_GAIN);
+							&behOutput, 1);
 						break;
 					}
 					default: {

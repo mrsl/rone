@@ -66,7 +66,8 @@ void mrmOrbitCentroid(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
  */
 void mrmOrbitPivot(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier) {
 	if (roneID == getPivotRobot()) {
-		behSetTvRv(behPtr, 0, -200);
+		//behSetTvRv(behPtr, 0, -200);
+		behSetTvRv(behPtr, 0, -0);
 	} else {
 		mrmPointOrbit(behPtr,
 					 (int32) (navDataPtr->pivotX / 10),
@@ -294,12 +295,6 @@ void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 	int32 centroidX = navDataPtr->centroidX;
 	int32 centroidY = navDataPtr->centroidY;
 
-	guideX = 500;
-	guideY = 0;
-
-	centroidX = 100;
-	centroidY = 0;
-
 	if ((guideX == 0 && guideY == 0) || (centroidX == 0 && centroidY == 0)) {
 		behSetTvRv(behPtr, 0, 0);
 		return;
@@ -337,7 +332,18 @@ void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 
 	// Get bearing towards cycloid path
 	// TODO: Scale Translation to Rotation
-	int32 Cbearing = averageAngles(Tbearing, Rbearing);
+	 int32 Cbearing = averageAngles(Tbearing, Rbearing);
+
+//	int32 Cbearing;
+//	int32 bearingLeft = averageAngles(Tbearing, Rbearing);
+//	int32 bearingRight = normalizeAngleMilliRad(bearingLeft + MILLIRAD_PI) - MILLIRAD_PI;
+//
+//	if (abs(bearingLeft) < abs(bearingRight)) {
+//		Cbearing = bearingLeft;
+//	} else {
+//		Cbearing = bearingRight;
+//		tvModifier = -tvModifier;
+//	}
 
 	//cprintf("pt 0,%d,%d\n", Vmagnitude * cosMilliRad(Cbearing), Vmagnitude * sinMilliRad(Cbearing));
 
@@ -345,12 +351,12 @@ void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 	int32 tv = behGetTv(behPtr);
 	int32 rv = behGetRv(behPtr);
 
-	int32 goalTv = boundAbs(Vmagnitude * MRM_MAX_TV  / MRM_MAX_CYCLOID_DIST * getTVGain() / 100, MRM_MAX_TV);
+	int32 goalTv = tvModifier * boundAbs(Vmagnitude * MRM_MAX_TV  / MRM_MAX_CYCLOID_DIST * getTVGain() / 100, MRM_MAX_TV);
 	int32 goalRv = 0;
 
 	if (abs(Cbearing) > ROTATION_DEADZONE) {
 		goalRv = getRVGain() * Cbearing / 10 / 100;
-		goalTv = goalTv * 100 / 150;
+		goalTv = goalTv * 100 / 200;
 	}
 
 	//cprintf("%d, %d, %d\n", Vmagnitude, goalTv, goalRv);
@@ -358,6 +364,9 @@ void mrmCycloidMotion(navigationData *navDataPtr, Beh *behPtr, int32 tvModifier)
 	// Filter from previous state
 	int32 finalTv = mrmIIR(goalTv, tv, getBehFilter());
 	int32 finalRv = mrmIIR(goalRv, rv, getBehFilter());
+
+	rprintf("%d,%d,%d,%d\n", goalTv, goalRv, finalTv, finalRv);
+	rprintfFlush();
 
 	behSetTvRv(behPtr, finalTv, finalRv);
 }
