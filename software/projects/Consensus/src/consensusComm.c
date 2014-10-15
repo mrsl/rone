@@ -122,7 +122,15 @@ void consensusAckMode() {
 		}
 		i++;
 	}
-	consensusParseMessage();
+
+	// Do consensus if success
+	if (i == consensusNumMessages) {
+		consensusParseMessage();
+		// Do consensus if success
+		consensusOp(consensusData, consensusReadData);
+	} else {
+
+	}
 
 	// Send your data
 	consensusBuildMessage();
@@ -130,17 +138,39 @@ void consensusAckMode() {
 		radioCommandXmit(&consensusRadioCmdAtoB, destID, &consensusRadioMessageData[i]);
 		osTaskDelay(CONSENSUS_INTER_MESSAGE_DELAY);
 	}
-
-	// Do consensus if success
-	consensusOp(consensusData, consensusReadData);
 }
 
 void consensusIdleMode() {
 	// Wait for ack for w/e time
+	if (!radioCommandReceive(&consensusRadioCmdAtoB, &consensusRadioMessageData[0], consensusPeriod - CONSENSUS_ACK_TIMEOUT_DELTA)) {
+		return;
+	}
 
 	// If ack, then transmit your data
+	uint8 i;
+	uint8 destID = consensusRadioMessageData[0].command.destinationID;
+
+	consensusBuildMessage();
+	for (i = 0; i < consensusNumMessages; i++) {
+		radioCommandXmit(&consensusRadioCmdBtoA, destID, &consensusRadioMessageData[i]);
+		osTaskDelay(CONSENSUS_INTER_MESSAGE_DELAY);
+	}
 
 	// Then wait for data back, then consensus
+	uint8 i = 0;
+	while (radioCommandReceive(&consensusRadioCmdAtoB, &consensusRadioMessageData[i], CONSENSUS_RESPONSE_TIMEOUT)) {
+		if (i == consensusNumMessages) {
+			break;
+		}
+		i++;
+	}
+	if (i == consensusNumMessages) {
+		consensusParseMessage();
+		// Do consensus if success
+		consensusOp(consensusData, consensusReadData);
+	} else {
+
+	}
 }
 
 void consensusTask() {
