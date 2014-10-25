@@ -7,8 +7,12 @@
 
 #include "consensus.h"
 
-#define NEIGHBOR_ROUND_PERIOD	500
+#define NEIGHBOR_ROUND_PERIOD	300
 #define RPRINTF_SLEEP_TIME		30
+
+void noop(uint8 nbrID) {
+	// nothing
+}
 
 /**
  * Initialization of subsystems and such
@@ -26,6 +30,8 @@ void behaviorTaskInit() {
 	// Initialize the external pose subsystem for location
 	externalPoseInit();
 
+	consensusInit(noop);
+
 	// Status check
 	systemPrintStartup();
 	systemPrintMemUsage();
@@ -38,10 +44,6 @@ void behaviorTask(void* parameters) {
 	uint32 lastWakeTime;		// The last time this task was woken
 
 	Beh behOutput;				// Output motion behavior
-
-	boolean nbrUpdate;			// Has the neighbor system updated?
-	NbrList nbrList;			// The neighbor list
-	uint32 neighborRound;		// The current neighbor round
 
 	// Initialize variables and subsystems
 	behaviorTaskInit();

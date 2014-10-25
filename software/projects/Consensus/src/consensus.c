@@ -34,7 +34,7 @@ void (*consensusOperation)(uint8 nbrID);
 /**
  * Sets the requested ID to a random neighbor
  */
-inline void consensusSetReqID(void) {
+void consensusSetReqID(void) {
 	uint8 randomNbr = rand() % consensusNbrList.size;
 	uint8 reqID = nbrListGetNbr(&consensusNbrList, randomNbr)->ID;
 	consensusReqIDValue = reqID;
@@ -45,14 +45,14 @@ inline void consensusSetReqID(void) {
 /**
  * Sets the acknowledged ID
  */
-inline void consensusSetAckID(uint8 ackID) {
+void consensusSetAckID(uint8 ackID) {
 	nbrDataSet(&consensusAckID, ackID);
 }
 
 /**
  * Nulls out req and ack ID's for idle state
  */
-inline void consensusNullIDs(void) {
+void consensusNullIDs(void) {
 	nbrDataSet(&consensusReqID, 0);
 	nbrDataSet(&consensusAckID, 0);
 }
@@ -60,7 +60,7 @@ inline void consensusNullIDs(void) {
 /**
  * Increments the nonce
  */
-inline void consensusIncNonce(void) {
+void consensusIncNonce(void) {
 	consensusNonceValue++;
 	consensusNonceValue %= CONSENSUS_MAX_NONCE;
 	nbrDataSet(&consensusNonce, consensusNonceValue);
@@ -69,16 +69,23 @@ inline void consensusIncNonce(void) {
 /**
  * Finds a random neighbor that has our ID set to their requested ID
  */
-inline uint8 consensusGetAckID(void) {
+uint8 consensusGetAckID(void) {
 	uint8 ackID = 0;	// Return value
 
-	uint8 requestingInd = 0;						// Index in request list
-	uint8 requestingNbrs[consensusNbrList.size];	// Valid requesting nbrs
+	uint8 reqInd = 0;						// Index in request list
+	uint8 reqNbrs[consensusNbrList.size];	// Valid requesting nbrs
+	uint8 reqNonce[consensusNbrList.size];	// Nonces from the nbrs
 
 	/* Iterate over neighbor list */
 	uint8 i;
 	for (i = 0; i < consensusNbrList.size; i++) {
 		Nbr *nbrPtr = nbrListGetNbr(&consensusNbrList, i);
+
+		if (!nbrPtr) {
+			/* Handle bad neighbors */
+			continue;
+		}
+
 		uint8 nbrID = nbrGetID(nbrPtr);
 
 		if (nbrDataGetNbr(&consensusReqID, nbrPtr) == roneID) {
@@ -87,19 +94,24 @@ inline uint8 consensusGetAckID(void) {
 			if (nbrID == consensusPrevReqID) {
 				/* If this was the neighbor we gossiped with last time, make
 				 * sure the request is fresh */
-				if (nbrDataGetNbr(&consensusNonce, nbrPtr) == consensusPrevNonce) {
+				reqNonce[reqInd] = nbrDataGetNbr(&consensusNonce, nbrPtr);
+				if (reqNonce[reqInd] == consensusPrevNonce) {
 					/* The request is not fresh! Nonce matches previous,
 					 * ignore */
 					continue;
 				}
 			}
-			requestingNbrs[requestingInd++] = nbrID;
+
+			reqNbrs[reqInd++] = nbrID;
 		}
 	}
 
 	/* Return a random neighbor from this list of requesters */
-	if (requestingInd) {
-		ackID = requestingNbrs[rand() % requestingInd];
+	if (reqInd) {
+		uint8 randInd = rand() % reqInd;
+		ackID = reqNbrs[randInd];
+		consensusPrevReqID = ackID;
+		consensusPrevNonce = reqNonce[randInd];
 	}
 
 	return ackID;
@@ -137,7 +149,7 @@ void consensusTask(void *args) {
 			ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
 			/* Handle being in the idle state */
-			if (consensusStateTime + CONSENSUS_TIME_IDLE < consensusWakeTime) {
+			if (consensusStateTime + CONSENSUS_TIME_IDLE > consensusWakeTime) {
 				/* Still in idle state */
 				uint8 ackID = consensusGetAckID();
 
@@ -180,7 +192,7 @@ void consensusTask(void *args) {
 			ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
 			/* Handle being in the request state */
-			if (consensusStateTime + CONSENSUS_TIME_REQ < consensusWakeTime) {
+			if (consensusStateTime + CONSENSUS_TIME_REQ > consensusWakeTime) {
 				/* Still in request state, check whether requested robot has
 				 * acked back */
 				Nbr *nbrPtr = nbrsGetWithID(consensusReqIDValue);
@@ -209,7 +221,7 @@ void consensusTask(void *args) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
 			/* Handle being in the ack state */
-			if (consensusStateTime + CONSENSUS_TIME_ACK < consensusWakeTime) {
+			if (consensusStateTime + CONSENSUS_TIME_ACK > consensusWakeTime) {
 				/* Still in ack state */
 			} else {
 				/* Ack state over, head back to idle state */
