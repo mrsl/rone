@@ -7,6 +7,10 @@
 
 #include "consensus.h"
 
+#define STATE_WAIT	0
+#define STATE_ACK	1
+#define STATE_IDLE	2
+
 /**
  * Initialization of subsystems and such
  */
@@ -20,8 +24,13 @@ void behaviorTaskInit() {
 	// Set rprintf time
 	rprintfSetSleepTime(RPRINTF_SLEEP_TIME);
 
+	// Set audio volume
+	audioVolume(230);
+
 	// Initialize the external pose subsystem for location
 	externalPoseInit();
+
+	consensusNoOpInit();
 
 	// Status check
 	systemPrintStartup();
@@ -36,17 +45,41 @@ void behaviorTask(void* parameters) {
 
 	Beh behOutput;				// Output motion behavior
 
-	boolean nbrUpdate;			// Has the neighbor system updated?
-	NbrList nbrList;			// The neighbor list
-	uint32 neighborRound;		// The current neighbor round
+//	boolean nbrUpdate;			// Has the neighbor system updated?
+//	NbrList nbrList;			// The neighbor list
+//	uint32 neighborRound;		// The current neighbor round
+
+	uint8 mode = STATE_WAIT;
 
 	// Initialize variables and subsystems
 	behaviorTaskInit();
 
 	for (;;) {
+
 		lastWakeTime = osTaskGetTickCount();	// We have woken
 		behOutput = behInactive;
 
+		if (buttonsGet(BUTTON_RED)) {
+			consensusSetAckChance(0);
+		} else if (buttonsGet(BUTTON_GREEN)) {
+			consensusSetAckChance(500);
+		} else if (buttonsGet(BUTTON_BLUE)) {
+			consensusSetAckChance(1000);
+		}
+
+//		switch (mode) {
+//		case (STATE_ACK): {
+//			consensusAckMode();
+//			break;
+//		} case (STATE_IDLE): {
+//			consensusIdleMode();
+//			break;
+//		}
+//		case (STATE_WAIT):
+//		default: {
+//			break;
+//		}
+//		}
 
 		// Set motion output
 		motorSetBeh(&behOutput);

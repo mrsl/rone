@@ -12,29 +12,39 @@ uint32 consensusPeriod = CONSENSUS_DEFAULT_PERIOD;
 uint16 consensusAckChance = CONSENSUS_DEFAULT_ACK_CHANCE;
 
 uint32 consensusWakeTime;
+boolean consensusSuccess;
 
-RadioCmd consensusRadioCmdAtoB;
-RadioCmd consensusRadioCmdBtoA;
+RadioCmd consensusRadioCmdAck;
+RadioCmd consensusRadioCmdData;
 
-RadioMessage consensusRadioMessageData[CONSENSUS_MAX_MESSAGES];
+RadioMessage consensusRadioMessageData;
 
 uint8 consensusNumMessages;
 
-void *consensusData;
-uint16 consensusDataSize;
+char *consensusData;
+uint8 consensusDataSize;
 
 char consensusReadData[CONSENSUS_MAX_DATA_SIZE];
 
-void (*consensusPreOp)(void *);
-void (*consensusPostOp)(void *);
-void (*consensusOp)(void *, void *);
+void (*consensusPreOp)(void *) = NULL;
+void (*consensusPostOp)(void *) = NULL;
+void (*consensusOp)(void *, void *) = NULL;
+
+void consensusPrintBytes(void *p, uint8 l) {
+	uint8 i;
+	cprintf("(");
+	for (i = 0; i < l; ++i) {
+		cprintf("%02X", ((unsigned char *)p)[i]);
+	}
+	cprintf(")");
+}
 
 void consensusNoOp(void *a, void *b) {
 	// No-Op
 }
 
-void consensusInitData(void *data, uint16 size) {
-	if (size <= CONSENSUS_MAX_DATA_SIZE) {
+void consensusInitData(void *data, uint8 size) {
+	if (size > CONSENSUS_MAX_DATA_SIZE) {
 		error("Consensus data too large!");
 	}
 
@@ -45,8 +55,10 @@ void consensusInitData(void *data, uint16 size) {
 			- (size % RADIO_COMMAND_MESSAGE_DATA_LENGTH))
 			/ RADIO_COMMAND_MESSAGE_DATA_LENGTH;
 
-	radioCommandAddQueue(&consensusRadioCmdAtoB, "consensusAtoB", CONSENSUS_MAX_MESSAGES);
-	radioCommandAddQueue(&consensusRadioCmdBtoA, "consensusBtoA", CONSENSUS_MAX_MESSAGES);
+	radioCommandAddQueue(&consensusRadioCmdAck, "consensusAck", 1);
+	radioCommandAddQueue(&consensusRadioCmdData, "consensusData", consensusNumMessages);
+
+	cprintf("Consensus Initialized! Data Size: %d Num Messages: %d\n", consensusDataSize, consensusNumMessages);
 }
 
 void consensusInitPreConsensusOperation(void (*func)(void *)) {
@@ -69,37 +81,130 @@ void consensusSetAckChance(uint16 newAckChance) {
 	consensusAckChance = newAckChance;
 }
 
-void consensusBuildMessage() {
-	uint8 i, j;
 
-	for (i = 0; i < consensusNumMessages; i++) {
-		uint16 dataIndex;
-		for (j = 0; j < RADIO_COMMAND_MESSAGE_DATA_LENGTH && (dataIndex = (RADIO_COMMAND_MESSAGE_DATA_LENGTH * i) + j) < consensusDataSize; j++) {
-			consensusRadioMessageData[i].command.data[j] = consensusData + dataIndex;
-		}
+void consensusClearReadData() {
+	uint8 i;
+
+	for (i = 0; i < consensusDataSize; i++) {
+		consensusReadData[i] = 0;
 	}
 }
 
-void consensusParseMessage() {
-	uint8 i, j;
+uint8 consensusGetSizeData() {
+	return consensusDataSize;
+}
 
-	for (i = 0; i < consensusNumMessages; i++) {
-		uint16 dataIndex;
-		for (j = 0; j < RADIO_COMMAND_MESSAGE_DATA_LENGTH && (dataIndex = (RADIO_COMMAND_MESSAGE_DATA_LENGTH * i) + j) < consensusDataSize; j++) {
-			consensusReadData + dataIndex = consensusRadioMessageData[i].command.data[j];
+/**
+ * Transmits whatever is at the consensusData pointer to a destination ID
+ */
+void consensusDataTransmit(uint8 destID) {
+//	char *bufferPtr = consensusRadioMessageData.command.data;
+//	char *tempBufPtr;
+
+	uint8 dataLeft = consensusDataSize;
+
+	//rprintf("	");
+
+	//consensusPrintBytes(consensusData, consensusDataSize);
+	//cprintf("	%s\n", consensusData);
+
+	cprintf("	TRANSMITTING %d to %d: ", dataLeft, destID);
+
+	while (dataLeft > 0) {
+		char *bufferPtr = consensusRadioMessageData.command.data;
+		uint8 i = 0;
+		while (i < RADIO_COMMAND_MESSAGE_DATA_LENGTH && i < dataLeft) {
+			*bufferPtr++ = consensusData[(consensusDataSize - dataLeft) + i++];
 		}
+
+		cprintf("%d ", i);
+		radioCommandXmit(&consensusRadioCmdData, destID, &consensusRadioMessageData);
+
+		//consensusPrintBytes(consensusRadioMessageData.command.data, 8);
+
+		dataLeft -= i;
+		osTaskDelay(CONSENSUS_INTER_MESSAGE_DELAY);
 	}
+
+	cprintf("\n");
+}
+
+/**
+ * Receives incoming data from other robot, returns 1 if success, 0 if failure
+ * Stores data in the consensusReadData buffer
+ */
+uint8 consensusDataReceive() {
+	uint8 dataLeft = consensusDataSize;
+	char *dataPtr = consensusReadData;
+
+	//rprintf("	");
+	cprintf("	RECEIVE: ");
+
+	while (radioCommandReceive(&consensusRadioCmdData, &consensusRadioMessageData, CONSENSUS_RESPONSE_TIMEOUT)
+		   && dataLeft > 0) {
+		char *bufferPtr = consensusRadioMessageData.command.data;
+
+		cprintf("C: ");
+		uint8 i = 0;
+		for (i = 0; i < RADIO_COMMAND_MESSAGE_DATA_LENGTH && i < dataLeft; i++) {
+			cprintf("%c", ((char *)bufferPtr)[i]);
+		}
+		cprintf(" - ");
+
+
+		i = 0;
+		while (i < RADIO_COMMAND_MESSAGE_DATA_LENGTH && i < dataLeft) {
+			*dataPtr++ = bufferPtr[i++];
+		}
+		cprintf("%d ", i);
+
+		//consensusPrintBytes(consensusRadioMessageData.command.data, 8);
+		dataLeft -= i;
+	}
+
+	//consensusPrintBytes(consensusReadData, consensusDataSize);
+
+	//cprintf("	%s\n", consensusReadData);
+	//rprintf("\n");
+	cprintf("\n");
+
+	if (dataLeft > 0) {
+		return (0);
+	}
+
+	return (1);
 }
 
 void consensusSendAck(uint8 destID) {
-	consensusAckMessage *cAck = &consensusRadioMessageData[0].command.data;
+	consensusAckMessage *cAck = (consensusAckMessage *) &consensusRadioMessageData.command.data;
 	cAck->ackCheck = CONSENSUS_ACK;
+	cAck->id = roneID;
 
-	radioCommandXmit(&consensusRadioCmdAtoB, destID, &consensusRadioMessageData[0]);
+	cprintf("	SENDING ACK\n");
+
+	radioCommandXmit(&consensusRadioCmdAck, destID, &consensusRadioMessageData);
+	osTaskDelay(CONSENSUS_INTER_MESSAGE_DELAY);
+}
+
+uint8 consensusReceiveAck() {
+	// Wait for ack for w/e time
+	if (!radioCommandReceive(&consensusRadioCmdAck, &consensusRadioMessageData, consensusPeriod - CONSENSUS_ACK_TIMEOUT_DELTA)) {
+		return 0;
+	} else {
+		// This is not an ack message
+		if (((consensusAckMessage *) &consensusRadioMessageData.command.data)->ackCheck != CONSENSUS_ACK) {
+			return 0;
+		}
+	}
+	cprintf("	ACK RECEIVED\n");
+
+	// Get ID of partner robot from message
+	return ((consensusAckMessage*) &consensusRadioMessageData.command.data)->id;
 }
 
 
 void consensusAckMode() {
+	cprintf("	Ack Mode\n");
 	// Random wait to offset to prevent synchronous transmissions
 	osTaskDelay(rand() % (consensusPeriod / 2));
 
@@ -109,74 +214,77 @@ void consensusAckMode() {
 	nbrListCreate(&nbrList);
 	neighborsPutMutex();
 
-	uint8 destID = nbrListGetNbr(&nbrList, rand() % nbrList.size)->ID;
+	if (nbrList.size == 0) {
+		cprintf("	No one to ack with!\n");
+		return;
+	}
+
+	Nbr *nbrPtr = nbrListGetNbr(&nbrList, (((uint8) rand()) % nbrList.size));
+	if (nbrPtr == NULL) {
+		cprintf("	No one to ack with!\n");
+		return;
+	}
+
+	uint8 destID = nbrGetID(nbrPtr);
+
+	cprintf("	Acking with robot %d\n", destID);
 
 	// Send ack to neighbor
 	consensusSendAck(destID);
 
-	// Wait for data from neighbor
-	uint8 i = 0;
-	while (radioCommandReceive(&consensusRadioCmdBtoA, &consensusRadioMessageData[i], CONSENSUS_RESPONSE_TIMEOUT)) {
-		if (i == consensusNumMessages) {
-			break;
-		}
-		i++;
-	}
+	cprintf("	Ack sent.\n");
 
-	// Do consensus if success
-	if (i == consensusNumMessages) {
-		consensusParseMessage();
-		// Do consensus if success
-		consensusOp(consensusData, consensusReadData);
-	} else {
-
-	}
-
-	// Send your data
-	consensusBuildMessage();
-	for (i = 0; i < consensusNumMessages; i++) {
-		radioCommandXmit(&consensusRadioCmdAtoB, destID, &consensusRadioMessageData[i]);
-		osTaskDelay(CONSENSUS_INTER_MESSAGE_DELAY);
-	}
-}
-
-void consensusIdleMode() {
-	// Wait for ack for w/e time
-	if (!radioCommandReceive(&consensusRadioCmdAtoB, &consensusRadioMessageData[0], consensusPeriod - CONSENSUS_ACK_TIMEOUT_DELTA)) {
+	if (!consensusDataReceive()) {
+		cprintf("	No data received :(\n");
 		return;
 	}
 
-	// If ack, then transmit your data
-	uint8 i;
-	uint8 destID = consensusRadioMessageData[0].command.destinationID;
+	cprintf("	Data received! Transmitting...\n");
 
-	consensusBuildMessage();
-	for (i = 0; i < consensusNumMessages; i++) {
-		radioCommandXmit(&consensusRadioCmdBtoA, destID, &consensusRadioMessageData[i]);
-		osTaskDelay(CONSENSUS_INTER_MESSAGE_DELAY);
+	consensusDataTransmit(destID);
+
+	cprintf("	Transmitted! Consensus time.\n");
+
+	(*consensusOp)(consensusData, consensusReadData);
+
+}
+
+void consensusIdleMode() {
+	cprintf("	Idle Mode\n");
+
+	uint8 fromID;
+	// Receive an ack from a neighbor
+	if ((fromID = consensusReceiveAck()) == 0) {
+		// No ack received
+		cprintf("	No Ack received :(\n");
+		return;
 	}
 
-	// Then wait for data back, then consensus
-	uint8 i = 0;
-	while (radioCommandReceive(&consensusRadioCmdAtoB, &consensusRadioMessageData[i], CONSENSUS_RESPONSE_TIMEOUT)) {
-		if (i == consensusNumMessages) {
-			break;
-		}
-		i++;
-	}
-	if (i == consensusNumMessages) {
-		consensusParseMessage();
-		// Do consensus if success
-		consensusOp(consensusData, consensusReadData);
-	} else {
+	cprintf("	Ack from robot %d! Transmitting...\n", fromID);
 
+	consensusDataTransmit(fromID);
+
+	cprintf("	Transmitted! Receiving data...\n");
+
+	if (!consensusDataReceive()) {
+		cprintf("	No data received :(\n");
+		return;
 	}
+
+	cprintf("	Received! Consensus time.\n");
+
+	(*consensusOp)(consensusData, consensusReadData);
 }
 
 void consensusTask() {
-	consensusWakeTime = osTaskGetTickCount();
 	for (;;) {
-		consensusPreOp(consensusData);
+		consensusWakeTime = osTaskGetTickCount();
+
+		consensusSuccess = FALSE;
+
+		cprintf("Consensus Round Begin\n");
+
+		(*consensusPreOp)(consensusData);
 
 		// Decide whether to attempt to connect or wait for a connection
 		if ((rand() % CONSENSUS_RAND_MOD) < consensusAckChance) {
@@ -185,18 +293,29 @@ void consensusTask() {
 			consensusIdleMode();
 		}
 
-		consensusPostOp(consensusData);
+		(*consensusPostOp)(consensusData);
+
+		consensusClearReadData();
+
+		cprintf("Consensus Round End\n");
 
 		osTaskDelayUntil(&consensusWakeTime, consensusPeriod);
 	}
 }
 
 void consensusInit(void *data, uint16 size) {
+	cprintf("Initializing Consensus\n");
+
 	consensusInitData(data, size);
 
-	consensusPreOp = (void (*)(void *))&consensusNoOp;
-	consensusPostOp =(void (*)(void *)) &consensusNoOp;
-	consensusOp = (void (*)(void *, void *))&consensusNoOp;
+	// Init to no ops
+	if (consensusPreOp == NULL)
+		consensusPreOp = (void (*)(void *))&consensusNoOp;
+	if (consensusPostOp == NULL)
+		consensusPostOp =(void (*)(void *)) &consensusNoOp;
+	if (consensusOp == NULL)
+		consensusOp = (void (*)(void *, void *))&consensusNoOp;
 
-	osTaskCreate(consensusTask, "consensus", 1024, NULL, CONSENSUS_TASK_PRIORITY);
+	osTaskCreate(consensusTask, "consensus", 1536, NULL, CONSENSUS_TASK_PRIORITY);
+	cprintf("Consensus Initialized\n");
 }
