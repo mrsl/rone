@@ -7,6 +7,9 @@
 
 #include "consensus.h"
 
+#define NEIGHBOR_ROUND_PERIOD	500
+#define RPRINTF_SLEEP_TIME		30
+
 /**
  * Initialization of subsystems and such
  */
