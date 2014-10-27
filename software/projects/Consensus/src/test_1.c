@@ -10,8 +10,34 @@
 #define NEIGHBOR_ROUND_PERIOD	300
 #define RPRINTF_SLEEP_TIME		30
 
-void noop(uint8 nbrID) {
-	// nothing
+
+uint8 tempValue;
+NbrData value;
+
+void averageDataInit() {
+	nbrDataCreate(&value, "cAvg", 8, rand() % 200);
+
+	cprintf("Initializing random value: %d\n", nbrDataGet(&value));
+}
+
+void averageStoreTempData(uint8 nbrID) {
+	Nbr *nbrPtr = nbrsGetWithID(nbrID);
+	if (!nbrPtr) {
+		/* Neighbor not found let's get out of here */
+		return;
+	}
+
+	/* Store temporary value */
+	tempValue = nbrDataGetNbr(&value, nbrPtr);
+}
+
+void averageOperation() {
+	uint8 currentValue = nbrDataGet(&value);
+	uint8 newValue = (currentValue + tempValue) / 2;
+
+	nbrDataSet(&value, newValue);
+
+	cprintf("New value after consensus: %d\n", newValue);
 }
 
 /**
@@ -30,7 +56,8 @@ void behaviorTaskInit() {
 	// Initialize the external pose subsystem for location
 	externalPoseInit();
 
-	consensusInit(noop);
+	averageDataInit();
+	consensusInit(averageStoreTempData, averageOperation);
 
 	// Status check
 	systemPrintStartup();

@@ -1,6 +1,8 @@
 /*
  * consensus.c
  *
+ * Finite state machine that performs pairwise gossip consensus.
+ *
  *  Created on: Oct 25, 2014
  *      Author: zkk
  */
@@ -12,32 +14,37 @@ uint8 consensusState;			// Current consensus state
 NbrData consensusReqID;			// Requested ID for consensus
 NbrData consensusAckID;			// Acknowledgment ID for consensus
 NbrData consensusNonce;			// Request number (nonce)
-uint8 consensusReqIDValue = 0;	// Requsted ID value
-uint8 consensusNonceValue = 0;	// Nonce value
 
-uint8 consensusPrevNonce = CONSENSUS_MAX_NONCE;	// Previous value containers
+/* Previous values from acknowledged robots, so we don't ack them again */
+uint8 consensusPrevNonce = CONSENSUS_MAX_NONCE;
 uint8 consensusPrevReqID = 0;
 
-uint32 consensusWakeTime;	// Task wake time
-uint32 consensusStateTime;	// Time when state began
+uint32 consensusWakeTime;		// Task wake time
+uint32 consensusStateTime;		// Time when state began
 
-NbrList consensusNbrList;	// Neighbor list
+NbrList consensusNbrList;		// Neighbor list
 
 uint8 consensusFeedback = 1;	// Display information about state?
 
 /**
- * Function to call upon successful gossip, argument is the neighbor to perform
- * gossip with.
+ * Function to call upon successful gossip. Should operate on the temporary data
+ * stored from consensusTempStoreData.
  */
-void (*consensusOperation)(uint8 nbrID);
+void (*consensusOperation)();
 
 /**
- * Sets the requested ID to a random neighbor
+ * Function to temporarily store the neighbors data before consensus, so that
+ * there isn't a race condition with new data being read by the neighbor.
+ * Argument is the neighbor to store data from
+ */
+void (*consensusStoreTempData)(uint8 nbrID);
+
+/**
+ * Sets the requested ID to a random neighbor from the neighbor list
  */
 void consensusSetReqID(void) {
 	uint8 randomNbr = rand() % consensusNbrList.size;
 	uint8 reqID = nbrListGetNbr(&consensusNbrList, randomNbr)->ID;
-	consensusReqIDValue = reqID;
 
 	nbrDataSet(&consensusReqID, reqID);
 }
@@ -52,56 +59,56 @@ void consensusSetAckID(uint8 ackID) {
 /**
  * Nulls out req and ack ID's for idle state
  */
-void consensusNullIDs(void) {
+void consensusSetIDsNull(void) {
 	nbrDataSet(&consensusReqID, 0);
 	nbrDataSet(&consensusAckID, 0);
 }
 
 /**
- * Increments the nonce
+ * Increments the nonce with wrap-around
  */
 void consensusIncNonce(void) {
-	consensusNonceValue++;
-	consensusNonceValue %= CONSENSUS_MAX_NONCE;
-	nbrDataSet(&consensusNonce, consensusNonceValue);
+	uint8 newNonce = nbrDataGet(&consensusNonce);
+	newNonce = (newNonce + 1) % CONSENSUS_MAX_NONCE;
+	nbrDataSet(&consensusNonce, newNonce);
 }
 
 /**
- * Finds a random neighbor that has our ID set to their requested ID
+ * Browses neighbor list to find a random neighbor that has requested to gossip
+ * with us. Returns their ID so that we can ack them and perform consensus.
  */
 uint8 consensusGetAckID(void) {
-	uint8 ackID = 0;	// Return value
+	uint8 ackID = 0;	// Return ID
 
 	uint8 reqInd = 0;						// Index in request list
 	uint8 reqNbrs[consensusNbrList.size];	// Valid requesting nbrs
-	uint8 reqNonce[consensusNbrList.size];	// Nonces from the nbrs
+	uint8 reqNonce[consensusNbrList.size];	// Nonces of requesting nbrs
 
 	/* Iterate over neighbor list */
 	uint8 i;
 	for (i = 0; i < consensusNbrList.size; i++) {
 		Nbr *nbrPtr = nbrListGetNbr(&consensusNbrList, i);
 
+		/* Handle bad neighbors */
 		if (!nbrPtr) {
-			/* Handle bad neighbors */
 			continue;
 		}
 
 		uint8 nbrID = nbrGetID(nbrPtr);
 
+		/* Is the requested ID our ID? */
 		if (nbrDataGetNbr(&consensusReqID, nbrPtr) == roneID) {
-			/* Is the requested ID our ID? */
+			uint8 nbrNonce = nbrDataGetNbr(&consensusNonce, nbrPtr);
 
+			/* If this was the neighbor we gossiped with last time, make sure
+			 * the request is fresh */
 			if (nbrID == consensusPrevReqID) {
-				/* If this was the neighbor we gossiped with last time, make
-				 * sure the request is fresh */
-				reqNonce[reqInd] = nbrDataGetNbr(&consensusNonce, nbrPtr);
-				if (reqNonce[reqInd] == consensusPrevNonce) {
-					/* The request is not fresh! Nonce matches previous,
-					 * ignore */
+				if (nbrNonce == consensusPrevNonce) {
+					/* The request isn't fresh! Nonce matches, ignore */
 					continue;
 				}
 			}
-
+			reqNonce[reqInd] = nbrNonce;
 			reqNbrs[reqInd++] = nbrID;
 		}
 	}
@@ -121,8 +128,30 @@ uint8 consensusGetAckID(void) {
  * Switches state and sets state time
  */
 void consensusSwitchState(uint8 newState) {
+	/* Set state variable and beginning time */
 	consensusState = newState;
 	consensusStateTime = osTaskGetTickCount();
+
+	/* Set LEDs if display mode on */
+	if (consensusFeedback) {
+		switch (newState) {
+		case (CONSENSUS_STATE_IDLE): {
+			ledsSetPattern(LED_GREEN, LED_PATTERN_ON,
+					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			break;
+		}
+		case (CONSENSUS_STATE_REQ): {
+			ledsSetPattern(LED_RED, LED_PATTERN_ON,
+					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			break;
+		}
+		case (CONSENSUS_STATE_ACK): {
+			ledsSetPattern(LED_BLUE, LED_PATTERN_ON,
+					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			break;
+		}
+		}
+	}
 }
 
 /**
@@ -145,9 +174,6 @@ void consensusTask(void *args) {
 
 		switch (consensusState) {
 		case (CONSENSUS_STATE_IDLE): {
-			/* Set LEDs if display mode on */
-			ledsSetPattern(LED_GREEN, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-
 			/* Handle being in the idle state */
 			if (consensusStateTime + CONSENSUS_TIME_IDLE > consensusWakeTime) {
 				/* Still in idle state */
@@ -161,8 +187,8 @@ void consensusTask(void *args) {
 					/* Set our ack ID to the requesting robot */
 					consensusSetAckID(ackID);
 
-					/* Perform consensus */
-					consensusOperation(ackID);
+					/* Store data for consensus */
+					consensusStoreTempData(ackID);
 				}
 			} else {
 				/* Idle state over, change state by rolling the dice, change
@@ -185,69 +211,94 @@ void consensusTask(void *args) {
 					requestConsensusFlag = 0;
 				}
 			}
-			break;
-		}
-		case (CONSENSUS_STATE_REQ): {
-			/* Set LEDs if display mode on */
-			ledsSetPattern(LED_RED, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
+			break;
+		} // End idle state
+		case (CONSENSUS_STATE_REQ): {
 			/* Handle being in the request state */
 			if (consensusStateTime + CONSENSUS_TIME_REQ > consensusWakeTime) {
-				/* Still in request state, check whether requested robot has
-				 * acked back */
-				Nbr *nbrPtr = nbrsGetWithID(consensusReqIDValue);
-				if (nbrPtr) {
-					if (nbrDataGetNbr(&consensusAckID, nbrPtr) == roneID) {
-						/* The requsted robot has set us as acknowledged! */
+				/* Still in request state */
+				if (requestConsensusFlag) {
+					/* We have already performed consensus, so just wait */
+					break;
+				}
 
-						/* Perform consensus, trip flag */
-						if (!requestConsensusFlag) {
-							consensusOperation(consensusReqIDValue);
-							requestConsensusFlag = 1;
-						}
-					}
+				/* Check whether requested robot has acked back */
+				uint8 reqID = nbrDataGet(consensusReqID);
+				Nbr *nbrPtr = nbrsGetWithID(reqID);
+				if (!nbrPtr) {
+					/* Neighbor not found, break and continue to next round */
+					break;
+				}
+
+				/* The requested robot has set us as acknowledged! */
+				if (nbrDataGetNbr(&consensusAckID, nbrPtr) == roneID) {
+					/* Store data for consensus, trip flag */
+					consensusStoreTempData(reqID);
+					requestConsensusFlag = 1;
 				}
 			} else {
+				/* If we managed to get an ack back, perform consensus on the
+				 * stored data */
+				if (requestConsensusFlag) {
+					consensusOperation();
+				}
+
 				/* Request state over, head back to idle state */
 				consensusSwitchState(CONSENSUS_STATE_IDLE);
 
 				/* Set ID values to null */
-				consensusNullIDs();
+				consensusSetIDsNull();
 			}
-			break;
-		}
-		case (CONSENSUS_STATE_ACK): {
-			/* Set LEDs if display mode on */
-			ledsSetPattern(LED_BLUE, LED_PATTERN_ON, LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
 
+			break;
+		} // End request state
+		case (CONSENSUS_STATE_ACK): {
 			/* Handle being in the ack state */
 			if (consensusStateTime + CONSENSUS_TIME_ACK > consensusWakeTime) {
-				/* Still in ack state */
+				/* Still in ack state, just wait it out */
 			} else {
+				/* Perform consensus now that the ack period is over */
+				consensusOperation();
+
 				/* Ack state over, head back to idle state */
 				consensusSwitchState(CONSENSUS_STATE_IDLE);
 
 				/* Set ID values to null */
-				consensusNullIDs();
+				consensusSetIDsNull();
 			}
+
 			break;
-		}
+		} // End ack state
 		}
 
+		/* Delay task until next round */
 		osTaskDelayUntil(&consensusWakeTime, CONSENSUS_TASK_DELAY);
 	}
 }
 
 /**
- * Initialize data and task for consensus
+ * Initialize data and task for consensus.
+ * Arguments are the two function needed to be provided by the user.
+ * First is a function to temporarily store the values of the neighbor data as
+ * to prevent race conditions from occurring.
+ * Second is the function that performs consensus using your data and the
+ * temporarily stored data from the first function call.
  */
-void consensusInit(void (*consensusOp)(uint8 nbrID)) {
-	consensusOperation = consensusOp;
+void consensusInit(void (*storeTempData)(uint8 nbrID), void (*operation)(void)) {
+	/* Set the function to store temporary data to prevent race conditions */
+	consensusStoreTempData = storeTempData;
 
+	/* Set the consensus operation to the provided function */
+	consensusOperation = operation;
+
+	/* Initialize the neighbor data used for the state machine */
 	nbrDataCreate(&consensusReqID, "cReqId", 8, 0);
 	nbrDataCreate(&consensusAckID, "cAckId", 8, 0);
 	nbrDataCreate(&consensusNonce, "cNonce", 8, 0);
 
-	osTaskCreate(consensusTask, "consensus", 1536, NULL, CONSENSUS_TASK_PRIORITY);
+	/* Create the background task */
+	osTaskCreate(consensusTask, "consenus", 1536, NULL,
+			CONSENSUS_TASK_PRIORITY);
 }
 
