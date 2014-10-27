@@ -37,7 +37,7 @@ void (*consensusOperation)();
  * there isn't a race condition with new data being read by the neighbor.
  * Argument is the neighbor to store data from
  */
-void (*consensusStoreTempData)(uint8 nbrID);
+void (*consensusStoreTempData)(Nbr *nbrPtr);
 
 /**
  * Sets the requested ID to a random neighbor from the neighbor list
@@ -77,11 +77,11 @@ void consensusIncNonce(void) {
  * Browses neighbor list to find a random neighbor that has requested to gossip
  * with us. Returns their ID so that we can ack them and perform consensus.
  */
-uint8 consensusGetAckID(void) {
-	uint8 ackID = 0;	// Return ID
+Nbr *consensusGetReqNbr(void) {
+	Nbr *reqNbr = NULL;	// Requesting nbr
 
 	uint8 reqInd = 0;						// Index in request list
-	uint8 reqNbrs[consensusNbrList.size];	// Valid requesting nbrs
+	Nbr *reqNbrs[consensusNbrList.size];	// Valid requesting nbrs
 	uint8 reqNonce[consensusNbrList.size];	// Nonces of requesting nbrs
 
 	/* Iterate over neighbor list */
@@ -94,34 +94,34 @@ uint8 consensusGetAckID(void) {
 			continue;
 		}
 
-		uint8 nbrID = nbrGetID(nbrPtr);
-
 		/* Is the requested ID our ID? */
 		if (nbrDataGetNbr(&consensusReqID, nbrPtr) == roneID) {
 			uint8 nbrNonce = nbrDataGetNbr(&consensusNonce, nbrPtr);
 
 			/* If this was the neighbor we gossiped with last time, make sure
 			 * the request is fresh */
-			if (nbrID == consensusPrevReqID) {
+			if (nbrGetID(nbrPtr) == consensusPrevReqID) {
 				if (nbrNonce == consensusPrevNonce) {
 					/* The request isn't fresh! Nonce matches, ignore */
 					continue;
 				}
 			}
+			/* Store data */
 			reqNonce[reqInd] = nbrNonce;
-			reqNbrs[reqInd++] = nbrID;
+			reqNbrs[reqInd++] = nbrPtr;
 		}
 	}
 
 	/* Return a random neighbor from this list of requesters */
 	if (reqInd) {
 		uint8 randInd = rand() % reqInd;
-		ackID = reqNbrs[randInd];
-		consensusPrevReqID = ackID;
+		reqNbr = reqNbrs[randInd];
+
+		consensusPrevReqID = nbrGetID(reqNbr);
 		consensusPrevNonce = reqNonce[randInd];
 	}
 
-	return ackID;
+	return reqNbr;
 }
 
 /**
@@ -160,12 +160,19 @@ void consensusSwitchState(uint8 newState) {
 void consensusTask(void *args) {
 	/* Flag for whether consensus has been performed in request mode */
 	uint8 requestConsensusFlag;
+	uint32 neighborRound;
 
 	/* Initialize state to idle */
 	consensusSwitchState(CONSENSUS_STATE_IDLE);
 
 	for (;;) {
 		consensusWakeTime = osTaskGetTickCount();
+
+		/* Only check if a new neighbor round has occurred */
+		if (!neighborsNewRoundCheck(&neighborRound)) {
+			osTaskDelayUntil(&consensusWakeTime, CONSENSUS_TASK_DELAY);
+			continue;
+		}
 
 		/* Create neighbor list for this round */
 		neighborsGetMutex();
@@ -177,18 +184,18 @@ void consensusTask(void *args) {
 			/* Handle being in the idle state */
 			if (consensusStateTime + CONSENSUS_TIME_IDLE > consensusWakeTime) {
 				/* Still in idle state */
-				uint8 ackID = consensusGetAckID();
+				Nbr *reqNbr = consensusGetReqNbr();
 
-				if (ackID) {
-					/* If we have a robot requesting us to gossip, switch to ack
-					 * mode */
+				if (reqNbr) {
+					/* If we have a robot requesting us to gossip, switch to
+					 * ack mode */
 					consensusSwitchState(CONSENSUS_STATE_ACK);
 
 					/* Set our ack ID to the requesting robot */
-					consensusSetAckID(ackID);
+					consensusSetAckID(nbrGetID(reqNbr));
 
 					/* Store data for consensus */
-					consensusStoreTempData(ackID);
+					consensusStoreTempData(reqNbr);
 				}
 			} else {
 				/* Idle state over, change state by rolling the dice, change
@@ -224,7 +231,7 @@ void consensusTask(void *args) {
 				}
 
 				/* Check whether requested robot has acked back */
-				uint8 reqID = nbrDataGet(consensusReqID);
+				uint8 reqID = nbrDataGet(&consensusReqID);
 				Nbr *nbrPtr = nbrsGetWithID(reqID);
 				if (!nbrPtr) {
 					/* Neighbor not found, break and continue to next round */
@@ -234,7 +241,7 @@ void consensusTask(void *args) {
 				/* The requested robot has set us as acknowledged! */
 				if (nbrDataGetNbr(&consensusAckID, nbrPtr) == roneID) {
 					/* Store data for consensus, trip flag */
-					consensusStoreTempData(reqID);
+					consensusStoreTempData(nbrPtr);
 					requestConsensusFlag = 1;
 				}
 			} else {
@@ -285,7 +292,7 @@ void consensusTask(void *args) {
  * Second is the function that performs consensus using your data and the
  * temporarily stored data from the first function call.
  */
-void consensusInit(void (*storeTempData)(uint8 nbrID), void (*operation)(void)) {
+void consensusInit(void (*storeTempData)(Nbr *nbrPtr), void (*operation)(void)) {
 	/* Set the function to store temporary data to prevent race conditions */
 	consensusStoreTempData = storeTempData;
 

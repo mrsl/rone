@@ -15,7 +15,8 @@
 
 /* Task Information */
 #define CONSENSUS_TASK_DELAY		100
-#define CONSENSUS_TASK_PRIORITY	(tskIDLE_PRIORITY + 3)
+#define CONSENSUS_TASK_PRIORITY		(tskIDLE_PRIORITY + 3)
+#define CONSENSUS_NUM_ROUNDS		3
 
 /* States */
 #define CONSENSUS_STATE_IDLE		0
@@ -23,9 +24,9 @@
 #define CONSENSUS_STATE_ACK			2
 
 /* Timing */
-#define CONSENSUS_TIME_IDLE			1000
-#define CONSENSUS_TIME_REQ			1000
-#define CONSENSUS_TIME_ACK			1000
+#define CONSENSUS_TIME_IDLE			(CONSENSUS_NUM_ROUNDS * neighborsGetPeriod())
+#define CONSENSUS_TIME_REQ			(CONSENSUS_NUM_ROUNDS * neighborsGetPeriod())
+#define CONSENSUS_TIME_ACK			(CONSENSUS_NUM_ROUNDS * neighborsGetPeriod())
 
 /* Other Information */
 #define CONSENSUS_MAX_NONCE			100
@@ -33,6 +34,6 @@
 #define CONSENSUS_RAND_MOD			1000
 
 /* Function Declarations */
-void consensusInit(void (*storeTempData)(uint8 nbrID), void (*operation)(void));
+void consensusInit(void (*storeTempData)(Nbr *nbrPtr), void (*operation)(void));
 
 #endif /* SRC_CONSENSUS_H_ */

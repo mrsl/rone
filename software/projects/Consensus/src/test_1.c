@@ -20,13 +20,7 @@ void averageDataInit() {
 	cprintf("Initializing random value: %d\n", nbrDataGet(&value));
 }
 
-void averageStoreTempData(uint8 nbrID) {
-	Nbr *nbrPtr = nbrsGetWithID(nbrID);
-	if (!nbrPtr) {
-		/* Neighbor not found let's get out of here */
-		return;
-	}
-
+void averageStoreTempData(Nbr *nbrPtr) {
 	/* Store temporary value */
 	tempValue = nbrDataGetNbr(&value, nbrPtr);
 }
@@ -78,7 +72,6 @@ void behaviorTask(void* parameters) {
 	for (;;) {
 		lastWakeTime = osTaskGetTickCount();	// We have woken
 		behOutput = behInactive;
-
 
 		// Set motion output
 		motorSetBeh(&behOutput);
