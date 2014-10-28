@@ -7,21 +7,28 @@
 
 #include "consensusPipeline.h"
 
-#define CONSENSUS_PIPELINE_AVG_SIZE	5
+#define CONSENSUS_PIPELINE_AVG_SIZE	20
 
 uint8 tempValue[CONSENSUS_PIPELINE_AVG_SIZE];
 NbrData value[CONSENSUS_PIPELINE_AVG_SIZE];
 
-uint8 inputValue = rand() % 200;
+uint8 inputValue;
+
+void pipelineAveragePrintCell(uint8 index) {
+	cprintf("%d-", nbrDataGet(&value[index]));
+}
 
 void pipelineAveragePrintPipeline(void) {
-	cprintf("PLINE: ")
+	cprintf("PLINE: ");
 	consensusPipelinePrintPipeline(pipelineAveragePrintCell);
 	cprintf("\n");
 }
 
 void pipelineAverageInput(uint8 index) {
 	nbrDataSet(&value[index], inputValue);
+
+	cprintf("%d\n", index);
+
 	pipelineAveragePrintPipeline();
 }
 
@@ -36,11 +43,9 @@ void pipelineAverageOperation(uint8 index) {
 	nbrDataSet(&value[index], newValue);
 }
 
-void pipelineAveragePrintCell(uint8 index) {
-	cprintf("%d-", nbrDataGet(&value[index]));
-}
-
 void pipelineAverageDataInit(void) {
+	inputValue = rand() % 200;
+
 	uint8 i;
 	for (i = 0; i < CONSENSUS_PIPELINE_AVG_SIZE; i++) {
 		nbrDataCreate(&value[i], "cpAvg", 8, 0);

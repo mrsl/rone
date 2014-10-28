@@ -141,6 +141,8 @@ void consensusPipelineInit(uint8 size,
 		void (*cellStoreTempData)(Nbr *nbrPtr, uint8 srcIndex, uint8 destIndex),
 		void (*cellOperation)(uint8 index)) {
 
+	consensusPipelineSize = size;
+
 	nbrDataCreate(&consensusPipelineHead, "cpHead", 8, 0);
 	nbrDataCreate(&consensusPipelineCount, "cpCount", 8, 0);
 

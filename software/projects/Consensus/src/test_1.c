@@ -27,9 +27,12 @@ void behaviorTaskInit() {
 	externalPoseInit();
 
 	/* Initialize and begin consensus */
-	averageDataInit();
+	//averageDataInit();
 	consensusEnableFeedback(1);
-	consensusInit(averageStoreTempData, averageOperation);
+	//consensusInit(averageStoreTempData, averageOperation);
+	//pipelineAverageDataInit();
+
+	averageDataInit();
 
 	// Status check
 	systemPrintStartup();

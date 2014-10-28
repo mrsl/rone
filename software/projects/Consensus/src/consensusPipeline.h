@@ -8,6 +8,8 @@
 #ifndef SRC_CONSENSUSPIPELINE_H_
 #define SRC_CONSENSUSPIPELINE_H_
 
+#include "consensus.h"
+
 void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index));
 
 uint8 consensusPipelineGetOldestIndex(void);

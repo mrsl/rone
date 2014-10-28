@@ -5,14 +5,10 @@
  *      Author: zkk
  */
 
+#include "consensus.h"
+
 uint8 tempValue;
 NbrData value;
-
-void averageDataInit() {
-	nbrDataCreate(&value, "cAvg", 8, rand() % 200);
-
-	cprintf("Initializing random value: %d\n", nbrDataGet(&value));
-}
 
 void averageStoreTempData(Nbr *nbrPtr) {
 	/* Store temporary value */
@@ -26,4 +22,10 @@ void averageOperation() {
 	nbrDataSet(&value, newValue);
 
 	cprintf("New value after consensus: %d\n", newValue);
+}
+
+void averageDataInit() {
+	nbrDataCreate(&value, "cAvg", 8, rand() % 200);
+
+	consensusInit(averageStoreTempData, averageOperation);
 }

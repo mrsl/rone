@@ -23,21 +23,21 @@
  *  States
  */
 #define CONSENSUS_STATE_IDLE		0
-#define CONSENSUS_STATE_REQ		1
-#define CONSENSUS_STATE_ACK		2
+#define CONSENSUS_STATE_REQ			1
+#define CONSENSUS_STATE_ACK			2
 
 /**
  *  Timing, based on a number of neighbor rounds
  */
-#define CONSENSUS_TIME_IDLE		(3 * neighborsGetPeriod())
+#define CONSENSUS_TIME_IDLE			(3 * neighborsGetPeriod())
 #define CONSENSUS_TIME_REQ			(3 * neighborsGetPeriod())
-#define CONSENSUS_TIME_ACK			(3 * neighborsGetPeriod())
+#define CONSENSUS_TIME_ACK			(4 * neighborsGetPeriod())
 
 /**
  *  Other Information
  */
 /* The maximum value of the request nonce. */
-#define CONSENSUS_MAX_NONCE		100
+#define CONSENSUS_MAX_NONCE			100
 /* The probability of going into request mode from idle mode.
  * Range is from 0 - CONSENSUS_RAND_MOD */
 #define CONSENSUS_REQ_PROB			500
