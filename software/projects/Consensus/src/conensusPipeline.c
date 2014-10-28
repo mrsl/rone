@@ -10,7 +10,7 @@
 #include "consensus.h"
 
 NbrData consensusPipelineHead;		// The current head, or most recent
-NbrData consensusPipelineCount;	// The current element count in the pipeline
+NbrData consensusPipelineCount;		// The current element count in the pipeline
 uint8 consensusPipelineSize;		// The maximum size of the pipeline
 
 /* User provided function to input new pipeline data to the neighbor data at the
@@ -26,7 +26,13 @@ void (*consensusPipelineCellStoreTempData)(Nbr *nbrPtr, uint8 srcIndex, uint8 de
 void (*consensusPipelineCellOperation)(uint8 index);
 
 /**
- * Outputs the contents of the pipeline using a user defined cell output function
+ * Outputs the contents of the pipeline using a user defined cell output function.
+ * Iterates over the entire pipeline starting at the head and calls the provided
+ * function.
+ *
+ * @param void (*printFunction)(uint8 index)
+ * 		Function called on each element of the pipeline, should print out or
+ * 		display data about it
  */
 void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index)) {
 	/* Get values from neighbor data */
@@ -44,7 +50,8 @@ void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index)) {
 }
 
 /**
- * Operation that occurs when consensus happens
+ * Function called at the beginning of each round. Handles input into the
+ * pipeline and the rolling aspects and count incrementing in the pipeline.
  */
 void consensusPipelineNextRound(void) {
 	/* Decrement the head and set it */
@@ -53,7 +60,7 @@ void consensusPipelineNextRound(void) {
 	nbrDataSet(&consensusPipelineHead, newHead);
 
 	/* Input new value into head */
-	(*consensusPipelineCellInput)(newHead);
+	consensusPipelineCellInput(newHead);
 
 	/* Increment the count if we are less than full */
 	uint8 count = nbrDataGet(&consensusPipelineCount);
@@ -64,7 +71,10 @@ void consensusPipelineNextRound(void) {
 }
 
 /**
- * Consensus operation on successful gossip
+ * Consensus operation on successful gossip. Iterates over the pipeline and
+ * calls the cell consensus function intialized by the user on each cell.
+ * Predicated on the fact that consensusPipelineStoreTempData was called
+ * before it, as the cellOperation should use the temporary data storage array.
  */
 void consensusPipelineOperation(void) {
 	/* Get values from neighbor data */
@@ -78,13 +88,17 @@ void consensusPipelineOperation(void) {
 
 	    /* Perform consensus with corresponding stored values in the similarly
 	     * indexed temporary pipeline */
-	    (*consensusPipelineCellOperation)(index);
+	    consensusPipelineCellOperation(index);
 	}
 }
 
 /**
  * Stores data into temporary buffer at corresponding index locations to our
- * pipeline.
+ * pipeline. Calls the user provided cellStoreTempData to store data in
+ * locations in the temporary storage array.
+ *
+ * @param nbrPtr
+ * 		The neighbor pointer to look up the data from
  */
 void consensusPipelineStoreTempData(Nbr *nbrPtr) {
 	/* Get values from neighbor data */
@@ -101,7 +115,9 @@ void consensusPipelineStoreTempData(Nbr *nbrPtr) {
 	    uint8 destIndex = (myHead + i) % consensusPipelineSize;
 	    uint8 srcIndex = (theirHead + j) % consensusPipelineSize;
 
-	    (*consensusPipelineCellStoreTempData)(nbrPtr, srcIndex, destIndex);
+	    /* Store the data from the neighbor into locations in the temporary
+	     * storage that correspond to our indices in our pipeline. */
+	    consensusPipelineCellStoreTempData(nbrPtr, srcIndex, destIndex);
 
 	    /* Only increment their count if it is less than their size */
 	    if (j < theirCount) {
@@ -112,6 +128,8 @@ void consensusPipelineStoreTempData(Nbr *nbrPtr) {
 
 /**
  * Gets the last index in the pipeline
+ *
+ * @return The last (oldest) index in the pipeline.
  */
 uint8 consensusPipelineGetOldestIndex(void) {
 	uint8 head = nbrDataGet(&consensusPipelineHead);
@@ -130,27 +148,45 @@ uint8 consensusPipelineGetOldestIndex(void) {
  *
  * @param size
  * 		The maximum size of the pipeline array.
+ *
  * @param void (*cellInput)(uint8 index)
  * 		A function that inserts the input value for the pipeline into the cell
  * 		of the pipeline array given by the index parameter to the function.
+ *
  * 	@param void (*cellStoreTempData)(Nbr *nbrPtr, uint8 srcIndex, uint8 destIndex)
- * 		A function that stores tempo
+ * 		A function that stores a neighbors data that we are going to gossip
+ * 		with into a temporary storage array provided by the user. The function
+ * 		provided should accept the pointer to the neighbor, nbrPtr, a source
+ * 		index from the neighbor's pipeline to copy data from, and a destination
+ * 		index where the data should be stored in the temporary storage array.
+ * 		This will look something like this:
+ * 		tempValue[destIndex] = nbrDataGetNbr(&value[srcIndex], nbrPtr);
+ *
+ * 	@param void (*cellOperation)(uint8 index))
+ * 		The function called upon a successful gossip. This should update the
+ * 		value in the index of your pipeline using data from the temporary
+ * 		data array at the same index.
  */
 void consensusPipelineInit(uint8 size,
 		void (*cellInput)(uint8 index),
 		void (*cellStoreTempData)(Nbr *nbrPtr, uint8 srcIndex, uint8 destIndex),
 		void (*cellOperation)(uint8 index)) {
 
+	/* Set the size of the pipeline */
 	consensusPipelineSize = size;
 
+	/* Create our neighbor data */
 	nbrDataCreate(&consensusPipelineHead, "cpHead", 8, 0);
 	nbrDataCreate(&consensusPipelineCount, "cpCount", 8, 0);
 
+	/* Initialize all the provided function pointers */
 	consensusPipelineCellInput = cellInput;
 	consensusPipelineCellStoreTempData = cellStoreTempData;
 	consensusPipelineCellOperation = cellOperation;
 
+	/* Set the beginning round operation for consensus subtask */
 	consensusSetRoundOperation(consensusPipelineNextRound);
 
+	/* Initalize the consensus subtask */
 	consensusInit(consensusPipelineStoreTempData, consensusPipelineOperation);
 }

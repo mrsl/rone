@@ -10,6 +10,7 @@
 
 #include "consensus.h"
 
+/* Function Declarations */
 void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index));
 
 uint8 consensusPipelineGetOldestIndex(void);
