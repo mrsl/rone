@@ -29,10 +29,14 @@ void pipelineAveragePrintCell(uint8 index) {
  * Prints out the contents of the pipeline from head to tail.
  */
 void pipelineAveragePrintPipeline(void) {
-	cprintf("PLINE: ");
-	/* Call the consensus pipeline print function using our print function */
-	consensusPipelinePrintPipeline(pipelineAveragePrintCell);
-	cprintf("\n");
+//	cprintf("PLINE: ");
+//	/* Call the consensus pipeline print function using our print function */
+//	consensusPipelinePrintPipeline(pipelineAveragePrintCell);
+//	cprintf("\n");
+
+	/* Print out the input value and the current value we have */
+	uint8 oldIndex = consensusPipelineGetOldestIndex();
+	cprintf("%d, %d\n", inputValue, nbrDataGet(&value[oldIndex]));
 }
 
 /**
