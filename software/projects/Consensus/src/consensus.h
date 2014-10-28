@@ -47,6 +47,8 @@
 /* Function Declarations */
 void consensusEnableFeedback(uint8 isOn);
 
+void consensusSetRoundOperation(void (*roundOperation)(void));
+
 void consensusInit(void (*storeTempData)(Nbr *nbrPtr), void (*operation)(void));
 
 #endif /* SRC_CONSENSUS_H_ */

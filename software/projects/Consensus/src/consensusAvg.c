@@ -12,6 +12,9 @@ NbrData value;		// Our value
 
 uint8 inputValue;	// The input value for our consensus
 
+/* Function Declaration */
+void consensusAverageInit(void);
+
 /**
  * Stores the value of the neighbors data into a temporary storage location
  *
@@ -49,7 +52,7 @@ void consensusAveragePrint(void) {
 /**
  * Initializes average consensus
  */
-void consensusAverageInit() {
+void consensusAverageInit(void) {
 	/* Assign our input value */
 	inputValue = rand() % 200;
 

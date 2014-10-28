@@ -26,13 +26,10 @@ void behaviorTaskInit() {
 	// Initialize the external pose subsystem for location
 	externalPoseInit();
 
-	/* Initialize and begin consensus */
-	//averageDataInit();
+	/* Enable visual LED feedback from the consensus system */
 	consensusEnableFeedback(1);
-	//consensusInit(averageStoreTempData, averageOperation);
-	//pipelineAverageDataInit();
-
-	averageDataInit();
+	/* Initialize and begin consensus using averaging */
+	consensusAverageInit();
 
 	// Status check
 	systemPrintStartup();
