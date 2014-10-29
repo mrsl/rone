@@ -19,7 +19,7 @@
 #define POWER_BUTTON_BIT			BIT2
 
 /* 5VUSB_SENSE Pin Inputs */
-#ifdef RONE_V11
+#if defined(RONE_V11)
 	#define POWER_USB_PORT_IN			P1IN
 	#define POWER_USB_PORT_OUT			P1OUT
 	#define POWER_USB_PORT_DIR			P1DIR
@@ -31,9 +31,7 @@
 	#define POWER_EN_PORT_OUT			P1OUT
 	#define POWER_EN_PORT_DIR			P1DIR
 	#define POWER_EN_BIT				BIT1
-#endif
-
-#ifdef RONE_V12
+#elif defined(RONE_V12)
 	#define POWER_USB_PORT_IN			P2IN
 	#define POWER_USB_PORT_OUT			P2OUT
 	#define POWER_USB_PORT_DIR			P2DIR
@@ -52,20 +50,20 @@
 	#define FTDI_RESET_PORT_OUT			P1OUT
 	#define FTDI_RESET_PORT_DIR			P1DIR
 	#define FTDI_RESET_BIT				BIT3
-	
-#ifdef RONE_V12_TILETRACK
-	#define MOT_SLEEP_PORT_SEL			P1SEL
-	#define MOT_SLEEP_PORT_IN			P1IN
-	#define MOT_SLEEP_PORT_OUT			P1OUT
-	#define MOT_SLEEP_PORT_DIR			P1DIR
-	#define MOT_SLEEP_BIT				BIT5
-#else
-	#define MOT_SLEEP_PORT_SEL			P3SEL
-	#define MOT_SLEEP_PORT_IN			P3IN
-	#define MOT_SLEEP_PORT_OUT			P3OUT
-	#define MOT_SLEEP_PORT_DIR			P3DIR
-	#define MOT_SLEEP_BIT				BIT6
-#endif /* #ifdef RONE_V12_TILETRACK */
+
+	#ifdef RONE_V12_TILETRACK
+		#define MOT_SLEEP_PORT_SEL			P1SEL
+		#define MOT_SLEEP_PORT_IN			P1IN
+		#define MOT_SLEEP_PORT_OUT			P1OUT
+		#define MOT_SLEEP_PORT_DIR			P1DIR
+		#define MOT_SLEEP_BIT				BIT5
+	#else
+		#define MOT_SLEEP_PORT_SEL			P3SEL
+		#define MOT_SLEEP_PORT_IN			P3IN
+		#define MOT_SLEEP_PORT_OUT			P3OUT
+		#define MOT_SLEEP_PORT_DIR			P3DIR
+		#define MOT_SLEEP_BIT				BIT6
+	#endif /* #ifdef RONE_V12_TILETRACK */
 
 	#define CHRG_LIM_PORT_IN			P2IN
 	#define CHRG_LIM_PORT_OUT			P2OUT
@@ -73,29 +71,24 @@
 	#define CHRG_LIM_PORT_SEL			P2SEL
 	#define CHRG_LIM_BIT				BIT5
 	
-	// Experimentally determined number for V15
-	// USB5VSense USB: 		890
-	//	 		  Charger:	950
-	//			  Both:		926
-	#define POWER_USB_FAST_CHARGE_THRESHOLD		922
-
-//    #define USB_5V_RUN_AVG_LEN          3
-//	uint8 Usb5vRunAvg[USB_5V_RUN_AVG_LEN];
-//	uint8 Usb5vRunAvgCount = 0;
-#endif
+#endif /* RONE_V12 */
 
 #ifndef RONE_V12_TILETRACK
+
 #define RESET_PORT_SEL		P2SEL
 #define RESET_PORT_IN		P2IN
 #define RESET_PORT_OUT		P2OUT
 #define RESET_PORT_DIR		P2DIR
 #define RESET_BIT			BIT4
+
 #else
+
 #define RESET_PORT_SEL		P1SEL
 #define RESET_PORT_IN		P1IN
 #define RESET_PORT_OUT		P1OUT
 #define RESET_PORT_DIR		P1DIR
 #define RESET_BIT			BIT4
+
 #endif // #ifndef RONE_V12_TILETRACK
 
 boolean powerOn = FALSE;
@@ -111,6 +104,8 @@ uint8 vBatRunAvgCount = 0;
 uint16 USBSenseRunAvg[USB_SENSE_RUN_AVG_LEN];
 uint8 USBSenseRunAvgCount = 0;
 
+static void powerUSBSetEnable(boolean on);
+
 void powerUSBInit(void) {
 #ifdef RONE_V11
 	//Input with I/O
@@ -119,19 +114,38 @@ void powerUSBInit(void) {
 	POWER_USB_PORT_SEL &= ~POWER_USB_BIT;
 #endif
 #ifdef RONE_V12
+	uint8 i;
+
 	// Set up the comparator to read true if we receive more than about 2.5V on
 	// USB 5V. This allows airplaine mode with a 1/3 Voltage Divider
 	CACTL1 = CARSEL + CAREF0;  // 0.25 * Vcc reference applied to '-' terminal
 							   // No interrupts.
 	CACTL2 = P2CA0 + CAF;      // Input CA0 on '+' terminal, filter output.
 
+	POWER_USB_PORT_REN &= ~(POWER_USB_BIT);
 	powerUSBSetEnable(FALSE);
+
+	/* Start off assuming we are plugged in */
+	for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
+		USBSenseRunAvg[i] = 900;
+	}
+	/*
+	 * Read the USB and use that as all of the running averages
+	 * Esensially, this should give a starting place unless the read fails
+	 */
+	USBSenseRunAvgCount = 0;
+	powerUSBReadADC();
+	for (i = 0; i < VBAT_RUN_AVG_LEN; i++){
+		vBatRunAvg[i] = vBatRunAvg[0];
+	}
+	//Reset the read count to 0
+	USBSenseRunAvgCount = 0;
 #endif
 }
 
-void powerUSBSetEnable(boolean on) {
+static void powerUSBSetEnable(boolean on) {
 #ifdef RONE_V11
-	// Nothing to do for V11
+	// No Power USB Set Enable for V11
 #endif
 #ifdef RONE_V12
 	// Turn off/on the comparator
@@ -145,6 +159,23 @@ void powerUSBSetEnable(boolean on) {
 #endif
 }
 
+static boolean powerUSBGetState(void) {
+#if defined(RONE_V11)
+	if(((POWER_USB_PORT_IN & POWER_USB_BIT)==POWER_USB_BIT)){
+		return TRUE;
+	} 
+	else {
+		return FALSE;
+	}
+#elif defined(RONE_V12)
+	// CAOUT is the value of the filtered Comparator
+	if((CACTL2 & CAOUT) == CAOUT) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+#endif
+}
 
 uint16 powerUSBGetAvg() {
 	uint32 average = 0;
@@ -154,70 +185,8 @@ uint16 powerUSBGetAvg() {
 		average += USBSenseRunAvg[i];
 	}
 
-	average = average / USB_SENSE_RUN_AVG_LEN;
-
-	return average;
+	return (average / USB_SENSE_RUN_AVG_LEN);
 }
-
-// Set the mode of the USB Power Sense to be either Digital, Analog Comparator, or ADC based
-// This may take over the USBSetEnable
-// Returns 1 if fast charge should be enabled, 0 otherwise
-uint8 powerUSBSetMode(uint8 mode) {
-	uint8 retval = 0;
-#ifdef RONE_V12
-	volatile uint16 ADCValue = 0;
-	switch(mode) {
-	case POWER_USB_SENSE_MODE_COMP:
-		// Disable ADC
-		ADC10AE0 &= ~(POWER_USB_BIT);
-		// Setup comparator mode settings
-		powerUSBInit();
-		powerUSBSetEnable(TRUE);
-		break;
-	case POWER_USB_SENSE_MODE_ADC:
-		// Disable comparator mode
-		powerUSBSetEnable(FALSE);
-		// Setup ADC pins
-		POWER_USB_PORT_REN &= ~(POWER_USB_BIT);
-		ADC10AE0 |= (POWER_USB_BIT);
-	   	ADC10CTL0 &= ~ENC;             						// Turn off ADC10 to switch channel
-		ADC10CTL1 = INCH_3 | ADC10DIV_0 | CONSEQ_0;			// Input A0, single sequence
-	   	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
-	   	while (ADC10CTL1 & BUSY); 							// Wait until sample ends
-	   	// Store and calculate running average
-		USBSenseRunAvg[USBSenseRunAvgCount] = (uint16)ADC10MEM;
-		USBSenseRunAvgCount = (USBSenseRunAvgCount + 1) % USB_SENSE_RUN_AVG_LEN;
-		// Determine if it reached threshold for fast charge
-	   	if (powerUSBGetAvg() > POWER_USB_FAST_CHARGE_THRESHOLD) {
-	   		retval = POWER_USB_SENSE_MODE_ADC;
-	   	}
-	   	break;
-	}
-#endif /* RONE_V12 */
-
-	return retval;
-}
-
-boolean powerUSBGetState(void){
-#ifdef RONE_V11
-	if(((POWER_USB_PORT_IN & POWER_USB_BIT)==POWER_USB_BIT)){
-		return TRUE;
-	} 
-	else {
-		return FALSE;
-	}
-#endif
-#ifdef RONE_V12
-	// CAOUT is the value of the filtered Comparator
-	if((CACTL2 & CAOUT) == CAOUT) {
-		return TRUE;
-	} else {
-		return FALSE;
-	}
-
-#endif
-}
-
 
 uint8 powerVBatGet(void){
 	//Returns 10x the battery voltage as an integer
@@ -231,7 +200,20 @@ uint8 powerVBatGet(void){
 }
 
 void ADC10Init(void){
-	ADC10CTL0 = SREF_0 | ADC10SHT_2 | ADC10ON; 					// Default ref, 16 x clk, ADC10 on
+	/* Set up the ADC10 for single sample conversions at a slow (<100 Hz) rate. */
+	ADC10CTL0 = SREF_1 + 		/* Vr+ = Vref+, Vr- = Vss */
+				ADC10SHT_3 + 	/* 64x clock cycle hold */
+				ADC10SR + 		/* Slow sample */
+				REF2_5V + 		/* Up the voltage to 2.5V for noise tolerance. */
+				REFBURST + 		/* Bust sample (turn off buffer) */
+				REFON + 		/* Turn on the reference */
+				ADC10ON; 		/* Turn on ADC */
+}
+
+void ADC10Shutdown(void){
+	ADC10CTL0 = 0; // ~ADC10ON
+	ADC10CTL1 = 0;
+	ADC10AE0 = 0;
 }
 
 void powerVBatInit(void) {
@@ -251,25 +233,23 @@ void powerVBatInit(void) {
 	vBatRunAvgCount = 0;
 }
 
-
-void ADC10Shutdown(void){
-	ADC10CTL0 = 0; // ~ADC10ON
-}
-
-
 #define ADC_MAX_DELAY_TIME		500
 #define VBAT_CONV_NUMER			(2.5 * 10)
+/* The 0.467 Constant comes from the 1/2 voltage divider + sampling droop */
 #define VBAT_CONV_DENOM			(1024 * 0.467)
-//#define VBAT_CONV_DENOM			(1024 * 0.425)
 
 void powerVBatReadADC(void){
-	volatile uint16 i;
-	
+	uint16 i;
 	// Reconfigure ADC10 for power sense
-	ADC10AE0 |= BIT7; 													// A7
-	ADC10CTL1 = INCH_7 | ADC10DIV_7 | CONSEQ_0;							// input channel 7, single sequence
-	ADC10CTL0 = ADC10SHT_2 | ADC10ON | SREF_1 | REFON | REF2_5V ; 		// 16 x clk, ADC10 on, internal ref, ref on, 2.5 volt internal ref
-   	ADC10CTL0 |= ENC + ADC10SC;             							// Sampling and conversion start
+	/* Turn off the ENC and conversion start */
+	ADC10CTL0 &= ~(ENC + ADC10SC);
+	/* Input channel A7, manual trigger, Single conversion, default 5.5MHz internal osc */
+	ADC10CTL1 = INCH_7 + ADC10DIV_0 + CONSEQ_0;
+	/* Enable A7 as an ADC input. This sets up the pin as well. */
+	ADC10AE0 = BIT7;
+    /* Sampling and conversion start */
+	ADC10CTL0 |= (ENC + ADC10SC);
+
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
 		if (!(ADC10CTL1 & ADC10BUSY)) {
 			// Add the current read to the sliding average if there was a sucsessful read
@@ -278,11 +258,28 @@ void powerVBatReadADC(void){
 			break;
 		} 
 	}
-
-	// Change back to original ADC10 settings
-	ADC10Init();
 }
 
+void powerUSBReadADC() {
+	uint16 i;
+	/* Turn off the ENC and conversion start */
+	ADC10CTL0 &= ~(ENC + ADC10SC);
+	/* Input channel A7, manual trigger, Single conversion, default 5.5MHz internal osc */
+	ADC10CTL1 = INCH_3 + ADC10DIV_0 + CONSEQ_0;
+	/* Enable A7 as an ADC input. This sets up the pin as well. */
+	ADC10AE0 = POWER_USB_BIT;
+    /* Sampling and conversion start */
+	ADC10CTL0 |= (ENC + ADC10SC);
+
+	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
+		if (!(ADC10CTL1 & ADC10BUSY)) {
+		   	// Store and calculate running average
+			USBSenseRunAvg[USBSenseRunAvgCount] = (uint16)ADC10MEM;
+			USBSenseRunAvgCount = (USBSenseRunAvgCount + 1) % USB_SENSE_RUN_AVG_LEN;
+			break;
+		}
+	}
+}
 
 void powerEnSet(uint8 val) {
 	if (val) {
@@ -352,11 +349,20 @@ void resetInit(void) {
 		motSleepSet(TRUE);
 	}
 	
-	void chargeLimitSet(boolean val){ // False is low and True is high
-		if(val){
+	/* Sets the battery charger charge limit.
+	 *
+	 * When system 3.3V power is OFF:
+	 *   - TRUE: Set the charger to shutdown
+	 *   - FALSE: Set the charge limit to 100 mA
+	 * When the system 3.3V power is ON:
+	 *   - TRUE: Set the charge limit to 500 mA
+	 *   - FALSE: Set the charge limit to 1 A
+	 */
+	void chargeLimitSet(boolean val){
+		if (val) {
 			CHRG_LIM_PORT_DIR |= CHRG_LIM_BIT;
 			CHRG_LIM_PORT_OUT |= CHRG_LIM_BIT;
-		}else{
+		} else {
 			CHRG_LIM_PORT_DIR &= ~CHRG_LIM_BIT;
 		}
 	}
@@ -365,54 +371,6 @@ void resetInit(void) {
 		CHRG_LIM_PORT_SEL &= ~CHRG_LIM_BIT;
 		chargeLimitSet(FALSE);
 	}
-	
-	/*#define USB_5V_CONV_NUMER			(2.5 * 10)
-	#define USB_5V_CONV_DENOM			(1024 * 0.333)
-	
-	void Usb5vReadADC(void){
-		volatile uint16 i;
-		
-		ADC10AE0 |= BIT3; // A3
-		ADC10CTL1 = INCH_3 | ADC10DIV_7 | CONSEQ_0;			// input channel 3, single sequence 
-	   	ADC10CTL0 |= ENC + ADC10SC;             			// Sampling and conversion start
-		for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++){
-			if(!(ADC10CTL1 & ADC10BUSY)){
-				//Add the current read to the sliding average if there was a sucsessful read
-				Usb5vRunAvg[Usb5vRunAvgCount] = (uint8)(ADC10MEM * USB_5V_CONV_NUMER / USB_5V_CONV_DENOM);
-				Usb5vRunAvgCount = (Usb5vRunAvgCount+1)%USB_5V_RUN_AVG_LEN;
-				break;
-			}
-		}
-	}
-	
-	void Usb5vSenseInit(void){
-		uint8 i;
-		
-		//Start off assuming that the battery is fully charged
-		for(i = 0; i < USB_5V_RUN_AVG_LEN; i++){
-			Usb5vRunAvg[i] = 0;
-		}
-		//Read the battery and use that as all of the running averages
-		//Esensially, this should give a starting place unless the read fails
-		Usb5vRunAvgCount = 0;
-		Usb5vReadADC();
-		for(i = 0; i < USB_5V_RUN_AVG_LEN; i++){
-			Usb5vRunAvg[i] = Usb5vRunAvg[0];
-		}
-		//Reset the read count to 0
-		Usb5vRunAvgCount = 0;
-	}
-	
-	uint8 Usb5vGet(void){
-		//Returns 10x the battery voltage as an integer
-		//Takes a running average of the last three reads to filter out noise
-		uint8 i;
-		uint16 average5vUsb = 0;
-		for(i=0; i<USB_5V_RUN_AVG_LEN; i++){
-			average5vUsb += (uint16)(Usb5vRunAvg[i]);
-		}
-		return (uint8)(average5vUsb/USB_5V_RUN_AVG_LEN);
-	}*/
 	
 #endif
 
@@ -443,16 +401,6 @@ void powerButtonIRQDisable(void) {
 	P1IE &= ~POWER_BUTTON_BIT;                             // P1.2 interrupt disabled
 }
 
-//void powerButtonDisable(void) {
-//	powerButtonState = FALSE;
-//	P1IE &= ~POWER_BUTTON_BIT;
-//	P1IES &= ~POWER_BUTTON_BIT;	
-//}
-//
-//void powerButtonEnable(void) {
-//	powerButtonState = TRUE;	
-//}
-
 
 #define BUTTON_DEBOUNCE_COUNT   15000
 
@@ -471,7 +419,9 @@ __interrupt void Port_1(void) {
 		if (airplaneModeGetState()) {
 			powerUSBSetEnable(TRUE); // Turn on the USB Power Sense Line
 		}
+
 		for (i = 0; i < BUTTON_DEBOUNCE_COUNT; ++i) {}
+
 		// Is the button still down?
 		if (powerButtonGetValue()) {
 			if (airplaneModeGetState()) {
@@ -482,13 +432,13 @@ __interrupt void Port_1(void) {
 				powerOn = TRUE;
 			}
 		}
-	}
-	if (powerOn) {
+
 		// Turn back off of the comparator
 		if (airplaneModeGetState()) {
 			powerUSBSetEnable(FALSE);
 		}
-
+	}
+	if (powerOn) {
 		// Exit LPM4, enable normal CPU operation, enable interrupts
 		// aka turn the robot back on
 		__bic_SR_register_on_exit(SCG1 + SCG0 + OSCOFF + CPUOFF);

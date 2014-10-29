@@ -62,6 +62,14 @@ ClassGenNCAutoScope=None
 DItemRevisionGUID=
 GenerateClassCluster=0
 
+[GeneratedDocument1]
+DocumentPath=Project Outputs for toasterBigBoard\Design Rule Check - toasterBigBoard.html
+DItemRevisionGUID=
+
+[GeneratedDocument2]
+DocumentPath=toasterBigBoard.PcbDoc.htm
+DItemRevisionGUID=
+
 [PCBConfiguration1]
 ReleaseItemId=
 CurrentRevision=

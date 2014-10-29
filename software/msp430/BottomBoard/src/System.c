@@ -110,7 +110,8 @@ volatile uint32 airplaneStartTicks;
 	boolean resetFTDIWithButton = FALSE;
 #endif
 
-volatile uint16 timerADCUpdate = TIMER_ADC_PERIOD;
+volatile uint16 timerVBatADCUpdate = TIMER_ADC_PERIOD;
+volatile uint16 timerUSBADCUpdate = TIMER_ADC_PERIOD/2;
 
 volatile uint32 systemTicksVal = 0;
 volatile uint8 timer60hz = 0;
@@ -385,10 +386,9 @@ void main(void) {
 				ftdiResetSet(TRUE);
 				ledResetSet(TRUE);
 				motSleepSet(TRUE);
+				/* Set the charge limit to 100 mA */
 				chargeLimitSet(FALSE);
 			#endif
-			//msp430SetRobotMode(MSP430_MODE_PYTHON);
-			powerUSBSetEnable(FALSE); // Turn off the USB Power Sense Line comparator
 			powerEnSet(FALSE);
 			for (i = 0; i < POWER_OFF_DELAY; ++i) {}
 
@@ -418,12 +418,9 @@ void main(void) {
 			airplaneMode = FALSE;	
 			
 			#ifdef RONE_V12
-				// Set Charge Limit to high to force initial charge at 500mA
+				/* Set Charge Limit to high to force initial charge at 500mA */
 				chargeLimitSet(TRUE);
 			#endif
-			
-			// Turn on the USB Power Sense Line comparator
-			powerUSBSetEnable(TRUE);
 			
 			// Turn on the main power supply and wait for it to stabilize
 			powerEnSet(TRUE);
@@ -455,6 +452,7 @@ void main(void) {
 
 			ADC10Init();
 			powerVBatInit();
+			powerUSBInit();
 
 			// init the on-chip I/O
 			accelInit();
@@ -464,11 +462,6 @@ void main(void) {
 			bumpSensorInit();
 			reflectiveSensorsInit();
 
-
-			/*#ifdef RONE_V12
-				Usb5vSenseInit();
-			#endif*/
-			//bumpDebugInit();
 			#ifdef RONE_V11
 				irBeaconEnable();
 			#endif
@@ -494,48 +487,50 @@ void main(void) {
 			}
 		}
 
-		// Update the VBAT value and the USB 5V Line ADC (V12 Only)
-		if (timerADCUpdate == 0) {
+		// Update the VBAT value at 10 Hz
+		if (timerVBatADCUpdate == 0) {
 			// Disable almost all of the interrupts so that these are atomic
 			__bic_SR_register(GIE);
 			watchdogDisable();
 
 			// Update the values
 			powerVBatReadADC();
-			/*#ifdef RONE_V12
-				Usb5vReadADC();
-			#endif*/
-			timerADCUpdate = TIMER_ADC_PERIOD;
+			timerVBatADCUpdate = TIMER_ADC_PERIOD;
 
 			// Re-enable inturupts
 			__bis_SR_register(GIE);
 			watchdogInit();
 		}
+
+		// Update the USB 5V Line ADC (V12 Only). This 90 degrees out of phase with the vbat update
+		if (timerUSBADCUpdate == 0) {
+			// Disable almost all of the interrupts so that these are atomic
+			__bic_SR_register(GIE);
+			watchdogDisable();
+
+			// Update the values
+			powerUSBReadADC();
+			timerUSBADCUpdate = TIMER_ADC_PERIOD;
+
+			// Re-enable inturupts
+			__bis_SR_register(GIE);
+			watchdogInit();
+		}
+
 #ifdef RONE_V12
 		// Check voltage for fast charge
-		if(powerEnGet()){
-			if (powerUSBSetMode(POWER_USB_SENSE_MODE_ADC) == POWER_USB_SENSE_MODE_ADC) {
-				chargeLimitSet(FALSE); // put LOW
-			} else {
-				chargeLimitSet(TRUE);  // put HIGH
-			}
-			powerUSBSetMode(POWER_USB_SENSE_MODE_COMP);
+		if (powerEnGet()) {
+			// Determine if it reached threshold for fast charge
+		   	if (powerUSBGetAvg() > POWER_USB_FAST_CHARGE_THRESHOLD) {
+		   		/* Set the charge limit to 1 A */
+		   		chargeLimitSet(FALSE);
+		   	} else {
+		   		/* Set the charge limit to 500 mA */
+		   		chargeLimitSet(TRUE);
+		   	}
 		}
 #endif /* RONE_V12 */
 
-		/*
-		#ifdef RONE_V12
-			if(powerEnGet()){
-				if(Usb5vGet() > USB_5V_1000mAMP_THRESHHOLD){
-					chargeLimitSet(FALSE); // put LOW
-				} else {
-					chargeLimitSet(TRUE);  // put HIGH
-				}
-			}
-		#endif*/
-		
-		//TODO RFID debug
-//#ifndef RFID_DEBUG
 		// check for a power off request
 		currentTicks = systemTicks();
  		if (powerButtonGetValue()) {
@@ -624,51 +619,48 @@ void main(void) {
 		}
 
 		//Turn off the robot as soon as possible if the VBat drops below a threshold
-		if (powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD) {
-			if(!powerUSBGetState()) {
-				resetSet(TRUE);
-				#ifdef RONE_V12
-					ftdiResetSet(TRUE);
-					motSleepSet(TRUE);
-				#endif
+		if (powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD && powerUSBGetAvg() < POWER_USB_PLUGGED_IN_THRESHOLD) {
+			resetSet(TRUE);
+			#ifdef RONE_V12
+				ftdiResetSet(TRUE);
+				motSleepSet(TRUE);
+			#endif
 
-				// Turn the robot off officially this time
-				powerOffRequest = TRUE;
-				airplaneMode = FALSE;
+			// Turn the robot off officially this time
+			powerOffRequest = TRUE;
+			airplaneMode = FALSE;
 
-				// Go into airplane mode if the battery is beyond dead
-				if (powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
-					airplaneMode = TRUE;
-				}
-
-				// Disable some interupts
-				watchdogPet();
-				watchdogDisable();
-
-				// Make sure the LED's don't turn off
-				ledTimeoutReset();
-
-				// Turn off the bliky led so it isn't stuck on
-				blinkyLEDSet(0);
-
-				// Blink the red light 3 times so that the user knows there is no battery
-				uint8 blinkCount;
-				setAllLEDData(powerButtonLEDOverideData, 0);
-				for (blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
-					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
-					ledUpdate(powerButtonLEDOverideData);
-
-					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
-
-					powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
-					ledUpdate(powerButtonLEDOverideData);
-
-					for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
-				}
-				watchdogEnable();
+			// Go into airplane mode if the battery is beyond dead
+			if (powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
+				airplaneMode = TRUE;
 			}
+
+			// Disable some interupts
+			watchdogPet();
+			watchdogDisable();
+
+			// Make sure the LED's don't turn off
+			ledTimeoutReset();
+
+			// Turn off the bliky led so it isn't stuck on
+			blinkyLEDSet(0);
+
+			// Blink the red light 3 times so that the user knows there is no battery
+			uint8 blinkCount;
+			setAllLEDData(powerButtonLEDOverideData, 0);
+			for (blinkCount = 0; blinkCount < VBAT_SHUTDOWN_BLINK_LED_TIMES; blinkCount++){
+				powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = VBAT_SHUTDOWN_BLINK_LED_PWM;
+				ledUpdate(powerButtonLEDOverideData);
+
+				for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
+
+				powerButtonLEDOverideData[VBAT_SHUTDOWN_BLINK_LED] = 0;
+				ledUpdate(powerButtonLEDOverideData);
+
+				for (i=0; i<VBAT_SHUTDOWN_BLINK_DELAY; i++) {}
+			}
+			watchdogEnable();
 		}
-//#endif
 	} // while
 }
 
@@ -688,25 +680,6 @@ __interrupt void Timer_A0 (void)
 	
 	//enable nested interrupts for SPI transfers
 	__bis_SR_register(GIE);
-	
-//	if (SPIMessageTicks > 0) {
-//		// you have received a SPI message recently.  reset the time-outs 
-//		SPIMessageTicks--;
-//		systemLEDRampTimer = 0;
-//		systemLEDRampBrightness = -1;
-//	}
-//	if (SPIMessageTicks == 0) {
-//		// no SPI message in a while.  Wait a bit, then start the system LED ramp
-//		systemLEDRampTimer++;
-//		if (systemLEDRampTimer > SYSTEM_LED_DIMMER_DELAY) {
-//			systemLEDRampBrightness = (systemLEDRampTimer - SYSTEM_LED_DIMMER_DELAY) / 16; 
-//			if (systemLEDRampBrightness == SYSTEM_LED_BRIGHTNESS) {
-//				systemLEDRampTimer = (SYSTEM_LED_DIMMER_DELAY + 1);
-//			}
-//		} else {
-//			systemLEDRampBrightness = -1;
-//		}
-//	}
 
 	if (SPIMessageTicks > 0) {
 		// you have received a SPI message recently.  reset the time-outs 
@@ -732,8 +705,12 @@ __interrupt void Timer_A0 (void)
 			}
 		#endif
 		
-		if(timerADCUpdate > 0) {
-			timerADCUpdate--;
+		if(timerVBatADCUpdate > 0) {
+			timerVBatADCUpdate--;
+		}
+
+		if (timerUSBADCUpdate > 0) {
+			timerUSBADCUpdate--;
 		}
 	}
 	
@@ -744,9 +721,10 @@ __interrupt void Timer_A0 (void)
 		//Update the LEDs so that they will timeout correctly
 		ledTimeoutUpdate();
 	}
-// Used for testing frequency of interrupt function being called
-//	pulseFlag = 1 - pulseFlag;
-//	blinkySet(pulseFlag);
+
+	// Used for testing frequency of interrupt function being called
+	//	pulseFlag = 1 - pulseFlag;
+	//	blinkySet(pulseFlag);
 }
 
 //SPI and I2C RX interrupt vector handler
