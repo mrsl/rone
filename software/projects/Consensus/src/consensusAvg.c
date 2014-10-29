@@ -24,6 +24,8 @@ void consensusAverageInit(void);
 void consensusAverageStoreTempData(Nbr *nbrPtr) {
 	/* Store temporary value */
 	tempValue = nbrDataGetNbr(&value, nbrPtr);
+
+	cprintf("S\n");
 }
 
 /**
@@ -39,6 +41,8 @@ void consensusAverageOperation(void) {
 
 	/* Set our data */
 	nbrDataSet(&value, newValue);
+
+	cprintf("G\n");
 }
 
 /**
@@ -46,6 +50,20 @@ void consensusAverageOperation(void) {
  * each round.
  */
 void consensusAveragePrint(uint8 state) {
+	switch (state) {
+	case (CONSENSUS_STATE_IDLE): {
+		cprintf("I: ");
+		break;
+	}
+	case (CONSENSUS_STATE_ACK): {
+		cprintf("A: ");
+		break;
+	}
+	case (CONSENSUS_STATE_REQ): {
+		cprintf("R: ");
+		break;
+	}
+	}
 	cprintf("%d, %d\n", inputValue, nbrDataGet(&value));
 }
 

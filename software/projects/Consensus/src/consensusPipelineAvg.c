@@ -7,6 +7,8 @@
 
 #include "consensusPipeline.h"
 
+#define CONSENSUS_PIPELINE_AVG_INV	255
+
 #define CONSENSUS_PIPELINE_AVG_SIZE	20			// Size of the pipeline
 
 uint8 tempValue[CONSENSUS_PIPELINE_AVG_SIZE];	// Temporary data array
@@ -83,23 +85,35 @@ void pipelineAverageOperation(uint8 index) {
 	/* Get our current value */
 	uint8 currentValue = nbrDataGet(&value[index]);
 
-	cprintf("%d - %d\n", currentValue, tempValue[index]);
+	/* Get the stored value */
+	uint8 theirValue = tempValue[index];
+
+	/* Stored value is invalid */
+	if (theirValue == CONSENSUS_PIPELINE_AVG_INV) {
+		return;
+	}
 
 	/* Average our value and the temporary value together */
-	uint8 newValue = (currentValue + tempValue[index]) / 2;
+	uint8 newValue = (currentValue + theirValue) / 2;
 
 	/* Set our new value */
 	nbrDataSet(&value[index], newValue);
+
+	/* Put invalid value back in place */
+	tempValue[index] = CONSENSUS_PIPELINE_AVG_INV;
 }
 
 void pipelineAverageInit(void) {
 	/* Random input value */
 	inputValue = (roneID == 105) ? 0 : 100;
 
-	/* Initialize all our neighbor data */
+	/* Initialize our data */
 	uint8 i;
 	for (i = 0; i < CONSENSUS_PIPELINE_AVG_SIZE; i++) {
+		/* Create neighbor data */
 		nbrDataCreate(&value[i], "cpAvg", 8, 0);
+		/* Initialize temp storage to nulls */
+		tempValue[i] = CONSENSUS_PIPELINE_AVG_INV;
 	}
 
 	/* Initialize the pipeline */

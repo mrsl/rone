@@ -69,6 +69,8 @@ void consensusPipelineNextRound(uint8 state) {
 	/* If we are back to idle state, unlock the pipeline */
 	if (state == CONSENSUS_STATE_IDLE) {
 		consensusPipelineLock = 0;
+	} else {
+		consensusPipelineLock = 1;
 	}
 
 	/* Don't insert if the pipeline is locked */
@@ -86,10 +88,12 @@ void consensusPipelineNextRound(uint8 state) {
 
 	/* Increment the count if we are less than full */
 	uint8 count = nbrDataGet(&consensusPipelineCount);
-	count++;
-	if (count <= consensusPipelineSize) {
+	if (count < consensusPipelineSize) {
+		count++;
 		nbrDataSet(&consensusPipelineCount, count);
 	}
+
+	cprintf("input!\n");
 }
 
 /**
@@ -111,6 +115,8 @@ void consensusPipelineOperation(void) {
 	     * indexed temporary pipeline */
 	    consensusPipelineCellOperation(index);
 	}
+
+	cprintf("gossip!\n");
 }
 
 /**
@@ -122,9 +128,6 @@ void consensusPipelineOperation(void) {
  * 		The neighbor pointer to look up the data from
  */
 void consensusPipelineStoreTempData(Nbr *nbrPtr) {
-	/* Lock the pipeline from here until we get back to idle mode */
-	consensusPipelineLock = 1;
-
 	/* Get values from neighbor data */
 	uint8 myHead = nbrDataGet(&consensusPipelineHead);
 	uint8 theirHead = nbrDataGetNbr(&consensusPipelineHead, nbrPtr);
@@ -145,6 +148,8 @@ void consensusPipelineStoreTempData(Nbr *nbrPtr) {
 	     * storage that correspond to our indices in our pipeline. */
 	    consensusPipelineCellStoreTempData(nbrPtr, srcIndex, destIndex);
 	}
+
+	cprintf("stored!\n");
 }
 
 /**

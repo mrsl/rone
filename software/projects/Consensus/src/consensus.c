@@ -12,7 +12,7 @@
 
 /* Variables */
 uint8 consensusState;			// Current consensus state
-uint32 consensusStateTime;		// Time when current state began
+uint8 consensusStateTime;		// Round counter to track time in state
 
 NbrData consensusReqID;			// Requested ID for consensus
 NbrData consensusAckID;			// Acknowledgment ID for consensus
@@ -193,7 +193,7 @@ uint8 consensusNewStateCheck(uint32 *oldCountPtr) {
 void consensusSwitchState(uint8 newState) {
 	/* Set state variable and beginning time */
 	consensusState = newState;
-	consensusStateTime = osTaskGetTickCount();
+	consensusStateTime = 0;
 	consensusStateCount++;
 
 	/* Set LEDs if display mode is on */
@@ -251,10 +251,13 @@ void consensusTask(void *args) {
 		/* Call the round operation before the round begins */
 		consensusRoundOperation(consensusState);
 
+		/* Increment the state round counter */
+		consensusStateTime++;
+
 		switch (consensusState) {
 		case (CONSENSUS_STATE_IDLE): {
 			/* Handle being in the idle state */
-			if (consensusStateTime + CONSENSUS_TIME_IDLE > consensusWakeTime) {
+			if (consensusStateTime <= CONSENSUS_TIME_IDLE) {
 				/* Still in idle state */
 				Nbr *reqNbr = consensusGetReqNbr();
 
@@ -295,7 +298,7 @@ void consensusTask(void *args) {
 		} // End idle state
 		case (CONSENSUS_STATE_REQ): {
 			/* Handle being in the request state */
-			if (consensusStateTime + CONSENSUS_TIME_REQ > consensusWakeTime) {
+			if (consensusStateTime <= CONSENSUS_TIME_REQ) {
 				/* Still in request state */
 				if (requestConsensusFlag) {
 					/* We have already performed consensus, so just wait */
@@ -334,7 +337,7 @@ void consensusTask(void *args) {
 		} // End request state
 		case (CONSENSUS_STATE_ACK): {
 			/* Handle being in the ack state */
-			if (consensusStateTime + CONSENSUS_TIME_ACK > consensusWakeTime) {
+			if (consensusStateTime <= CONSENSUS_TIME_ACK) {
 				/* Still in ack state, just wait it out */
 
 			} else {

@@ -29,9 +29,9 @@
 /**
  *  Timing, based on a number of neighbor rounds
  */
-#define CONSENSUS_TIME_IDLE			(3 * neighborsGetPeriod())
-#define CONSENSUS_TIME_REQ			(3 * neighborsGetPeriod())
-#define CONSENSUS_TIME_ACK			(4 * neighborsGetPeriod())
+#define CONSENSUS_TIME_IDLE			3
+#define CONSENSUS_TIME_REQ			5
+#define CONSENSUS_TIME_ACK			3
 
 /**
  *  Other Information
