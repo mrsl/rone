@@ -8,7 +8,7 @@
 #ifndef SRC_CONSENSUS_H_
 #define SRC_CONSENSUS_H_
 
-#include <stdio.h>
+//#include <stdio.h>
 #include <stdlib.h>
 #include "roneos.h"
 #include "ronelib.h"
@@ -39,7 +39,7 @@
 /* The maximum value of the request nonce. */
 #define CONSENSUS_MAX_NONCE			100
 /* The probability of going into request mode from idle mode.
- * Range is from 0 - CONSENSUS_RAND_MOD */
+ * Range is from 0 - CONSENSUS_RAND_MOD. */
 #define CONSENSUS_REQ_PROB			500
 /* The modulus operator applied to random numbers generated for probability */
 #define CONSENSUS_RAND_MOD			1000
@@ -47,7 +47,7 @@
 /* Function Declarations */
 void consensusEnableFeedback(uint8 isOn);
 
-void consensusSetRoundOperation(void (*roundOperation)(void));
+void consensusSetRoundOperation(void (*roundOperation)(uint8 state));
 
 uint8 consensusNewStateCheck(uint32 *oldCountPtr);
 

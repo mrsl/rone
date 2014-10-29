@@ -31,8 +31,9 @@ uint8 consensusFeedback = 0;	// Display information about state?
 
 /**
  * Function to call each round. May manipulate something in the data, etc.
+ * Parameter is the current consensus state.
  */
-void (*consensusRoundOperation)(void) = NULL;
+void (*consensusRoundOperation)(uint8 state) = NULL;
 
 /**
  * Function to call upon successful gossip. Should operate on the temporary data
@@ -63,11 +64,12 @@ void consensusEnableFeedback(uint8 isOn) {
  * Round operation is called at the start of each consensus round regardless of
  * state. Only triggers if a new neighbor update round has occurred.
  *
- * @param void (*roundOperation)(void)
+ * @param void (*roundOperation)(uint8 state)
  * 		A function that updates the consensus data each round, or does some
- * 		other task synchronized with consensus.
+ * 		other task synchronized with consensus. The parameter given is the
+ * 		current consensus state.
  */
-void consensusSetRoundOperation(void (*roundOperation)(void)) {
+void consensusSetRoundOperation(void (*roundOperation)(uint8 state)) {
 	consensusRoundOperation = roundOperation;
 }
 
@@ -143,6 +145,7 @@ Nbr *consensusGetReqNbr(void) {
 					continue;
 				}
 			}
+
 			/* Store data */
 			reqNonce[reqInd] = nbrNonce;
 			reqNbrs[reqInd++] = nbrPtr;
@@ -224,8 +227,6 @@ void consensusSwitchState(uint8 newState) {
  * 		Arguments to the task, not needed.
  */
 void consensusTask(void *args) {
-	(void *) args;
-
 	/* Flag for whether consensus has been performed in request mode */
 	uint8 requestConsensusFlag;
 	uint32 neighborRound;
@@ -248,7 +249,7 @@ void consensusTask(void *args) {
 		neighborsPutMutex();
 
 		/* Call the round operation before the round begins */
-		(*consensusRoundOperation)();
+		consensusRoundOperation(consensusState);
 
 		switch (consensusState) {
 		case (CONSENSUS_STATE_IDLE): {
@@ -268,6 +269,7 @@ void consensusTask(void *args) {
 					/* Store data for consensus */
 					consensusStoreTempData(reqNbr);
 				}
+
 			} else {
 				/* Idle state over, change state by rolling the dice, change
 				 * either to request or idle */
@@ -279,7 +281,7 @@ void consensusTask(void *args) {
 					/* Going to request mode! */
 					consensusSwitchState(CONSENSUS_STATE_REQ);
 
-					/* Increment nonce */
+					/* Increment request nonce */
 					consensusIncNonce();
 
 					/* Select a random neighbor to gossip with */
@@ -314,6 +316,7 @@ void consensusTask(void *args) {
 					consensusStoreTempData(nbrPtr);
 					requestConsensusFlag = 1;
 				}
+
 			} else {
 				/* If we managed to get an ack back, perform consensus on the
 				 * stored data */
@@ -333,6 +336,7 @@ void consensusTask(void *args) {
 			/* Handle being in the ack state */
 			if (consensusStateTime + CONSENSUS_TIME_ACK > consensusWakeTime) {
 				/* Still in ack state, just wait it out */
+
 			} else {
 				/* Perform consensus now that the ack period is over */
 				consensusOperation();
@@ -363,7 +367,7 @@ void consensusTask(void *args) {
 /**
  * No-op function used for uninitialized functions
  */
-void consensusNoOp(void) {
+void consensusNoOp(uint8 state) {
 }
 
 /**

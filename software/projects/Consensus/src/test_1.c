@@ -5,55 +5,58 @@
  *      Author: zkk
  */
 
+/* Main includes */
+#include <stdlib.h>
+#include "roneos.h"
+#include "ronelib.h"
+
+/* Our includes */
 #include "consensus.h"
 
-#define NEIGHBOR_ROUND_PERIOD	1000
+#define NEIGHBOR_ROUND_PERIOD	600
 #define RPRINTF_SLEEP_TIME		30
 
 /**
  * Initialization of subsystems and such
  */
 void behaviorTaskInit() {
-	// Set our subnet
+	/* Set our radio subnet */
 	radioCommandSetSubnet(1);
 
-	// Initialize neighbor subsystem
+	/* Initialize neighbor subsystem */
 	neighborsInit(NEIGHBOR_ROUND_PERIOD);
 
-	// Set rprintf time
+	/* Set rprintf time */
 	rprintfSetSleepTime(RPRINTF_SLEEP_TIME);
-
-	// Initialize the external pose subsystem for location
-	externalPoseInit();
 
 	/* Enable visual LED feedback from the consensus system */
 	consensusEnableFeedback(1);
 	/* Initialize and begin consensus using averaging */
 	pipelineAverageInit();
 
-	// Status check
-	systemPrintStartup();
-	systemPrintMemUsage();
+	/* Status check */
+//	systemPrintStartup();
+//	systemPrintMemUsage();
 }
 
 /**
  * Main behavior task
  */
 void behaviorTask(void* parameters) {
-	uint32 lastWakeTime;		// The last time this task was woken
+	uint32 lastWakeTime;	// The last time this task was woken
 
-	Beh behOutput;				// Output motion behavior
+	Beh behOutput;			// Output motion behavior
 
-	// Initialize variables and subsystems
+	/* Initialize variables and subsystems */
 	behaviorTaskInit();
 
 	for (;;) {
-		lastWakeTime = osTaskGetTickCount();	// We have woken
+		lastWakeTime = osTaskGetTickCount();
 		behOutput = behInactive;
 
-		// Set motion output
+		/* Set motion output */
 		motorSetBeh(&behOutput);
-		// Delay task until next time
+		/* Delay task until next time */
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 	}
 }

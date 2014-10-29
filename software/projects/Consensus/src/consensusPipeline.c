@@ -14,6 +14,9 @@ NbrData consensusPipelineCount;		// The current element count in the pipeline
 uint8 consensusPipelineSize;		// The maximum size of the pipeline
 uint32 consensusPipelineRound;		// Round check to know when to input
 
+uint8 consensusPipelineSizeLimit;	// The size of data stored temporarily
+uint8 consensusPipelineLock = 0;	// Pipeline insertion lock
+
 /* User provided function to input new pipeline data to the neighbor data at the
  * specified index. */
 void (*consensusPipelineCellInput)(uint8 index);
@@ -53,10 +56,23 @@ void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index)) {
 /**
  * Function called at the beginning of each round. Handles input into the
  * pipeline and the rolling aspects and count incrementing in the pipeline.
+ *
+ * @param state
+ * 		The state that consensus is currently in.
  */
-void consensusPipelineNextRound(void) {
+void consensusPipelineNextRound(uint8 state) {
 	/* Only input if a new state has occurred */
 	if (!consensusNewStateCheck(&consensusPipelineRound)) {
+		return;
+	}
+
+	/* If we are back to idle state, unlock the pipeline */
+	if (state == CONSENSUS_STATE_IDLE) {
+		consensusPipelineLock = 0;
+	}
+
+	/* Don't insert if the pipeline is locked */
+	if (consensusPipelineLock) {
 		return;
 	}
 
@@ -85,11 +101,10 @@ void consensusPipelineNextRound(void) {
 void consensusPipelineOperation(void) {
 	/* Get values from neighbor data */
 	uint8 myHead = nbrDataGet(&consensusPipelineHead);
-	uint8 myCount = nbrDataGet(&consensusPipelineCount);
 
 	/* Iterate over pipeline */
 	uint8 i;
-	for (i = 0; i < myCount; i++) {
+	for (i = 0; i < consensusPipelineSizeLimit; i++) {
 	    uint8 index = (myHead + i) % consensusPipelineSize;
 
 	    /* Perform consensus with corresponding stored values in the similarly
@@ -107,28 +122,28 @@ void consensusPipelineOperation(void) {
  * 		The neighbor pointer to look up the data from
  */
 void consensusPipelineStoreTempData(Nbr *nbrPtr) {
+	/* Lock the pipeline from here until we get back to idle mode */
+	consensusPipelineLock = 1;
+
 	/* Get values from neighbor data */
 	uint8 myHead = nbrDataGet(&consensusPipelineHead);
 	uint8 theirHead = nbrDataGetNbr(&consensusPipelineHead, nbrPtr);
 	uint8 myCount = nbrDataGet(&consensusPipelineCount);
 	uint8 theirCount = nbrDataGetNbr(&consensusPipelineCount, nbrPtr);
 
-	/* Iterate through your entire pipeline, storing relevant data in relative
-	 * locations */
-	uint8 i = 0;
-	uint8 j = 0;
-	for (; i < myCount; i++) {
+	/* Set the size of the pipeline we are going to consensus against. Only
+	 * use the smallest pipeline and consensus directly against position */
+	consensusPipelineSizeLimit = (myCount > theirCount) ? theirCount : myCount;
+
+	/* Iterate through the smallest buffer. */
+	uint8 i;
+	for (i = 0; i < consensusPipelineSizeLimit; i++) {
 	    uint8 destIndex = (myHead + i) % consensusPipelineSize;
-	    uint8 srcIndex = (theirHead + j) % consensusPipelineSize;
+	    uint8 srcIndex = (theirHead + i) % consensusPipelineSize;
 
 	    /* Store the data from the neighbor into locations in the temporary
 	     * storage that correspond to our indices in our pipeline. */
 	    consensusPipelineCellStoreTempData(nbrPtr, srcIndex, destIndex);
-
-	    /* Only increment their count if it is less than their size */
-	    if (j < theirCount) {
-	    	j++;
-	    }
 	}
 }
 

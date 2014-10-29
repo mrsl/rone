@@ -22,7 +22,7 @@ uint8 inputValue;								// Input value for the pipeline
  * 		The index to print
  */
 void pipelineAveragePrintCell(uint8 index) {
-	cprintf("%d-", nbrDataGet(&value[index]));
+	cprintf("%d,", nbrDataGet(&value[index]));
 }
 
 /**

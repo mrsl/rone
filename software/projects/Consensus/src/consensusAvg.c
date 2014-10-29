@@ -45,7 +45,7 @@ void consensusAverageOperation(void) {
  * Prints out our input value and our current value, called at the start of
  * each round.
  */
-void consensusAveragePrint(void) {
+void consensusAveragePrint(uint8 state) {
 	cprintf("%d, %d\n", inputValue, nbrDataGet(&value));
 }
 
