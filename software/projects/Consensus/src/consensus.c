@@ -23,6 +23,7 @@ uint8 consensusPrevNonce = CONSENSUS_MAX_NONCE;
 uint8 consensusPrevReqID = 0;
 
 uint32 consensusWakeTime;		// Task wake time
+uint32 consensusStateCount = 0;	// Number of times we have changed state
 
 NbrList consensusNbrList;		// Neighbor list, updated each consensus round
 
@@ -161,6 +162,23 @@ Nbr *consensusGetReqNbr(void) {
 }
 
 /**
+ * Check if a new round has occurred.
+ *
+ * @param oldCountPtr
+ * 		Old value of the round count when last checked.
+ *
+ * @return Boolean whether or not a new round has occurred. Updates value.
+ */
+uint8 consensusNewStateCheck(uint32 *oldCountPtr) {
+	uint8 val = 0;
+	if (consensusStateCount != *oldCountPtr) {
+		val = 1;
+	}
+	*oldCountPtr = consensusStateCount;
+	return val;
+}
+
+/**
  * Switches state and sets state time.
  *
  * Shouldn't be called besides from the main consensus task.
@@ -173,6 +191,7 @@ void consensusSwitchState(uint8 newState) {
 	/* Set state variable and beginning time */
 	consensusState = newState;
 	consensusStateTime = osTaskGetTickCount();
+	consensusStateCount++;
 
 	/* Set LEDs if display mode is on */
 	if (consensusFeedback) {

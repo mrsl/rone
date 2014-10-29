@@ -17,7 +17,7 @@
  *  Task Information
  */
 #define CONSENSUS_TASK_DELAY		100
-#define CONSENSUS_TASK_PRIORITY	(tskIDLE_PRIORITY + 3)
+#define CONSENSUS_TASK_PRIORITY		(tskIDLE_PRIORITY + 3)
 
 /**
  *  States
@@ -48,6 +48,8 @@
 void consensusEnableFeedback(uint8 isOn);
 
 void consensusSetRoundOperation(void (*roundOperation)(void));
+
+uint8 consensusNewStateCheck(uint32 *oldCountPtr);
 
 void consensusInit(void (*storeTempData)(Nbr *nbrPtr), void (*operation)(void));
 

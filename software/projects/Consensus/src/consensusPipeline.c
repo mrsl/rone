@@ -12,6 +12,7 @@
 NbrData consensusPipelineHead;		// The current head, or most recent
 NbrData consensusPipelineCount;		// The current element count in the pipeline
 uint8 consensusPipelineSize;		// The maximum size of the pipeline
+uint32 consensusPipelineRound;		// Round check to know when to input
 
 /* User provided function to input new pipeline data to the neighbor data at the
  * specified index. */
@@ -54,6 +55,11 @@ void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index)) {
  * pipeline and the rolling aspects and count incrementing in the pipeline.
  */
 void consensusPipelineNextRound(void) {
+	/* Only input if a new state has occurred */
+	if (!consensusNewStateCheck(&consensusPipelineRound)) {
+		return;
+	}
+
 	/* Decrement the head and set it */
 	uint8 newHead = nbrDataGet(&consensusPipelineHead);
 	newHead = (newHead + consensusPipelineSize - 1) % consensusPipelineSize;
@@ -135,7 +141,7 @@ uint8 consensusPipelineGetOldestIndex(void) {
 	uint8 head = nbrDataGet(&consensusPipelineHead);
 	uint8 count = nbrDataGet(&consensusPipelineCount);
 
-	return (head + count) % consensusPipelineSize;
+	return (head + count - 1) % consensusPipelineSize;
 }
 
 /**

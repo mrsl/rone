@@ -7,7 +7,7 @@
 
 #include "consensus.h"
 
-#define NEIGHBOR_ROUND_PERIOD	300
+#define NEIGHBOR_ROUND_PERIOD	1000
 #define RPRINTF_SLEEP_TIME		30
 
 /**
@@ -29,7 +29,7 @@ void behaviorTaskInit() {
 	/* Enable visual LED feedback from the consensus system */
 	consensusEnableFeedback(1);
 	/* Initialize and begin consensus using averaging */
-	consensusAverageInit();
+	pipelineAverageInit();
 
 	// Status check
 	systemPrintStartup();

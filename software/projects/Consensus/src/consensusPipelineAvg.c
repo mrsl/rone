@@ -29,10 +29,9 @@ void pipelineAveragePrintCell(uint8 index) {
  * Prints out the contents of the pipeline from head to tail.
  */
 void pipelineAveragePrintPipeline(void) {
-//	cprintf("PLINE: ");
-//	/* Call the consensus pipeline print function using our print function */
-//	consensusPipelinePrintPipeline(pipelineAveragePrintCell);
-//	cprintf("\n");
+	/* Call the consensus pipeline print function using our print function */
+	consensusPipelinePrintPipeline(pipelineAveragePrintCell);
+	cprintf("\n");
 
 	/* Print out the input value and the current value we have */
 	uint8 oldIndex = consensusPipelineGetOldestIndex();
@@ -84,6 +83,8 @@ void pipelineAverageOperation(uint8 index) {
 	/* Get our current value */
 	uint8 currentValue = nbrDataGet(&value[index]);
 
+	cprintf("%d - %d\n", currentValue, tempValue[index]);
+
 	/* Average our value and the temporary value together */
 	uint8 newValue = (currentValue + tempValue[index]) / 2;
 
@@ -91,9 +92,9 @@ void pipelineAverageOperation(uint8 index) {
 	nbrDataSet(&value[index], newValue);
 }
 
-void pipelineAverageDataInit(void) {
+void pipelineAverageInit(void) {
 	/* Random input value */
-	inputValue = rand() % 200;
+	inputValue = (roneID == 105) ? 0 : 100;
 
 	/* Initialize all our neighbor data */
 	uint8 i;
