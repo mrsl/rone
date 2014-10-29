@@ -62,7 +62,8 @@ void msp430CheckAndUpdate(void) {
 #endif //RONE_V12_TILETRACK
 
 		SPIMessageOut[MSP430_MSG_VBAT_IDX] = powerVBatGet();
-		SPIMessageOut[MSP430_MSG_VUSB_IDX] = powerUSBGetState();
+		/* TODO: We are just thresholding the USB voltage for now. Should we send up more info? */
+		SPIMessageOut[MSP430_MSG_VUSB_IDX] = (powerUSBGetAvg() > POWER_USB_PLUGGED_IN_THRESHOLD ? 1 : 0);
 		SPIMessageOut[MSP430_MSG_POWER_BUTTON_IDX] = powerButtonGetValue();
 		SPIMessageOut[MSP430_MSG_VERSION_IDX] = FULL_ID_VERSION_NUMBER;
 		// Pack checksum

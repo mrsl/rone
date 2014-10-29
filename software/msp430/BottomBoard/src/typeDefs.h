@@ -10,7 +10,7 @@ typedef unsigned char uint8;
 typedef unsigned short int uint16;
 typedef unsigned long int uint32;
 
-typedef unsigned char boolean;
+typedef unsigned int boolean;
 
 #define FALSE 0
 #define TRUE 1

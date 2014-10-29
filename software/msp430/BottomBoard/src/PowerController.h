@@ -1,9 +1,13 @@
 #ifndef POWERCONTROLLER_H_
 #define POWERCONTROLLER_H_
 
-// 5VUSB sense modes
-#define POWER_USB_SENSE_MODE_COMP 			1
-#define POWER_USB_SENSE_MODE_ADC 			2
+// Experimentally determined number for V15
+// USB5VSense USB: 		890
+//	 		  Charger:	950
+//			  Both:		926
+#define POWER_USB_PLUGGED_IN_THRESHOLD		700
+#define POWER_USB_FAST_CHARGE_THRESHOLD		950
+
 
 void set8962Reset(uint8 state);
 
@@ -17,14 +21,6 @@ void powerButtonDisable(void);
 void powerButtonIRQEnable(void);
 void powerButtonIRQDisable(void);
 
-
-boolean powerUSBGetState(void);
-void powerUSBInit(void);
-void powerUSBSetEnable(boolean on);
-uint16 powerUSBGetAvg();
-uint8 powerUSBSetMode(uint8 mode);
-void ADC10Init(void);
-
 void resetSet(boolean val);
 void resetInit(void);
 
@@ -35,13 +31,17 @@ void resetInit(void);
 	void motSleepInit(void);
 	void chargeLimitSet(boolean val);
 	void chargeLimitInit(void);
-	void Usb5vReadADC(void);
-	void Usb5vSenseInit(void);
-	uint8 Usb5vGet(void);
 #endif
 
-void powerVBatInit(void);
+
+void ADC10Init(void);
 void ADC10Shutdown(void);
+
+void powerUSBInit(void);
+uint16 powerUSBGetAvg(void);
+void powerUSBReadADC(void);
+
+void powerVBatInit(void);
 uint8 powerVBatGet(void);
 void powerVBatReadADC(void);
 
