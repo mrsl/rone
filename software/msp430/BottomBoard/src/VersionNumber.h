@@ -13,7 +13,7 @@
 	#define HARDWARE_VERSION_NUMBER    2
 #endif
 
-#define	PROGRAM_VERSION_NUMBER		21
+#define	PROGRAM_VERSION_NUMBER		22
 
 /* Bitpack the version ID byte */
 #define FULL_ID_VERSION_NUMBER   (((HARDWARE_VERSION_NUMBER & 0x3) << 6) | (PROGRAM_VERSION_NUMBER & 0x3F))
