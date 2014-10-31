@@ -71,6 +71,10 @@ GenerateClassCluster=0
 DocumentUniqueId=TSAWGOFI
 
 [GeneratedDocument1]
+DocumentPath=Project Outputs for toasterBigBoard\Design Rule Check - toasterBigBoard.html
+DItemRevisionGUID=
+
+[GeneratedDocument2]
 DocumentPath=toasterBigBoard.PcbDoc.htm
 DItemRevisionGUID=
 
