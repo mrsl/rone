@@ -32,12 +32,13 @@ void pipelineAveragePrintCell(uint8 index) {
  */
 void pipelineAveragePrintPipeline(void) {
 	/* Call the consensus pipeline print function using our print function */
-	consensusPipelinePrintPipeline(pipelineAveragePrintCell);
-	cprintf("\n");
+	// consensusPipelinePrintPipeline(pipelineAveragePrintCell);
+	// cprintf("\n");
 
 	/* Print out the input value and the current value we have */
 	uint8 oldIndex = consensusPipelineGetOldestIndex();
-	cprintf("%d, %d\n", inputValue, nbrDataGet(&value[oldIndex]));
+	rprintf("%d, %d\n", inputValue, nbrDataGet(&value[oldIndex]));
+	rprintfFlush();
 }
 
 /**
@@ -48,11 +49,7 @@ void pipelineAveragePrintPipeline(void) {
  * 		The position in the array to store the input value into.
  */
 void pipelineAverageInput(uint8 index) {
-	/* Set the input value */
 	nbrDataSet(&value[index], inputValue);
-
-	/* Print the new pipeline */
-	pipelineAveragePrintPipeline();
 }
 
 /**
@@ -105,7 +102,7 @@ void pipelineAverageOperation(uint8 index) {
 
 void pipelineAverageInit(void) {
 	/* Random input value */
-	inputValue = (roneID == 105) ? 0 : 100;
+	inputValue = rand() % 100;
 
 	/* Initialize our data */
 	uint8 i;
@@ -115,6 +112,8 @@ void pipelineAverageInit(void) {
 		/* Initialize temp storage to nulls */
 		tempValue[i] = CONSENSUS_PIPELINE_AVG_INV;
 	}
+
+	consensusPipelineSetPrintFunction(pipelineAveragePrintPipeline);
 
 	/* Initialize the pipeline */
 	consensusPipelineInit(CONSENSUS_PIPELINE_AVG_SIZE,

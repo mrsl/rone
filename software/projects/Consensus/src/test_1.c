@@ -13,7 +13,7 @@
 /* Our includes */
 #include "consensus.h"
 
-#define NEIGHBOR_ROUND_PERIOD	600
+#define NEIGHBOR_ROUND_PERIOD	1500
 #define RPRINTF_SLEEP_TIME		30
 
 /**
@@ -35,8 +35,8 @@ void behaviorTaskInit() {
 	pipelineAverageInit();
 
 	/* Status check */
-//	systemPrintStartup();
-//	systemPrintMemUsage();
+	systemPrintStartup();
+	systemPrintMemUsage();
 }
 
 /**
@@ -47,6 +47,8 @@ void behaviorTask(void* parameters) {
 
 	Beh behOutput;			// Output motion behavior
 
+	uint32 c = 0;	// Count to know when to print neighbors
+
 	/* Initialize variables and subsystems */
 	behaviorTaskInit();
 
@@ -54,6 +56,35 @@ void behaviorTask(void* parameters) {
 		lastWakeTime = osTaskGetTickCount();
 		behOutput = behInactive;
 
+		if (rprintfIsHost()) {
+			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
+					LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+			neighborsDisable();
+			/* Delay task until next time */
+			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
+			continue;
+		}
+
+		if (c == 200) {
+			rprintf("N,%d", roneID);
+			/* Print out neighbor information */
+			NbrList nbrList;
+			nbrListCreate(&nbrList);
+			uint8 i;
+			for (i = 0; i < nbrList.size; i++) {
+				Nbr *nbrPtr = nbrListGetNbr(&nbrList, i);
+				if (nbrPtr == NULL) {
+					break;
+				} else {
+					rprintf(",%d", nbrGetID(nbrPtr));
+				}
+			}
+			rprintf("\n");
+			rprintfFlush();
+			c = 0;
+		}
+
+		c++;
 		/* Set motion output */
 		motorSetBeh(&behOutput);
 		/* Delay task until next time */
@@ -66,7 +97,7 @@ void behaviorTask(void* parameters) {
  */
 int main(void) {
   	systemInit();
-	behaviorSystemInit(behaviorTask, 4096);
+	behaviorSystemInit(behaviorTask, 2048);
 	osTaskStartScheduler();
 
 	return 0;

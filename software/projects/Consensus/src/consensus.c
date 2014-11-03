@@ -148,7 +148,9 @@ Nbr *consensusGetReqNbr(void) {
 
 			/* Store data */
 			reqNonce[reqInd] = nbrNonce;
-			reqNbrs[reqInd++] = nbrPtr;
+			reqNbrs[reqInd] = nbrPtr;
+
+			reqInd++;
 		}
 	}
 
@@ -202,19 +204,49 @@ void consensusSwitchState(uint8 newState) {
 		case (CONSENSUS_STATE_IDLE): {
 			ledsSetPattern(LED_GREEN, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 500);
 			break;
 		}
 		case (CONSENSUS_STATE_REQ): {
 			ledsSetPattern(LED_RED, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			audioNoteOn(CONSENSUS_INSTRUMENT, 73, CONSENSUS_VELOCITY, 500);
 			break;
 		}
 		case (CONSENSUS_STATE_ACK): {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+			audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 500);
 			break;
 		}
 		}
+	}
+}
+
+/**
+ * Perform consensus, maybe play a tune, print some lines, kick back and relax.
+ */
+void consensusDoConsensus(void) {
+	consensusOperation();
+
+	if (consensusFeedback) {
+		audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 500);
+		audioNoteOn(CONSENSUS_INSTRUMENT, 73, CONSENSUS_VELOCITY, 500);
+		audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 500);
+		audioNoteOn(CONSENSUS_INSTRUMENT, 81, CONSENSUS_VELOCITY, 500);
+	}
+}
+
+/**
+ * Perform the round operation
+ */
+void consensusDoRoundOperation(void) {
+	/* Call the round operation before the round begins */
+	consensusRoundOperation(consensusState);
+
+	if (consensusFeedback) {
+		audioNoteOffAll();
+		audioNoteOn(CONSENSUS_INSTRUMENT, 57, CONSENSUS_VELOCITY, 500);
 	}
 }
 
@@ -246,13 +278,11 @@ void consensusTask(void *args) {
 		/* Create neighbor list for this round */
 		neighborsGetMutex();
 		nbrListCreate(&consensusNbrList);
-		neighborsPutMutex();
-
-		/* Call the round operation before the round begins */
-		consensusRoundOperation(consensusState);
 
 		/* Increment the state round counter */
 		consensusStateTime++;
+
+		consensusDoRoundOperation();
 
 		switch (consensusState) {
 		case (CONSENSUS_STATE_IDLE): {
@@ -324,7 +354,7 @@ void consensusTask(void *args) {
 				/* If we managed to get an ack back, perform consensus on the
 				 * stored data */
 				if (requestConsensusFlag) {
-					consensusOperation();
+					consensusDoConsensus();
 				}
 
 				/* Request state over, head back to idle state */
@@ -342,7 +372,7 @@ void consensusTask(void *args) {
 
 			} else {
 				/* Perform consensus now that the ack period is over */
-				consensusOperation();
+				consensusDoConsensus();
 
 				/* Ack state over, head back to idle state */
 				consensusSwitchState(CONSENSUS_STATE_IDLE);
@@ -361,6 +391,8 @@ void consensusTask(void *args) {
 			break;
 		}
 		}
+
+		neighborsPutMutex();
 
 		/* Delay task until next round */
 		osTaskDelayUntil(&consensusWakeTime, CONSENSUS_TASK_DELAY);
@@ -416,6 +448,6 @@ void consensusInit(void (*storeTempData)(Nbr *nbrPtr), void (*operation)(void)) 
 	nbrDataCreate(&consensusNonce, "cNonce", 8, 0);
 
 	/* Create the background task */
-	osTaskCreate(consensusTask, "consenus", 1536, NULL, CONSENSUS_TASK_PRIORITY);
+	osTaskCreate(consensusTask, "consenus", 2048, NULL, CONSENSUS_TASK_PRIORITY);
 }
 

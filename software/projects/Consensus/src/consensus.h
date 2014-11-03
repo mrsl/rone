@@ -30,8 +30,8 @@
  *  Timing, based on a number of neighbor rounds
  */
 #define CONSENSUS_TIME_IDLE			3
-#define CONSENSUS_TIME_REQ			5
-#define CONSENSUS_TIME_ACK			3
+#define CONSENSUS_TIME_REQ			4
+#define CONSENSUS_TIME_ACK			4
 
 /**
  *  Other Information
@@ -40,9 +40,13 @@
 #define CONSENSUS_MAX_NONCE			100
 /* The probability of going into request mode from idle mode.
  * Range is from 0 - CONSENSUS_RAND_MOD. */
-#define CONSENSUS_REQ_PROB			500
+#define CONSENSUS_REQ_PROB			600
 /* The modulus operator applied to random numbers generated for probability */
 #define CONSENSUS_RAND_MOD			1000
+
+/* Musak Feedbak */
+#define CONSENSUS_INSTRUMENT		83
+#define CONSENSUS_VELOCITY			90
 
 /* Function Declarations */
 void consensusEnableFeedback(uint8 isOn);

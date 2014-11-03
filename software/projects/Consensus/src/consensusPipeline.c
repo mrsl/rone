@@ -29,6 +29,27 @@ void (*consensusPipelineCellStoreTempData)(Nbr *nbrPtr, uint8 srcIndex, uint8 de
  * at the same index. */
 void (*consensusPipelineCellOperation)(uint8 index);
 
+/* User specified print function */
+void (*consensusPipelinePrint)(void) = NULL;
+
+/**
+ * Sets the print function that is called each round.
+ *
+ * @param void (*printFunction)(void)
+ * 		Print function
+ */
+void consensusPipelineSetPrintFunction(void (*printFunction)(void)) {
+	consensusPipelinePrint = printFunction;
+}
+
+/**
+ * Do something every round, not final
+ */
+void consensusPipelineRoundOperation(uint8 state) {
+	/* Call print function every round */
+	consensusPipelinePrint();
+}
+
 /**
  * Outputs the contents of the pipeline using a user defined cell output function.
  * Iterates over the entire pipeline starting at the head and calls the provided
@@ -56,27 +77,24 @@ void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index)) {
 /**
  * Function called at the beginning of each round. Handles input into the
  * pipeline and the rolling aspects and count incrementing in the pipeline.
- *
- * @param state
- * 		The state that consensus is currently in.
  */
-void consensusPipelineNextRound(uint8 state) {
+void consensusPipelineNextRound(void) {
 	/* Only input if a new state has occurred */
-	if (!consensusNewStateCheck(&consensusPipelineRound)) {
-		return;
-	}
+//	if (!consensusNewStateCheck(&consensusPipelineRound)) {
+//		return;
+//	}
 
 	/* If we are back to idle state, unlock the pipeline */
-	if (state == CONSENSUS_STATE_IDLE) {
-		consensusPipelineLock = 0;
-	} else {
-		consensusPipelineLock = 1;
-	}
-
-	/* Don't insert if the pipeline is locked */
-	if (consensusPipelineLock) {
-		return;
-	}
+//	if (state == CONSENSUS_STATE_IDLE) {
+//		consensusPipelineLock = 0;
+//	} else {
+//		consensusPipelineLock = 1;
+//	}
+//
+//	/* Don't insert if the pipeline is locked */
+//	if (consensusPipelineLock) {
+//		return;
+//	}
 
 	/* Decrement the head and set it */
 	uint8 newHead = nbrDataGet(&consensusPipelineHead);
@@ -92,8 +110,6 @@ void consensusPipelineNextRound(uint8 state) {
 		count++;
 		nbrDataSet(&consensusPipelineCount, count);
 	}
-
-	cprintf("input!\n");
 }
 
 /**
@@ -116,7 +132,7 @@ void consensusPipelineOperation(void) {
 	    consensusPipelineCellOperation(index);
 	}
 
-	cprintf("gossip!\n");
+	consensusPipelineNextRound();
 }
 
 /**
@@ -148,8 +164,6 @@ void consensusPipelineStoreTempData(Nbr *nbrPtr) {
 	     * storage that correspond to our indices in our pipeline. */
 	    consensusPipelineCellStoreTempData(nbrPtr, srcIndex, destIndex);
 	}
-
-	cprintf("stored!\n");
 }
 
 /**
@@ -161,8 +175,20 @@ uint8 consensusPipelineGetOldestIndex(void) {
 	uint8 head = nbrDataGet(&consensusPipelineHead);
 	uint8 count = nbrDataGet(&consensusPipelineCount);
 
-	return (head + count - 1) % consensusPipelineSize;
+	/* Only return latest index if we have filled the pipeline */
+	if (count == consensusPipelineSize) {
+		return (head + count - 1) % consensusPipelineSize;
+	} else {
+		return head;
+	}
 }
+
+/**
+ * No-op function used for uninitialized functions
+ */
+void consensusPipelineNoOp(void) {
+}
+
 
 /**
  * Initialize the pipeline. Also initializes the consensus subroutine.
@@ -198,6 +224,10 @@ void consensusPipelineInit(uint8 size,
 		void (*cellStoreTempData)(Nbr *nbrPtr, uint8 srcIndex, uint8 destIndex),
 		void (*cellOperation)(uint8 index)) {
 
+	if (consensusPipelinePrint == NULL) {
+		consensusPipelinePrint = consensusPipelineNoOp;
+	}
+
 	/* Set the size of the pipeline */
 	consensusPipelineSize = size;
 
@@ -210,8 +240,11 @@ void consensusPipelineInit(uint8 size,
 	consensusPipelineCellStoreTempData = cellStoreTempData;
 	consensusPipelineCellOperation = cellOperation;
 
+	/* Initialize with one item */
+	consensusPipelineNextRound();
+
 	/* Set the beginning round operation for consensus subtask */
-	consensusSetRoundOperation(consensusPipelineNextRound);
+	consensusSetRoundOperation(consensusPipelineRoundOperation);
 
 	/* Initalize the consensus subtask */
 	consensusInit(consensusPipelineStoreTempData, consensusPipelineOperation);

@@ -33,11 +33,11 @@
 #define NEIGHBOR_XMIT_MIN_DELAY	    	50
 
 #define	ROBOT_ID_NULL					0
-#define	ROBOT_ID_MIN					60
-#define	ROBOT_ID_MAX					130
+#define	ROBOT_ID_MIN					90
+#define	ROBOT_ID_MAX					173
 #define	ROBOT_ID_ALL					0xFF
 
-#define	MAX_PARENT_ID					0x7F
+#define	MAX_PARENT_ID					0xFF
 
 // nbr radio messages - low-level system that underpins nbrnbr data and nbrData messages
 #define NBR_RADIO_MESSAGES_MAX   				16
