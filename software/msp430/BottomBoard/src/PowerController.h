@@ -8,7 +8,6 @@
 #define POWER_USB_PLUGGED_IN_THRESHOLD		700
 #define POWER_USB_FAST_CHARGE_THRESHOLD		950
 
-
 void set8962Reset(uint8 state);
 
 void powerEnSet(uint8 val);
@@ -32,7 +31,6 @@ void resetInit(void);
 	void chargeLimitSet(boolean val);
 	void chargeLimitInit(void);
 #endif
-
 
 void ADC10Init(void);
 void ADC10Shutdown(void);

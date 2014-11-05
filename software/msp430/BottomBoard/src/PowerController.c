@@ -136,7 +136,7 @@ void powerUSBInit(void) {
 	USBSenseRunAvgCount = 0;
 	powerUSBReadADC();
 	for (i = 0; i < VBAT_RUN_AVG_LEN; i++){
-		vBatRunAvg[i] = vBatRunAvg[0];
+		USBSenseRunAvg[i] = USBSenseRunAvg[0];
 	}
 	//Reset the read count to 0
 	USBSenseRunAvgCount = 0;

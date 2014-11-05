@@ -60,11 +60,6 @@
 #define VBAT_SHUTDOWN_BLINK_LED			10
 #define VBAT_SHUTDOWN_BLINK_LED_PWM		45
 
-#ifdef RONE_V12
-	#define USB_5V_1000mAMP_THRESHHOLD          53
-#endif
-
-
 #define BATTERY_LED_FADE_IN_SPEED	40 //Smaller is faster
 
 #define POWER_OFF_DELAY				50000
