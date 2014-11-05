@@ -2,7 +2,7 @@
  * test_1.c
  *
  *  Created on: Oct 11, 2014
- *      Author: zkk
+ *      Author: Zak
  */
 
 /* Main includes */
@@ -29,14 +29,18 @@ void behaviorTaskInit() {
 	/* Set rprintf time */
 	rprintfSetSleepTime(RPRINTF_SLEEP_TIME);
 
+	/* Initialize callbacks */
+	consensusCallbackInit();
+
 	/* Enable visual LED feedback from the consensus system */
 	consensusEnableFeedback(1);
+
 	/* Initialize and begin consensus using averaging */
 	pipelineAverageInit();
 
 	/* Status check */
-	systemPrintStartup();
-	systemPrintMemUsage();
+//	systemPrintStartup();
+//	systemPrintMemUsage();
 }
 
 /**
@@ -52,10 +56,14 @@ void behaviorTask(void* parameters) {
 	/* Initialize variables and subsystems */
 	behaviorTaskInit();
 
+	/* Disable consensus */
+	consensusDisable();
+
 	for (;;) {
 		lastWakeTime = osTaskGetTickCount();
 		behOutput = behInactive;
 
+		/* Disable neighbor comms and just be a radio host */
 		if (rprintfIsHost()) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_FAST);
@@ -65,9 +73,14 @@ void behaviorTask(void* parameters) {
 			continue;
 		}
 
-		if (c == 200) {
+		if (!consensusIsEnabled()) {
+			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
+					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+		}
+
+		/* Print out neighbor information */
+		if (c == 200 || (c == 20 && !consensusIsEnabled())) {
 			rprintf("N,%d", roneID);
-			/* Print out neighbor information */
 			NbrList nbrList;
 			nbrListCreate(&nbrList);
 			uint8 i;
@@ -83,8 +96,8 @@ void behaviorTask(void* parameters) {
 			rprintfFlush();
 			c = 0;
 		}
-
 		c++;
+
 		/* Set motion output */
 		motorSetBeh(&behOutput);
 		/* Delay task until next time */

@@ -2,7 +2,7 @@
  * consensus.h
  *
  *  Created on: Oct 11, 2014
- *      Author: zkk
+ *      Author: Zak
  */
 
 #ifndef SRC_CONSENSUS_H_
@@ -38,20 +38,32 @@
  */
 /* The maximum value of the request nonce. */
 #define CONSENSUS_MAX_NONCE			100
+
 /* The probability of going into request mode from idle mode.
  * Range is from 0 - CONSENSUS_RAND_MOD. */
-#define CONSENSUS_REQ_PROB			600
+#define CONSENSUS_REQ_PROB			5000
+
 /* The modulus operator applied to random numbers generated for probability */
-#define CONSENSUS_RAND_MOD			1000
+#define CONSENSUS_RAND_MOD			10000
 
 /* Musak Feedbak */
 #define CONSENSUS_INSTRUMENT		83
-#define CONSENSUS_VELOCITY			90
+#define CONSENSUS_VELOCITY			30
 
 /* Function Declarations */
+void consensusDisable(void);
+
+void consensusEnable(void);
+
+uint8 consensusIsEnabled(void);
+
+void consensusSetReqProbability(uint16 prob);
+
 void consensusEnableFeedback(uint8 isOn);
 
 void consensusSetRoundOperation(void (*roundOperation)(uint8 state));
+
+void consensusSetDisableOperation(void (*disableOperation)(void));
 
 uint8 consensusNewStateCheck(uint32 *oldCountPtr);
 

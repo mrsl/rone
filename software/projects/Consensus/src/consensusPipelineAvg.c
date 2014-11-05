@@ -2,42 +2,32 @@
  * consensusPipelineAvg.c
  *
  *  Created on: Oct 28, 2014
- *      Author: zkk
+ *      Author: Zak
  */
 
 #include "consensusPipeline.h"
+#include <stdio.h>
 
-#define CONSENSUS_PIPELINE_AVG_INV	255
+#define CONSENSUS_PIPELINE_AVG_INV	-1.0
 
 #define CONSENSUS_PIPELINE_AVG_SIZE	20			// Size of the pipeline
 
-uint8 tempValue[CONSENSUS_PIPELINE_AVG_SIZE];	// Temporary data array
-NbrData value[CONSENSUS_PIPELINE_AVG_SIZE];		// The pipeline itself
+float tempValue[CONSENSUS_PIPELINE_AVG_SIZE];		// Temporary data array
+NbrDataFloat value[CONSENSUS_PIPELINE_AVG_SIZE];	// The pipeline itself
 
-uint8 inputValue;								// Input value for the pipeline
-
-/**
- * Function that prints out the number at the index given. Also prints a
- * trailing '-' to seperate values.
- *
- * @param index
- * 		The index to print
- */
-void pipelineAveragePrintCell(uint8 index) {
-	cprintf("%d,", nbrDataGet(&value[index]));
-}
+float inputValue;								// Input value for the pipeline
 
 /**
  * Prints out the contents of the pipeline from head to tail.
  */
 void pipelineAveragePrintPipeline(void) {
-	/* Call the consensus pipeline print function using our print function */
-	// consensusPipelinePrintPipeline(pipelineAveragePrintCell);
-	// cprintf("\n");
+	char tempBuffer[30];
 
 	/* Print out the input value and the current value we have */
 	uint8 oldIndex = consensusPipelineGetOldestIndex();
-	rprintf("%d, %d\n", inputValue, nbrDataGet(&value[oldIndex]));
+
+	sprintf(tempBuffer, "%.3f, %.3f\n", inputValue, nbrDataGetFloat(&value[oldIndex]));
+	rprintf(tempBuffer);
 	rprintfFlush();
 }
 
@@ -49,7 +39,7 @@ void pipelineAveragePrintPipeline(void) {
  * 		The position in the array to store the input value into.
  */
 void pipelineAverageInput(uint8 index) {
-	nbrDataSet(&value[index], inputValue);
+	nbrDataSetFloat(&value[index], inputValue);
 }
 
 /**
@@ -67,7 +57,7 @@ void pipelineAverageInput(uint8 index) {
  * 		data from.
  */
 void pipelineAverageStoreTempData(Nbr *nbrPtr, uint8 srcIndex, uint8 destIndex) {
-	tempValue[destIndex] = nbrDataGetNbr(&value[srcIndex], nbrPtr);
+	tempValue[destIndex] = nbrDataGetNbrFloat(&value[srcIndex], nbrPtr);
 }
 
 /**
@@ -80,10 +70,10 @@ void pipelineAverageStoreTempData(Nbr *nbrPtr, uint8 srcIndex, uint8 destIndex) 
  */
 void pipelineAverageOperation(uint8 index) {
 	/* Get our current value */
-	uint8 currentValue = nbrDataGet(&value[index]);
+	float currentValue = nbrDataGetFloat(&value[index]);
 
 	/* Get the stored value */
-	uint8 theirValue = tempValue[index];
+	float theirValue = tempValue[index];
 
 	/* Stored value is invalid */
 	if (theirValue == CONSENSUS_PIPELINE_AVG_INV) {
@@ -91,10 +81,10 @@ void pipelineAverageOperation(uint8 index) {
 	}
 
 	/* Average our value and the temporary value together */
-	uint8 newValue = (currentValue + theirValue) / 2;
+	float newValue = (currentValue + theirValue) / 2.0;
 
 	/* Set our new value */
-	nbrDataSet(&value[index], newValue);
+	nbrDataSetFloat(&value[index], newValue);
 
 	/* Put invalid value back in place */
 	tempValue[index] = CONSENSUS_PIPELINE_AVG_INV;
@@ -102,13 +92,13 @@ void pipelineAverageOperation(uint8 index) {
 
 void pipelineAverageInit(void) {
 	/* Random input value */
-	inputValue = rand() % 100;
+	inputValue = (float) (rand() % 10000);
 
 	/* Initialize our data */
 	uint8 i;
 	for (i = 0; i < CONSENSUS_PIPELINE_AVG_SIZE; i++) {
 		/* Create neighbor data */
-		nbrDataCreate(&value[i], "cpAvg", 8, 0);
+		nbrDataCreateFloat(&value[i], "cpAvg");
 		/* Initialize temp storage to nulls */
 		tempValue[i] = CONSENSUS_PIPELINE_AVG_INV;
 	}

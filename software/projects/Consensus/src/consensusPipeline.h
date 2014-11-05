@@ -2,7 +2,7 @@
  * consensusPipeline.h
  *
  *  Created on: Oct 28, 2014
- *      Author: zkk
+ *      Author: Zak
  */
 
 #ifndef SRC_CONSENSUSPIPELINE_H_

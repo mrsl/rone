@@ -4,18 +4,21 @@
  * Generic abstracted pipeline consensus methods.
  *
  *  Created on: Oct 27, 2014
- *      Author: zkk
+ *      Author: Zak
  */
 
 #include "consensus.h"
 
+/* Function prototypes */
+void consensusPipelineNextRound(void);
+
+/* Variables */
 NbrData consensusPipelineHead;		// The current head, or most recent
 NbrData consensusPipelineCount;		// The current element count in the pipeline
 uint8 consensusPipelineSize;		// The maximum size of the pipeline
 uint32 consensusPipelineRound;		// Round check to know when to input
 
 uint8 consensusPipelineSizeLimit;	// The size of data stored temporarily
-uint8 consensusPipelineLock = 0;	// Pipeline insertion lock
 
 /* User provided function to input new pipeline data to the neighbor data at the
  * specified index. */
@@ -31,6 +34,33 @@ void (*consensusPipelineCellOperation)(uint8 index);
 
 /* User specified print function */
 void (*consensusPipelinePrint)(void) = NULL;
+
+/**
+ * What to do on a consensus disable. Just resets the pipeline to initial
+ * state.
+ */
+void consensusPipelineDisableOperation(void) {
+	nbrDataSet(&consensusPipelineHead, 0);
+	nbrDataSet(&consensusPipelineCount, 0);
+
+	/* Initialize with one item */
+	consensusPipelineNextRound();
+}
+
+/**
+ * Sets the size of the pipeline currently in use. Be careful to not cause
+ * segfaults. Also resets the current data in the pipeline.
+ *
+ * @param size
+ * 		The new size of the pipeline
+ */
+void consensusPipelineSetSize(uint8 size) {
+	consensusPipelineSize = size;
+
+	/* Reset the pipeline */
+	consensusPipelineDisableOperation();
+}
+
 
 /**
  * Sets the print function that is called each round.
@@ -245,6 +275,7 @@ void consensusPipelineInit(uint8 size,
 
 	/* Set the beginning round operation for consensus subtask */
 	consensusSetRoundOperation(consensusPipelineRoundOperation);
+	consensusSetDisableOperation(consensusPipelineDisableOperation);
 
 	/* Initalize the consensus subtask */
 	consensusInit(consensusPipelineStoreTempData, consensusPipelineOperation);

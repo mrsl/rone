@@ -5,10 +5,13 @@
  * provided functions to abstract the background consensus task.
  *
  *  Created on: Oct 25, 2014
- *      Author: zkk
+ *      Author: Zak
  */
 
 #include "consensus.h"
+
+/* Function prototypes */
+void consensusSwitchState(uint8 newState);
 
 /* Variables */
 uint8 consensusState;			// Current consensus state
@@ -28,6 +31,10 @@ uint32 consensusStateCount = 0;	// Number of times we have changed state
 NbrList consensusNbrList;		// Neighbor list, updated each consensus round
 
 uint8 consensusFeedback = 0;	// Display information about state?
+
+uint8 consensusNoConsensus = 0;	// Should we do consensus or not?
+
+uint16 consensusReqProb = CONSENSUS_REQ_PROB;	// Probability of request mode
 
 /**
  * Function to call each round. May manipulate something in the data, etc.
@@ -49,6 +56,11 @@ void (*consensusOperation)(void) = NULL;
 void (*consensusStoreTempData)(Nbr *nbrPtr) = NULL;
 
 /**
+ * Operation to do when consensus becomes disabled
+ */
+void (*consensusDisableOperation)(void) = NULL;
+
+/**
  * Set feedback based on boolean input parameter, if on gives visual feedback
  *
  * @param isOn
@@ -56,6 +68,44 @@ void (*consensusStoreTempData)(Nbr *nbrPtr) = NULL;
  */
 void consensusEnableFeedback(uint8 isOn) {
 	consensusFeedback = (isOn) ? 1 : 0;
+}
+
+/**
+ * Disables consensus. Allows you to turn the system off and on.
+ */
+void consensusDisable(void) {
+	consensusNoConsensus = 1;
+	nbrDataSet(&consensusReqID, 0);
+	nbrDataSet(&consensusAckID, 0);
+	nbrDataSet(&consensusNonce, 0);
+
+	consensusDisableOperation();
+}
+
+/**
+ * Enables consensus.
+ */
+void consensusEnable(void) {
+	consensusNoConsensus = 0;
+	consensusSwitchState(CONSENSUS_STATE_IDLE);
+}
+
+/**
+ * Returns true if consensus is active.
+ * @return True if consensus is active.
+ */
+uint8 consensusIsEnabled(void) {
+	return !consensusNoConsensus;
+}
+
+/**
+ * Sets the probability of going into request mode from idle mode
+ *
+ * @param prob
+ * 		New probability. Must be in range 0 < prob < CONSENSUS_RAND_MOD
+ */
+void consensusSetReqProbability(uint16 prob) {
+	consensusReqProb = prob;
 }
 
 /**
@@ -71,6 +121,13 @@ void consensusEnableFeedback(uint8 isOn) {
  */
 void consensusSetRoundOperation(void (*roundOperation)(uint8 state)) {
 	consensusRoundOperation = roundOperation;
+}
+
+/**
+ * Sets the disable consensus operation
+ */
+void consensusSetDisableOperation(void (*disableOperation)(void)) {
+	consensusDisableOperation = disableOperation;
 }
 
 /**
@@ -204,19 +261,19 @@ void consensusSwitchState(uint8 newState) {
 		case (CONSENSUS_STATE_IDLE): {
 			ledsSetPattern(LED_GREEN, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 500);
+			audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 200);
 			break;
 		}
 		case (CONSENSUS_STATE_REQ): {
 			ledsSetPattern(LED_RED, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			audioNoteOn(CONSENSUS_INSTRUMENT, 73, CONSENSUS_VELOCITY, 500);
+			audioNoteOn(CONSENSUS_INSTRUMENT, 73, CONSENSUS_VELOCITY, 200);
 			break;
 		}
 		case (CONSENSUS_STATE_ACK): {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 500);
+			audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 200);
 			break;
 		}
 		}
@@ -230,10 +287,9 @@ void consensusDoConsensus(void) {
 	consensusOperation();
 
 	if (consensusFeedback) {
-		audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 500);
-		audioNoteOn(CONSENSUS_INSTRUMENT, 73, CONSENSUS_VELOCITY, 500);
-		audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 500);
-		audioNoteOn(CONSENSUS_INSTRUMENT, 81, CONSENSUS_VELOCITY, 500);
+		audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 200);
+		audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 200);
+		audioNoteOn(CONSENSUS_INSTRUMENT, 81, CONSENSUS_VELOCITY, 200);
 	}
 }
 
@@ -246,7 +302,7 @@ void consensusDoRoundOperation(void) {
 
 	if (consensusFeedback) {
 		audioNoteOffAll();
-		audioNoteOn(CONSENSUS_INSTRUMENT, 57, CONSENSUS_VELOCITY, 500);
+		//audioNoteOn(CONSENSUS_INSTRUMENT, 57, CONSENSUS_VELOCITY, 200);
 	}
 }
 
@@ -270,7 +326,7 @@ void consensusTask(void *args) {
 		consensusWakeTime = osTaskGetTickCount();
 
 		/* Only check if a new neighbor round has occurred */
-		if (!neighborsNewRoundCheck(&neighborRound)) {
+		if (!neighborsNewRoundCheck(&neighborRound) || consensusNoConsensus) {
 			osTaskDelayUntil(&consensusWakeTime, CONSENSUS_TASK_DELAY);
 			continue;
 		}
@@ -306,7 +362,7 @@ void consensusTask(void *args) {
 			} else {
 				/* Idle state over, change state by rolling the dice, change
 				 * either to request or idle */
-				if ((rand() % CONSENSUS_RAND_MOD) < CONSENSUS_REQ_PROB) {
+				if ((rand() % CONSENSUS_RAND_MOD) < consensusReqProb) {
 					/* Staying in idle mode! */
 					consensusSwitchState(CONSENSUS_STATE_IDLE);
 
@@ -435,6 +491,10 @@ void consensusInit(void (*storeTempData)(Nbr *nbrPtr), void (*operation)(void)) 
 	if (consensusRoundOperation == NULL) {
 		consensusRoundOperation = consensusNoOp;
 	}
+	if (consensusDisableOperation == NULL) {
+		consensusDisableOperation = (void (*)(void)) consensusNoOp;
+	}
+
 
 	/* Set the function to store temporary data to prevent race conditions */
 	consensusStoreTempData = storeTempData;
