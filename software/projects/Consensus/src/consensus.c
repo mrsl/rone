@@ -261,19 +261,19 @@ void consensusSwitchState(uint8 newState) {
 		case (CONSENSUS_STATE_IDLE): {
 			ledsSetPattern(LED_GREEN, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 200);
+//			audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 200);
 			break;
 		}
 		case (CONSENSUS_STATE_REQ): {
 			ledsSetPattern(LED_RED, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			audioNoteOn(CONSENSUS_INSTRUMENT, 73, CONSENSUS_VELOCITY, 200);
+//			audioNoteOn(CONSENSUS_INSTRUMENT, 73, CONSENSUS_VELOCITY, 200);
 			break;
 		}
 		case (CONSENSUS_STATE_ACK): {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_ON,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-			audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 200);
+//			audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 200);
 			break;
 		}
 		}
@@ -287,9 +287,9 @@ void consensusDoConsensus(void) {
 	consensusOperation();
 
 	if (consensusFeedback) {
-		audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 200);
-		audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 200);
-		audioNoteOn(CONSENSUS_INSTRUMENT, 81, CONSENSUS_VELOCITY, 200);
+//		audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 200);
+//		audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 200);
+//		audioNoteOn(CONSENSUS_INSTRUMENT, 81, CONSENSUS_VELOCITY, 200);
 	}
 }
 
@@ -301,8 +301,8 @@ void consensusDoRoundOperation(void) {
 	consensusRoundOperation(consensusState);
 
 	if (consensusFeedback) {
-		audioNoteOffAll();
-		//audioNoteOn(CONSENSUS_INSTRUMENT, 57, CONSENSUS_VELOCITY, 200);
+//		 audioNoteOffAll();
+//		 audioNoteOn(CONSENSUS_INSTRUMENT, 57, CONSENSUS_VELOCITY, 200);
 	}
 }
 

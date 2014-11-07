@@ -36,7 +36,7 @@ void behaviorTaskInit() {
 	consensusEnableFeedback(1);
 
 	/* Initialize and begin consensus using averaging */
-	pipelineAverageInit();
+	pipelineLightAverageInit();
 
 	/* Status check */
 //	systemPrintStartup();
