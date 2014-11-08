@@ -5,7 +5,7 @@
  *      Author: Zak
  */
 
-#include "consensusPipeline.h"
+#include "../consensus/consensusPipeline.h"
 #include <stdio.h>
 
 #define CONSENSUS_PIPELINE_AVG_INV	-1.0

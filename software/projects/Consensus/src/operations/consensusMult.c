@@ -5,7 +5,7 @@
  *      Author: Golnaz
  */
 
-#include "consensus.h"
+#include "../consensus/consensus.h"
 
 NbrData consensusMultData;
 uint8 consensusMultTempData;

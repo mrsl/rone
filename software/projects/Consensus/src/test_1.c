@@ -11,7 +11,7 @@
 #include "ronelib.h"
 
 /* Our includes */
-#include "consensus.h"
+#include "./consensus/consensus.h"
 
 #define NEIGHBOR_ROUND_PERIOD	1500
 #define RPRINTF_SLEEP_TIME		30
