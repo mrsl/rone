@@ -36,6 +36,8 @@ uint8 consensusNoConsensus = 0;	// Should we do consensus or not?
 
 uint16 consensusReqProb = CONSENSUS_REQ_PROB;	// Probability of request mode
 
+uint8 consensusPartner = 0;		// Robot we are doing consensus with
+
 /**
  * Function to call each round. May manipulate something in the data, etc.
  * Parameter is the current consensus state.
@@ -130,12 +132,18 @@ void consensusSetDisableOperation(void (*disableOperation)(void)) {
 	consensusDisableOperation = disableOperation;
 }
 
+uint8 consensusGetPartner(void) {
+	return consensusPartner;
+}
+
 /**
  * Sets the requested ID to a random neighbor from the neighbor list.
  */
 void consensusSetReqID(void) {
 	uint8 randomNbr = rand() % consensusNbrList.size;
 	uint8 reqID = nbrListGetNbr(&consensusNbrList, randomNbr)->ID;
+
+	consensusPartner = reqID;
 
 	nbrDataSet(&consensusReqID, reqID);
 }
@@ -144,6 +152,8 @@ void consensusSetReqID(void) {
  * Sets the acknowledged ID.
  */
 void consensusSetAckID(uint8 ackID) {
+	consensusPartner = ackID;
+
 	nbrDataSet(&consensusAckID, ackID);
 }
 
@@ -151,6 +161,8 @@ void consensusSetAckID(uint8 ackID) {
  * Nulls out req and ack ID's for idle state.
  */
 void consensusSetIDsNull(void) {
+	consensusPartner = 0;
+
 	nbrDataSet(&consensusReqID, 0);
 	nbrDataSet(&consensusAckID, 0);
 }
@@ -287,6 +299,8 @@ void consensusDoConsensus(void) {
 	consensusOperation();
 
 	if (consensusFeedback) {
+		rprintf("P,%d,%d\n", roneID, consensusPartner);
+		rprintfFlush();
 //		audioNoteOn(CONSENSUS_INSTRUMENT, 69, CONSENSUS_VELOCITY, 200);
 //		audioNoteOn(CONSENSUS_INSTRUMENT, 76, CONSENSUS_VELOCITY, 200);
 //		audioNoteOn(CONSENSUS_INSTRUMENT, 81, CONSENSUS_VELOCITY, 200);

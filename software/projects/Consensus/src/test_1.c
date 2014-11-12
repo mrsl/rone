@@ -16,6 +16,13 @@
 #define NEIGHBOR_ROUND_PERIOD	1500
 #define RPRINTF_SLEEP_TIME		30
 
+#define MOVE_STATE_IDLE	0
+#define MOVE_STATE_MOVE	1
+
+#define MOVE_TV			20
+
+uint8 moveState = MOVE_STATE_IDLE;
+
 /**
  * Initialization of subsystems and such
  */
@@ -29,6 +36,12 @@ void behaviorTaskInit() {
 	/* Set rprintf time */
 	rprintfSetSleepTime(RPRINTF_SLEEP_TIME);
 
+	/* Enable the external pose system */
+	externalPoseInit();
+
+	/* Filter really smooth */
+	neighborsSetFilterTimeConstants(50, 50);
+
 	/* Initialize callbacks */
 	consensusCallbackInit();
 
@@ -36,7 +49,7 @@ void behaviorTaskInit() {
 	consensusEnableFeedback(1);
 
 	/* Initialize and begin consensus using averaging */
-	pipelineLightAverageInit();
+	consensusCentroidInit();
 
 	/* Status check */
 //	systemPrintStartup();
@@ -64,7 +77,7 @@ void behaviorTask(void* parameters) {
 		behOutput = behInactive;
 
 		/* Disable neighbor comms and just be a radio host */
-		if (rprintfIsHost()) {
+		if (rprintfIsHost() || externalPoseIsHost()) {
 			ledsSetPattern(LED_BLUE, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_FAST);
 			neighborsDisable();
@@ -76,6 +89,24 @@ void behaviorTask(void* parameters) {
 		if (!consensusIsEnabled()) {
 			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
+
+			if (c > 20) {
+				c = 20;
+			}
+		} else {
+			switch (moveState) {
+			case (MOVE_STATE_MOVE): {
+				behIRObstacleAvoid(&behOutput, MOVE_TV, FALSE);
+				if (!behIsActive(&behOutput)) {
+					behMoveForward(&behOutput, MOVE_TV);
+				}
+				break;
+			}
+			case (MOVE_STATE_IDLE):
+			default: {
+				break;
+			}
+			}
 		}
 
 		/* Print out neighbor information */

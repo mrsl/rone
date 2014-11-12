@@ -8,10 +8,9 @@
 #ifndef SRC_CONSENSUS_H_
 #define SRC_CONSENSUS_H_
 
-//#include <stdio.h>
-#include <stdlib.h>
 #include "roneos.h"
 #include "ronelib.h"
+#include <stdlib.h>
 
 /**
  *  Task Information
@@ -62,6 +61,8 @@ void consensusSetReqProbability(uint16 prob);
 void consensusEnableFeedback(uint8 isOn);
 
 void consensusSetRoundOperation(void (*roundOperation)(uint8 state));
+
+uint8 consensusGetPartner(void);
 
 void consensusSetDisableOperation(void (*disableOperation)(void));
 

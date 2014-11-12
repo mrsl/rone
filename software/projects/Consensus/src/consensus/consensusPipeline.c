@@ -109,23 +109,6 @@ void consensusPipelinePrintPipeline(void (*printFunction)(uint8 index)) {
  * pipeline and the rolling aspects and count incrementing in the pipeline.
  */
 void consensusPipelineNextRound(void) {
-	/* Only input if a new state has occurred */
-//	if (!consensusNewStateCheck(&consensusPipelineRound)) {
-//		return;
-//	}
-
-	/* If we are back to idle state, unlock the pipeline */
-//	if (state == CONSENSUS_STATE_IDLE) {
-//		consensusPipelineLock = 0;
-//	} else {
-//		consensusPipelineLock = 1;
-//	}
-//
-//	/* Don't insert if the pipeline is locked */
-//	if (consensusPipelineLock) {
-//		return;
-//	}
-
 	/* Decrement the head and set it */
 	uint8 newHead = nbrDataGet(&consensusPipelineHead);
 	newHead = (newHead + consensusPipelineSize - 1) % consensusPipelineSize;
@@ -162,6 +145,7 @@ void consensusPipelineOperation(void) {
 	    consensusPipelineCellOperation(index);
 	}
 
+	/* Insert the new value */
 	consensusPipelineNextRound();
 }
 

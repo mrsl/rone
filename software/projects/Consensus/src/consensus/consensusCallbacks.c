@@ -5,8 +5,8 @@
  *      Author: Zak
  */
 
-#include "roneos.h"
-#include "ronelib.h"
+#include "consensus.h"
+#include "consensusPipeline.h"
 #include <stdio.h>
 #include <stdlib.h>
 
