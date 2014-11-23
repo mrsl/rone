@@ -1,0 +1,14 @@
+CAMtasticDXP Drill Report
+Serial Number:0000-00-00000
+Drill File: C:\Users\Sujay\Documents\MRSL\rone\hardware\ELEC\ToasterChargerModule\Gerber outputs\slot_holes.drl
+Format: 2.4
+Units: English (Inch)
+Step & Repeat Codes Used: NO
+
+
+TOOL		SIZE		COUNT
+====		======		=====
+
+ 2 		0.1083		2
+ 3 		0.1181		1
+ 4 		0.1250		8
