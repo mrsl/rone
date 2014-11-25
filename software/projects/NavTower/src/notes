@@ -1,0 +1,59 @@
+This file is general notes for building the IR beacon code. It relates a lot to the hardware configuration of the 8962
+so I don't have to keep Altium up while I'm programming. After the hardware configs, there are rough design notes.
+
+SAME 
+
+- IR receivers 0, 1
+- IR_XMIT_CLK
+- IR_XMIT_DATA
+- IR_XMIT_PWM
+- 3.3V_FTDI
+- RGB switches
+- FTDI RX and TX
+- JTAG and USB pins
+- LED_HEARTBEAT
+- RESET
+
+DIFFERENT
+
+**Power chip** - Need to look at 430 code in CCS and sort of port it
+				 Switch for power instead of pushbutton makes this relatively easy.
+- LEDs attached directly to chip
+- IR beacon power and a new dual PWM configuration for the beacons
+- VBAT_SENSE is attached
+
+REMOVED
+
+- Motor PWMs
+- IR receivers 2-7
+- Radio
+- SPI
+- QEI
+- Light sensors
+- ADC_EXPAND
+
+PROGRAM DESIGN NOTES
+Need a mapping of I/O which is different from the rone I/O. Get others from roneos, roneLib.
+IR beacon protocols are the same, but there is now going to be a second PWM factor. Look at old code and figure 
+out how to integrate. Hold off writing that until OR gates arrive.
+Treat headers like IR LEDs all the time? Does the protocol need to be changed at all considering that the emitters 
+will most likely be in a linear configuration rather than circular?
+Now only 2 IR receivers. Probably not able to be used for motion tracking. Just simple comms.
+Both beacon code and emitter code should run at once so that the jumper is what decides which of them is sending a message,
+rather than requiring that the software be changed constantly.
+Need to test serial comms at some point. Code really should not be different from rone, can look at thngs like SuperDemo.
+Figure out how to encode messages in IR emitters and beacons.
+
+OVERALL STRUCTURE
+
+--Main--
+I/O header
+Comms file
+Driver file
+
+--Tests--
+Blinking lights
+IR protocol, messages being sent, received (use scope to debug protocol, robots to debug messages)
+Serial comms
+
+NO CONDITIONAL COMPILIATION IN HEADERS!
