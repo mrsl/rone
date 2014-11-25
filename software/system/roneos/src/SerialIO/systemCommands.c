@@ -412,10 +412,11 @@ void systemCommandsInit() {
 	// remote control
 	serialCommandAdd(&serialCmdRC, "rc", serialCmdRCFunc);
 
+
+	#if (defined(RONE_V6) || defined(RONE_V9) || defined(RONE_V12))
 	// RCC
 	serialCommandAdd(&serialCmdRR, "rr", serialCmdRRFunc);
 
-	#if (defined(RONE_V6) || defined(RONE_V9) || defined(RONE_V12))
 	radioCommandAddQueue(&radioCmdGUI, "GUI", 10);
 
 	// robot status for pinging com posrt
