@@ -35,6 +35,7 @@ http://gnuarmeclipse.livius.net/blog/openocd-install/
 	d) Copy the following command for the GDB connection string
 
 | openocd -f interface/busblaster.cfg -f target/stellaris.cfg -c "gdb_port pipe; log_output openocd.log" -c "init" -c "reset halt"
+openocd -d0 -f interface/busblaster.cfg -f target/stellaris.cfg -c init -c targets -c "reset halt"
 
 6d. In the "Startup" tab:
 	a) Un-check the "Reset and Delay (seconds):" box
