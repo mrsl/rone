@@ -133,11 +133,7 @@ void behaviorTask(void* parameters) {
 
 			nbrListCreate(&nbrList);
 
-
 			broadcastMsgUpdate(&broadcastMessage, &nbrList);
-
-
-
 
 			/*** READ BUTTONS ***/
 			if(navigationMode != REMOTE){

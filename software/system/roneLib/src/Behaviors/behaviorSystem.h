@@ -11,7 +11,7 @@
 #define BEHAVIORSYSTEM_H_
 
 #define BEHAVIOR_TASK_PRIORITY		(BACKGROUND_TASK_PRIORITY + 1)
-#define BEHAVIOR_TASK_PERIOD		50
+#define BEHAVIOR_TASK_PERIOD		200
 
 /**
  * @brief Structure for robot behaviors.

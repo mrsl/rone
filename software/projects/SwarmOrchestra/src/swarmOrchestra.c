@@ -31,8 +31,8 @@ void behaviorTaskInit() {
 
 	synchInit();
 	/* Status check */
-//	systemPrintStartup();
-//	systemPrintMemUsage();
+	systemPrintStartup();
+	systemPrintMemUsage();
 }
 
 /**
@@ -51,6 +51,7 @@ void behaviorTask(void* parameters) {
 
 		if (buttonsGet(BUTTON_RED)) {
 			synchMakeClock();
+			cprintf("clock!\n");
 		}
 
 		/* Set motion output */

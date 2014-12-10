@@ -5,7 +5,8 @@
  *      Author: zkk
  */
 
-#include "BroadcastComms.h"
+#include "roneos.h"
+#include "roneLib.h"
 
 #define HH_MASK	0xFF000000
 #define HL_MASK	0x00FF0000
@@ -35,6 +36,8 @@ static void synchCallback(NbrDatabase* ndPtr) {
 
 	broadcastMsgUpdate(&synchBroadcastMessage, &nbrList);
 
+	cprintf("synch!\n");
+
 	//TODO: do something with the updated broadcast message
 	uint8 tsHH, tsHL, tsLH, tsLL;
 	if (broadcastMsgIsSource(&synchBroadcastMessage)) {
@@ -61,27 +64,17 @@ static void synchCallback(NbrDatabase* ndPtr) {
 							| tsHL << HL_SHIFT
 							| tsLH << LH_SHIFT
 							| tsLL << LL_SHIFT;
+
 		cprintf("%u\n", receiveTime);
 	}
 }
 
 /**
- * Initialize the synchronization subsystem
+ * Initialize the synchronization subsystem.
+ * TODO:
+ * Should automatically elect a conductor robot that is the clock synchronizer.
+ * This clock robot then propogates its time through a tree
  */
 void synchInit(void) {
-	broadcastMsgCreate(&synchBroadcastMessage, BROADCAST_MSG_HOPS_MAX);
-
-	broadcastMsgDataCreate(&synchTimeMessageHH, &synchBroadcastMessage, "synchHH", 0);
-	broadcastMsgDataCreate(&synchTimeMessageHH, &synchBroadcastMessage, "synchHL", 0);
-	broadcastMsgDataCreate(&synchTimeMessageHH, &synchBroadcastMessage, "synchLH", 0);
-	broadcastMsgDataCreate(&synchTimeMessageHH, &synchBroadcastMessage, "synchLL", 0);
-
 	neighborsAddReceiveCallback(synchCallback);
-}
-
-/**
- * Set this robot to be the source of the timestamp synchronization
- */
-void synchMakeClock(void) {
-	broadcastMsgSetSource(&synchBroadcastMessage, 1);
 }

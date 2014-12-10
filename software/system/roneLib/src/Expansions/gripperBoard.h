@@ -88,12 +88,13 @@ void gripperGripRelax();
 void gripperGripUntilGripped();
 
 void gripperCheckGripped();
+void gripperGetGripped();
 
 void gripperUpdateServo();
 
-void gripperCalibratServo();
+void gripperCalibrateServo();
 
-uint8 gripperServoCalibratFinish();
+uint8 gripperServoCalibrateFinish();
 
 /**
  *  @brief Change the position of the servo

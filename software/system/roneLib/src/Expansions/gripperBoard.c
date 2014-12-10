@@ -288,11 +288,11 @@ void serialCmdSGFunc(char* command) {
 			gripperBoardGetGripped());
 }
 
-void gripperCalibratServo(){
+void gripperCalibrateServo(){
 	state = GRIPPER_CALIBRATE_MIN;
 }
 
 
-uint8 gripperServoCalibratFinish(){
+uint8 gripperServoCalibrateFinish(){
 	return gripper.calibrated;
 }

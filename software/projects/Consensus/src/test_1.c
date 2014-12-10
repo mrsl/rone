@@ -49,7 +49,7 @@ void behaviorTaskInit() {
 	consensusEnableFeedback(1);
 
 	/* Initialize and begin consensus using averaging */
-	consensusCentroidInit();
+	pipelineCentroidInit();
 
 	/* Status check */
 //	systemPrintStartup();
@@ -65,6 +65,8 @@ void behaviorTask(void* parameters) {
 	Beh behOutput;			// Output motion behavior
 
 	uint32 c = 0;	// Count to know when to print neighbors
+
+	uint8 buttonOld;		// Was the button pressed last round?
 
 	/* Initialize variables and subsystems */
 	behaviorTaskInit();
@@ -85,6 +87,16 @@ void behaviorTask(void* parameters) {
 			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 			continue;
 		}
+
+		uint8 button = buttonsGet(BUTTON_RED);
+		if (button && !buttonOld) {
+			if (consensusIsEnabled()) {
+				consensusDisable();
+			} else {
+				consensusEnable();
+			}
+		}
+		buttonOld = button;
 
 		if (!consensusIsEnabled()) {
 			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,

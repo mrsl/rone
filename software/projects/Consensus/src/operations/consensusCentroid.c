@@ -57,13 +57,7 @@ void consensusCentroidOperation(void) {
 	centroidValue nx = (ox + tx) / ((centroidValue) 2.0);
 	centroidValue ny = (oy + ty) / ((centroidValue) 2.0);
 
-	char buf[100];
-	sprintf(buf, "%.3f, %.3f, %.3f, %.3f, %.3f, %.3f\n", ox, oy, tx, ty, nx, ny);
-	cprintf(buf);
-
-//	if (roneID != 146) {
-		centroidNbrDataSet(nx, ny, &value);
-//	}
+	centroidNbrDataSet(nx, ny, &value);
 
 	centroidDataSet(INVVALUE, INVVALUE, &tempValue);
 }
