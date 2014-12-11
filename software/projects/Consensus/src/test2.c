@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "roneos.h"
 #include "ronelib.h"
+#include <math.h>
 
 /* Our includes */
 #include "./consensus/consensus.h"
@@ -125,15 +126,16 @@ void behaviorTask(void* parameters) {
 
 		consensusPipelineMinMaxGetPosDiff(&posDiff);
 		consensusPipelineMinMaxGetPosMult(&posMult);
+		//float object_orient = atan2f()   (posMult,posDiff);
+		int16 object_orient = atan2MilliRad((int32)posMult,(int32)posDiff);
 
 		char buffer[100];
-
-		sprintf(buffer, "CX: %.3f CY: %.3f PD: %.3f PM: %.3f\n", centroidX, centroidY, posDiff, posMult);
+		sprintf(buffer, "CX: %.3f CY: %.3f PD: %.3f PM: %.3f OD: %d \n", centroidX, centroidY, posDiff, posMult, object_orient);
 		cprintf(buffer);
 
 
-//		consensusPipelineMinMaxSetPosDiff(centroidX);
-//		consensusPipelineMinMaxSetPosMult(3);
+		consensusPipelineMinMaxSetPosDiff(centroidX*centroidX -centroidY*centroidY);
+		consensusPipelineMinMaxSetPosMult(centroidX*centroidY);
 
 		/* Set motion output */
 		motorSetBeh(&behOutput);
