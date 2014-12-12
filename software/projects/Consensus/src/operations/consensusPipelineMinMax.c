@@ -6,6 +6,7 @@
  */
 
 #include "../consensus/consensusPipeline.h"
+#include "./consensusPipelineMinMax.h"
 #include "../util/centroidData.h"
 #include <stdio.h>
 
@@ -34,6 +35,26 @@ float posMultTempValue[CONSENSUS_PIPELINE_MINMAX_SIZE];
 NbrDataFloat posMultValue[CONSENSUS_PIPELINE_MINMAX_SIZE];
 
 
+/**
+ * Prints out the contents of the pipeline from head to tail.
+ */
+void consensusPipelineMinMaxPrintValues(void) {
+	float centroidX, centroidY;
+	float posDiff;
+	float posMult;
+
+	consensusPipelineMinMaxGetCentroid(&centroidX, &centroidY);
+
+	consensusPipelineMinMaxGetPosDiff(&posDiff);
+	consensusPipelineMinMaxGetPosMult(&posMult);
+	int16 object_orient = atan2MilliRad((int32) posMult, (int32) posDiff);
+
+	char buffer[100];
+	sprintf(buffer, "CX:%.3f CY:%.3f PD:%.3f PM:%.3f OD:%d\n", centroidX, centroidY, posDiff, posMult, object_orient);
+	rprintf(buffer);
+
+	rprintfFlush();
+}
 
 void consensusPipelineMinMaxGetCentroid(float *x, float *y) {
 	uint8 oldIndex = consensusPipelineGetOldestIndex();
@@ -194,6 +215,9 @@ void consensusPipelineMinMaxInit(void) {
 		/* Initialize temp storage to nulls */
 		posMultTempValue[i] = CONSENSUS_PIPELINE_MINMAX_INV;
 	}
+
+
+	consensusPipelineSetPrintFunction(consensusPipelineMinMaxPrintValues);
 
 	/* Initialize the pipeline */
 	consensusPipelineInit(CONSENSUS_PIPELINE_MINMAX_SIZE,

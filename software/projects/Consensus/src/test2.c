@@ -119,23 +119,11 @@ void behaviorTask(void* parameters) {
 		}
 
 		float centroidX, centroidY;
-		float posDiff;
-		float posMult;
 
 		consensusPipelineMinMaxGetCentroid(&centroidX, &centroidY);
 
-		consensusPipelineMinMaxGetPosDiff(&posDiff);
-		consensusPipelineMinMaxGetPosMult(&posMult);
-		//float object_orient = atan2f()   (posMult,posDiff);
-		int16 object_orient = atan2MilliRad((int32)posMult,(int32)posDiff);
-
-		char buffer[100];
-		sprintf(buffer, "CX: %.3f CY: %.3f PD: %.3f PM: %.3f OD: %d \n", centroidX, centroidY, posDiff, posMult, object_orient);
-		cprintf(buffer);
-
-
-		consensusPipelineMinMaxSetPosDiff(centroidX*centroidX -centroidY*centroidY);
-		consensusPipelineMinMaxSetPosMult(centroidX*centroidY);
+		consensusPipelineMinMaxSetPosDiff(centroidX * centroidX - centroidY * centroidY);
+		consensusPipelineMinMaxSetPosMult(centroidX * centroidY);
 
 		/* Set motion output */
 		motorSetBeh(&behOutput);
