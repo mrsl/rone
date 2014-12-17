@@ -118,12 +118,51 @@ void behaviorTask(void* parameters) {
 			}
 		}
 
-		float centroidX, centroidY;
+		float centroidX, centroidY, centroidTempX, centroidTempY;
+		float posDiff;
+		float posMult;
 
 		consensusPipelineMinMaxGetCentroid(&centroidX, &centroidY);
 
+
+
 		consensusPipelineMinMaxSetPosDiff(centroidX * centroidX - centroidY * centroidY);
 		consensusPipelineMinMaxSetPosMult(centroidX * centroidY);
+
+		// TODO: set the width as the distance to the line passing the centroid and has the slope of object orientation
+		// suggestion: compute object orientation here not in the print function
+
+		consensusPipelineMinMaxGetCentroid(&centroidX, &centroidY);
+		consensusPipelineMinMaxGetPosDiff(&posDiff);
+		consensusPipelineMinMaxGetPosMult(&posMult);
+
+		if ((abs(posDiff)<1) && (abs(2* posMult)<1))
+			{
+				posDiff = posDiff*100;
+				posMult = posMult*100;
+
+			}
+
+		int16 object_orient = (1 * atan2MilliRad((int32)(2*posMult), (int32)posDiff))/2;
+
+		centroidTempX = centroidX;
+		centroidTempY = centroidY;
+
+		if ((centroidTempX < 1) && (centroidTempY < 1))
+		{
+			centroidTempX = 100 * centroidTempX;
+			centroidTempY = 100 * centroidTempY;
+
+		}
+
+
+		float centoridDist =  vectorMag(centroidX, centroidY);
+		int16 centroidbearing = atan2MilliRad((int32)centroidTempY ,(int32)centroidTempX);
+		float widthInit = centoridDist * sinMilliRad((int16)(centroidbearing - object_orient))/MILLIRAD_TRIG_SCALER;
+		// TODO : this computation works only in normalized angles (-pi,pi], check the atan2 gives the angle in
+		// range, otherwise normalized it...
+		consensusPipelineMinMaxSetWidth(widthInit);
+		consensusPipelineMinMaxSetDiameter(centoridDist);
 
 		/* Set motion output */
 		motorSetBeh(&behOutput);
