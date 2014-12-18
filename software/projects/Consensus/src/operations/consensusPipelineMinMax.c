@@ -144,6 +144,15 @@ void consensusPipelineMinMaxInput(uint8 index) {
 
 	//
 	nbrDataSetFloat(&posMultValue[index], posMultInputValue);
+
+	//
+
+	nbrDataSetFloat(&widthValue[index], posMultInputValue);
+
+		//
+
+	nbrDataSetFloat(&diameterValue[index], posMultInputValue);
+
 }
 
 void consensusPipelineMinMaxStoreTempData(Nbr *nbrPtr, uint8 srcIndex, uint8 destIndex) {
@@ -160,6 +169,12 @@ void consensusPipelineMinMaxStoreTempData(Nbr *nbrPtr, uint8 srcIndex, uint8 des
 
 	//
 	posMultTempValue[destIndex] = nbrDataGetNbrFloat(&posMultValue[srcIndex], nbrPtr);
+
+	//
+	widthTempValue[destIndex] = nbrDataGetNbrFloat(&widthValue[srcIndex], nbrPtr);
+
+	//
+	diameterTempValue[destIndex] = nbrDataGetNbrFloat(&diameterValue[srcIndex], nbrPtr);
 }
 
 void consensusPipelineMinMaxCentroidOperation(uint8 index) {
@@ -228,7 +243,7 @@ void consensusPipelineMinMaxAvgOperation(uint8 index) {
 }
 
 
-void consensusPipelineMinWidthOperation(uint8 index) {
+void consensusPipelineWidthDiameterOperation(uint8 index) {
 	float currentValue = nbrDataGetFloat(&widthValue[index]);
 
 	/* Get the stored value */
@@ -257,15 +272,12 @@ void consensusPipelineMinWidthOperation(uint8 index) {
 	/* Put invalid value back in place */
 	widthTempValue[index] = CONSENSUS_PIPELINE_MINMAX_INV;
 
-	}
 
-
-void consensusPipelineMaxDiameterOperation(uint8 index) {
-	/* Get our current value */
-	float currentValue = nbrDataGetFloat(&diameterValue[index]);
+	//////
+	 currentValue = nbrDataGetFloat(&diameterValue[index]);
 
 	/* Get the stored value */
-	float theirValue = diameterTempValue[index];
+	 theirValue = diameterTempValue[index];
 
 	/* Stored value is invalid */
 	if (theirValue == CONSENSUS_PIPELINE_MINMAX_INV) {
@@ -273,7 +285,6 @@ void consensusPipelineMaxDiameterOperation(uint8 index) {
 	}
 
 
-	float newValue;
 	/* Take the maximum value from our value and the temporary value together */
 	if (currentValue < theirValue)
 	{ newValue = theirValue;}
@@ -289,15 +300,17 @@ void consensusPipelineMaxDiameterOperation(uint8 index) {
 	/* Put invalid value back in place */
 	diameterTempValue[index] = CONSENSUS_PIPELINE_MINMAX_INV;
 
-	///////////////
 
-}
+	}
+
+
+
 
 void consensusPipelineMinMaxOperation(uint8 index) {
 	consensusPipelineMinMaxCentroidOperation(index);
 	consensusPipelineMinMaxAvgOperation(index);
-	consensusPipelineMinWidthOperation(index);
-	consensusPipelineMaxDiameterOperation(index);
+	consensusPipelineWidthDiameterOperation(index);
+
 
 
 }
@@ -324,7 +337,7 @@ void consensusPipelineMinMaxInit(void) {
 	/* Initialize our data */
 	for (i = 0; i < CONSENSUS_PIPELINE_MINMAX_SIZE; i++) {
 		/* Create neighbor data */
-		nbrDataCreateFloat(&posDiffValue[i], "pdAvg");
+		nbrDataCreateFloat(&posDiffValue[i], "cpAvg");
 		/* Initialize temp storage to nulls */
 		posDiffTempValue[i] = CONSENSUS_PIPELINE_MINMAX_INV;
 	}
@@ -335,7 +348,7 @@ void consensusPipelineMinMaxInit(void) {
 	/* Initialize our data */
 	for (i = 0; i < CONSENSUS_PIPELINE_MINMAX_SIZE; i++) {
 		/* Create neighbor data */
-		nbrDataCreateFloat(&posMultValue[i], "pmAvg");
+		nbrDataCreateFloat(&posMultValue[i], "cpAvg");
 		/* Initialize temp storage to nulls */
 		posMultTempValue[i] = CONSENSUS_PIPELINE_MINMAX_INV;
 	}
@@ -345,7 +358,7 @@ void consensusPipelineMinMaxInit(void) {
 
 	for (i = 0; i < CONSENSUS_PIPELINE_MINMAX_SIZE; i++) {
 			/* Create neighbor data */
-			nbrDataCreateFloat(&widthValue[i], "wAvg");
+			nbrDataCreateFloat(&widthValue[i], "cpAvg");
 			/* Initialize temp storage to nulls */
 			widthTempValue[i] = CONSENSUS_PIPELINE_MINMAX_INV;
 		}
@@ -358,14 +371,14 @@ void consensusPipelineMinMaxInit(void) {
 
 		for (i = 0; i < CONSENSUS_PIPELINE_MINMAX_SIZE; i++) {
 				/* Create neighbor data */
-				nbrDataCreateFloat(&diameterValue[i], "dAvg");
+				nbrDataCreateFloat(&diameterValue[i], "cpAvg");
 				/* Initialize temp storage to nulls */
 				diameterTempValue[i] = CONSENSUS_PIPELINE_MINMAX_INV;
 			}
 
 
 
-	consensusPipelineSetPrintFunction(consensusPipelineMinMaxPrintValues);
+	//consensusPipelineSetPrintFunction(consensusPipelineMinMaxPrintValues);
 
 	/* Initialize the pipeline */
 	consensusPipelineInit(CONSENSUS_PIPELINE_MINMAX_SIZE,
