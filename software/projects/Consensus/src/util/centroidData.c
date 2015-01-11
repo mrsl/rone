@@ -6,7 +6,7 @@
  */
 
 #include "roneos.h"
-#include "roneLib.h"
+#include "ronelib.h"
 #include "centroidData.h"
 
 void centroidNbrValueCreate(centroidNbrValue *value, char *name) {
