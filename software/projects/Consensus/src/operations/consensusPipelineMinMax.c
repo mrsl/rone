@@ -45,11 +45,14 @@ void consensusPipelineMinMaxPrintValues(void) {
 	float cX, cY;
 	float pDiff;
 	float pMult;
+	float cW, cD;
 
 	// Retrieve values
 	consensusPipelineMinMaxGetCentroid(&cX, &cY);
 	consensusPipelineMinMaxGetPosDiff(&pDiff);
 	consensusPipelineMinMaxGetPosMult(&pMult);
+	consensusPipelineMinMaxGetWidth(&cW);
+	consensusPipelineMinMaxGetDiameter(&cD);
 
 	// Scale appropriately
 	if ((abs(pDiff) < 1) && (abs(2 * pMult) < 1)) {
@@ -61,8 +64,8 @@ void consensusPipelineMinMaxPrintValues(void) {
 	int16 oO = atan2MilliRad((int32) (2 * pMult), (int32) pDiff) / 2;
 
 	char outBuffer[100];	// Output buffer and format
-	char outBufferFormat[35] = "X:%.3f Y:%.3f D:%.3f M:%.3f D:%d\n";
-	sprintf(outBuffer, outBufferFormat, cX, cY, pDiff, pMult, oO);
+	char outBufferFormat[50] = "X:%.3f Y:%.3f D:%.3f M:%.3f O:%d W:%.3f D:%.3f\n";
+	sprintf(outBuffer, outBufferFormat, cX, cY, pDiff, pMult, oO, cW, cD);
 
 	rprintf(outBuffer);
 	rprintfFlush();
@@ -73,14 +76,21 @@ void consensusPipelineMinMaxPrintValues(void) {
 	float tcX = cX;
 	float tcY = cY;
 
-	if ((tcX < 1) && (tcY < 1)) {
-		tcX *= 100;
-		tcY *= 100;
+	if ((tcX < 1.) && (tcY < 1.)) {
+		tcX *= 100.;
+		tcY *= 100.;
 	}
 
-	float cDist =  vectorMag(cX, cY);
-	int16 cBear = atan2MilliRad((int32)tcY ,(int32)tcY);
-	float w = cDist * sinMilliRad((int16)(cBear - oO)) / MILLIRAD_TRIG_SCALER;
+	float cDist = (float) vectorMag((int32) cX, (int32) cY);
+	int16 cBear = atan2MilliRad((int32) tcY ,(int32) tcY);
+
+	int16 ang = sinMilliRad(normalizeAngleMilliRad2(cBear - oO));
+	float factor = ((float) ang / (float) MILLIRAD_TRIG_SCALER);
+
+	float w = cDist * factor;
+
+//	sprintf(outBuffer, "%.3f, %d, %d, %d, %.3f, %.3f\n", cDist, cBear, oO, ang, w, factor);
+//	cprintf(outBuffer);
 
 	consensusPipelineMinMaxSetWidth(w);
 	consensusPipelineMinMaxSetDiameter(cDist);
@@ -120,6 +130,18 @@ void consensusPipelineMinMaxGetPosMult(float *x) {
 	*x = nbrDataGetFloat(&posMultValue[oldIndex]);
 }
 
+void consensusPipelineMinMaxGetWidth(float *x) {
+	uint8 oldIndex = consensusPipelineGetOldestIndex();
+
+	*x = nbrDataGetFloat(&widthValue[oldIndex]);
+}
+
+void consensusPipelineMinMaxGetDiameter(float *x) {
+	uint8 oldIndex = consensusPipelineGetOldestIndex();
+
+	*x = nbrDataGetFloat(&diameterValue[oldIndex]);
+}
+
 void consensusPipelineMinMaxInput(uint8 index) {
 	//
 	centroidNbrDataCopy(&centroidEstInputValue, &centroidEstValue[index]);
@@ -129,6 +151,12 @@ void consensusPipelineMinMaxInput(uint8 index) {
 
 	//
 	nbrDataSetFloat(&posMultValue[index], posMultInputValue);
+
+	//
+	nbrDataSetFloat(&widthValue[index], widthInputValue);
+
+	//
+	nbrDataSetFloat(&diameterValue[index], diameterInputValue);
 }
 
 void consensusPipelineMinMaxStoreTempData(Nbr *nbrPtr, uint8 srcIndex,
@@ -235,8 +263,8 @@ void consensusPipelineMinMaxAvgOperation(uint8 index) {
 		return;
 	}
 
-	/* Find smallest */
-	newValue = (currentValue < theirValue) ? currentValue : theirValue;
+	/* Find largest */
+	newValue = (currentValue > theirValue) ? currentValue : theirValue;
 
 	/* Set our new value */
 	nbrDataSetFloat(&widthValue[index], newValue);
