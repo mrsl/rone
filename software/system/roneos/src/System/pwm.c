@@ -163,14 +163,10 @@ void pwmInitializeLed(void) {
  * Sets up the PWM pins for the IR beacon PWM control.
  */
 void pwmInitializeBeacon(void) {
-/*	MAP_SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM);
-	MAP_PWMGenConfigure(PWM_BASE, GEN_RED_BEACON, PWM_GEN_MODE_DOWN|PWM_GEN_MODE_DBG_RUN);
-	MAP_PWMGenPeriodSet(PWM_BASE, GEN_RED_BEACON, PWM_FREQUENCY);
-	MAP_PWMIntEnable(PWM_BASE, GEN_RED_BEACON);*/
 	MAP_SysCtlPeripheralEnable(IR_BEACON_PERIPH);
 	//MAP_GPIOPinWrite(IR_BEACON_BASE, IR_BEACON_GPIO_BIT, 0);
 	MAP_GPIOPinTypeGPIOOutput(IR_BEACON_BASE, IR_BEACON_GPIO_BIT);
-	MAP_GPIOPinWrite(IR_BEACON_BASE, IR_BEACON_GPIO_BIT, 0);
+	MAP_GPIOPinWrite(IR_BEACON_BASE, IR_BEACON_GPIO_BIT, IR_BEACON_GPIO_BIT);
 }
 
 /*
