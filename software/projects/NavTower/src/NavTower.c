@@ -19,7 +19,7 @@ void behaviorTask (void* parameters){
 	while(TRUE){
 		counter++;
 		if (counter > 5) {
-			ledsSetAll(20);
+			//ledsSetAll(20);
 			if (counter > 10) {
 				counter = 0;
 			}
@@ -37,7 +37,6 @@ int main(void) {
 	systemPrintStartup();
 
 	// init the behavior system and start the behavior thread
-	//behaviorSystemInit(behaviorTask, 2048);
 	osTaskCreate(behaviorTask, "behavior", 2048, NULL, BEHAVIOR_TASK_PRIORITY);
 
 	// Start the scheduler

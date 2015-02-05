@@ -536,7 +536,6 @@ static void neighborsTask(void* parameters) {
 				nd.nbrs[i].signalBits = (nd.nbrs[i].signalBits << 1) & nbrSignalBitsMask;
 
 				// set the new nbrround flag
-
 			}
 
 			// process the new IR messages
