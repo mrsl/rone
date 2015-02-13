@@ -37,8 +37,8 @@
 #define CAPTAIN_LED_COUNTER_TIME		12
 
 
-#define NAV_TOWER_LOW_RONE_ID				126
-#define NAV_TOWER_HIGH_RONE_ID				127
+#define NAV_TOWER_LOW_RONE_ID				124
+#define NAV_TOWER_HIGH_RONE_ID				125
 
 #define MODE_IDLE						0
 #define MODE_FOLLOW						1
@@ -51,8 +51,6 @@
 #define JOYSTICK_TIMEOUT_BEH			20000
 
 #define JOYSTICK_NUM					1
-
-//void serialCmdUIFunc(char* arguments);
 
 #define MUSEUM_RADIO_COMMAND_BEH_IDX	0
 #define TEAM_LEADER_ON_TIME			4
@@ -164,7 +162,7 @@ void behaviorTask(void* parameters) {
 
 
 		if (!remoteControlJoystickIsActive(JOYSTICK_NUM, BEHAVIOR_IDLE_TIME)) {
-			// no joystick activity for a while.  go idle amd flash the ligths.
+			// no joystick activity for a while.  go idle and flash the lights.
 			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 			remoteControlLedsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
 		} else if (osTaskGetTickCount() - behaviorChangeTime > BEHAVIOR_READY_TIME) {
@@ -209,6 +207,7 @@ void behaviorTask(void* parameters) {
 				nbrListPrint(&nbrList, "nbrs");
 				nbrListPrint(&nbrListRobots, "robots");
 			}
+
 			/* see how many joysticks are active
 			 * count the number of teams and make a team map
 			 */
@@ -254,7 +253,9 @@ void behaviorTask(void* parameters) {
 			nbrListClear(&nbrListTeam);
 			nbrListFindNbrsWithDataEqual(&nbrListTeam, &nbrListRobots, &nbrDataTeam, team);
 
-			if (printNbrs) nbrListPrint(&nbrListTeam, "Team Members");
+			if (printNbrs) {
+				nbrListPrint(&nbrListTeam, "Team Members");
+			}
 
 			// see if you are your team leader
 			boolean teamLeader = FALSE;
@@ -269,9 +270,13 @@ void behaviorTask(void* parameters) {
 				// read the joystick for your team.  We read into the behRadio so we can
 				// use the joystick for flocking
 				joystickPtr = remoteControlGetJoystick(team);
-				if (printNbrs) cprintf("joy%d %d,%d\n", team, joystickPtr->x, joystickPtr->y);
+				if (printNbrs) {
+					cprintf("joy%d %d,%d\n", team, joystickPtr->x, joystickPtr->y);
+				}
 				behRemoteControlCompass(&behRadio, joystickPtr, MOTION_TV, nbrNavTowerHighPtr, nbrNavTowerLowPtr);
-				if (printNbrs) cprintf("beh %d,%d\n", behOutput.tv, behOutput.rv);
+				if (printNbrs) {
+					cprintf("beh %d,%d\n", behOutput.tv, behOutput.rv);
+				}
 			}
 
 			/* Code for the regular robots that are not the head of the snake */

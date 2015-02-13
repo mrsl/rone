@@ -19,7 +19,7 @@ void behaviorTask (void* parameters){
 	while(TRUE){
 		counter++;
 		if (counter > 5) {
-			//ledsSetAll(20);
+			ledsSetAll(20);
 			if (counter > 10) {
 				counter = 0;
 			}
