@@ -18,6 +18,7 @@ uint8 convertASCIIHexByte(char *val);
 uint16 convertASCIIHexWord(char *val);
 
 void datestr(char *buffer);
+//int round(GLfloat x);
 void strins(char* str, char c, int index);
 void strdel(char* str, int index);
 

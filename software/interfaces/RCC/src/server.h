@@ -14,6 +14,9 @@
 #define	APRILTAG_BUFFERSIZE		64
 #define NUMBUFFER_APRILTAG		64
 
+#define SAT_BCAST_TIME			500
+
+
 /**
  * Connection information struct that is passed to the handlers
  */
@@ -31,6 +34,7 @@ struct aprilTag
 	int id;
 	int rid;												// Robot ID linked
 	time_t up;
+	time_t bcastTime;										// Time last broadcasted
 	int active;												// Been seen?
 	int head;												// Head of buffer
 	char buffer[NUMBUFFER_APRILTAG][APRILTAG_BUFFERSIZE]; 	// Buffer
@@ -67,10 +71,11 @@ SOCKET openClientFD(char *hostname, char *port);
 void incomingHandler(void *vargp);
 void connectionHandler(void *vargp);
 void initAprilTag();
-int connectAprilTag();
 void aprilTagHandler(void *vargp);
 int appendAprilTagData(char *buffer, int n, int aid);\
 int fetchData(char *buffer, int rid, int rhead, int aid, int ahead);
+
+void remoteRCCHandler(void *vargp);
 
 ssize_t socketWrite(int fd, char *usrbuf, size_t n);
 ssize_t socketRead(struct socketIO *sp, char *usrbuf, size_t n);

@@ -9,6 +9,8 @@ int showHelp = 0;
 int clickMode;
 int prevClick;
 
+int guiTick = 0;
+
 char *toasterText;
 CRITICAL_SECTION toasterMutex;
 long toasterTime;
@@ -26,6 +28,7 @@ char hostName[20] =			"Make Radio Host";
 char infoName[20] =			"Extra Information";
 char logName[20] =			"Log Data";
 char guiName[20] =			"Connect to GUI";
+char satName[30] =			"Make AprilTag Satellite";
 char openlocalName[21] = 	"Opened Local Robots!";
 char openremoteName[22] = 	"Opened Remote Robots!";
 char timeOnName[21] = 		"Time-stamps enabled!";
@@ -249,10 +252,16 @@ void readChar(char character)
 			break;
 		}
 		case ('7'): {
+			clickMode = ATSAT;
+			setToaster(satName);
+			break;
+		}
+		case ('8'): {
 			clickMode = DISPLAY;
 			setToaster(infoName);
 			break;
 		}
+
 //		case ('8'): {
 //			clickMode = GUI;
 //			setToaster(guiName);
@@ -265,12 +274,15 @@ void readChar(char character)
 		return;
 	}
 
+	mutexLock(&aprilTagURL.mutex);
 	switch (character)
 	{
 	case ('\r'):
 	case ('\n'): {
-		if (!aprilTagConnected)
-			connectAprilTag();
+		if (!aprilTagConnected) {
+			mutexUnlock(&aprilTagURL.mutex);
+			makeThread(&aprilTagHandler, NULL);
+		}
 		break;
 	}
 	/* Backspace handler */
@@ -293,6 +305,7 @@ void readChar(char character)
 		break;
 	}
 	}
+	mutexUnlock(&aprilTagURL.mutex);
 }
 
 /**
@@ -336,10 +349,18 @@ void processHits(GLint hits, GLuint buffer[])
 		/* Textbox */
 		case (TEXTBOX_ID): {
 			if (aprilTagConnected) {
-				if (clickMode == CONNECT)
+				if (clickMode == CONNECT) {
 					openClientConnection(0, -1);
+				}
 			} else {
 				aprilTagURL.isActive = 1;
+			}
+			continue;
+		}
+		case (TEXTBOX_NAME): {
+			if (!aprilTagConnected) {
+				mutexUnlock(&aprilTagURL.mutex);
+				makeThread(&aprilTagHandler, NULL);
 			}
 			continue;
 		}
@@ -377,6 +398,11 @@ void processHits(GLint hits, GLuint buffer[])
 		case (INFO_BUTTON): {
 			clickMode = DISPLAY;
 			setToaster(infoName);
+			continue;
+		}
+		case (SAT_BUTTON): {
+			clickMode = ATSAT;
+			setToaster(satName);
 			continue;
 		}
 //		case (GUI_BUTTON): {
@@ -534,6 +560,15 @@ void processHits(GLint hits, GLuint buffer[])
 				case (GUI): {
 					guiConnect(robotID);
 					break;
+				}
+				case (ATSAT): {
+					if (robots[robotID].type == LOCAL) {
+						if (ATsatID != robotID) {
+							ATsatID = robotID;
+						} else if (ATsatID == robotID) {
+							ATsatID = 0;
+						}
+					}
 				}
 				default: {
 					break;
@@ -741,18 +776,67 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 	glPushMatrix();
 	glTranslatef(x, y, 0);
 
-	/* Draw a local robot */
-	if (robot->type == LOCAL || robot->type == HOST) {
-		if (robot->type == HOST) {
+	GLfloat oscillator = sin((guiTick % 360) * PI / 180) * 0.1;
+
+	if (robot->id == ATsatID) {
+		glPushMatrix();
+			glTranslatef(-0.5, 0.5, 0);
+			glRotatef(45, 0, 0, 1);
 			glPushMatrix();
 				glTranslatef(0.05, -0.05, 0);
 				glColor3fv(color_darkgrey);
-				glScalef(HOST_RADIUS / scale, HOST_RADIUS / scale, 0);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_black);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glTranslatef(0, oscillator, 0);
+				glColor3fv(color_red);
+				glScalef(BOX_RADIUS / scale, 0.1 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+		glPopMatrix();
+
+		glPushMatrix();
+			glTranslatef(0.5, -0.5, 0);
+			glRotatef(45, 0, 0, 1);
+			glPushMatrix();
+				glTranslatef(0.05, -0.05, 0);
+				glColor3fv(color_darkgrey);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glColor3fv(color_black);
+				glScalef(BOX_RADIUS / scale, 0.2 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+			glPushMatrix();
+				glTranslatef(0, -oscillator, 0);
+				glColor3fv(color_red);
+				glScalef(BOX_RADIUS / scale, 0.1 / scale, 0);
+				glCallList(LIST_SQUARE);
+			glPopMatrix();
+		glPopMatrix();
+	}
+
+	/* Draw a local robot */
+	if (robot->type == LOCAL || robot->type == HOST) {
+		if (robot->type == HOST) {
+			GLfloat hostRadius = (HOST_RADIUS / scale);
+			glPushMatrix();
+				glTranslatef(0.05, -0.05, 0);
+				glColor3fv(color_darkgrey);
+				glScalef(hostRadius, hostRadius, 0);
 				glCallList(LIST_CIRCLE_FILLED);
 			glPopMatrix();
 			glPushMatrix();
 				glColor3fv(color_red);
-				glScalef(HOST_RADIUS / scale, HOST_RADIUS / scale, 0);
+				glScalef(hostRadius, hostRadius, 0);
 				glCallList(LIST_CIRCLE_FILLED);
 			glPopMatrix();
 			glPushMatrix();
@@ -997,7 +1081,7 @@ void drawRobot(GLfloat x, GLfloat y, struct commCon *robot, GLfloat scale)
 
 void drawAprilTags(GLenum mode)
 {
-	int i;
+	int i, j, rid;
 	int numAprilTags = 0;
 	struct aprilTag *activeTags[MAX_APRILTAG];
 	GLfloat xi, yi;
@@ -1103,6 +1187,38 @@ void drawAprilTags(GLenum mode)
 			activeTags[numAprilTags++] = &aprilTagData[i];
 		else
 			mutexUnlock(&aprilTagData[i].mutex);
+	}
+
+	/* Draw each aprilTag */
+	for (i = 0; i < numAprilTags; i++) {
+		glPushMatrix();
+			/* Scale coordinate */
+			xi = xs * ((activeTags[i]->x - aprilTagX) / aprilTagX);
+			yi = -ys * ((activeTags[i]->y - aprilTagY) / aprilTagY);
+
+			glTranslatef(xi, yi, 0);
+
+			if ((rid = activeTags[i]->rid) != -1) {
+				for (j = 0; j < NUMROBOT_POINTS; j++) {
+					if (robots[rid].upP[j]) {
+						glPushMatrix();
+							GLfloat xit = xs * robots[rid].xP[j] / aprilTagX;
+							GLfloat yit = -ys * robots[rid].yP[j] / aprilTagY;
+
+							glRotatef(activeTags[i]->t + 90, 0, 0, 1);
+
+							glColor3fv(lightcolor_array[j]);
+							glBegin(GL_LINES);
+								glVertex2f(0, 0);
+								glVertex2f(yit, xit);
+							glEnd();
+
+							glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
+						glPopMatrix();
+					}
+				}
+			}
+		glPopMatrix();
 	}
 
 	/* Draw each aprilTag */
@@ -1225,8 +1341,49 @@ void drawAprilTags(GLenum mode)
 				glPopMatrix();
 			}
 		glPopMatrix();
+	}
+
+	/* Draw each aprilTag */
+	for (i = 0; i < numAprilTags; i++) {
+		glPushMatrix();
+			/* Load aprilTag ID */
+			if (mode == GL_SELECT)
+				glLoadName(2000 + activeTags[i]->id);
+
+
+			/* Scale coordinate */
+			xi = xs * ((activeTags[i]->x - aprilTagX) / aprilTagX);
+			yi = -ys * ((activeTags[i]->y - aprilTagY) / aprilTagY);
+
+			glTranslatef(xi, yi, 0);
+
+			if ((rid = activeTags[i]->rid) != -1) {
+				for (j = 0; j < NUMROBOT_POINTS; j++) {
+					if (robots[rid].upP[j]) {
+						glPushMatrix();
+							xi = xs * robots[rid].xP[j] / aprilTagX;
+							yi = -ys * robots[rid].yP[j] / aprilTagY;
+
+							glRotatef(activeTags[i]->t + 90, 0, 0, 1);
+
+							glTranslatef(yi, xi, 0);
+
+							glRotatef(-activeTags[i]->t - 90, 0, 0, 1);
+
+							glPushMatrix();
+								glColor3fv(color_array[j]);
+								glScalef(0.1, 0.1, 0);
+								glCallList(LIST_CIRCLE_FILLED);
+							glPopMatrix();
+						glPopMatrix();
+					}
+				}
+			}
+		glPopMatrix();
+
 		mutexUnlock(&activeTags[i]->mutex);
 	}
+
 	glPopMatrix();
 
 	/* Draw dividing bar */
@@ -1258,8 +1415,6 @@ void drawAprilTagTextbox(GLenum mode)
 	GLfloat nameWidth = TEXT_MED * gmf[(int) 'm'].gmfCellIncX * 17;
 
 	glPushMatrix();
-	if (mode == GL_SELECT)
-		glLoadName(TEXTBOX_ID);
 
 	glColor3fv(color_black);
 	textSetAlignment(ALIGN_LEFT);
@@ -1267,12 +1422,18 @@ void drawAprilTagTextbox(GLenum mode)
 
 	glTranslatef(-TITLE_POS_X - textWidth - nameWidth, TITLE_POS_Y, 0);
 
+	if (mode == GL_SELECT)
+		glLoadName(TEXTBOX_NAME);
+
 	textPrintf(name);
 
 	glTranslatef(nameWidth, 0, 0);
 
 	glPushMatrix();
 		glTranslatef(textWidth / 2, TEXT_MED / 2, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(TEXTBOX_ID);
 
 		glPushMatrix();
 			glColor3fv(color_darkgrey);
@@ -1416,6 +1577,21 @@ void drawToolbar(GLenum mode)
 			glColor3fv(color_black);
 		textSetSize(TEXT_NORMAL);
 		textPrintf("Apr");
+
+		/* AtS Button */
+		glTranslatef(0, BUTTONSPACE, 0);
+
+		if (mode == GL_SELECT)
+			glLoadName(SAT_BUTTON);
+
+		drawButtonBox(textWidth);
+
+		if (clickMode == ATSAT)
+			glColor3fv(color_red);
+		else
+			glColor3fv(color_black);
+		textSetSize(TEXT_NORMAL);
+		textPrintf("AtS");
 
 		/* IN Button */
 		glTranslatef(0, BUTTONSPACE, 0);
@@ -1768,6 +1944,8 @@ void timerEnableDraw(int value)
 	if (showHelp)
 		drawHelp();
 
+	guiTick = (guiTick + 1) % 359;
+
 	/* Update */
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -1795,6 +1973,7 @@ void guiInit()
 	aprilTagURL.isActive = 0;
 	aprilTagURL.index = strlen(defaultATServerIP);
 	aprilTagURL.length = 21;
+	mutexInit(&aprilTagURL.mutex);
 	sprintf(aprilTagURL.message, defaultATServerIP);
 
 	glutMouseFunc(mouse);
