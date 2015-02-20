@@ -1,4 +1,4 @@
 rone
 ====
 
-The Multi-Robot Systems Lab r-one robots software and hardware
+The Multi-Robot Systems Lab r-one robots software

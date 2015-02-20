@@ -33,6 +33,7 @@
 
 /* Robot drawing defines */
 #define ROBOT_RADIUS		2.
+#define BOX_RADIUS			2.5
 #define OUTER_RADIUS		2.1
 #define INNER_RADIUS		1.9
 #define HOST_RADIUS			2.3
@@ -51,7 +52,7 @@
 #define SCALE_TINY			3.
 
 #define BUTTONSPACE			-TEXT_LARGE - 0.2
-#define BUTTONBLOCKSPACE	-2.7
+#define BUTTONBLOCKSPACE	-2.0
 
 #define TOASTER_POP_TIME	750
 
@@ -93,6 +94,7 @@
 /* Textbox defines */
 #define MAX_TEXTBOX_LENGTH	21
 #define TEXTBOX_ID			10000
+#define TEXTBOX_NAME		10001
 
 /* Click modes */
 #define CONNECT		0
@@ -102,7 +104,8 @@
 #define HOSTBOT		4
 #define LOG			5
 #define DISPLAY		6
-#define GUI			7
+#define ATSAT		7
+#define GUI			8
 
 #define CONNECT_BUTTON		1001
 #define BLACKLIST_BUTTON	1002
@@ -119,6 +122,7 @@
 #define LOGST_BUTTON		1013
 #define GUI_BUTTON			1014
 #define HDATA_BUTTON		1015
+#define SAT_BUTTON			1016
 
 #define APRILTAG_GRID		1501
 
@@ -129,6 +133,7 @@ struct textbox {
 	int isActive;
 	unsigned int length;
 	int index;
+	CRITICAL_SECTION mutex;									// Mutex
 	char message[MAX_TEXTBOX_LENGTH];
 };
 
@@ -146,6 +151,9 @@ extern const float color_black[COLOR_SIZE];
 extern const float color_grey[COLOR_SIZE];
 extern const float color_darkgrey[COLOR_SIZE];
 extern const float color_white[COLOR_SIZE];
+
+extern const GLfloat *color_array[NUMROBOT_POINTS];
+extern const GLfloat *lightcolor_array[NUMROBOT_POINTS];
 
 /* GUI functions and drawing functions */
 void display();

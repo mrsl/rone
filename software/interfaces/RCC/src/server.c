@@ -123,9 +123,6 @@ SOCKET openClientFD(char *hostname, char *port)
 
 	// Resolve the server address and port
 	if (getaddrinfo(hostname, port, NULL, &result) != 0) {
-		if (verbose) {
-			fprintf(stderr, "MAS: Bad AprilTag Address!\n");
-		}
 		return (INVALID_SOCKET);
 	}
 
@@ -451,6 +448,7 @@ void initAprilTag()
 	for (i = 0; i < MAX_APRILTAG; i++) {
 		aprilTagData[i].id = i;
 		aprilTagData[i].up = 0;
+		aprilTagData[i].bcastTime = 0;
 		aprilTagData[i].rid = -1;
 		aprilTagData[i].display = 0;
 		aprilTagData[i].head = 0;
@@ -459,12 +457,25 @@ void initAprilTag()
 	}
 }
 
-int connectAprilTag()
+void aprilTagHandler(void *vargp)
 {
 	SOCKET fd;
 	char *port, hostname[MAX_TEXTBOX_LENGTH];
-	struct Connection *conn;
+	int i, id, rid, n, oldhead;
+	int tid;						// Thread ID
+	struct socketIO socketio;		// Robust IO buffer for socket
+	char buffer[APRILTAG_BUFFERSIZE], *bufp;
+	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
+	fd_set read_set, ready_set;		// Read set for select
+	struct timeval tv = { 0, 1 };	// Timeout for select
+	GLfloat x, y, t;				// Data from server
+	int ts;							// Timestamp from server
 
+	if (aprilTagConnected) {
+		return;
+	}
+
+	mutexLock(&aprilTagURL.mutex);
 	strcpy(hostname, aprilTagURL.message);
 
 	/* Parse out port from hostname */
@@ -475,44 +486,24 @@ int connectAprilTag()
 	}
 
 	if ((fd = openClientFD(hostname, port)) == INVALID_SOCKET) {
-		return (-1);
+		mutexUnlock(&aprilTagURL.mutex);
+		return;
 	}
 
-	conn = Malloc(sizeof(struct Connection));
-	conn->fd = fd;
-	conn->n = 0;
+	tid = 0;
 
 	aprilTagConnected = 1;
 	robots[0].type = UNKNOWN;
 	robots[0].up = 1;
 	aprilTagURL.isActive = 0;
-	makeThread(&aprilTagHandler, conn);
-
-	return (0);
-}
-
-void aprilTagHandler(void *vargp)
-{
-	int i, id, rid, n, oldhead;
-	int tid;						// Thread ID
-	struct Connection *conn;		// Connection information
-	struct socketIO socketio;		// Robust IO buffer for socket
-	char buffer[APRILTAG_BUFFERSIZE], *bufp;
-	char lbuffer[BUFFERSIZE + APRILTAG_BUFFERSIZE + 16];
-	fd_set read_set, ready_set;		// Read set for select
-	struct timeval tv = { 0, 1 };	// Timeout for select
-	GLfloat x, y, t;				// Data from server
-	int ts;							// Timestamp from server
-
-	conn = (struct Connection *) vargp;
-	tid = conn->n;
+	mutexUnlock(&aprilTagURL.mutex);
 
 	if (verbose) {
 		printf("A%02d: Handler thread initialized\n", tid);
 	}
 
 	/* Initialize robust IO on the socket */
-	socketInitIO(&socketio, conn->fd);
+	socketInitIO(&socketio, fd);
 
 	if (verbose) {
 		printf("A%02d: Processing April Tag Data\n", tid);
@@ -520,19 +511,19 @@ void aprilTagHandler(void *vargp)
 
 	/* Initialize stuff for select */
 	FD_ZERO(&read_set);
-	FD_SET(conn->fd, &read_set);
+	FD_SET(fd, &read_set);
 
 	for (;;) {
 		memset(buffer, 0, APRILTAG_BUFFERSIZE);
 		ready_set = read_set;
 
 		/* Check if there is data available from the client. */
-		if (select(conn->fd + 1, &ready_set, NULL, NULL, &tv) < 0) {
+		if (select(fd + 1, &ready_set, NULL, NULL, &tv) < 0) {
 			break;
 		}
 
 		/* Is there is data to be read? */
-		if (FD_ISSET(conn->fd, &ready_set)) {
+		if (FD_ISSET(fd, &ready_set)) {
 			if ((n = socketReadline(&socketio, buffer, APRILTAG_BUFFERSIZE - 1))
 				!= 0) {
 				/* Get the beginning of the remote message */
@@ -567,10 +558,24 @@ void aprilTagHandler(void *vargp)
 				aprilTagData[id].active = 1;
 				strcpy(aprilTagData[id].buffer[aprilTagData[id].head], bufp);
 
+				aprilTagData[id].up = clock();
+
 				if (sscanf(bufp, "%f, %f, %f, %d", &x, &y, &t, &ts) == 4) {
 					aprilTagData[id].x = x;
 					aprilTagData[id].y = y;
 					aprilTagData[id].t = t;
+
+					if (ATsatID != 0) {
+						if ((aprilTagData[id].up - aprilTagData[id].bcastTime > SAT_BCAST_TIME)
+							&& aprilTagData[id].rid != -1) {
+							sprintf(lbuffer, "EP %d,%d,%d,%d\n", aprilTagData[id].rid,
+																 (int) round(x),
+																 (int) round(y),
+																 (int) round(t));
+							hprintf(robots[ATsatID].hSerial, lbuffer);
+							aprilTagData[id].bcastTime = aprilTagData[id].up;
+						}
+					}
 
 					if (x > 2 * aprilTagX) {
 						aprilTagX = ((int) (aprilTagData[id].x / 2) + 50) / 100
@@ -584,8 +589,6 @@ void aprilTagHandler(void *vargp)
 						aprilTagY += (aprilTagY < aprilTagData[id].y) ? 50 : 0;
 					}
 				}
-
-				aprilTagData[id].up = clock();
 
 				oldhead = aprilTagData[id].head;
 				aprilTagData[id].head = (aprilTagData[id].head + 1)
@@ -627,8 +630,7 @@ void aprilTagHandler(void *vargp)
 
 	/* Clean up */
 	aprilTagConnected = 0;
-	Close(conn->fd);
-	Free(conn);
+	Close(fd);
 
 	return;
 }

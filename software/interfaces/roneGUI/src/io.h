@@ -20,40 +20,40 @@
 #define NUM_TEXTBOXES 		3
 #define NUM_LED_BUTTONS 	3
 #define NUM_MOTOR_LEFT		5
-#define NUM_MOTOR_RIGHT	5
+#define NUM_MOTOR_RIGHT		5
 
 /* Max number of neighbors - defined in the nbr code in roneos */
 #define NEIGHBOR_MAX		30
 
 #define NAME_TEXTBOX		0
-#define NAME_LED_BUTTON	1
-#define NAME_MOTOR_LEFT	2
+#define NAME_LED_BUTTON		1
+#define NAME_MOTOR_LEFT		2
 #define NAME_MOTOR_RIGHT	3
-#define NAME_MOTOR_SYNC	4
+#define NAME_MOTOR_SYNC		4
 #define NAME_TRANSMIT		5
 #define NAME_VEL			6
 #define NAME_PWM			7
-#define NAME_SMOOTH		8
-#define NAME_SELECT		9
+#define NAME_SMOOTH			8
+#define NAME_SELECT			9
 
 #define BUTTON_LED_RED		0
 #define BUTTON_LED_GREEN	1
-#define BUTTON_LED_BLUE	2
+#define BUTTON_LED_BLUE		2
 #define BUTTON_LED_ALL		3
 #define BUTTON_LED_OFF		4
 
-#define MOTOR_ADD10		0
+#define MOTOR_ADD10			0
 #define MOTOR_ADD1			1
 #define MOTOR_OFF			2
 #define MOTOR_SUB1			3
-#define MOTOR_SUB10		4
+#define MOTOR_SUB10			4
 
 #define TEXTBOX_COM_PORT	0
 #define TEXTBOX_RADIO		1
 #define LEN_TXT_COM_PORT	4
 #define LEN_TXT_RADIO		(LEN_RADIO_MESSAGE)
 
-#define PWM				0
+#define PWM					0
 #define VEL 				1
 
 

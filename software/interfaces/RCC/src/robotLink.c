@@ -11,12 +11,14 @@ int timestamps = 1;
 int logging = 0;
 int hostData = 1;
 
+int ATsatID = 0;
+
 /**
  * Initialize the robot buffers
  */
 void initRobots()
 {
-	int i;
+	int i, j;
 
 	/* Initialize values in the struct */
 	for (i = 0; i < MAXROBOTID; i++) {
@@ -33,6 +35,11 @@ void initRobots()
 		robots[i].count = 0;
 		robots[i].type = UNKNOWN;
 		robots[i].subnet = -1;
+		for (j = 0; j < NUMROBOT_POINTS; j++) {
+			robots[i].xP[j] = 0;
+			robots[i].yP[j] = 0;
+			robots[i].upP[j] = 0;
+		}
 		mutexInit(&robots[i].mutex);
 	}
 
@@ -44,7 +51,7 @@ void initRobots()
  */
 void commManager(void *vargp)
 {
-	int i;
+	int i, j;
 
 	vargp = (void *) vargp;
 
@@ -58,6 +65,13 @@ void commManager(void *vargp)
 				&& robots[i].type == REMOTE) {
 				robots[i].up = 0;
 				robots[i].head = 0;
+			}
+
+			/* If robot drawing point has been inactive, deactivate */
+			for (j = 0; j < NUMROBOT_POINTS; j++) {
+				if (robots[i].upP[j] + PTTIME < clock()) {
+					robots[i].upP[j] = 0;
+				}
 			}
 
 			/* Ping all host robots for updated remote robots. */
@@ -77,9 +91,9 @@ void commManager(void *vargp)
 		if (aprilTagConnected) {
 			for (i = 0; i < MAX_APRILTAG; i++) {
 				mutexLock(&aprilTagData[i].mutex);
-				if (!robots[aprilTagData[i].rid].up) {
-					aprilTagData[i].rid = -1;
-				}
+//				if (!robots[aprilTagData[i].rid].up) {
+//					aprilTagData[i].rid = -1;
+//				}
 
 				if ((aprilTagData[i].up + GRACETIME < clock())
 					&& aprilTagData[i].active) {
@@ -133,7 +147,7 @@ void commCommander(void *vargp)
 	int initialized = 0;				// Have we hand-shook with the robot?
 	int isHost = 0;						// Is this robot a rprintf host?
 	int subnet = -1;					// What is this robot's subnet?
-	int rid;							// Remote robot ID
+	int rid = -1;						// Remote robot ID
 	char buffer[BUFFERSIZE + 1];		// Buffers
 	char rbuffer[BUFFERSIZE + 1];
 	char *bufp = buffer;				// Pointer to buffers
@@ -159,6 +173,14 @@ void commCommander(void *vargp)
 			}
 			break;
 		} else if (n == 0) {
+			continue;
+		}
+
+		if ((bufp - buffer) >= BUFFERSIZE) {
+			if (verbose) {
+				fprintf(stderr, "S%02d: Buffer Overflow! Dumping contents.\n", id);
+			}
+			bufp = buffer;
 			continue;
 		}
 
@@ -353,6 +375,25 @@ void commCommander(void *vargp)
 			}
 
 			bufp = buffer;
+		} else if (strncmp(buffer, "pt", 2) == 0) {
+			int x, y, ind;
+
+			if (sscanf(buffer, "pt %d,%d,%d", &ind, &x, &y) != 3) {
+				bufp = buffer;
+				continue;
+			}
+
+			if (ind >= 0 && ind < NUMROBOT_POINTS) {
+				mutexLock(&robots[id].mutex);
+
+				robots[id].xP[ind] = (GLfloat) x;
+				robots[id].yP[ind] = (GLfloat) y;
+				robots[id].upP[ind] = clock();
+
+				mutexUnlock(&robots[id].mutex);
+			}
+
+			bufp = buffer;
 		} else {
 			/* Insert the read line into robot's buffer. */
 			insertBuffer(id, buffer, 0);
@@ -361,6 +402,9 @@ void commCommander(void *vargp)
 
 	/* On close. */
 	if (id != 0) {
+		if (ATsatID == id) {
+			ATsatID = 0;
+		}
 		robots[id].hSerial = NULL;
 
 		robots[id].display = 0;
