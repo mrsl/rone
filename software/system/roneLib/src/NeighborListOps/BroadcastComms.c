@@ -32,7 +32,7 @@
  * @returns void
  */
 void broadcastMsgCreate(BroadcastMessage* msgPtr, uint8 maxHops) {
-	nbrDataCreate(&msgPtr->msgSourceID, "sourceID", 7, ROBOT_ID_NULL);
+	nbrDataCreate(&msgPtr->msgSourceID, "sourceID", ROBOT_ID_NUM_BITS, ROBOT_ID_NULL);
 	nbrDataCreate(&msgPtr->msgHops, "hops", 5, 0);
 	nbrDataCreate(&msgPtr->msgTimestamp, "timestamp", 5, 0);
 	msgPtr->inactiveTimeOut = 0;

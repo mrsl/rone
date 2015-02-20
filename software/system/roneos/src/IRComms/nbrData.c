@@ -81,7 +81,6 @@ void nbrDataRFPacketIndex(uint16 nbrDataRFIdx, uint8* packetPtr, uint8* idxPtr) 
 }
 
 void nbrDataCreate(NbrData* nbrDataPtr, const char* name, uint8 size, uint8 value){
-	NbrData* nbrMsgTempPtr;
 	uint8 packet, idx;
 
 	if (nbrDataRFIdx >= NBR_DATA_RF_IDX_MAX) {
