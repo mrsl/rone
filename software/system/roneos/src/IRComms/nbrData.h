@@ -45,7 +45,7 @@ void nbrDataCreate32(NbrData* nbrDataPtrHH, NbrData* nbrDataPtrHL, NbrData* nbrD
 
 /**
  * @brief Create a IR neighbor data.  This is transmitted via IR.  The neighbor
- * system makes one 7-bit data by default for the robot ID.  Only data that need to share
+ * system makes one 8-bit data by default for the robot ID.  Only data that need to share
  * the fate of an IR message should go here.  The rest should use radio (See nbrDataCreate())
  *
  * This function is called only once to init each neighbor data

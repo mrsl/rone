@@ -37,8 +37,8 @@
 #define CAPTAIN_LED_COUNTER_TIME		12
 
 
-#define NAV_TOWER_LOW_RONE_ID				124
-#define NAV_TOWER_HIGH_RONE_ID				125
+#define NAV_TOWER_LOW_RONE_ID			124
+#define NAV_TOWER_HIGH_RONE_ID			125
 
 #define MODE_IDLE						0
 #define MODE_FOLLOW						1
@@ -53,11 +53,11 @@
 #define JOYSTICK_NUM					1
 
 #define MUSEUM_RADIO_COMMAND_BEH_IDX	0
-#define TEAM_LEADER_ON_TIME			4
-#define TEAM_LEADER_TOTAL_TIME		25
+#define TEAM_LEADER_ON_TIME				4
+#define TEAM_LEADER_TOTAL_TIME			25
 
-#define BEHAVIOR_READY_TIME 		10000
-#define BEHAVIOR_IDLE_TIME			60000
+#define BEHAVIOR_READY_TIME 			10000
+#define BEHAVIOR_IDLE_TIME				60000
 
 
 /****** Team Broadcast messages *******/
@@ -111,6 +111,8 @@ void behaviorTask(void* parameters) {
 	Nbr* nbrNavTowerLowPtr;
 	uint32 navTowerTime = 0;
 	RadioMessage radioMessage;
+	uint8 irBeaconNumIDs = 4;
+	uint8 irBeaconIDs[] = {124, 125, 126, 127};
 
 	uint32 captainLEDCounter = 0;
 
@@ -126,9 +128,6 @@ void behaviorTask(void* parameters) {
 	remoteControlInit();
 	radioCommandSetSubnet(2);
 
-	// make a new radio command for remote control message
-	//radioCommandAddQueue(&radioCmdBehavior, "nuseumBehavior", 1);
-
 	ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
 	remoteControlLedsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
 
@@ -142,7 +141,7 @@ void behaviorTask(void* parameters) {
 
 		// look for the nav tower
 		nbrListCreate(&nbrList);
-		nbrListGetRobots(&nbrListRobots, &nbrList);
+		nbrListGetRobots(&nbrListRobots, &nbrList, irBeaconIDs, irBeaconNumIDs);
 
 		behRadio = behInactive;
 
@@ -223,6 +222,7 @@ void behaviorTask(void* parameters) {
 				}
 			}
 
+			int8 a;
 
 			// select your team.  Use the team map.  If not, then select TEAM_NONE
 			if(teamCount > 0) {
@@ -233,7 +233,7 @@ void behaviorTask(void* parameters) {
 			}
 			uint8 team = nbrDataGet(&nbrDataTeam);
 			if (printNbrs) {
-				cprintf("myteam %d", team);
+				cprintf("myteam %d\n", team);
 			}
 
 			// update the broadcast messages to look for the team leaders
@@ -318,7 +318,9 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				case MODE_FLOCK: {
-					if(printNbrs) cprintf("Team Size: %d\n", nbrListTeam.size);
+					if(printNbrs) {
+						cprintf("Team Size: %d\n", nbrListTeam.size);
+					}
 					demoFlock(&behOutput, &behRadio, &nbrListTeam, team);
 					break;
 				}
@@ -328,7 +330,9 @@ void behaviorTask(void* parameters) {
 				default:
 					break;
 				}
-				if(printNbrs) cprintf("leader. mode = %d\n", mode);
+				if(printNbrs) {
+					cprintf("leader. mode = %d\n", mode);
+				}
 
 
 				// Show team captain colors (alternate between team colors and all the LEDs)
@@ -379,7 +383,9 @@ void behaviorTask(void* parameters) {
 						break;
 					}
 					case MODE_FLOCK: {
-						if(printNbrs) cprintf("Team Size: %d\n", nbrListTeam.size);
+						if(printNbrs) {
+							cprintf("Team Size: %d\n", nbrListTeam.size);
+						}
 						demoFlock(&behOutput, &behRadio, &nbrListTeam, team);
 						break;
 					}
@@ -393,7 +399,9 @@ void behaviorTask(void* parameters) {
 					/* If the regular robot is teamless */
 					/* Show that you are not on a team */
 					if (hostFlag == FALSE) ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
-					if(printNbrs) cprintf("teamless. ");
+					if(printNbrs) {
+						cprintf("teamless.\n");
+					}
 				}
 			}
 			behBumpAvoid(&behBump, behOutput.tv, 5);
@@ -401,7 +409,9 @@ void behaviorTask(void* parameters) {
 			behSubsume(&behOutput, &behIRObstacle, &behBump);
 		}
 
-		//if (printNbrs) cprintf("\n\n");
+		if (printNbrs) {
+			cprintf("\n\n");
+		}
 		neighborsPutMutex();
 		if (hostFlag == TRUE ){
 			behOutput.tv = 0;
