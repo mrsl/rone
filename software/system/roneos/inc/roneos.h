@@ -25,7 +25,7 @@
 
 // Free RTOS includes
 #include "FreeRTOS.h"
-#include "Task.h"
+#include "task.h"
 #include "queue.h"
 #include "semphr.h"
 
