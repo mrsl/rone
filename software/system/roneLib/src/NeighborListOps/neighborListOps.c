@@ -279,14 +279,22 @@ NbrList* nbrListFindNbrsWithDataEqual(NbrList* nbrListOutPtr, NbrList* nbrListIn
  * @param nbrListInPtr pointer to the neighbor list to search for robots
  * @returns updated nbrListOutPtr that contains only neighbors that are robots
  */
-NbrList* nbrListGetRobots(NbrList* nbrListOutPtr, NbrList* nbrListInPtr) {
-	uint8 i;
+NbrList* nbrListGetRobots(NbrList* nbrListOutPtr, NbrList* nbrListInPtr, uint8* irBeaconIDs, uint8 irBeaconNumIDs) {
+	uint8 i, j;
 	Nbr* nbrPtr;
 
 	nbrListClear(nbrListOutPtr);
 	for (i = 0; i < nbrListGetSize(nbrListInPtr); i++) {
 		nbrPtr = nbrListGetNbr(nbrListInPtr, i);
-		if (nbrIsRobot(nbrPtr)) {
+		/* Make sure the ID isn't a beacon */
+		boolean isBeacon = FALSE;
+		for (j = 0; j < irBeaconNumIDs; j++) {
+			if (nbrGetID(nbrPtr) == irBeaconIDs[j]) {
+				isBeacon = TRUE;
+				break;
+			}
+		}
+		if (!isBeacon) {
 			nbrListAddNbr(nbrListOutPtr, nbrPtr);
 		}
 	}

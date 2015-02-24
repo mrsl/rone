@@ -39,7 +39,6 @@ static void neighborsTask(void* parameters);
 /******** Variables ********/
 static uint32 neighborPeriod = NEIGHBOR_PERIOD_DEFAULT;
 //static uint32 neighbor_timeout = NEIGHBOR_PERIOD_DEFAULT * NEIGHBOR_TIMEOUT_ROUNDS;
-static uint8 nbrSignalBitsRounds;
 static uint8 nbrSignalBitsMask;
 static uint8 nbrSignalBitsMinActive;
 static uint8 nbrSignalBitsMaxInactive;
@@ -111,7 +110,7 @@ void neighborsXmitEnable(boolean neighbor_xmit_enable_arg) {
  *
  * Initializes neighbor period, neighbor timeout, obstacle timeout. Initialize neighborData
  * Sets message length.
- * Puts 7-bit roneID in message.
+ * Puts 8-bit roneID in message.
  * Semaphore implementing neighborsMutex created.
  * @param neighbor_period_arg the neighbor period in rounds
  * @returns void
@@ -124,7 +123,7 @@ void neighborsInit(uint32 neighbor_period_arg) {
 	nd.nbrsSize = 0;
 	nd.round = 0;
 
-	nbrDataCreateIR(&nbrMsgID, "ID", 8, roneID);
+	nbrDataCreateIR(&nbrMsgID, "ID", ROBOT_ID_NUM_BITS, roneID);
 	neighborsMutex = osSemaphoreCreateMutex();
 	serialCommandAdd(&serialCmdSN, "sn", serialCmdSNFunc);
 	osTaskCreate(neighborsTask, "neighbors", 4096, NULL, NEIGHBORS_TASK_PRIORITY );
@@ -760,20 +759,6 @@ void nbrListPrintDebug(NbrList* nbrListPtr, char* name) {
  */
 boolean nbrIsBeacon(Nbr* nbrPtr) {
 	if((nbrGetID(nbrPtr) >= 125) && (nbrGetID(nbrPtr) <= 127)) {
-		return TRUE;
-	} else {
-		return FALSE;
-	}
-}
-
-/*
- * @brief Returns true if this neighbor is a beacon.
- *
- * @param nbrPtr neighbor pointer
- * @returns true if the neighbor is a IR beacon
- */
-boolean nbrIsRobot(Nbr* nbrPtr) {
-	if((nbrGetID(nbrPtr) >= ROBOT_ID_MIN) && (nbrGetID(nbrPtr) <= ROBOT_ID_MAX)) {
 		return TRUE;
 	} else {
 		return FALSE;

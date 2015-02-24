@@ -385,129 +385,18 @@ static void serialCmdUIFunc(char* command) {
 	remoteControlSendMsg();
 }
 
-//void serialGetLEDCmd(char* ledcmd){
-//	char parseStr[2];
-//	uint8 i, j, bitNum, joystickVal;
-//	uint8 gotCorrectTeamString = 0;
-//	uint8 prevDemoMode[3];
-//	RadioMessage radioMessage;
-//	//Joystick joysticks[REMOTE_CONTROL_JOYSTICK_NUM];	//###
-//
-//	//command = command + 2;
-//
-//	for (i = 0; i < REMOTE_CONTROL_JOYSTICK_NUM; i++) {
-//		// parse message for each team
-//		gotCorrectTeamString = FALSE;
-//		bitNum = i * 4; // the bit number that the message starts for each team
-//		for (j = bitNum; j < bitNum + 2; j++) {
-//			if (command[j] == 0) {
-//				return;
-//			}
-//			parseStr[j - bitNum] = command[j];
-//		}
-//
-//		joystickVal = atoi_hex8(parseStr);
-//
-//		/* Joystick values:
-//		 * |0|0|0|0|up|down|left|right|
-//		 */
-//
-//		if (joystickVal & JOYSTICK_MASK_LEFT) { //check for left
-//			joysticks[i].x = JOYSTICK_VAL_LEFT;
-//		} else if (joystickVal & JOYSTICK_MASK_RIGHT) { //check for right
-//			joysticks[i].x = JOYSTICK_VAL_RIGHT;
-//		} else {
-//			joysticks[i].x = 0;
-//		}
-//
-//		if (joystickVal & JOYSTICK_MASK_UP) { //check for up
-//			joysticks[i].y = JOYSTICK_VAL_UP;
-//		} else if (joystickVal & JOYSTICK_MASK_DOWN) { //check for down
-//			joysticks[i].y = JOYSTICK_VAL_DOWN;
-//		} else {
-//			joysticks[i].y = 0;
-//		}
-//
-//		//get button values
-//		for (j = bitNum + 2; j < bitNum + 4; j++) {
-//			if (command[j] == 0) {
-//				return;
-//			}
-//			parseStr[j - bitNum - 2] = command[j];
-//		}
-//
-//		buttonVal = atoi_hex8(parseStr);
-//		/*
-//		 * if people are pressing more than one, it'll just
-//		 * pick the topmost one of what they are pressing
-//		 */
-//		joysticks[i].buttons = 0;
-//		if (buttonVal & 0x4) { //top
-//			joysticks[i].buttons |= JOYSTICK_BUTTON_TOP;
-//		}
-//		if (buttonVal & 0x2) { //middle
-//			joysticks[i].buttons |= JOYSTICK_BUTTON_MIDDLE;
-//		}
-//		if (buttonVal & 0x1) { //none
-//			joysticks[i].buttons |= JOYSTICK_BUTTON_BOTTOM;
-//		}
-//	}
-//	remoteControlSendMsg(joysticks);
-//}
-
 #define REMOTE_CONTROL_LED_COMMAND_LEN		12
 char LEDCommandString[REMOTE_CONTROL_LED_COMMAND_LEN + 2];
 
-
 void remoteControlLEDSendMsg(void){
-	cprintf("%s",LEDCommandString);
+	//cprintf("%s",LEDCommandString);
 }
-
-//void serialCmdLEDSet(uint8 LEDcolor, uint8 LEDFreq, uint8 LEDmode){
-//	// Make a cmd line, 4chars for each color
-//	uint8 i;
-//	uint8 cmdLen = 12;
-//	cmdLine[0] = 'R';
-//
-//	//cmdLine[4] = 'G';
-//	//cmdLine[8] = 'B';
-//
-//	for (i = 0; i < 3; i++) {
-//		if (LEDcolor == i) {
-//			if (LEDmode == LED_PATTERN_MANUAL) {
-//				cmdLine[i + 1] = 'M';
-//			} else if (LEDmode == LED_PATTERN_ON) {
-//				cmdLine[i + 1] = 'O';
-//			} else if (LEDmode == LED_PATTERN_OFF) {
-//				cmdLine[i + 1] = 'F';
-//			} else if (LEDmode == LED_PATTERN_PULSE) {
-//				cmdLine[i + 1] = 'P';
-//			}
-//			char buf[2];
-//			sprintf(buf, "%d", LEDFreq);
-//			cmdLine[i + 2] = buf[0];
-//			cmdLine[i + 3] = buf[1];
-//		} else {
-//			// This led should 'OFF'
-//			cmdLine[i + 1] = 'F';
-//			cmdLine[i + 2] = 0;
-//			cmdLine[i + 3] = 0;
-//		}
-//	}
-//
-//	remoteControlLEDSendMsg(char* ledCmd, uint8 cmdLen);
-//
-//}
-
 
 const char* joystickLedCmdDefault = "RM00GM00BM00\n";
 
 void remoteControlLEDClear() {
 	strcpy(LEDCommandString, joystickLedCmdDefault);
 }
-
-
-//void remoteControlLedsSetPattern(uint8 color, uint8 pattern, uint8 brightness, uint8 rate) {
 
 void remoteControlLEDSetSingle(uint8 color, uint8 rate, uint8 pattern){
 	uint8 colorIdx = 0;
@@ -558,38 +447,6 @@ void remoteControlLedsSetPattern(uint8 color, uint8 pattern, uint8 brightness, u
 	remoteControlLEDSetSingle(color, rate , pattern);
 	remoteControlLEDSendMsg();
 }
-
-
-
-//void remoteControlLEDSendMsg(char ledCmd []) {
-//	RadioMessage radioMessage;
-//	uint8 i;
-//
-//	for (i = 0; i < 12; i++) {
-//		radioMessage.command.data[i] = ledCmd[i];
-//	}
-//	radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessage);
-//}
-
-
-void remoteControlUpdateLEDmsg(char* LEDmsg) {
-	RadioMessage radioMessage;
-	uint8 i;
-
-	if (radioCommandReceive(&radioCmdRemoteControl, &radioMessage, 0) ) {
-		// TODO How to deal with two general problem?
-		// TODO or put semaphore comm with joystick cmd msg.
-		if (radioMessage.command.data[0] == 'R'){
-			for (i = 0; i < 12; i++) {
-				LEDmsg[i] = radioMessage.command.data[i];
-	//			if((vectorMag(joysticks[i].x, joysticks[i].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[i].buttons) {
-	//				joystickActiveTimes[i] = osTaskGetTickCount();
-	//			}
-			}
-		}
-	}
-}
-
 
 void remoteControlInit() {
 	// make a new radio command for remote control message

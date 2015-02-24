@@ -50,7 +50,7 @@
 /**
  * @brief Message received over IR ring (contains the sending transmitter ID and receiving ID)
  *
- * @warning If you are using the neighbor system, you have 7 less bits than
+ * @warning If you are using the neighbor system, you have 8 less bits than
  * this says.
  */
 typedef struct IRCommsMessage {

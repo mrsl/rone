@@ -31,7 +31,7 @@
 #if defined(RONE_V9)
 	#include "msp430ProgramDataRoneV11.h"
 #elif defined(RONE_V12)
-	#include "msp430ProgramdataRoneV12.h"
+	#include "msp430ProgramDataRoneV12.h"
 #endif
 
 //data

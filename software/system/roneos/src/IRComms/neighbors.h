@@ -5,7 +5,7 @@
  * callbacks.
  *
  * Initializing neighbors initializes the neighbor period, neighbor timeout, obstacle timeout.
- * Also initializes neighborData, sets the message length, and puts the 7-bit roneID in message.
+ * Also initializes neighborData, sets the message length, and puts the 8-bit roneID in message.
  * In addition, semaphore implementing neighborsMutex is created.
  *
  * @since March 2, 2011
@@ -34,8 +34,9 @@
 
 #define	ROBOT_ID_NULL					0
 #define	ROBOT_ID_MIN					1
-#define	ROBOT_ID_MAX					100
+#define	ROBOT_ID_MAX					255
 #define	ROBOT_ID_ALL					0xFF
+#define ROBOT_ID_NUM_BITS				8
 
 #define	MAX_PARENT_ID					0x7F
 
@@ -476,16 +477,6 @@ void nbrPrint(Nbr* nbr);
  * @returns void
  */
 void nbrPrintData(Nbr* nbr, uint32 round);
-
-
-/**
- * @brief Returns true if this neighbor is a beacon.
- *
- * @param nbrPtr neighbor pointer
- * @returns true if the neighbor is a IR beacon
- */
-boolean nbrIsRobot(Nbr* nbrPtr);
-
 
 /**
  * @brief Returns true if this neighbor is a beacon.
