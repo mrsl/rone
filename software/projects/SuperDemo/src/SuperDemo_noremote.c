@@ -12,8 +12,8 @@
 
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 #define BEHAVIOR_TASK_PERIOD			50
-#define DEMO_TV							80
-#define DEMO_TV_FLOCK					50
+#define DEMO_TV							100
+#define DEMO_TV_FLOCK					60
 #define DEMO_TV_CLUSTER					50
 #define DEMO_TV_CLUSTER_BUMP			50
 #define DEMO_TV_SORT					30
@@ -144,7 +144,7 @@ void behaviorTask(void* parameters) {
 	NbrData demoModeXmitMsg;
 
 	// init the neighbor system wth a 300 ms update period
-    neighborsInit(300);
+    neighborsInit(270);
 
     // print startup message and thread memory usage
 	systemPrintStartup();
