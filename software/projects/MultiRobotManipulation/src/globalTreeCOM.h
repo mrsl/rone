@@ -15,7 +15,7 @@
 #include "scaleCoordinate.h"
 
 #define BEHAVIOR_TASK_PERIOD	50
-#define NEIGHBOR_ROUND_PERIOD	2000
+#define NEIGHBOR_ROUND_PERIOD	700
 #define RPRINTF_SLEEP_TIME		100
 
 #define CHECKVAL		0xDADA

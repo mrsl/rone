@@ -64,7 +64,7 @@ void consensusPipelineMinMaxPrintValues(void) {
 	int16 oO = atan2MilliRad((int32) (2 * pMult), (int32) pDiff) / 2;
 
 	char outBuffer[100];	// Output buffer and format
-	char outBufferFormat[50] = "X:%.3f Y:%.3f D:%.3f M:%.3f O:%d W:%.3f D:%.3f\n";
+	char outBufferFormat[50] = "%.3f,%.3f,%.3f,%.3f,%d,%.3f,%.3f\n";
 	sprintf(outBuffer, outBufferFormat, cX, cY, pDiff, pMult, oO, cW, cD);
 
 	rprintf(outBuffer);

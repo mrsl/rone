@@ -148,6 +148,7 @@ void behaviorTask(void* parameters) {
 	uint8 buttonBlueOld = 0;
 	uint8 buttonRed, buttonGreen, buttonBlue;
 
+	radioCommandSetSubnet(2);
 	NbrData demoModeXmitMsg;
 
 	// init the neighbor system wth a 300 ms update period

@@ -49,8 +49,8 @@ void mrmBehaviorInit() {
 	externalPoseInit();
 
 	// Gripper stuff
-//	gripperBoardInit();
-//	gripperCalibratServo();
+	gripperBoardInit();
+	gripperCalibrateServo();
 
 	// Status check
 	systemPrintStartup();
@@ -64,7 +64,7 @@ void behaviorTask(void* parameters) {
 
 	boolean nbrUpdate;			// Has the neighbor system updated?
 	NbrList nbrList;			// The neighbor list
-	uint32 neighborRound;	// The current neighbor round
+	uint32 neighborRound;		// The current neighbor round
 
 	uint8 gripperEscape = 0;
 
@@ -72,17 +72,17 @@ void behaviorTask(void* parameters) {
 	mrmBehaviorInit();
 
 	for (;;) {
-//		// Calibrate gripper
-//		if(!gripperServoCalibratFinish() && !gripperEscape){
-//			if (buttonsGet(BUTTON_RED)) {
-//				gripperEscape = 1;
-//			}
-//			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE,
-//				LED_BRIGHTNESS_LOW, LED_RATE_FAST);
-//			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
-//			lastWakeTime = osTaskGetTickCount();
-//			continue;
-//		}
+		// Calibrate gripper
+		if(!gripperServoCalibrateFinish() && !gripperEscape){
+			if (buttonsGet(BUTTON_RED)) {
+				gripperEscape = 1;
+			}
+			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE,
+				LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
+			lastWakeTime = osTaskGetTickCount();
+			continue;
+		}
 
 		lastWakeTime = osTaskGetTickCount();	// We have woken
 
@@ -99,18 +99,18 @@ void behaviorTask(void* parameters) {
 			setState((getState() + 1) % (STATE_MAX + 1));
 		}
 
-//		// Attempt to grip until you are gripped, then stay gripped
-//		if (!gripperBoardGetGripped()) {
-//			if (gripPos != ATTEMPTING) {
-//				gripperGripUntilGripped();
-//				gripPos = ATTEMPTING;
-//			}
-//		} else {
-//			gripPos = CLKWISE;
-//			if (gripperBoardGetServo() > 100) {
-//				gripPos = CNTCLK;
-//			}
-//		}
+		// Attempt to grip until you are gripped, then stay gripped
+		if (!gripperBoardGetGripped()) {
+			if (gripPos != ATTEMPTING) {
+				gripperGripUntilGripped();
+				gripPos = ATTEMPTING;
+			}
+		} else {
+			gripPos = CLKWISE;
+			if (gripperBoardGetServo() > 100) {
+				gripPos = CNTCLK;
+			}
+		}
 
 		// If a host, don't do anything
 		if (rprintfIsHost() || externalPoseIsHost()) {
@@ -165,20 +165,20 @@ void behaviorTask(void* parameters) {
 					// Print out some data
 					switch (getState()) {
 					case (STATE_CGUESS): {
-						rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
-												 navDataRead.centroidY,
-												 navDataRead.childCountSum,
-												 getDeltaStartNbrRound(neighborRound));
-						rprintfFlush();
+//						rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
+//												 navDataRead.centroidY,
+//												 navDataRead.childCountSum,
+//												 getDeltaStartNbrRound(neighborRound));
+//						rprintfFlush();
 						break;
 					}
 					case (STATE_RALIGN):
 					case (STATE_ROTATE): {
-						rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
-												 navDataRead.centroidY,
-												 navDataRead.childCountSum,
-												 getDeltaStartNbrRound(neighborRound));
-						rprintfFlush();
+//						rprintf("%d,%d,%d,%d\n", navDataRead.centroidX,
+//												 navDataRead.centroidY,
+//												 navDataRead.childCountSum,
+//												 getDeltaStartNbrRound(neighborRound));
+//						rprintfFlush();
 						break;
 					}
 					case (STATE_PALIGN):
