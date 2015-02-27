@@ -18,6 +18,7 @@
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 //in milliseconds
 #define BEHAVIOR_TASK_PERIOD			50
+#define NEIGHBOR_PERIOD					250
 
 //stuff for flocking
 #define DEMO_TV_FLOCK					0
@@ -31,7 +32,7 @@
 #define TEAM_COUNT						3
 
 #define SNAKE_NAV_TOWER_TIMEOUT			1000
-#define MOTION_TV						85
+#define MOTION_TV						100
 #define MOTION_TV_FLOCK					(MOTION_TV*2/3)
 #define MOTION_TV_ORBIT_CENTER			35
 #define CAPTAIN_LED_COUNTER_TIME		12
@@ -116,7 +117,7 @@ void behaviorTask(void* parameters) {
 
 	uint32 captainLEDCounter = 0;
 
-	neighborsInit(300);
+	neighborsInit(NEIGHBOR_PERIOD);
 	nbrDataCreate(&nbrDataTeam, "team", 4, TEAM_NONE);
 	for (i = 0; i < TEAM_COUNT; i++) {
 		broadcastMsgCreate(&broadcastTeamMsg[i], MSI_DEMO_HOPS_MAX);
