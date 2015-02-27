@@ -25,6 +25,8 @@
 
 #define MOVE_TV			20
 
+#define BEEP_RATE		10
+
 uint8 moveState = MOVE_STATE_IDLE;
 
 /**
@@ -92,7 +94,7 @@ void behaviorTask(void* parameters) {
 			continue;
 		}
 
-		uint8 button = buttonsGet(BUTTON_RED);
+		uint8 button = buttonsGet(BUTTON_GREEN);
 		if (button && !buttonOld) {
 			if (consensusIsEnabled()) {
 				consensusDisable();
@@ -105,10 +107,6 @@ void behaviorTask(void* parameters) {
 		if (!consensusIsEnabled()) {
 			ledsSetPattern(LED_RED, LED_PATTERN_CIRCLE,
 					LED_BRIGHTNESS_LOW, LED_RATE_SLOW);
-
-			if (c > 20) {
-				c = 20;
-			}
 		} else {
 			switch (moveState) {
 			case (MOVE_STATE_IDLE):
@@ -116,6 +114,15 @@ void behaviorTask(void* parameters) {
 				break;
 			}
 			}
+		}
+
+		if (!externalPoseIsActive()) {
+			if (c > BEEP_RATE) {
+				audioNoteOn(16, 50, 80, 200);
+				c = 0;
+			}
+
+			c++;
 		}
 
 		/* Set motion output */
