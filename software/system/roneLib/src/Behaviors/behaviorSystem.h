@@ -144,4 +144,6 @@ boolean buttonModeRGB(uint8* modePtr, uint8 modeRed, uint8 modeGreen, uint8 mode
  * @returns behOutPtr
  */
 Beh* behSubsume(Beh* behOutPtr, Beh* behInLoPtr, Beh* behInHighPtr);
+Beh* behSubsume2(Beh* behOutPtr, Beh* behIn1Ptr, Beh* behIn2Ptr, Beh* behIn3Ptr);
+
 #endif /* BEHAVIORSYSTEM_H_ */

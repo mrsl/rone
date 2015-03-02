@@ -105,7 +105,7 @@ void behaviorTask(void* parameters) {
 	boolean printNbrs;
 
 	int32 i,j;
-	Beh behOutput, behMove, behIRObstacle, behBump, behRadio;
+	Beh behOutput, behMove, behIRObstacle, behBump, behCharge, behRadio;
 	NbrList nbrList, nbrListRobots;
 	Nbr* nbrPtr;
 	Nbr* nbrNavTowerHighPtr;
@@ -124,7 +124,7 @@ void behaviorTask(void* parameters) {
 		nbrDataCreate(&nbrDataMode[i], teamNames[i], 4, MODE_FOLLOW);
 	}
 
-	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 75 /100);
+	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 60 /100);
 
 	remoteControlInit();
 	radioCommandSetSubnet(2);
@@ -405,9 +405,11 @@ void behaviorTask(void* parameters) {
 					}
 				}
 			}
+			behChargeStop(&behCharge);
 			behBumpAvoid(&behBump, behOutput.tv, 5);
 			behIRObstacleAvoid_ExcludeRobots(&behIRObstacle, behOutput.tv, &nbrListTeam, behIsActive(&behBump));
-			behSubsume(&behOutput, &behIRObstacle, &behBump);
+			behSubsume2(&behOutput, &behIRObstacle, &behBump, &behCharge);
+			behChargeStopLights(&behCharge);
 		}
 
 		if (printNbrs) {

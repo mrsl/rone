@@ -76,6 +76,45 @@ Beh* behBearingControllerGain(Beh* behPtr, int32 angle, int32 rvGain) {
 	return behPtr;
 }
 
+#define CHARGE_STOP_ACCEL_VALUE		500
+#define CHARGE_STOP_IIR_ALPHA		5
+#define CHARGE_STOP_COUNTER_MAX		16
+
+
+Beh* behChargeStop(Beh* behPtr) {
+	static int32 accelAvg = 0;
+	static int32 chargeStopCounter = 0;
+	int32 accelX = accelerometerGetValue(ACCELEROMETER_X);
+
+	*behPtr = behInactive;
+	accelAvg = filterIIR(accelX, accelAvg, CHARGE_STOP_IIR_ALPHA);
+	//cprintf("accelAvg %d count %d ", accelAvg, chargeStopCounter);
+	if (abs(accelAvg) > CHARGE_STOP_ACCEL_VALUE) {
+		if (chargeStopCounter < CHARGE_STOP_COUNTER_MAX * 2) {
+			chargeStopCounter++;
+		}
+	} else {
+		if (chargeStopCounter > 0) {
+			chargeStopCounter-=2;
+		}
+	}
+	if (chargeStopCounter > CHARGE_STOP_COUNTER_MAX) {
+		behPtr->active = TRUE;
+		//cprintf("stop");
+	}
+	//cprintf("\n");
+	return behPtr;
+}
+
+void behChargeStopLights(Beh* behPtr) {
+	if(behIsActive(behPtr)) {
+		// show different lights for charge statis
+		//TODO: right now, we don't have access to the charge status, so we just show red circle
+		ledsSetPattern(LED_GREEN, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_LOW, LED_RATE_FAST);
+	}
+}
+
+
 
 // this is for a neighbor period of 150ms
 //#define MOVE_TO_NEIGHBOR_RV_GAIN	120

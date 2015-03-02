@@ -137,6 +137,7 @@ void behSetInactive(Beh* behPtr) {
 	behPtr->active = FALSE;
 }
 
+
 Beh* behSubsume(Beh* behOutPtr, Beh* behInLoPtr, Beh* behInHighPtr) {
 	if (behIsActive(behInHighPtr)) {
 		*behOutPtr = *behInHighPtr;
@@ -145,6 +146,18 @@ Beh* behSubsume(Beh* behOutPtr, Beh* behInLoPtr, Beh* behInHighPtr) {
 	}
 	return behOutPtr;
 }
+
+Beh* behSubsume2(Beh* behOutPtr, Beh* behIn1Ptr, Beh* behIn2Ptr, Beh* behIn3Ptr) {
+	if (behIsActive(behIn3Ptr)) {
+		*behOutPtr = *behIn3Ptr;
+	} else if (behIsActive(behIn2Ptr)){
+		*behOutPtr = *behIn2Ptr;
+	} else if (behIsActive(behIn1Ptr)){
+		*behOutPtr = *behIn1Ptr;
+	}
+	return behOutPtr;
+}
+
 
 /*
  *  @brief Determines if the red, green, or blue button has been pressed.

@@ -191,6 +191,15 @@ Beh* behBearingController(Beh* behPtr, int32 angle);
 //TODO fix code overlap with rvBearingController
 Beh* behBearingControllerGain(Beh* behPtr, int32 angle, int32 rvGain);
 
+/**
+ * @brief Stops the robot if it is sitting on it's butt. (x
+ *
+ * @param behPtr behavior that is updated by this function
+ * @returns updated behPtr
+ */
+Beh* behChargeStop(Beh* behPtr);
+void behChargeStopLights(Beh* behPtr);
+
 
 /**
  * @brief Moves robot towards specified neighbor.
