@@ -94,15 +94,15 @@
 boolean powerOn = FALSE;
 uint16 startCount;
 uint16 endCount;
-#define VBAT_RUN_AVG_LEN	3
+#define VBAT_RUN_AVG_LEN		3
 //Start off assuming that the battery is fully charged
-uint8 vBatRunAvg[VBAT_RUN_AVG_LEN];
-uint8 vBatRunAvgCount = 0;
+uint8 voltageBatRunAvg[VBAT_RUN_AVG_LEN];
+uint8 voltageBatRunAvgCount = 0;
 
-#define USB_SENSE_RUN_AVG_LEN 3
+#define VOLTAGE_USB_SENSE_RUN_AVG_LEN 	3
 //Start off assuming that USB line gives 0V, used for ADC mode only
-uint16 USBSenseRunAvg[USB_SENSE_RUN_AVG_LEN];
-uint8 USBSenseRunAvgCount = 0;
+uint16 voltageUSBSenseRunAvg[VOLTAGE_USB_SENSE_RUN_AVG_LEN];
+uint8 voltageUSBSenseRunAvgCount = 0;
 
 static void powerUSBSetEnable(boolean on);
 
@@ -126,20 +126,20 @@ void powerUSBInit(void) {
 	powerUSBSetEnable(FALSE);
 
 	/* Start off assuming we are plugged in */
-	for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
-		USBSenseRunAvg[i] = 900;
+	for (i = 0; i < VOLTAGE_USB_SENSE_RUN_AVG_LEN; i++) {
+		voltageUSBSenseRunAvg[i] = 900;
 	}
 	/*
 	 * Read the USB and use that as all of the running averages
 	 * Esensially, this should give a starting place unless the read fails
 	 */
-	USBSenseRunAvgCount = 0;
-	powerUSBReadADC();
+	voltageUSBSenseRunAvgCount = 0;
+	voltageUSBReadADC();
 	for (i = 0; i < VBAT_RUN_AVG_LEN; i++){
-		USBSenseRunAvg[i] = USBSenseRunAvg[0];
+		voltageUSBSenseRunAvg[i] = voltageUSBSenseRunAvg[0];
 	}
 	//Reset the read count to 0
-	USBSenseRunAvgCount = 0;
+	voltageUSBSenseRunAvgCount = 0;
 #endif
 }
 
@@ -177,27 +177,33 @@ static boolean powerUSBGetState(void) {
 #endif
 }
 
-uint16 powerUSBGetAvg() {
-	uint32 average = 0;
-	uint8 i;
 
-	for (i = 0; i < USB_SENSE_RUN_AVG_LEN; i++) {
-		average += USBSenseRunAvg[i];
+uint16 voltageUSBGet() {
+	//Returns 10x the USB/Prong voltage as an integer
+	//Takes a running average of the last three reads to filter out noise
+	uint8 i;
+	uint16 voltageAvg = 0;
+
+	for (i = 0; i < VOLTAGE_USB_SENSE_RUN_AVG_LEN; i++) {
+		voltageAvg += voltageUSBSenseRunAvg[i];
 	}
 
-	return (average / USB_SENSE_RUN_AVG_LEN);
+	return (uint8)(voltageAvg / VOLTAGE_USB_SENSE_RUN_AVG_LEN);
 }
 
-uint8 powerVBatGet(void){
+
+uint8 voltageBatGet(void){
 	//Returns 10x the battery voltage as an integer
 	//Takes a running average of the last three reads to filter out noise
 	uint8 i;
-	uint16 averageVBat = 0;
+	uint16 voltageAvg = 0;
+
 	for(i=0; i<VBAT_RUN_AVG_LEN; i++){
-		averageVBat += (uint16)(vBatRunAvg[i]);
+		voltageAvg += (uint16)(voltageBatRunAvg[i]);
 	}
-	return (uint8)(averageVBat/VBAT_RUN_AVG_LEN);
+	return (uint8)(voltageAvg / VBAT_RUN_AVG_LEN);
 }
+
 
 void ADC10Init(void){
 	/* Set up the ADC10 for single sample conversions at a slow (<100 Hz) rate. */
@@ -210,35 +216,34 @@ void ADC10Init(void){
 				ADC10ON; 		/* Turn on ADC */
 }
 
+
 void ADC10Shutdown(void){
 	ADC10CTL0 = 0; // ~ADC10ON
 	ADC10CTL1 = 0;
 	ADC10AE0 = 0;
 }
 
+
 void powerVBatInit(void) {
 	uint8 i;
 	//Start off assuming that the battery is fully charged
 	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
-		vBatRunAvg[i] = 42;
+		voltageBatRunAvg[i] = 42;
 	}
 	//Read the battery and use that as all of the running averages
 	//Esensially, this should give a starting place unless the read fails
-	vBatRunAvgCount = 0;
-	powerVBatReadADC();
+	voltageBatRunAvgCount = 0;
+	voltageBatReadADC();
 	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
-		vBatRunAvg[i] = vBatRunAvg[0];
+		voltageBatRunAvg[i] = voltageBatRunAvg[0];
 	}
 	//Reset the read count to 0
-	vBatRunAvgCount = 0;
+	voltageBatRunAvgCount = 0;
 }
 
 #define ADC_MAX_DELAY_TIME		500
-#define VBAT_CONV_NUMER			(2.5 * 10)
-/* The 0.467 Constant comes from the 1/2 voltage divider + sampling droop */
-#define VBAT_CONV_DENOM			(1024 * 0.467)
 
-void powerVBatReadADC(void){
+void voltageBatReadADC(void){
 	uint16 i;
 	// Reconfigure ADC10 for power sense
 	/* Turn off the ENC and conversion start */
@@ -253,14 +258,14 @@ void powerVBatReadADC(void){
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
 		if (!(ADC10CTL1 & ADC10BUSY)) {
 			// Add the current read to the sliding average if there was a sucsessful read
-			vBatRunAvg[vBatRunAvgCount] = (uint8)(ADC10MEM * VBAT_CONV_NUMER / VBAT_CONV_DENOM);
-			vBatRunAvgCount = (vBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
+			voltageBatRunAvg[voltageBatRunAvgCount] = (uint8)(ADC10MEM * VOLTAGE_BAT_CONV_NUMER / VOLTAGE_BAT_CONV_DENOM);
+			voltageBatRunAvgCount = (voltageBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
 			break;
 		} 
 	}
 }
 
-void powerUSBReadADC() {
+void voltageUSBReadADC() {
 	uint16 i;
 	/* Turn off the ENC and conversion start */
 	ADC10CTL0 &= ~(ENC + ADC10SC);
@@ -274,8 +279,8 @@ void powerUSBReadADC() {
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
 		if (!(ADC10CTL1 & ADC10BUSY)) {
 		   	// Store and calculate running average
-			USBSenseRunAvg[USBSenseRunAvgCount] = (uint16)ADC10MEM;
-			USBSenseRunAvgCount = (USBSenseRunAvgCount + 1) % USB_SENSE_RUN_AVG_LEN;
+			voltageUSBSenseRunAvg[voltageUSBSenseRunAvgCount] = (uint16)ADC10MEM;
+			voltageUSBSenseRunAvgCount = (voltageUSBSenseRunAvgCount + 1) % VOLTAGE_USB_SENSE_RUN_AVG_LEN;
 			break;
 		}
 	}

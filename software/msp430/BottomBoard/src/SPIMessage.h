@@ -20,6 +20,9 @@ extern const uint8 MSP430Code[];
 #define MSP430_MSG_REFLECT_START_IDX	17 + MSP430_CODE_LENGTH
 #define MSP430_MSG_CHECKSUM_IDX			MSP430_MSG_LENGTH - 1
 
+#define MSP430_MSG_VUSB_FASTCHARGE_BIT	(1<<7)
+#define MSP430_MSG_VUSB_CHARGE_BIT		(1<<6)
+
 /* Commands:
  * 0x00:	    Normal Operation, LED and Button Information
  * 0x01:	    Shutdown Command

@@ -61,9 +61,16 @@ void msp430CheckAndUpdate(void) {
 		}
 #endif //RONE_V12_TILETRACK
 
-		SPIMessageOut[MSP430_MSG_VBAT_IDX] = powerVBatGet();
-		/* TODO: We are just thresholding the USB voltage for now. Should we send up more info? */
-		SPIMessageOut[MSP430_MSG_VUSB_IDX] = (powerUSBGetAvg() > POWER_USB_PLUGGED_IN_THRESHOLD ? 1 : 0);
+		SPIMessageOut[MSP430_MSG_VBAT_IDX] = voltageBatGet();
+		// convert and pack the USB voltage.  this int will range from 30-65ish.
+		// we subtract 30 to free up some room at the top for the charge bits
+		uint8 vUSB = voltageUSBGet() * VOLTAGE_USB_CONV_NUMER / VOLTAGE_USB_CONV_DENOM - VOLTAGE_USB_CONV_OFFSET;
+		if (voltageBatGet() < VOLTAGE_BAT_FULLY_CHARGED) {
+			vUSB |= (voltageUSBGet() > VOLTAGE_USB_PLUGGED_IN_THRESHOLD ? MSP430_MSG_VUSB_CHARGE_BIT : 0);
+			vUSB |= (voltageUSBGet() > VOLTAGE_USB_FAST_CHARGE_THRESHOLD ? MSP430_MSG_VUSB_FASTCHARGE_BIT : 0);
+		}
+
+		SPIMessageOut[MSP430_MSG_VUSB_IDX] = (voltageUSBGet() > VOLTAGE_USB_PLUGGED_IN_THRESHOLD ? 1 : 0);
 		SPIMessageOut[MSP430_MSG_POWER_BUTTON_IDX] = powerButtonGetValue();
 		SPIMessageOut[MSP430_MSG_VERSION_IDX] = FULL_ID_VERSION_NUMBER;
 		// Pack checksum

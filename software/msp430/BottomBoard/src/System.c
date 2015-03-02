@@ -246,7 +246,7 @@ void setAllLEDData(uint8 *data, uint8 value){
 
 
 void setBatteryLEDData(uint8 *data){
-	unsigned long int vbatt = (long int)powerVBatGet();
+	unsigned long int vbatt = (long int)voltageBatGet();
 	int i = 10;
 	//The range of vbat is from 
 	//4.3V = 43 = 5 Lights
@@ -489,7 +489,7 @@ void main(void) {
 			watchdogDisable();
 
 			// Update the values
-			powerVBatReadADC();
+			voltageBatReadADC();
 			timerVBatADCUpdate = TIMER_ADC_PERIOD;
 
 			// Re-enable inturupts
@@ -504,7 +504,7 @@ void main(void) {
 			watchdogDisable();
 
 			// Update the values
-			powerUSBReadADC();
+			voltageUSBReadADC();
 			timerUSBADCUpdate = TIMER_ADC_PERIOD;
 
 			// Re-enable inturupts
@@ -516,7 +516,7 @@ void main(void) {
 		// Check voltage for fast charge
 		if (powerEnGet()) {
 			// Determine if it reached threshold for fast charge
-		   	if (powerUSBGetAvg() > POWER_USB_FAST_CHARGE_THRESHOLD) {
+		   	if (voltageUSBGet() > VOLTAGE_USB_FAST_CHARGE_THRESHOLD) {
 		   		/* Set the charge limit to 1 A */
 		   		chargeLimitSet(FALSE);
 		   	} else {
@@ -614,7 +614,7 @@ void main(void) {
 		}
 
 		//Turn off the robot as soon as possible if the VBat drops below a threshold
-		if (powerVBatGet() < VBAT_SHUTDOWN_THRESHOLD && powerUSBGetAvg() < POWER_USB_PLUGGED_IN_THRESHOLD) {
+		if (voltageBatGet() < VBAT_SHUTDOWN_THRESHOLD && voltageUSBGet() < VOLTAGE_USB_PLUGGED_IN_THRESHOLD) {
 			resetSet(TRUE);
 			#ifdef RONE_V12
 				ftdiResetSet(TRUE);
@@ -626,7 +626,7 @@ void main(void) {
 			airplaneMode = FALSE;
 
 			// Go into airplane mode if the battery is beyond dead
-			if (powerVBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
+			if (voltageBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
 				airplaneMode = TRUE;
 			}
 
