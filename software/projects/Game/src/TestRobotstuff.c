@@ -158,6 +158,8 @@ void behaviorTask(void* parameters) {
 			} else if (nbrNavTowerLowPtr){
 				cprintf("(NavTower Low) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerLowPtr->ID, nbrNavTowerLowPtr->bearing, nbrNavTowerLowPtr->orientation);
 			}
+			// print the battery voltages
+			cprintf("vbat=%f1.2 vusb=%f1.2 charge=%d fast=%d\n", systemBatteryVoltageGet(), systemUSBVoltageGet(), systemBatteryChargingGet(), systemBatteryFastChargingGet());
 		}
 
 

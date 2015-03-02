@@ -8,7 +8,8 @@
 #include "roneos.h"
 #include <stdio.h>
 
-uint8 batteryVoltage, usbVoltage, powerButton, mspVersion, mspVersionHardware, prevVal, prevValHardware;
+uint8 voltageBattery, voltageUSB, powerButton, mspVersion, mspVersionHardware, prevVal, prevValHardware;
+boolean batteryCharging, batteryFastCharging;
 
 /*
  * @brief Check USBlevel.
@@ -25,8 +26,8 @@ uint32 systemUSBConnected(void) {
 #if defined(RONE_V6)
 
 void systemIOInit() {
-	batteryVoltage = 0;
-	usbVoltage = 0;
+	voltageBattery = 0;
+	voltageUSB = 0;
 	powerButton = 0;
 	mspVersion = 0;
 	prevVal = 0;
@@ -64,8 +65,10 @@ uint8 systemPowerButtonGet(void) {
  *
  */
 void systemIOInit() {
-	batteryVoltage = 0;
-	usbVoltage = 0;
+	voltageBattery = 0;
+	voltageUSB = 0;
+	batteryCharging = FALSE;
+	batteryFastCharging = FALSE;
 	powerButton = 0;
 	mspVersion = 0;
 	prevVal = 0;
@@ -78,7 +81,7 @@ void systemIOInit() {
  * @returns void
  */
 void systemBatteryVoltageUpdate(uint8 val) {
-	batteryVoltage = val;
+	voltageBattery = val;
 }
 
 /*
@@ -87,7 +90,7 @@ void systemBatteryVoltageUpdate(uint8 val) {
  * @returns batteryVoltage the battery voltage
  */
 float systemBatteryVoltageGet(void) {
-	float bv = ((float)batteryVoltage) / 10.0;
+	float bv = ((float)voltageBattery) / 10.0;
 	return bv;
 }
 
@@ -99,7 +102,7 @@ float systemBatteryVoltageGet(void) {
  * @returns void
  */
 void systemBatteryVoltageGet2(uint8* onesPtr, uint8* tenthsPtr) {
-	float bv = ((float)batteryVoltage) / 10.0;
+	float bv = ((float)voltageBattery) / 10.0;
 	float ones, tenths;
 
 	ones = (float)(int)(bv);
@@ -114,8 +117,18 @@ void systemBatteryVoltageGet2(uint8* onesPtr, uint8* tenthsPtr) {
  * @param val the new USB voltage value
  * @returns void
  */
+#define VOLTAGE_USB_CONV_OFFSET		30
+#define MSP430_MSG_VUSB_FASTCHARGE_BIT	(1<<7)
+#define MSP430_MSG_VUSB_CHARGE_BIT		(1<<6)
+
 void systemUSBVoltageUpdate(uint8 val) {
-	usbVoltage = val;
+	// pull ou the charger status bits
+	batteryCharging = ((val & MSP430_MSG_VUSB_CHARGE_BIT) ? TRUE : FALSE);
+	batteryFastCharging = ((val & MSP430_MSG_VUSB_CHARGE_BIT) ? TRUE : FALSE);
+
+	//mask the charging bits from the battery value
+	val &= ~(MSP430_MSG_VUSB_FASTCHARGE_BIT | MSP430_MSG_VUSB_CHARGE_BIT);
+	voltageUSB = val + VOLTAGE_USB_CONV_OFFSET;
 }
 
 /*
@@ -123,8 +136,21 @@ void systemUSBVoltageUpdate(uint8 val) {
  *
  * @returns usbVoltage the USB voltage
  */
-uint8 systemUSBVoltageGet(void) {
-	return usbVoltage;
+float systemUSBVoltageGet(void) {
+	float bv = ((float)voltageUSB) / 10.0;
+	return bv;
+}
+
+/*
+ * @brief Get the USB voltage.
+ *
+ * @returns boolean of the charge status
+ */
+boolean systemBatteryChargingGet(void) {
+	return batteryCharging;
+}
+boolean systemBatteryFastChargingGet(void) {
+	return batteryFastCharging;
 }
 
 /*

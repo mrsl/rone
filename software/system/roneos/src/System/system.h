@@ -226,7 +226,21 @@ void systemUSBVoltageUpdate(uint8 val);
  *
  * @returns usbVoltage the USB voltage
  */
-uint8 systemUSBVoltageGet(void);
+float systemUSBVoltageGet(void);
+
+/**
+ * @brief Get the charger status
+ *
+ * @returns TRUE if the battery is charging, FALSE otherwise
+ */
+boolean systemBatteryChargingGet(void);
+
+/**
+ * @brief Get the charger status
+ *
+ * @returns TRUE if the battery is fast charging, FALSE otherwise
+ */
+boolean systemBatteryFastChargingGet(void);
 
 
 /**
