@@ -64,6 +64,7 @@ const uint8 MSP430Code[] = {'B', 'O', 'T'};
 // For tiletrack robots only
 #define MSP430_MSG_REFLECT_START_IDX	17 + MSP430_CODE_LENGTH
 #define MSP430_MSG_CHECKSUM_IDX			MSP430_MSG_LENGTH - 1
+
 /* Commands:
  * 0x00:		Normal Operation, LED and Button Information Sent
  * 0x01:		Shutdown Command
