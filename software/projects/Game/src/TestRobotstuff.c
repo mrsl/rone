@@ -18,7 +18,7 @@
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 //in milliseconds
 #define BEHAVIOR_TASK_PERIOD			50
-#define NEIGHBOR_PERIOD					250
+#define NEIGHBOR_PERIOD					240
 
 //stuff for flocking
 #define DEMO_TV_FLOCK					0
@@ -34,7 +34,7 @@
 #define SNAKE_NAV_TOWER_TIMEOUT			1000
 #define MOTION_TV						120
 #define MOTION_TV_FLOCK					(MOTION_TV*2/3)
-#define MOTION_TV_ORBIT_CENTER			35
+#define MOTION_TV_ORBIT_CENTER			40
 #define CAPTAIN_LED_COUNTER_TIME		12
 
 #define FTL_RANGE						300
@@ -127,7 +127,7 @@ void behaviorTask(void* parameters) {
 		nbrDataCreate(&nbrDataMode[i], teamNames[i], 4, MODE_FOLLOW);
 	}
 
-	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 60 /100);
+	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 65 /100);
 
 	remoteControlInit();
 	radioCommandSetSubnet(2);
@@ -321,10 +321,10 @@ void behaviorTask(void* parameters) {
 				case MODE_FOLLOW: {
 					// avoid neighbors who are in front of you
 					nbrPtr = nbrListGetClosestNbrToBearing(&nbrListTeam, 0);
-					if (abs(nbrGetBearing(nbrPtr)) < MILLIRAD_DEG_45) {
+					if (nbrPtr && (abs(nbrGetBearing(nbrPtr)) < MILLIRAD_DEG_45)) {
 						behMoveFromNbr(&behOutput, nbrPtr, MOTION_TV);
 					} else {
-						behOutput.tv = MOTION_TV;
+						behMoveForward(&behOutput, MOTION_TV);
 					}
 					break;
 				}
