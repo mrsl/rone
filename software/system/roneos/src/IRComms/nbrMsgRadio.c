@@ -83,8 +83,8 @@ void nbrMsgRadioXmit(void) {
 		radioMsgDataPtr[NBR_RADIO_MESSAGES_SENDER_ID_IDX] = roneID;
 		radioMsgDataPtr[NBR_RADIO_MESSAGES_LENGTH_IDX] = nbrMsgRadioPtr->length;
 		memcpy(&radioMsgDataPtr[NBR_RADIO_MESSAGES_DATA_IDX], nbrMsgRadioPtr->data, nbrMsgRadioPtr->length);
-		//TODO ugly hack to help nbr data get through.  send each packet 4 times
-		for (i = 0; i < 4; ++i) {
+		//TODO ugly hack to help nbr data get through.  send each packet multiple times
+		for (i = 0; i < 3; ++i) {
 			radioCommandXmit(&nbrMsgRadioPtr->radioCmd, ROBOT_ID_ALL, &radioMsg);
 		}
 		nbrMsgRadioPtr = nbrMsgRadioPtr->nextPtr; // search through next radioCmd ptr

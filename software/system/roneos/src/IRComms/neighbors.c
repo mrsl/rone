@@ -126,7 +126,7 @@ void neighborsInit(uint32 neighbor_period_arg) {
 	nbrDataCreateIR(&nbrMsgID, "ID", ROBOT_ID_NUM_BITS, roneID);
 	neighborsMutex = osSemaphoreCreateMutex();
 	serialCommandAdd(&serialCmdSN, "sn", serialCmdSNFunc);
-	osTaskCreate(neighborsTask, "neighbors", 4096, NULL, NEIGHBORS_TASK_PRIORITY );
+	osTaskCreate(neighborsTask, "neighbors", 2048, NULL, NEIGHBORS_TASK_PRIORITY );
 }
 
 
@@ -518,11 +518,11 @@ uint32 xmitDelay2=0;
 static void neighborsTask(void* parameters) {
 	portTickType lastWakeTime, currentTime;
 	IRCommsMessage IRMsg;
-	uint8 i, j;
+	uint8 i;
 	lastWakeTime = osTaskGetTickCount();
 	Nbr* nbrPtr;
 	uint8 signalBitsCount;
-	time_t timer = time(NULL);
+	//time_t timer = time(NULL);
 
 	for (;;) {
 		// process all the stored IR messages
@@ -589,6 +589,7 @@ static void neighborsTask(void* parameters) {
 		if(neighborXmitEnable) {
 			// wait a random offset before xmit
 			if (neighborPeriod > NEIGHBOR_XMIT_MIN_DELAY) {
+				//TODO for reasons unknown to anyone, rand stopped working.  WTF.  We've made a workaround.
 				//xmitDelay = (uint32)rand() % (neighbor_period - NEIGHBOR_XMIT_MIN_DELAY);
 				xmitDelay = pseudoRandNumGen(roneID, roneID) % (neighborPeriod - NEIGHBOR_XMIT_MIN_DELAY);
 				osTaskDelay(xmitDelay);
@@ -939,7 +940,7 @@ void serialCmdSNFunc(char *command) {
 	NbrList nbrs;
 
 	/* Neighbors */
-	if (neighborsGetMutexDelay(5)) {;
+	if (neighborsGetMutexDelay(5)) {
 		nbrListCreate(&nbrs);
 		neighborsPutMutex();
 

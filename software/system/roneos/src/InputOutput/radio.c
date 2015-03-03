@@ -249,7 +249,6 @@ void radioIntHandler(void) {
 	if (status & (1 << NRF_STATUS_TX_DS)) {
 		// transmit finished. if there is data in the xmit queue, then send it out
 		val = osQueueReceiveFromISR(radioCommsQueueXmit, &message, &taskWoken);
-
 		if (val == pdPASS) {
 			SPISelectDeviceISR(SPI_RADIO);
 			MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD_NOACK);
@@ -434,7 +433,7 @@ void radioSendMessage(RadioMessage* messagePtr) {
 		SPIDeselect();
 	} else {
 		// buffer the message in case we have a xmit in progress.
-		osQueueSend(radioCommsQueueXmit, messagePtr, portMAX_DELAY);
+		osQueueSend(radioCommsQueueXmit, messagePtr, 1);
 	}
 	radioIntEnable();
 }

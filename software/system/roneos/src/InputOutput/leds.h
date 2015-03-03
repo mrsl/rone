@@ -39,7 +39,7 @@
 #define LED_BRIGHTNESS_LOW					5
 #define LED_BRIGHTNESS_MED					10
 #define LED_BRIGHTNESS_HIGH					15
-#define LED_BRIGHTNESS_HIGHER				40
+#define LED_BRIGHTNESS_HIGHER				20
 
 // old defines
 //#define LED_RATE_SNAIL						64
