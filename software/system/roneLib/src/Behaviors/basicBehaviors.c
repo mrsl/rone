@@ -120,7 +120,7 @@ void behChargeStopLights(Beh* behPtr) {
 //#define MOVE_TO_NEIGHBOR_RV_GAIN	120
 
 // this is for a neighbor period of 600ms
-#define MOVE_TO_NEIGHBOR_RV_GAIN	50
+#define MOVE_TO_NEIGHBOR_RV_GAIN	70
 
 
 Beh* behMoveToNbr(Beh* behPtr, Nbr* nbrPtr, int32 tv) {
@@ -166,26 +166,43 @@ Beh* behMoveToNbrRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range) {	//###
 	return behPtr;
 }
 
-Beh* behMoveToNbrPRange(Beh* behPtr, Nbr* nbrPtr, uint16 range) {	//### move to distance
-	static int32 errIntegral=0;
+#define MOVE_TO_NBR_VEL_RANGE		25
+//#define MOVE_TO_NBR_KP			500
+#define MOVE_TO_NBR_KP				0
+#define MOVE_TO_NBR_KI				10
+#define MOVE_TO_NBR_KI_NEG_GAIN		3
+#define MOVE_TO_NBR_KI_BOUND		MOVE_TO_NBR_VEL_RANGE
+
+
+Beh* behMoveToNbrPRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range) {	//### move to distance
+	static int32 iTerm=0;
 	static int32 avgRange=-1;
+	int32 pTerm;
+
 	if (nbrPtr) {
 		if(avgRange==-1) {
 			avgRange=range;
 		} else {
 			avgRange=(avgRange+range)/2;
 		}
-		int32 err = nbrPtr->range - avgRange;
-		errIntegral+=err;
-		errIntegral=bound(errIntegral,-10000,10000);
+		int32 e = nbrPtr->range - avgRange;
+		if (e > 0) {
+			iTerm += e;
+		} else {
+			iTerm += MOVE_TO_NBR_KI_NEG_GAIN * e;
+		}
+		iTerm = bound(MOVE_TO_NBR_KI * iTerm / 1000, -MOVE_TO_NBR_KI_BOUND, MOVE_TO_NBR_KI_BOUND);
+		pTerm = MOVE_TO_NBR_KP * e / 1000;
+		int32 tvTemp = pTerm + iTerm;
+		tvTemp = bound(tvTemp, tv * (100 - MOVE_TO_NBR_VEL_RANGE) / 100, tv * (100 + MOVE_TO_NBR_VEL_RANGE) / 100);
+
 		int32 theta=nbrPtr->bearing;
 		rvBearingController(behPtr, theta, MOVE_TO_NEIGHBOR_RV_GAIN);
-		int32 tv = (700 * err + 1 * errIntegral) / 1000;
-		tv = bound(tv, 0, 120);	//TODO ###
-		cprintf("range=%d,desiredrange=%d,err=%d,errintegral=%d,tv=%d\n",nbrPtr->range,avgRange,err,errIntegral,tv);
+
+		cprintf("range=%d,desiredrange=%d,err=%d,errintegral=%d,tvTemp=%d\n",nbrPtr->range,avgRange,e,iTerm,tvTemp);
 		behPtr->active = TRUE;
-		if(tv>0) {
-			behPtr->tv = tv;
+		if(tvTemp>0) {
+			behPtr->tv = tvTemp;
 		} else {
 			behPtr->tv=0;
 		}
@@ -585,7 +602,7 @@ Beh* behOrbitCCWRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range) {	//### 
  *	@param	tv desired translational velocity
  *	@returns updated behPtr
  */
-Beh* behFollowPredesessor(Beh* behPtr, NbrList* nbrListPtr, int32 tv) {
+Beh* behFollowPredesessor(Beh* behPtr, NbrList* nbrListPtr, int32 tv, int32 range) {
 	int32 i, x, y, avgOrientation, theta;
 	Nbr* nbrPtr;
 	Nbr* leaderNbrPtr;
@@ -600,7 +617,8 @@ Beh* behFollowPredesessor(Beh* behPtr, NbrList* nbrListPtr, int32 tv) {
 		}
 	}
 	if (leaderNbrPtr) {
-		behMoveToNbr(behPtr, leaderNbrPtr, tv);
+		//behMoveToNbr(behPtr, leaderNbrPtr, tv);
+		behMoveToNbrPRange(behPtr, leaderNbrPtr, tv, range);
 	} else {
 		*behPtr = behInactive;
 	}

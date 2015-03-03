@@ -32,10 +32,12 @@
 #define TEAM_COUNT						3
 
 #define SNAKE_NAV_TOWER_TIMEOUT			1000
-#define MOTION_TV						100
-#define MOTION_TV_FLOCK					(MOTION_TV*2/3)
+#define MOTION_TV						120
+#define MOTION_TV_FLOCK					(MOTION_TV*3/4)
 #define MOTION_TV_ORBIT_CENTER			35
 #define CAPTAIN_LED_COUNTER_TIME		12
+
+#define FTL_RANGE						60
 
 
 #define NAV_TOWER_LOW_RONE_ID			124
@@ -43,8 +45,8 @@
 
 #define MODE_IDLE						0
 #define MODE_FOLLOW						1
-#define MODE_CLUSTER					2
-#define MODE_FLOCK						3
+#define MODE_FLOCK						2
+#define MODE_CLUSTER					3
 
 #define FLOCK_CLUSTER_THRESHOLD			1
 
@@ -80,7 +82,7 @@ static RadioCmd radioCmdBehavior;
 #define TEAM_LEADER_TOTAL_TIME		25
 
 #define BEHAVIOR_READY_TIME 		10000
-#define BEHAVIOR_IDLE_TIME			60000
+#define BEHAVIOR_IDLE_TIME			600000
 
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListTeamPtr, uint8 team) {
@@ -114,6 +116,7 @@ void behaviorTask(void* parameters) {
 	RadioMessage radioMessage;
 	uint8 irBeaconNumIDs = 4;
 	uint8 irBeaconIDs[] = {124, 125, 126, 127};
+	uint32 printMem = 0;
 
 	uint32 captainLEDCounter = 0;
 
@@ -140,6 +143,7 @@ void behaviorTask(void* parameters) {
 		printNbrs = neighborsNewRoundCheck(&neighborRound);
 		remoteControlUpdateJoysticks();
 
+
 		// look for the nav tower
 		nbrListCreate(&nbrList);
 		nbrListGetRobots(&nbrListRobots, &nbrList, irBeaconIDs, irBeaconNumIDs);
@@ -159,7 +163,17 @@ void behaviorTask(void* parameters) {
 				cprintf("(NavTower Low) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerLowPtr->ID, nbrNavTowerLowPtr->bearing, nbrNavTowerLowPtr->orientation);
 			}
 			// print the battery voltages
-			cprintf("vbat=%f1.2 vusb=%f1.2 charge=%d fast=%d\n", systemBatteryVoltageGet(), systemUSBVoltageGet(), systemBatteryChargingGet(), systemBatteryFastChargingGet());
+			char num1[10],num2[10];
+			sprintf(num1,"%1.2f", systemBatteryVoltageGet());
+			sprintf(num2,"%1.2f", systemUSBVoltageGet());
+			cprintf("vbat=%s vusb=%s charge=%d fast=%d\n", num1, num2, systemBatteryChargingGet(), systemBatteryFastChargingGet());
+		}
+
+		// print the stack usage for debugging
+		uint32 timeTemp = osTaskGetTickCount() / 2000;
+		if(printMem != timeTemp) {
+			printMem = timeTemp;
+			systemPrintMemUsage();
 		}
 
 
@@ -171,7 +185,6 @@ void behaviorTask(void* parameters) {
 			// behavior is settled.  show a steady light
 			ledsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
 			remoteControlLedsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-			// TODO flash the other lights occasionally
 
 			//  look for a new behavior button press
 			Joystick* joystickPtr = remoteControlGetJoystick(JOYSTICK_NUM);
@@ -198,7 +211,6 @@ void behaviorTask(void* parameters) {
 				currentLED = LED_BLUE;
 			}
 		}
-
 
 		if(remoteControlIsSerialHost()) {
 			hostFlag = TRUE;
@@ -290,9 +302,9 @@ void behaviorTask(void* parameters) {
 					if(joystickPtr->buttons & JOYSTICK_BUTTON_TOP) {
 						nbrDataSet(&nbrDataMode[team], MODE_FOLLOW);
 					} else if(joystickPtr->buttons & JOYSTICK_BUTTON_MIDDLE) {
-						nbrDataSet(&nbrDataMode[team], MODE_CLUSTER);
-					} else if(joystickPtr->buttons & JOYSTICK_BUTTON_BOTTOM) {
 						nbrDataSet(&nbrDataMode[team], MODE_FLOCK);
+					} else if(joystickPtr->buttons & JOYSTICK_BUTTON_BOTTOM) {
+						nbrDataSet(&nbrDataMode[team], MODE_CLUSTER);
 					}
 					behOutput = behRadio;
 				}
@@ -316,15 +328,15 @@ void behaviorTask(void* parameters) {
 					}
 					break;
 				}
-				case MODE_CLUSTER: {
-					behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER, nbrNavTowerHighPtr, nbrNavTowerLowPtr);
-					break;
-				}
 				case MODE_FLOCK: {
 					if(printNbrs) {
 						cprintf("Team Size: %d\n", nbrListTeam.size);
 					}
 					demoFlock(&behOutput, &behRadio, &nbrListTeam, team);
+					break;
+				}
+				case MODE_CLUSTER: {
+					behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER, nbrNavTowerHighPtr, nbrNavTowerLowPtr);
 					break;
 				}
 				case MODE_IDLE:{
@@ -346,10 +358,10 @@ void behaviorTask(void* parameters) {
 					captainLEDCounter--;
 				}
 
-				if ((captainLEDCounter < TEAM_LEADER_ON_TIME)) {
+				if ((captainLEDCounter < TEAM_LEADER_ON_TIME) && (mode != MODE_FLOCK)) {
 					if (hostFlag == FALSE)	ledsSetPattern(LED_ALL, LED_PATTERN_ON, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 				} else {
-					if (hostFlag == FALSE)  ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);	//###
+					if (hostFlag == FALSE)  ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 				}
 
 			} else {
@@ -359,20 +371,25 @@ void behaviorTask(void* parameters) {
 					mode = nbrDataGet(&nbrDataMode[team]);
 					if(printNbrs) cprintf("notleader.  mode = %d\n", mode);
 
-					// Show team colors
-					//ledsSetPattern(team, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_MED);
-					ledsSetPattern(mode-1, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_MED);	//###
-					//TODO follow the leader + bubble sort
+					// Show behavior colors
+					ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					switch (mode) {
 					case MODE_FOLLOW: {
 						//if(remoteControlJoystickIsActive(team, JOYSTICK_TIMEOUT_BEH)) {
 							uint8 parentID;
 							Beh behFollow, behCluster;
 							behMoveForward(&behOutput, MOTION_TV);
-							behFollowPredesessor(&behFollow, &nbrListTeam, MOTION_TV);
+							behFollowPredesessor(&behFollow, &nbrListTeam, MOTION_TV, FTL_RANGE);
 							behClusterBroadcast(&behCluster, &nbrListTeam, MOTION_TV, &broadcastTeamMsg[team]);
 							behSubsume(&behOutput, &behCluster, &behFollow);
 						//}
+						break;
+					}
+					case MODE_FLOCK: {
+						if(printNbrs) {
+							cprintf("Team Size: %d\n", nbrListTeam.size);
+						}
+						demoFlock(&behOutput, &behRadio, &nbrListTeam, team);
 						break;
 					}
 					case MODE_CLUSTER: {
@@ -383,13 +400,6 @@ void behaviorTask(void* parameters) {
 						} else {
 							behClusterBroadcast(&behOutput, &nbrListTeam, MOTION_TV, &broadcastTeamMsg[team]);
 						}
-						break;
-					}
-					case MODE_FLOCK: {
-						if(printNbrs) {
-							cprintf("Team Size: %d\n", nbrListTeam.size);
-						}
-						demoFlock(&behOutput, &behRadio, &nbrListTeam, team);
 						break;
 					}
 					case MODE_IDLE:{

@@ -126,7 +126,7 @@ Beh* behOrbitCCWRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range);
  *	@param	tv desired translational velocity
  *	@returns updated behPtr
  */
-Beh* behFollowPredesessor(Beh* behPtr, NbrList* nbrListPtr, int32 tv);
+Beh* behFollowPredesessor(Beh* behPtr, NbrList* nbrListPtr, int32 tv, int32 range);
 
 
 //TODO Implement or delete?
@@ -230,7 +230,7 @@ Beh* behMoveToNbrRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range);
  * @param range given minimum distance
  * @returns updated behPtr
  */
-Beh* behMoveToNbrPRange(Beh* behPtr, Nbr* nbrPtr, uint16 range);
+Beh* behMoveToNbrPRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range);
 
 /**
  * @brief Moves robot between specified neighbors.
