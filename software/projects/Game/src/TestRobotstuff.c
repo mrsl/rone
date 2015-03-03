@@ -33,11 +33,11 @@
 
 #define SNAKE_NAV_TOWER_TIMEOUT			1000
 #define MOTION_TV						120
-#define MOTION_TV_FLOCK					(MOTION_TV*3/4)
+#define MOTION_TV_FLOCK					(MOTION_TV*2/3)
 #define MOTION_TV_ORBIT_CENTER			35
 #define CAPTAIN_LED_COUNTER_TIME		12
 
-#define FTL_RANGE						60
+#define FTL_RANGE						300
 
 
 #define NAV_TOWER_LOW_RONE_ID			124
