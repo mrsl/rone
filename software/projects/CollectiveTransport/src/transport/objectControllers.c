@@ -40,7 +40,11 @@ void objectRotatePerpendicularLeft(int32 objectRV, Beh *behPtr) {
 
 	filteredTV = filterIIR(filteredTV, desiredTV, 30);
 
-	behMoveForward(behPtr, filteredTV);
+	if (!leaderCanTV())  {
+		behMoveForward(behPtr, 0);
+	} else {
+		behMoveForward(behPtr, filteredTV);
+	}
 
 	// Align to be facing perpendicular to vector as to rotate object.
 	rvBearingController(behPtr, desiredBearing, OBJECT_MAXIMUM_RV_GAIN);
@@ -72,7 +76,11 @@ void objectRotatePerpendicularRight(int32 objectRV, Beh *behPtr) {
 
 	filteredTV = filterIIR(filteredTV, desiredTV, 30);
 
-	behMoveForward(behPtr, filteredTV);
+	if (!leaderCanTV())  {
+		behMoveForward(behPtr, 0);
+	} else {
+		behMoveForward(behPtr, filteredTV);
+	}
 
 	// Align to be facing perpendicular to vector as to rotate object.
 	rvBearingController(behPtr, desiredBearing, OBJECT_MAXIMUM_RV_GAIN);
@@ -98,7 +106,11 @@ void objectTranslateGuide(int32 objectTV, Beh *behPtr) {
 
 	filteredTV = filterIIR(filteredTV, desiredTV, 30);
 
-	behMoveForward(behPtr, filteredTV);
+	if (!leaderCanTV())  {
+		behMoveForward(behPtr, 0);
+	} else {
+		behMoveForward(behPtr, filteredTV);
+	}
 
 	// Align to be facing perpendicular to vector as to rotate object.
 	rvBearingController(behPtr, desiredBearing, OBJECT_MAXIMUM_RV_GAIN);

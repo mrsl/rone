@@ -5,14 +5,15 @@
  *      Author: Zak
  */
 
-#include "leader.h"
-#include "guide.h"
+#include "../collectivetransport.h"
 
 NbrData isLeader;
 NbrData active;
 centroidNbrData guidePosition;
 NbrData movementMode;
-NbrData forward;
+
+uint8 deactiveTimeout = 0;
+NbrData deactivate;
 
 boolean manualDisable = FALSE;
 
@@ -20,7 +21,17 @@ int32 objectOrientation = 0;
 int32 leaderOrientation = 0;
 int32 angle2Rotate = 0;
 
+int32 guideDist = 1000000;
+int32 centroidDist = 1000000;
+int32 centroid2GuideDist = 1000000;
+
+boolean tvLimiter = 0;
+
+uint8 prevGuide = 0;
+
 int32 guideObjectBearing = 0;
+
+extern state currentState;
 
 centroidValue leaderGetGuideXCoordinate() {
 	centroidValue centroidX, centroidY;
@@ -38,6 +49,10 @@ centroidValue leaderGetGuideYCoordinate() {
 
 boolean leaderIsLeader() {
 	return nbrDataGet(&isLeader);
+}
+
+boolean leaderCanTV() {
+	return tvLimiter;
 }
 
 void leaderSetActive(boolean val) {
@@ -99,6 +114,7 @@ void leaderSetObjectOrientation() {
 void leaderSetGuideObjectBearing() {
 	centroidValue centroidX, centroidY;
 	centroidDataGet(&centroidX, &centroidY, &centroidLite);
+	centroidDist = vectorMag(centroidX, centroidY);
 
 	centroidValue guideX, guideY;
 	centroidNbrDataGet(&guideX, &guideY, &guidePosition);
@@ -110,6 +126,7 @@ void leaderSetGuideObjectBearing() {
 	int32 iVectorY = (int32) vectorY;
 
 	int32 tguideObjectBearing = normalizeAngleMilliRad2(atan2MilliRad(iVectorY, iVectorX));
+	centroid2GuideDist = filterIIR(vectorMag(iVectorX, iVectorY), centroid2GuideDist, 20);
 
 	guideObjectBearing = filterIIRAngle(guideObjectBearing, tguideObjectBearing, 30);
 }
@@ -121,6 +138,14 @@ int32 leaderGetGuideObjectBearing() {
 
 int32 leaderGetObjectOrientation() {
 	return objectOrientation;
+}
+
+int32 leaderGetGuideDistance() {
+	return guideDist;
+}
+
+void leaderDeactivateRobot(uint8 id) {
+	nbrDataSet(&deactivate, id);
 }
 
 // Need to search for guide robot
@@ -140,6 +165,13 @@ void leaderCallback(NbrDatabase* ndPtr) {
 			}
 		}
 	}
+
+	tvLimiter = 1;
+	if (centroid2GuideDist < 300) {
+		tvLimiter = 0;
+	}
+
+
 	// Find guide robot and get coordinates
 	if (leaderIsLeader()) {
 		leaderSetObjectOrientation();
@@ -149,12 +181,38 @@ void leaderCallback(NbrDatabase* ndPtr) {
 		// Found a guide
 		if (guide != NULL) {
 
+			uint8 tempGuide = nbrGetID(guide);
+
+			if (tempGuide != prevGuide) {
+				guideDist = 1000000;
+				centroid2GuideDist = 1000000;
+			}
+
+			prevGuide = tempGuide;
+
+			if (centroid2GuideDist < 300) {
+				uint8 oldRobot = nbrDataGet(&deactivate);
+				uint8 newRobot = nbrGetID(guide);
+
+				if (oldRobot == newRobot) {
+					deactiveTimeout++;
+					if (deactiveTimeout > 3) {
+						leaderDeactivateRobot(0);
+					}
+				} else {
+					leaderDeactivateRobot(newRobot);
+					deactiveTimeout = 0;
+				}
+			}
+
 			centroidValue guideX = 0.;
 			centroidValue guideY = 0.;
 
 			centroidTransform(&guideX, &guideY, guide);
 
 			centroidNbrDataSet(guideX, guideY, &guidePosition);
+
+			guideDist = vectorMag(guideX, guideY);
 
 			uint8 type = guideGetNbrType(guide);
 
@@ -187,10 +245,16 @@ void leaderCallback(NbrDatabase* ndPtr) {
 			}
 		} else {
 			nbrDataSet(&movementMode, MOVEMODE_STOP);
+			centroid2GuideDist = 1000000;
 		}
 
 	} else {
 		Nbr *leader = leaderGetLeader(&nbrList);
+
+		if (nbrDataGetNbr(&deactivate, leader) == roneID) {
+			currentState = IDLE;
+			guideSetGuide(FALSE);
+		}
 
 		int32 tLeaderOrientation = normalizeAngleMilliRad2(MILLIRAD_PI + nbrGetBearing(leader) - nbrGetOrientation(leader));
 
@@ -218,8 +282,8 @@ void leaderCallback(NbrDatabase* ndPtr) {
 void leaderInit() {
 	nbrDataCreate(&isLeader, "isLeader", 1, 0);
 	nbrDataCreate(&active, "active", 1, 0);
-	nbrDataCreate(&forward, "forward", 1, 0);
 	nbrDataCreate(&movementMode, "moveMode", 2, 0);
+	nbrDataCreate(&deactivate, "deactivate", 8, 0);
 	centroidNbrDataCreate(&guidePosition);
 	centroidNbrDataSet(0, 0, &guidePosition);
 

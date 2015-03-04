@@ -120,7 +120,7 @@ void behaviorTask(void* parameters) {
 
 		NbrList nbrList;
 		nbrListCreate(&nbrList);
-		behFlock_gain(&behOutput, &nbrList, 0, 10);
+		behFlock_gain(&behOutput, &nbrList, 0, 20);
 
 		/* Set motion output */
 		motorSetBeh(&behOutput);

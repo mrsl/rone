@@ -5,31 +5,7 @@
  *      Author: Zak
  */
 
-/* Main includes */
-#include <stdlib.h>
-#include <stdio.h>
-#include "roneos.h"
-#include "ronelib.h"
-#include <math.h>
-
-/* Our includes */
-#include "./tree/centroidLite.h"
-#include "./transport/objectControllers.h"
-#include "./tree/guide.h"
-#include "./tree/leader.h"
-
-#define NEIGHBOR_ROUND_PERIOD	300
-#define RPRINTF_SLEEP_TIME		30
-
-typedef enum states state;
-enum states {
-	IDLE,
-	FOLLOW,
-	LEADER,
-	GUIDE
-};
-
-#define MOVE_TV			20
+#include "collectivetransport.h"
 
 extern centroidNbrData guidePosition;
 
