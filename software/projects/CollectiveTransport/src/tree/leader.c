@@ -32,6 +32,8 @@ uint8 prevGuide = 0;
 int32 guideObjectBearing = 0;
 
 extern state currentState;
+extern int32 avoidBearing;
+extern uint8 avoidActive;
 
 centroidValue leaderGetGuideXCoordinate() {
 	centroidValue centroidX, centroidY;
@@ -271,6 +273,36 @@ void leaderCallback(NbrDatabase* ndPtr) {
 			centroidNbrDataGetNbr(&x, &y, &guidePosition, leader);
 			centroidTransform(&x, &y, leader);
 			centroidNbrDataSet(x, y, &guidePosition);
+
+			if (currentState == IDLE) {
+				avoidActive = 0;
+				if (nbrGetRange(leader) < 400) {
+					centroidValue nbrX = 0.;
+					centroidValue nbrY = 0.;
+
+					centroidTransform(&nbrX, &nbrY, leader);
+
+					centroidValue avoidX = x - nbrX;
+					centroidValue avoidY = y - nbrY;
+
+					int32 guideBear = atan2MilliRad(nbrY, nbrX);
+
+					int32 avoidBear = atan2MilliRad(avoidY, avoidX);
+					int32 avoidBearP = normalizeAngleMilliRad2(avoidBear + MILLIRAD_HALF_PI);
+					int32 avoidBearM = normalizeAngleMilliRad2(avoidBear - MILLIRAD_HALF_PI);
+
+					if (abs(smallestAngleDifference(guideBear, avoidBearP)) > abs(smallestAngleDifference(guideBear, avoidBearM))) {
+						avoidBear = avoidBearP;
+					} else {
+						avoidBear = avoidBearM;
+					}
+
+					avoidActive = 1;
+					avoidBearing = avoidBear;
+				}
+			}
+
+
 		} else {
 			nbrDataSet(&movementMode, MOVEMODE_STOP);
 		}

@@ -11,6 +11,11 @@ extern centroidNbrData guidePosition;
 
 state currentState = IDLE;
 
+int32 avoidBearing = 0;
+uint8 avoidActive = 0;
+
+NbrData isActive;
+
 /**
  * Initialization of subsystems and such
  */
@@ -51,6 +56,8 @@ void behaviorTask(void* parameters) {
 	/* Initialize variables and subsystems */
 	behaviorTaskInit();
 
+	nbrDataCreate(&isActive, "isActive", 1, 0);
+
 	for (;;) {
 		lastWakeTime = osTaskGetTickCount();
 
@@ -62,6 +69,12 @@ void behaviorTask(void* parameters) {
 			/* Delay task until next time */
 			osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
 			continue;
+		}
+
+		if (currentState == IDLE) {
+			nbrDataSet(&isActive, 0);
+		} else {
+			nbrDataSet(&isActive, 1);
 		}
 
 		// Buttons
@@ -263,7 +276,15 @@ void behaviorTask(void* parameters) {
 			}
 			break;
 		}
-		case (IDLE):
+		case (IDLE): {
+			if (avoidActive) {
+				behMoveForward(&behOutput, 30);
+				rvBearingController(&behOutput, avoidBearing, 50);
+			} else {
+				behOutput = behInactive;
+			}
+			break;
+		}
 		case (GUIDE):
 		default: {
 			behOutput = behInactive;

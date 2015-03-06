@@ -11,6 +11,8 @@ centroidData centroidLite;
 int32 centroidLiteBearing = MILLIRAD_HALF_PI;
 boolean centroidLiteActive = FALSE;
 
+extern NbrData isActive;
+
 void centroidLiteCalculateCentroid(NbrList *nbrListPtr) {
 	centroidValue centroidX = 0.;
 	centroidValue centroidY = 0.;
@@ -28,6 +30,9 @@ void centroidLiteCalculateCentroid(NbrList *nbrListPtr) {
 			if (guideNbrIsGuide(nbrPtr)) {
 				continue;
 			}
+		}
+		if (!nbrDataGetNbr(&isActive, nbrPtr)) {
+			continue;
 		}
 
 		centroidValue nbrX = 0.;
