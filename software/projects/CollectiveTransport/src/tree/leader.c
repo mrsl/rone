@@ -35,6 +35,13 @@ extern state currentState;
 extern int32 avoidBearing;
 extern uint8 avoidActive;
 
+extern int32 objectRV;
+extern int32 objectTV;
+extern int32 robotTVGain;
+extern int32 robotRVGain;
+extern int32 avoidDist;
+extern int32 avoidAngle;
+
 centroidValue leaderGetGuideXCoordinate() {
 	centroidValue centroidX, centroidY;
 	centroidNbrDataGet(&centroidX, &centroidY, &guidePosition);
@@ -169,7 +176,7 @@ void leaderCallback(NbrDatabase* ndPtr) {
 	}
 
 	tvLimiter = 1;
-	if (centroid2GuideDist < 300) {
+	if (centroid2GuideDist < avoidDist) {
 		tvLimiter = 0;
 	}
 
@@ -192,7 +199,7 @@ void leaderCallback(NbrDatabase* ndPtr) {
 
 			prevGuide = tempGuide;
 
-			if (centroid2GuideDist < 300) {
+			if (centroid2GuideDist < avoidDist) {
 				uint8 oldRobot = nbrDataGet(&deactivate);
 				uint8 newRobot = nbrGetID(guide);
 
@@ -288,8 +295,8 @@ void leaderCallback(NbrDatabase* ndPtr) {
 					int32 guideBear = atan2MilliRad(nbrY, nbrX);
 
 					int32 avoidBear = atan2MilliRad(avoidY, avoidX);
-					int32 avoidBearP = normalizeAngleMilliRad2(avoidBear + MILLIRAD_HALF_PI);
-					int32 avoidBearM = normalizeAngleMilliRad2(avoidBear - MILLIRAD_HALF_PI);
+					int32 avoidBearP = normalizeAngleMilliRad2(avoidBear + avoidAngle);
+					int32 avoidBearM = normalizeAngleMilliRad2(avoidBear - avoidAngle);
 
 					if (abs(smallestAngleDifference(guideBear, avoidBearP)) > abs(smallestAngleDifference(guideBear, avoidBearM))) {
 						avoidBear = avoidBearP;

@@ -13,6 +13,13 @@
 int32 desiredBearing = 0;
 int32 filteredTV = 0;
 
+extern int32 objectRV;
+extern int32 objectTV;
+extern int32 robotTVGain;
+extern int32 robotRVGain;
+extern int32 avoidDist;
+extern int32 avoidAngle;
+
 // in millirad/s, apriltag, millirad
 void objectRotatePerpendicularLeft(int32 objectRV, Beh *behPtr) {
 
@@ -43,11 +50,11 @@ void objectRotatePerpendicularLeft(int32 objectRV, Beh *behPtr) {
 	if (!leaderCanTV())  {
 		behMoveForward(behPtr, 0);
 	} else {
-		behMoveForward(behPtr, filteredTV);
+		behMoveForward(behPtr, filteredTV * (int32) ((float) robotTVGain / 100.));
 	}
 
 	// Align to be facing perpendicular to vector as to rotate object.
-	rvBearingController(behPtr, desiredBearing, OBJECT_MAXIMUM_RV_GAIN);
+	rvBearingController(behPtr, desiredBearing, robotRVGain);
 }
 
 void objectRotatePerpendicularRight(int32 objectRV, Beh *behPtr) {
@@ -79,11 +86,11 @@ void objectRotatePerpendicularRight(int32 objectRV, Beh *behPtr) {
 	if (!leaderCanTV())  {
 		behMoveForward(behPtr, 0);
 	} else {
-		behMoveForward(behPtr, filteredTV);
+		behMoveForward(behPtr, filteredTV * (int32) ((float) robotTVGain / 100.));
 	}
 
 	// Align to be facing perpendicular to vector as to rotate object.
-	rvBearingController(behPtr, desiredBearing, OBJECT_MAXIMUM_RV_GAIN);
+	rvBearingController(behPtr, desiredBearing, robotRVGain);
 }
 
 void objectTranslateGuide(int32 objectTV, Beh *behPtr) {
@@ -109,9 +116,9 @@ void objectTranslateGuide(int32 objectTV, Beh *behPtr) {
 	if (!leaderCanTV())  {
 		behMoveForward(behPtr, 0);
 	} else {
-		behMoveForward(behPtr, filteredTV);
+		behMoveForward(behPtr, filteredTV * (int32) ((float) robotTVGain / 100.));
 	}
 
 	// Align to be facing perpendicular to vector as to rotate object.
-	rvBearingController(behPtr, desiredBearing, OBJECT_MAXIMUM_RV_GAIN);
+	rvBearingController(behPtr, desiredBearing, robotRVGain);
 }

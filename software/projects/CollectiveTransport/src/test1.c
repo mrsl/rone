@@ -16,6 +16,14 @@ uint8 avoidActive = 0;
 
 NbrData isActive;
 
+
+extern int32 objectRV;
+extern int32 objectTV;
+extern int32 robotTVGain;
+extern int32 robotRVGain;
+extern int32 avoidDist;
+extern int32 avoidAngle;
+
 /**
  * Initialization of subsystems and such
  */
@@ -32,10 +40,15 @@ void behaviorTaskInit() {
 	/* Enable the external pose system */
 	externalPoseInit();
 
+	/* Enable gripper expansion. */
+	gripperInit();
+
 	/* Filter really smooth */
 	neighborsSetFilterTimeConstants(50, 50);
 
 	centroidLiteInit();
+
+	initCallbacks();
 
 	guideInit();
 	leaderInit();
@@ -120,8 +133,6 @@ void behaviorTask(void* parameters) {
 				uint8 hops = guideGetMyHops();
 
 				guideSetHops((hops + 1) % (MAX_HOPS + 1));
-
-				cprintf("%d\n", guideGetMyHops());
 				break;
 			}
 			default: {
@@ -160,8 +171,20 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				}
-
-				cprintf("%d\n", guideGetType());
+				break;
+			}
+			case (LEADER):
+			case (FOLLOW): {
+				switch (gripperGetDestinationServo()) {
+				case (0): {
+					gripperGripCCW();
+					break;
+				}
+				default: {
+					gripperGripCW();
+					break;
+				}
+				}
 				break;
 			}
 			default: {
@@ -257,15 +280,15 @@ void behaviorTask(void* parameters) {
 
 			switch (movementMode) {
 			case (MOVEMODE_TRNS): {
-				objectTranslateGuide(15, &behOutput);
+				objectTranslateGuide(objectTV, &behOutput);
 				break;
 			}
 			case (MOVEMODE_ROTL): {
-				objectRotatePerpendicularLeft(40, &behOutput);
+				objectRotatePerpendicularLeft(objectRV, &behOutput);
 				break;
 			}
 			case (MOVEMODE_ROTR): {
-				objectRotatePerpendicularRight(40, &behOutput);
+				objectRotatePerpendicularRight(objectRV, &behOutput);
 				break;
 			}
 			case (MOVEMODE_STOP):
@@ -278,8 +301,8 @@ void behaviorTask(void* parameters) {
 		}
 		case (IDLE): {
 			if (avoidActive) {
-				behMoveForward(&behOutput, 30);
-				rvBearingController(&behOutput, avoidBearing, 50);
+				behMoveForward(&behOutput, 30 * (int32) ((float) robotTVGain / 100.));
+				rvBearingController(&behOutput, avoidBearing, robotRVGain);
 			} else {
 				behOutput = behInactive;
 			}
