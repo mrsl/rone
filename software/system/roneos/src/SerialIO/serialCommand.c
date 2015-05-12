@@ -34,25 +34,17 @@ static SerialCmd* serialCommandFind(char* cmd) {
 	return serialCmdPtr;
 }
 
-/*
- * @brief Get the time this command was last called
- *
- * @param serialCmdPtr pointer to serial command to be added
- * @returns tick time of last call
- */
+
 uint32 serialCommandGetTimestamp(SerialCmd* serialCmdPtr) {
 	return serialCmdPtr->timestamp;
 }
 
 
-/*
- * @brief Add serial command to linked list.
- *
- * @param serialCmdPtr pointer to serial command to be added
- * @param name name of serial command
- * @param funcPtr function pointer to function that will be executed when command is sent to serial port
- * @returns void
- */
+char* serialCommandRemovePrefix(char* command) {
+	return command + SERIAL_COMMAND_LENGTH;
+}
+
+
 void serialCommandAdd(SerialCmd* serialCmdPtr, char* name, void(*funcPtr)(char* message)) {
 	SerialCmd* serialCmdTempPtr;
 

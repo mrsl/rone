@@ -70,7 +70,6 @@
 #define JOYSTICK_ACTIVE_TIMEOUT			2000
 #define JOYSTICK_ACTIVE_DIRECTION_MAG	30
 
-static uint32 joystickActiveTimes[REMOTE_CONTROL_JOYSTICK_NUM];
 static Joystick joysticks[REMOTE_CONTROL_JOYSTICK_NUM];
 
 static RadioCmd radioCmdRemoteControl;
@@ -144,29 +143,25 @@ void remoteControlSendMsgAccel(uint8 team) {
 
 void remoteControlUpdateJoysticks(void) {
 	RadioMessage radioMessage;
-	uint8 i, j;
-	//TODO put guards on function to deal with bad team numbers
+	uint8 joyNum, j;
+
 	if (radioCommandReceive(&radioCmdRemoteControl, &radioMessage, 0) ) {
 
 		// unpack all the joystick data from the radio message
 		//TODO Fix, add bounds checking to make sure we aren't corrupting things
 		j = 0;
-		for (i = 0; i < REMOTE_CONTROL_JOYSTICK_NUM; i++) {
-			joysticks[i].x = radioMessage.command.data[j++];
-			joysticks[i].y = radioMessage.command.data[j++];
-			joysticks[i].buttons = radioMessage.command.data[j++];
+		for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
+			joysticks[joyNum].x = (int8)radioMessage.command.data[j++];
+			joysticks[joyNum].y = (int8)radioMessage.command.data[j++];
+			joysticks[joyNum].buttons = radioMessage.command.data[j++];
 
-			if (i==1 && joysticks[i].buttons != 0){
-				i += 1;
-				i -= 1;
-			}
 			// see if this joystick is active
-			if((vectorMag(joysticks[i].x, joysticks[i].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[i].buttons) {
-				joystickActiveTimes[i] = osTaskGetTickCount();
+			if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {
+				joysticks[joyNum].activeTime = osTaskGetTickCount();
 			}
-			//cprintf("joy%d,%4d,%4d,%4d ",i,joysticks[i].x,joysticks[i].y,joysticks[i].buttons);
+			cprintf("joy%d,%4d,%4d,%4d ",joyNum,joysticks[joyNum].x,joysticks[joyNum].y,joysticks[joyNum].buttons);
 		}
-		//cprintf("\n");
+		cprintf("\n");
 	}
 }
 
@@ -183,12 +178,13 @@ boolean remoteControlJoystickIsActive(uint8 joystickNum, uint32 timeOut) {
 	boolean val = FALSE;
 	if (joystickNum < REMOTE_CONTROL_JOYSTICK_NUM) {
 		//if (((osTaskGetTickCount() - joystickActiveTimes[joystickNum]) < timeOut) && (osTaskGetTickCount() > timeOut)) {
-		if ((osTaskGetTickCount() - joystickActiveTimes[joystickNum]) < timeOut) {
+		if ((osTaskGetTickCount() - joysticks[joystickNum].activeTime) < timeOut) {
 			val = TRUE;
 		}
 	}
 	return val;
 }
+
 
 Beh* behRemoteControl(Beh* behPtr, uint8 joystickNum) {
 	int32 tv, rv;
@@ -200,11 +196,11 @@ Beh* behRemoteControl(Beh* behPtr, uint8 joystickNum) {
 		Joystick* joystickPtr = remoteControlGetJoystick(joystickNum);
 		radioMessageTimePrev = osTaskGetTickCount();
 
-		tv = -boundAbs(joystickPtr->x * REMOTE_CONTROL_TV_GAIN / 100, REMOTE_CONTROL_TV_MAX);
-		rv = -boundAbs(joystickPtr->y * REMOTE_CONTROL_RV_GAIN / 100, REMOTE_CONTROL_RV_MAX);
+		tv = -boundAbs((int32)joystickPtr->x * REMOTE_CONTROL_TV_GAIN / 100, REMOTE_CONTROL_TV_MAX);
+		rv = -boundAbs((int32)joystickPtr->y * REMOTE_CONTROL_RV_GAIN / 100, REMOTE_CONTROL_RV_MAX);
 
 		behSetTvRv(&radioBeh, tv, rv);
-		//cprintf("% 6d,% 6d, %1d",TVcmd,RVcmd,teamPtr); //debugging for the radio on the Secure CRT
+		//cprintf("joy % 6d,% 6d\n", joystickPtr->x, joystickPtr->y); //debugging for the radio on the Secure CRT
 	}
 
 	// no message this time.  see if you can just run the last command, or if it has timed out
@@ -228,51 +224,48 @@ Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 tvMax, N
 	static uint32 radioMessageTimePrev;
 	Pose pose;
 
-		// process the remote control message
-		radioMessageTimePrev = osTaskGetTickCount();
-		encoderGetPose(&pose);
-		if(nbrCompassLowPtr) {
-			// we can see the low power nav tower virtual robot.  update the robot's heading
-			//TODO use a IIR here or some kind of filtering
-			//IIR example function: nbrPtr->bearing = filterIIRAngle(nbrPtr->bearing, bearing, nbrAnglesIIRTimeConstant);
+	// process the remote control message
+	radioMessageTimePrev = osTaskGetTickCount();
+	encoderGetPose(&pose);
+	if(nbrCompassLowPtr) {
+		// we can see the low power nav tower virtual robot.  update the robot's heading
+		//TODO use a IIR here or some kind of filtering
+		//IIR example function: nbrPtr->bearing = filterIIRAngle(nbrPtr->bearing, bearing, nbrAnglesIIRTimeConstant);
 
-			heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrCompassLowPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrCompassLowPtr));
-			//pose.theta = heading;
-			pose.theta = filterIIRAngle(pose.theta, heading, 50);
-			encoderSetPose(&pose);
-		} else if(nbrCompassHighPtr) {
-			// we can see the high power nav tower virtual robot.  update the robot's heading
-			//TODO use a IIR here or some kind of filtering
-			heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrCompassHighPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrCompassHighPtr));
-			//pose.theta = heading;
-			pose.theta = filterIIRAngle(pose.theta, heading, 60);
-			encoderSetPose(&pose);
-		} else {
-			heading = pose.theta;
-		}
-
-
-		 /* Set Xcmd and Ycmd */
-		Xcmd = joystickPtr->x;
-		Ycmd = joystickPtr->y;
-
-		// compute mag and dir of rc message
-		goalVectorAngle = atan2MilliRad(Ycmd, Xcmd);
-		goalVectorMag = sqrtInt(Ycmd * Ycmd + Xcmd * Xcmd);
-
-		tv = boundAbs(goalVectorMag * REMOTE_CONTROL_COMPASS_TV_GAIN, tvMax);
-
-		if (tv > RADIO_CONTROL_COMPASS_TV_MIN) {
-			alpha = smallestAngleDifference(goalVectorAngle, heading);
-			behBearingControllerGain(&radioBeh, alpha, REMOTE_CONTROL_COMPASS_RV_GAIN);
-			behSetTv(&radioBeh, tv);
-		} else {
-			behSetTvRv(&radioBeh, 0, 0);
+		heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrCompassLowPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrCompassLowPtr));
+		//pose.theta = heading;
+		pose.theta = filterIIRAngle(pose.theta, heading, 50);
+		encoderSetPose(&pose);
+	} else if(nbrCompassHighPtr) {
+		// we can see the high power nav tower virtual robot.  update the robot's heading
+		//TODO use a IIR here or some kind of filtering
+		heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrCompassHighPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrCompassHighPtr));
+		//pose.theta = heading;
+		pose.theta = filterIIRAngle(pose.theta, heading, 60);
+		encoderSetPose(&pose);
+	} else {
+		heading = pose.theta;
+	}
 
 
+	 /* Set Xcmd and Ycmd */
+	Xcmd = joystickPtr->x;
+	Ycmd = joystickPtr->y;
+
+	// compute mag and dir of rc message
+	goalVectorAngle = atan2MilliRad(Ycmd, Xcmd);
+	goalVectorMag = sqrtInt(Ycmd * Ycmd + Xcmd * Xcmd);
+
+	tv = boundAbs(goalVectorMag * REMOTE_CONTROL_COMPASS_TV_GAIN, tvMax);
+
+	if (tv > RADIO_CONTROL_COMPASS_TV_MIN) {
+		alpha = smallestAngleDifference(goalVectorAngle, heading);
+		behBearingControllerGain(&radioBeh, alpha, REMOTE_CONTROL_COMPASS_RV_GAIN);
+		behSetTv(&radioBeh, tv);
+	} else {
+		// not enough tv to move the robot.  sit still, but keep the behavior active
+		behSetTvRv(&radioBeh, 0, 0);
 		//cprintf("hdg=%5d, alpha=%5d, tv=%4d, rv=%4d\n", heading, alpha, radioBeh.tv, radioBeh.rv);
-//		*rcteamPtr = team;
-		radioBeh.active = TRUE;
 		//cprintf("% 6d,% 6d, %1d",TVcmd,RVcmd,teamPtr); //debugging for the radio on the Secure CRT
 	}
 
@@ -301,89 +294,53 @@ boolean remoteControlIsSerialHost(void) {
 }
 
 
+#define JOYSTICK_UI_POSITION_CENTER		128
+#define JOYSTICK_POSITION_MAX			127
+
+int8 joystickAxisConvert(int32 val) {
+	int32 j = (int32)val - JOYSTICK_UI_POSITION_CENTER;
+	j = bound(j, -JOYSTICK_POSITION_MAX, JOYSTICK_POSITION_MAX);
+	return (int8)j;
+}
+
+
+void joystickParseSingle(int32 joystickNum, char* joystickCommand) {
+	joysticks[joystickNum].x = joystickAxisConvert((int32)atoi_hex8(&joystickCommand[0]));
+	joysticks[joystickNum].y = joystickAxisConvert((int32)atoi_hex8(&joystickCommand[2]));
+	joysticks[joystickNum].buttons = atoi_hex8(&joystickCommand[4]);
+}
+
+
+#define JOYSTICK_MESSAGE_SIZE	6
+
+/* Joystick values:
+ * XXYYBB...
+ * XX = 8-bit unsigned value for X.  128 = centered
+ * YY = 8-bit unsigned value for Y.  128 = centered
+ * BB = 8-bit bit-packed buttons.  bit 0 = r, 1 = g, 2 = b
+ */
 static void serialCmdUIFunc(char* command) {
-	char parseStr[2];
-	uint8 i, j, bitNum, joystickVal;
-	uint8 gotCorrectTeamString = 0;
-	uint8 prevDemoMode[3];
-	RadioMessage radioMessage;
-	//Joystick joysticks[REMOTE_CONTROL_JOYSTICK_NUM];	//###
+	uint8 joyNum;
 
-	//TODO Hack warning!
-	// move past the command text, skip the 'RI'
-	//TODO need structured argument parsing
-	command = command + 2;
+	// move past the command prefix, skip the 'UI'
+	command = serialCommandRemovePrefix(command);
 
-	for (i = 0; i < REMOTE_CONTROL_JOYSTICK_NUM; i++) {
-		// parse message for each team
-		gotCorrectTeamString = FALSE;
-		bitNum = i * 4; // the bit number that the message starts for each team
-		for (j = bitNum; j < bitNum + 2; j++) {
-			if (command[j] == 0) {
-				return;
-			}
-			parseStr[j - bitNum] = command[j];
-		}
+	for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
+		// parse each message for each joystick
+		char* joystickCommandPtr = &command[joyNum * JOYSTICK_MESSAGE_SIZE];
 
-		joystickVal = atoi_hex8(parseStr);
-
-		/* Joystick values:
-		 * |0|0|0|0|up|down|left|right|
-		 */
-
-		if (joystickVal & JOYSTICK_MASK_LEFT) { //check for left
-			joysticks[i].x = JOYSTICK_VAL_LEFT;
-		} else if (joystickVal & JOYSTICK_MASK_RIGHT) { //check for right
-			joysticks[i].x = JOYSTICK_VAL_RIGHT;
-		} else {
-			joysticks[i].x = 0;
-		}
-
-		if (joystickVal & JOYSTICK_MASK_UP) { //check for up
-			joysticks[i].y = JOYSTICK_VAL_UP;
-		} else if (joystickVal & JOYSTICK_MASK_DOWN) { //check for down
-			joysticks[i].y = JOYSTICK_VAL_DOWN;
-		} else {
-			joysticks[i].y = 0;
-		}
-
-		//get button values
-		for (j = bitNum + 2; j < bitNum + 4; j++) {
-			if (command[j] == 0) {
-				return;
-			}
-			parseStr[j - bitNum - 2] = command[j];
-		}
-		buttonVal = atoi_hex8(parseStr);
-
-		/*
-		 * Button values:
-		 * |0|0|0|0|0|top|middle|bottom|
-		 */
-
-		/*
-		 * if people are pressing more than one, it'll just
-		 * pick the topmost one of what they are pressing
-		 */
-		joysticks[i].buttons = 0;
-		if (buttonVal & 0x4) { //top
-			joysticks[i].buttons |= JOYSTICK_BUTTON_TOP;
-		}
-		if (buttonVal & 0x2) { //middle
-			joysticks[i].buttons |= JOYSTICK_BUTTON_MIDDLE;
-		}
-		if (buttonVal & 0x1) { //none
-			joysticks[i].buttons |= JOYSTICK_BUTTON_BOTTOM;
-		}
+		joystickParseSingle(joyNum, joystickCommandPtr);
 
 		// see if this joystick is active
-		if((vectorMag(joysticks[i].x, joysticks[i].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[i].buttons) {
-			joystickActiveTimes[i] = osTaskGetTickCount();
+		if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {
+			joysticks[joyNum].activeTime = osTaskGetTickCount();
 		}
 	}
 
 	remoteControlSendMsg();
 }
+
+
 
 #define REMOTE_CONTROL_LED_COMMAND_LEN		12
 char LEDCommandString[REMOTE_CONTROL_LED_COMMAND_LEN + 2];

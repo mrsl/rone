@@ -486,17 +486,33 @@ Beh* behClusterBroadcast(Beh* behPtr, NbrList* nbrListPtr, int32 tv, BroadcastMe
 	return behPtr;
 }
 
-#define ORBIT_RV_GAIN	40
+Beh* behClusterBroadcastStop(Beh* behPtr, NbrList* nbrListPtr, BroadcastMessage* msgPtr, uint16 minRange) {
+	NbrList nbrListParents;
+	if (msgPtr) {
+		uint8 i;
+		nbrListGetParents(&nbrListParents, nbrListPtr, msgPtr);
+		for (i = 0; i < nbrListGetSize(nbrListPtr); ++i) {
+			Nbr* nbrPtr = nbrListGetNbr(nbrListPtr, i);
+			if(nbrGetRange(nbrPtr) < minRange) {
+				behSetTv(behPtr, 0);
+				break;
+			}
+		}
+	}
+	return behPtr;
+}
 
+
+
+#define ORBIT_RV_GAIN	40
+// should be MILLIRAD_HALF_PI, but need to add lead compensation
+#define ORBIT_MAGIC_ANGLE 970
 
 Beh* behOrbit(Beh* behPtr, Nbr* nbrPtr, int32 tv) {
 	int32 theta;
-	theta = normalizeAngleMilliRad((int32)nbrPtr->bearing + 970);	//### should be 1570 instead of 90
+	theta = normalizeAngleMilliRad(nbrGetBearing(nbrPtr) + ORBIT_MAGIC_ANGLE);
 	rvBearingController(behPtr, theta, ORBIT_RV_GAIN);
-
-	behPtr->tv = tv;
-	behPtr->active = TRUE;
-
+	behSetTv(behPtr, tv);
 	return behPtr;
 }
 

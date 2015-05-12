@@ -18,7 +18,7 @@
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 //in milliseconds
 #define BEHAVIOR_TASK_PERIOD			50
-#define NEIGHBOR_PERIOD					240
+#define NEIGHBOR_PERIOD					250
 
 //stuff for flocking
 #define DEMO_TV_FLOCK					0
@@ -34,10 +34,12 @@
 #define SNAKE_NAV_TOWER_TIMEOUT			1000
 #define MOTION_TV						120
 #define MOTION_TV_FLOCK					(MOTION_TV*2/3)
-#define MOTION_TV_ORBIT_CENTER			40
+#define MOTION_TV_ORBIT_CENTER			55
 #define CAPTAIN_LED_COUNTER_TIME		12
 
 #define FTL_RANGE						300
+
+#define BEH_CLUSTER_RANGE				300
 
 
 #define NAV_TOWER_LOW_RONE_ID			124
@@ -50,17 +52,23 @@
 
 #define FLOCK_CLUSTER_THRESHOLD			1
 
-#define JOYSTICK_TIMEOUT_TEAM			200000
-#define JOYSTICK_TIMEOUT_BEH			20000
-
 #define JOYSTICK_NUM					1
 
 #define MUSEUM_RADIO_COMMAND_BEH_IDX	0
 #define TEAM_LEADER_ON_TIME				4
 #define TEAM_LEADER_TOTAL_TIME			25
 
-#define BEHAVIOR_READY_TIME 			10000
-#define BEHAVIOR_IDLE_TIME				60000
+#define MS_SECOND						1000
+#define MS_MINUTE						(60 * MS_SECOND)
+
+// time for a behavior fo "settle".  After this time, the user can select another behavior
+#define BEHAVIOR_READY_TIME 			(10 * MS_SECOND)
+
+// time for a behavior to time out.  After this time, the robots become idle
+#define BEHAVIOR_IDLE_TIME				(5 * MS_MINUTE)
+
+#define JOYSTICK_TIMEOUT_TEAM			(5 * MS_MINUTE)
+//#define JOYSTICK_TIMEOUT_BEH			20000
 
 
 /****** Team Broadcast messages *******/
@@ -80,9 +88,6 @@ static RadioCmd radioCmdBehavior;
 
 #define TEAM_LEADER_ON_TIME			4
 #define TEAM_LEADER_TOTAL_TIME		25
-
-#define BEHAVIOR_READY_TIME 		10000
-#define BEHAVIOR_IDLE_TIME			600000
 
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListTeamPtr, uint8 team) {
@@ -157,7 +162,7 @@ void behaviorTask(void* parameters) {
 		}
 
 		if (printNbrs){
-			if (nbrNavTowerLowPtr){
+			if (nbrNavTowerHighPtr){
 				cprintf("(NavTower High) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerHighPtr->ID, nbrNavTowerHighPtr->bearing, nbrNavTowerHighPtr->orientation);
 			} else if (nbrNavTowerLowPtr){
 				cprintf("(NavTower Low) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerLowPtr->ID, nbrNavTowerLowPtr->bearing, nbrNavTowerLowPtr->orientation);
@@ -170,11 +175,11 @@ void behaviorTask(void* parameters) {
 		}
 
 		// print the stack usage for debugging
-		uint32 timeTemp = osTaskGetTickCount() / 2000;
-		if(printMem != timeTemp) {
-			printMem = timeTemp;
-			systemPrintMemUsage();
-		}
+//		uint32 timeTemp = osTaskGetTickCount() / 2000;
+//		if(printMem != timeTemp) {
+//			printMem = timeTemp;
+//			systemPrintMemUsage();
+//		}
 
 
 		if (!remoteControlJoystickIsActive(JOYSTICK_NUM, BEHAVIOR_IDLE_TIME)) {
@@ -237,8 +242,6 @@ void behaviorTask(void* parameters) {
 				}
 			}
 
-			int8 a;
-
 			// select your team.  Use the team map.  If not, then select TEAM_NONE
 			if(teamCount > 0) {
 				uint8 teamIdx = roneID % teamCount;
@@ -274,7 +277,7 @@ void behaviorTask(void* parameters) {
 
 			// see if you are your team leader
 			boolean teamLeader = FALSE;
-			Joystick* joystickPtr = remoteControlGetJoystick(team);
+			Joystick* joystickPtr = NULL;
 			if (team < TEAM_NONE) {
 				if (broadcastMsgIsSource(&broadcastTeamMsg[team])) {
 					// you are the team leader
@@ -298,7 +301,7 @@ void behaviorTask(void* parameters) {
 			uint8 mode;
 			if(teamLeader) {
 				// team leader
-				if (remoteControlJoystickIsActive(team, JOYSTICK_TIMEOUT_TEAM)) {
+				if (remoteControlJoystickIsActive(team, JOYSTICK_TIMEOUT_TEAM) && joystickPtr) {
 					if(joystickPtr->buttons & JOYSTICK_BUTTON_TOP) {
 						nbrDataSet(&nbrDataMode[team], MODE_FOLLOW);
 					} else if(joystickPtr->buttons & JOYSTICK_BUTTON_MIDDLE) {
@@ -322,9 +325,16 @@ void behaviorTask(void* parameters) {
 					// avoid neighbors who are in front of you
 					nbrPtr = nbrListGetClosestNbrToBearing(&nbrListTeam, 0);
 					if (nbrPtr && (abs(nbrGetBearing(nbrPtr)) < MILLIRAD_DEG_45)) {
+						// move away from other robots - aka don't drive into your line
+						// todo add range limit here
 						behMoveFromNbr(&behOutput, nbrPtr, MOTION_TV);
+					} else if ((behGetTv(&behRadio) != 0) || (behGetRv(&behRadio) != 0)) {
+						// we have active user input.  follow the joystick
+						behOutput = behRadio;
 					} else {
-						behMoveForward(&behOutput, MOTION_TV);
+						// no nearby robots, no joystick input.  Just move forward
+						//TODO commented out for joystick testing
+						//behMoveForward(&behOutput, MOTION_TV);
 					}
 					break;
 				}
@@ -336,7 +346,9 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				case MODE_CLUSTER: {
-					behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER, nbrNavTowerHighPtr, nbrNavTowerLowPtr);
+					if(behIsActive(&behRadio)) {
+						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER, nbrNavTowerHighPtr, nbrNavTowerLowPtr);
+					}
 					break;
 				}
 				case MODE_IDLE:{
@@ -358,10 +370,15 @@ void behaviorTask(void* parameters) {
 					captainLEDCounter--;
 				}
 
-				if ((captainLEDCounter < TEAM_LEADER_ON_TIME) && (mode != MODE_FLOCK)) {
-					if (hostFlag == FALSE)	ledsSetPattern(LED_ALL, LED_PATTERN_ON, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+//				if ((captainLEDCounter < TEAM_LEADER_ON_TIME) && (mode != MODE_FLOCK)) {
+//					if (hostFlag == FALSE)	ledsSetPattern(LED_ALL, LED_PATTERN_ON, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
+//				} else {
+//					if (hostFlag == FALSE)  ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+//				}
+				if (mode == MODE_FLOCK) {
+					ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 				} else {
-					if (hostFlag == FALSE)  ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 				}
 
 			} else {
@@ -396,7 +413,11 @@ void behaviorTask(void* parameters) {
 						//behClusterBroadcast(&behOutput, &nbrListTeam, MOTION_TV, &broadcastTeamMsg[team]);
 						nbrPtr = nbrListFindSource(&nbrListTeam, &broadcastTeamMsg[team]);
 						if (nbrPtr) {
-							behOrbit(&behOutput, nbrPtr, MOTION_TV);
+							int32 orbitVelocity = MOTION_TV;
+							if (nbrGetRange(nbrPtr) < BEH_CLUSTER_RANGE) {
+								orbitVelocity = MOTION_TV/2;
+							}
+							behOrbit(&behOutput, nbrPtr, orbitVelocity);
 						} else {
 							behClusterBroadcast(&behOutput, &nbrListTeam, MOTION_TV, &broadcastTeamMsg[team]);
 						}

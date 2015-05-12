@@ -11,7 +11,8 @@
 
 /******** Defines ********/
 
-#define SERIAL_INPUT_STRING_SIZE 			(128)
+#define SERIAL_INPUT_STRING_SIZE 				128
+
 
 /******** Struct ********/
 
@@ -36,6 +37,15 @@ typedef struct SerialCmd {
  * @returns void
  */
 void serialCommandAdd(SerialCmd* serialCmdPtr, char* name, void(*funcPtr)(char* message));
+
+
+/**
+ * @brief Get the command data from the serial string.  Removes the command prefix.
+ *
+ * @param command pointer to serial command string
+ * @returns the pointer to the command text without the command prefix
+ */
+char* serialCommandRemovePrefix(char* command);
 
 
 /**

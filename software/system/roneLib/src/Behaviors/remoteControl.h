@@ -29,7 +29,8 @@
 typedef struct Joystick{
 	int8 x;				/**<x-axis control*/
 	int8 y;				/**<y-axis control*/
-	int8 buttons;
+	uint8 buttons;		/**<button bit vector*/
+	uint32 activeTime;	/**<time joystick was last active*/
 } Joystick;
 
 /**

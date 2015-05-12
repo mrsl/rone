@@ -19,6 +19,7 @@
 #define DEMO_TV_SORT					30
 #define DEMO_DISPERSE_SIZE				120  //about 3.3 cm //160 not good - why?//  360 about 10cm //
 #define DEMO_FLOCK_RV_GAIN				40
+#define DEMO_FOLLOW_RANGE				300
 
 #define DEMOMODE_IDLE					0
 #define DEMOMODE_FOLLOW					1
@@ -145,6 +146,7 @@ void behaviorTask(void* parameters) {
 
 	// init the neighbor system wth a 300 ms update period
     neighborsInit(270);
+	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 65 /100);
 
     // print startup message and thread memory usage
 	systemPrintStartup();
@@ -289,7 +291,7 @@ void behaviorTask(void* parameters) {
 
 		switch (demoMode) {
 		case DEMOMODE_FOLLOW: {
-			behFollowPredesessor(&behOutput, &nbrList, DEMO_TV);
+			behFollowPredesessor(&behOutput, &nbrList, DEMO_TV, DEMO_FOLLOW_RANGE);
 			if(behOutput.active) {
 				// you are following a robot in front of you  blink red
 				ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
@@ -308,6 +310,9 @@ void behaviorTask(void* parameters) {
 			break;
 		}
 		case DEMOMODE_FLOCK: {
+			behBumpAvoid(&behBump, DEMO_TV_FLOCK, BUMPMOVE_REFLECT_DISTANCE);
+			behMoveForward(&behMove, DEMO_TV_FLOCK);
+			behIRObstacleAvoid_ExcludeRobots(&behIRObstacle, DEMO_TV_FLOCK, &nbrList, FALSE);
 			behFlock_gain(&behOutput, &nbrList, DEMO_TV_FLOCK, DEMO_FLOCK_RV_GAIN);
 			ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 			if (behBump.active) {
