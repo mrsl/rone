@@ -378,6 +378,10 @@ static void processNbrMessage(IRCommsMessage* irMsgPtr) {
 			nbrPtr->rangeBits = irMsgPtr->rangeBits;
 			uint16 range = irCommsComputeNbrRange(nbrPtr->rangeBits);
 
+			if (nbrIsBeacon(nbrPtr)) {
+				range *= BEACON_RANGE_SCALE;
+			}
+
 			// Filter the range with a IIR
 			//cprintf("@@@ %d\t%d", nbrPtr->range, range);
 			//nbrPtr->range = filterIIR(nbrPtr->range, range, RANGE_IIR);

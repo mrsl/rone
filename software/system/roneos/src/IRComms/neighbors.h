@@ -62,6 +62,8 @@
 #define NBR_ANGLE_HISTORY				3
 #define NBR_ANGLE_MAX_DELTA_PER_ROUND	(MILLIRAD_PI / 4)
 
+#define BEACON_RANGE_SCALE		10
+
 /******** Structs ********/
 
 
