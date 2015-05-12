@@ -733,15 +733,6 @@ void nbrListPrint(NbrList* nbrListPtr, char* name) {
 }
 
 
-/*
- * @brief Prints the IDs and update times for all robots in the neighbor list.
- *
- * Formated as follows:
- * {name, ID updateTime, ID updateTime, ...}
- * @param nbrListPtr pointer for the neighborlist
- * @param name for the list name
- * @returns void
- */
 void nbrListPrintDebug(NbrList* nbrListPtr, char* name) {
 	uint8 i;
 
@@ -756,26 +747,24 @@ void nbrListPrintDebug(NbrList* nbrListPtr, char* name) {
 }
 
 
-/*
- * @brief Returns true if this neighbor is a beacon.
- *
- * @param nbrPtr neighbor pointer
- * @returns true if the neighbor is a IR beacon
- */
 boolean nbrIsBeacon(Nbr* nbrPtr) {
-	if((nbrGetID(nbrPtr) >= 125) && (nbrGetID(nbrPtr) <= 127)) {
+	if((nbrGetID(nbrPtr) >= IR_NAV_TOWER_LOW_ID) && (nbrGetID(nbrPtr) <= IR_NAV_TOWER_HIGH_ID)) {
 		return TRUE;
 	} else {
 		return FALSE;
 	}
 }
 
-/*
- * @brief Get neighbor ID.
- *
- * @param nbrPtr neighbor pointer
- * @returns ID
- */
+
+boolean nbrIsRobot(Nbr* nbrPtr) {
+	if(!nbrIsBeacon(nbrPtr)) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+
 uint8 nbrGetID(Nbr* nbrPtr) {
 	if (nbrPtr) {
 		return nbrPtr->ID;
@@ -783,6 +772,7 @@ uint8 nbrGetID(Nbr* nbrPtr) {
 		return ROBOT_ID_NULL;
 	}
 }
+
 
 /*
  * @brief Get neighbor bearing.
@@ -798,6 +788,7 @@ int32 nbrGetBearing(Nbr* nbrPtr) {
 	}
 }
 
+
 /*
  * @brief Get neighbor orientation.
  *
@@ -812,6 +803,7 @@ int32 nbrGetOrientation(Nbr* nbrPtr) {
 	}
 }
 
+
 /*
  * @brief Get neighbor range.
  *
@@ -825,6 +817,7 @@ int16 nbrGetRange(Nbr* nbrPtr) {
 		return 0;
 	}
 }
+
 
 /*
  * @brief Get neighbor orientation valid.

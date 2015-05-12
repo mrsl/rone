@@ -74,7 +74,7 @@ void nbrListPrint(NbrList* nbrListPtr, char* name);
  * @returns void
  */
 void nbrListPrintDebug(NbrList* nbrListPtr, char* name);
-//TODO: End neighbors.c functions
+
 
 /**
  * @brief Adds a neighbor to a neighbor's linked list of neighbors if there is room.
@@ -258,7 +258,7 @@ NbrList* nbrListIncludeSectorExclusive(NbrList* nbrListOutPtr, NbrList* nbrListI
  * @param nbrListInPtr pointer to the neighbor list to search for robots
  * @returns updated nbrListOutPtr that contains only neighbors that are robots
  */
-NbrList* nbrListGetRobots(NbrList* nbrListOutPtr, NbrList* nbrListInPtr, uint8* irBeaconIDs, uint8 irBeaconNumIDs);
+NbrList* nbrListGetRobots(NbrList* nbrListOutPtr, NbrList* nbrListInPtr);
 
 
 void nbrListMakeCloneExcept(NbrList* nbrListOutPtr, uint8 nbrID);

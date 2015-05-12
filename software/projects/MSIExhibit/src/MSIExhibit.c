@@ -14,7 +14,6 @@
 #include "roneos.h"
 #include "ronelib.h"
 
-#define PRINT_ENABLED
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 #define BEHAVIOR_TASK_PERIOD			50
 #define NEIGHBOR_PERIOD					250
@@ -100,17 +99,13 @@ void behaviorTask(void* parameters) {
 	uint32 neighborRound;
 	boolean printNbrs;
 
-	int32 i,j;
-	Beh behOutput, behMove, behIRObstacle, behBump, behCharge, behRadio;
+	Beh behOutput, behIRObstacle, behBump, behCharge, behRadio;
 	NbrList nbrListAll, nbrList;
 	Nbr* nbrPtr;
 	Nbr* nbrNavTowerHighPtr;
 	Nbr* nbrNavTowerLowPtr;
-	uint32 navTowerTime = 0;
-	RadioMessage radioMessage;
-	uint8 irBeaconNumIDs = 4;
-	uint8 irBeaconIDs[] = {124, 125, 126, 127};
 	uint32 printMem = 0;
+	uint32 navTowerTime = 0;
 
 	uint32 captainLEDCounter = 0;
 
@@ -136,7 +131,7 @@ void behaviorTask(void* parameters) {
 
 		// look for the nav tower
 		nbrListCreate(&nbrListAll);
-		nbrListGetRobots(&nbrList, &nbrListAll, irBeaconIDs, irBeaconNumIDs);
+		nbrListGetRobots(&nbrList, &nbrListAll);
 
 		behRadio = behInactive;
 
@@ -146,7 +141,6 @@ void behaviorTask(void* parameters) {
 			navTowerTime = osTaskGetTickCount();
 		}
 
-#ifdef PRINT_ENABLED
 		if (printNbrs){
 			if (nbrNavTowerHighPtr){
 				cprintf("(NavTower High) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerHighPtr->ID, nbrNavTowerHighPtr->bearing, nbrNavTowerHighPtr->orientation);
@@ -159,7 +153,6 @@ void behaviorTask(void* parameters) {
 			sprintf(num2,"%1.2f", systemUSBVoltageGet());
 			cprintf("vbat=%s vusb=%s charge=%d fast=%d\n", num1, num2, systemBatteryChargingGet(), systemBatteryFastChargingGet());
 		}
-#endif
 
 		// print the stack usage for debugging
 //		uint32 timeTemp = osTaskGetTickCount() / 2000;
@@ -375,11 +368,10 @@ void behaviorTask(void* parameters) {
 			behChargeStopLights(&behCharge);
 		}
 
-#ifdef PRINT_ENABLED
 		if (printNbrs) {
 			cprintf("\n\n");
 		}
-#endif
+
 		neighborsPutMutex();
 		motorSetBeh(&behOutput);
 		osTaskDelayUntil(&lastWakeTime, BEHAVIOR_TASK_PERIOD);
@@ -399,3 +391,4 @@ int main(void) {
 	// should never get here.  If so, you have a bad memory problem in the scheduler
 	return 0;
 }
+

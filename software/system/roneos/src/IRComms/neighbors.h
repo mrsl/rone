@@ -38,6 +38,10 @@
 #define	ROBOT_ID_ALL					0xFF
 #define ROBOT_ID_NUM_BITS				8
 
+#define IR_NAV_TOWER_LOW_ID				124
+#define IR_NAV_TOWER_HIGH_ID			127
+
+
 #define	MAX_PARENT_ID					0x7F
 
 // nbr radio messages - low-level system that underpins nbrnbr data and nbrData messages
@@ -489,10 +493,19 @@ void nbrPrintData(Nbr* nbr, uint32 round);
 boolean nbrIsBeacon(Nbr* nbrPtr);
 
 
+/**
+ * @brief Returns true if this neighbor is a robot.
+ *
+ * @param nbrPtr neighbor pointer
+ * @returns true if the neighbor is a robot
+ */
+boolean nbrIsRobot(Nbr* nbrPtr);
+
+
 //TODO: implement or delete?
 boolean nbrIsCharger(Nbr* nbrPtr);
 
-//TODO: Create nbrMsgRadio header file?
+
 // nbr radio messages
 
 /**
