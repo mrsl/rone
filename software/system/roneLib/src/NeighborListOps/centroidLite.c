@@ -5,6 +5,9 @@
  *      Author: Zak
  */
 
+#include "roneos.h"
+#include "ronelib.h"
+
 #include "centroidLite.h"
 
 centroidData centroidLite;
@@ -21,10 +24,6 @@ void centroidLiteCalculateCentroid(NbrList *nbrListPtr) {
 		Nbr *nbrPtr = nbrListGetNbr(nbrListPtr, i);
 
 		if (nbrPtr == NULL) {
-			continue;
-		}
-
-		if (!nbrDataGetNbr(&isActive, nbrPtr)) {
 			continue;
 		}
 

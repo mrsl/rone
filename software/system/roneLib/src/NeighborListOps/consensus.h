@@ -8,9 +8,10 @@
 #ifndef SRC_CONSENSUS_H_
 #define SRC_CONSENSUS_H_
 
+#include <stdlib.h>
+
 #include "roneos.h"
 #include "ronelib.h"
-#include <stdlib.h>
 
 /**
  *  Task Information

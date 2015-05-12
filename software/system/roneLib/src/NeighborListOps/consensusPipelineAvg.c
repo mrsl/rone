@@ -5,8 +5,12 @@
  *      Author: Zak
  */
 
-#include "../consensusPipeline.h"
 #include <stdio.h>
+
+#include "roneos.h"
+#include "ronelib.h"
+
+#include "consensusPipeline.h"
 
 #define CONSENSUS_PIPELINE_AVG_INV	-1.0
 

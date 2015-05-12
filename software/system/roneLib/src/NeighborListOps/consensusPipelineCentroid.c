@@ -5,9 +5,13 @@
  *      Author: Zak
  */
 
-#include "../consensusPipeline.h"
-#include "../../util/centroidData.h"
 #include <stdio.h>
+
+#include "roneos.h"
+#include "ronelib.h"
+
+#include "consensusPipeline.h"
+#include "centroidData.h"
 
 #define CONSENSUS_PIPELINE_CENTROID_INV		-1.0	// Invalid value
 #define CONSENSUS_PIPELINE_CENTROID_SIZE	20		// Size of the pipeline

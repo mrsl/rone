@@ -5,7 +5,10 @@
  *      Author: zkk
  */
 
-#include "../consensus.h"
+#include "roneos.h"
+#include "ronelib.h"
+
+#include "consensus.h"
 
 uint8 tempValue;	// Temporary storage location
 NbrData value;		// Our value

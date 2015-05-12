@@ -8,9 +8,7 @@
 #ifndef CENTROIDLITE_H_
 #define CENTROIDLITE_H_
 
-#include "roneos.h"
-#include "ronelib.h"
-#include "../util/centroidData.h"
+#include "centroidData.h"
 
 int32 centroidLiteGetDistance();
 

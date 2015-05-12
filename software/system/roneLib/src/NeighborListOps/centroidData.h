@@ -8,8 +8,6 @@
 #ifndef CENTROIDDATA_H_
 #define CENTROIDDATA_H_
 
-#include "roneos.h"
-
 /* Typedefs */
 typedef float centroidValue;
 #define CENTROID_VALUE_SIZE	4

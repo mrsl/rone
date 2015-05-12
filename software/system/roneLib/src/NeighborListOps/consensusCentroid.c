@@ -5,9 +5,13 @@
  *      Author: zkk
  */
 
-#include "../consensus.h"
-#include "../../util/centroidData.h"
 #include <stdio.h>
+
+#include "roneos.h"
+#include "ronelib.h"
+
+#include "consensus.h"
+#include "centroidData.h"
 
 #define INVVALUE -1.0
 

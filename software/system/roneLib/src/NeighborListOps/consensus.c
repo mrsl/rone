@@ -8,6 +8,9 @@
  *      Author: Zak
  */
 
+#include "roneos.h"
+#include "ronelib.h"
+
 #include "consensus.h"
 
 /* Function prototypes */
