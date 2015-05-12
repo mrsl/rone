@@ -17,12 +17,13 @@
 #ifndef REMOTECONTROL_H_
 #define REMOTECONTROL_H_
 
-#define JOYSTICK_BUTTON_NONE			0
-#define JOYSTICK_BUTTON_TOP				1
-#define JOYSTICK_BUTTON_MIDDLE			2
-#define JOYSTICK_BUTTON_BOTTOM			4
+#define JOYSTICK_BUTTON_RED				1
+#define JOYSTICK_BUTTON_GREEN			2
+#define JOYSTICK_BUTTON_BLUE			4
 
+#define JOYSTICK_POSITION_MAX			127
 #define REMOTE_CONTROL_JOYSTICK_NUM		3
+
 /**
  * @brief Remote Controller Struct
  */

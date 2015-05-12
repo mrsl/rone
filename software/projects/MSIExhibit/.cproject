@@ -40,7 +40,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash.37287277" name="Create flash image" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash" value="true" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.printsize.481298177" name="Print size" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.printsize" value="true" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.520949449" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder buildPath="${workspace_loc:/Game}/Debug" id="ilg.gnuarmeclipse.managedbuild.cross.builder.530796960" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder buildPath="${workspace_loc:/MSIExhibit}/Debug" id="ilg.gnuarmeclipse.managedbuild.cross.builder.530796960" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.718342606" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.736906120" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input.1364625942" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input"/>
@@ -142,7 +142,7 @@
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash.2004707485" name="Create flash image" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.createflash" value="true" valueType="boolean"/>
 							<option id="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.printsize.199518430" name="Print size" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.addtools.printsize" value="true" valueType="boolean"/>
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF" id="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform.1293174567" isAbstract="false" osList="all" superClass="ilg.gnuarmeclipse.managedbuild.cross.targetPlatform"/>
-							<builder buildPath="${workspace_loc:/Game}/Debug" id="ilg.gnuarmeclipse.managedbuild.cross.builder.497658217" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
+							<builder buildPath="${workspace_loc:/MSIExhibit}/Debug" id="ilg.gnuarmeclipse.managedbuild.cross.builder.497658217" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" superClass="ilg.gnuarmeclipse.managedbuild.cross.builder"/>
 							<tool id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.1037352895" name="Cross ARM GNU Assembler" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler">
 								<option id="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor.410032240" name="Use preprocessor" superClass="ilg.gnuarmeclipse.managedbuild.cross.option.assembler.usepreprocessor" value="true" valueType="boolean"/>
 								<inputType id="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input.1704956058" superClass="ilg.gnuarmeclipse.managedbuild.cross.tool.assembler.input"/>
@@ -204,7 +204,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="Game.ilg.gnuarmeclipse.managedbuild.cross.target.elf.656936070" name="Executable" projectType="ilg.gnuarmeclipse.managedbuild.cross.target.elf"/>
+		<project id="MSIExhibit.ilg.gnuarmeclipse.managedbuild.cross.target.elf.656936070" name="Executable" projectType="ilg.gnuarmeclipse.managedbuild.cross.target.elf"/>
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
@@ -217,7 +217,7 @@
 		<configuration configurationName="bin_rone_v09"/>
 		<configuration configurationName="bin_rone_v12"/>
 		<configuration configurationName="Debug">
-			<resource resourceType="PROJECT" workspacePath="/Game"/>
+			<resource resourceType="PROJECT" workspacePath="/MSIExhibit"/>
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>

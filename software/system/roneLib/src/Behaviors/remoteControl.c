@@ -247,7 +247,6 @@ Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 tvMax, N
 		heading = pose.theta;
 	}
 
-
 	 /* Set Xcmd and Ycmd */
 	Xcmd = joystickPtr->x;
 	Ycmd = joystickPtr->y;
@@ -282,7 +281,6 @@ Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 tvMax, N
 uint8 demoMode[3] = {DEMOMODE_IDLE};
 uint8 runMode[3] = {RUNMODE_IDLE};
 uint8 buttonVal = 0;
-//uint8 gotCorrectString = 0;
 
 
 boolean remoteControlIsSerialHost(void) {
@@ -295,12 +293,11 @@ boolean remoteControlIsSerialHost(void) {
 
 
 #define JOYSTICK_UI_POSITION_CENTER		128
-#define JOYSTICK_POSITION_MAX			127
 
 int8 joystickAxisConvert(int32 val) {
-	int32 j = (int32)val - JOYSTICK_UI_POSITION_CENTER;
-	j = bound(j, -JOYSTICK_POSITION_MAX, JOYSTICK_POSITION_MAX);
-	return (int8)j;
+	int32 valOut = (int32)val - JOYSTICK_UI_POSITION_CENTER;
+	valOut = bound(valOut, -JOYSTICK_POSITION_MAX, JOYSTICK_POSITION_MAX);
+	return (int8)valOut;
 }
 
 
@@ -336,7 +333,6 @@ static void serialCmdUIFunc(char* command) {
 			joysticks[joyNum].activeTime = osTaskGetTickCount();
 		}
 	}
-
 	remoteControlSendMsg();
 }
 
@@ -406,11 +402,20 @@ void remoteControlLedsSetPattern(uint8 color, uint8 pattern, uint8 brightness, u
 }
 
 void remoteControlInit() {
+	uint8 joyNum;
+
 	// make a new radio command for remote control message
 	radioCommandAddQueue(&radioCmdRemoteControl, "remoteControl", 1);
 
 	// add a serial command to receive remote control messages from the joysticks
 	serialCommandAdd(&serialCmdUI, "UI", serialCmdUIFunc);
+
+	// clear all the joysticks
+	for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
+		joysticks[joyNum].x = 0;
+		joysticks[joyNum].y = 0;
+		joysticks[joyNum].buttons = 0;
+	}
 }
 
 // This code fragment is for setting the demo mode without driving a robot around

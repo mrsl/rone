@@ -34,7 +34,7 @@
 
 #define	ROBOT_ID_NULL					0
 #define	ROBOT_ID_MIN					1
-#define	ROBOT_ID_MAX					255
+#define	ROBOT_ID_MAX					254
 #define	ROBOT_ID_ALL					0xFF
 #define ROBOT_ID_NUM_BITS				8
 
