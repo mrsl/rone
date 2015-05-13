@@ -126,7 +126,7 @@ Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr
 		int32 tvGain = cosMilliRad(headingDiff) * 2; //TODO use some kind of joystick gain instead of 2
 		//TODO: remember to divide by MILLIRAD_TRIG_SCALER when you use this
 
-		behOrbitRangeRaw(beh, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
+		behOrbitRangeRaw(behOutputPtr, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
 	}
 
 	return behOutputPtr;
@@ -302,6 +302,7 @@ void behaviorTask(void* parameters) {
 					if(behIsActive(&behRadio)) {
 						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER);
 					}
+					orbitCentroid(&behOutput, joystickPtr, &nbrList);
 					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
@@ -333,16 +334,7 @@ void behaviorTask(void* parameters) {
 				}
 				case MODE_CLUSTER: {
 					//behClusterBroadcast(&behOutput, &nbrListTeam, MOTION_TV, &broadcastTeamMsg[team]);
-					nbrPtr = nbrListFindSource(&nbrList, &broadcastMsg);
-					if (nbrPtr) {
-						int32 orbitVelocity = MOTION_TV;
-						if (nbrGetRange(nbrPtr) < BEH_CLUSTER_RANGE) {
-							orbitVelocity = MOTION_TV/2;
-						}
-						behOrbit(&behOutput, nbrPtr, orbitVelocity);
-					} else {
-						behClusterBroadcast(&behOutput, &nbrList, MOTION_TV, &broadcastMsg);
-					}
+					orbitCentroid(&behOutput, joystickPtr, &nbrList);
 					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
