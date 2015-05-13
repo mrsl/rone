@@ -516,15 +516,14 @@ Beh* behOrbit(Beh* behPtr, Nbr* nbrPtr, int32 tv) {
 	return behPtr;
 }
 
-#define ORBIT_MAX_BEARING	1000
+#define ORBIT_MAX_BEARING	1500
 #define ORBIT_OFFSET_GAIN	400
 #define TV_RANGE_FUDGE		400
 
 Beh* behOrbitRangeRaw(Beh* behPtr, int32 centerBearingCurrent, int32 centerRangeCurrent, int32 tv, uint16 centerRangeDesired) {
-	// COMpute the offset from the desired range
+	// Compute the offset from the desired range
 	int32 rangeError = centerRangeCurrent - centerRangeDesired;
 	int32 thetaOffset = bound((rangeError * ORBIT_OFFSET_GAIN / 100),-ORBIT_MAX_BEARING, ORBIT_MAX_BEARING);
-	//int32 thetaOffset = 0;
 
 	int32 theta = normalizeAngleMilliRad(centerBearingCurrent + MILLIRAD_HALF_PI - thetaOffset - TV_RANGE_FUDGE);
 	rvBearingController(behPtr, theta, ORBIT_RV_GAIN);

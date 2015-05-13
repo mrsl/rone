@@ -1,0 +1,7 @@
+robot ID	Notes
+113	bad IR sensors
+169	
+143	
+112	
+157	
+148	
