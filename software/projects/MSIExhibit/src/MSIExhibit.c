@@ -31,12 +31,11 @@
 #define CAPTAIN_LED_COUNTER_TIME		12
 
 #define FTL_RANGE						300
+#define FOLLOW_LEADER_AVOID_RANGE		180
 
 #define BEH_CLUSTER_RANGE				300
 
 
-#define NAV_TOWER_LOW_RONE_ID			124
-#define NAV_TOWER_HIGH_RONE_ID			125
 
 #define MODE_IDLE						0
 #define MODE_FOLLOW						1
@@ -78,20 +77,34 @@ uint8 currentLED = LED_RED;
 #define TEAM_LEADER_TOTAL_TIME		25
 
 
-Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListTeamPtr) {
-	if ((nbrListGetSize(nbrListTeamPtr) > FLOCK_CLUSTER_THRESHOLD) ||
+Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
+	if ((nbrListGetSize(nbrListPtr) > FLOCK_CLUSTER_THRESHOLD) ||
 			(broadcastMsgIsSource(&broadcastMsg))){
 		// you are the source, or a minion surrounded by member of your team.  flock.
-		behFlock(behOutputPtr, nbrListTeamPtr, MOTION_TV_FLOCK);
+		behFlock(behOutputPtr, nbrListPtr, MOTION_TV_FLOCK);
 		behOutputPtr->rv += behRadioPtr->rv;
 		behOutputPtr->tv = MOTION_TV_FLOCK;
 		behSetActive(behOutputPtr);
 	} else {
-		behClusterBroadcast(behOutputPtr, nbrListTeamPtr, MOTION_TV, &broadcastMsg);
+		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
 	}
 	return behOutputPtr;
 }
 
+
+Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr) {
+	// compute the centroid
+
+
+	// mix in the remote control
+	// compute the dot product between the joystick direction and the current heading
+	int32 heading = encoderGetHeading();
+	int32 headingJoystick = atan2MilliRad(joystickPtr->y, joystickPtr->x);
+	int32 headingDiff = smallestAngleDifference(headingJoystick, heading);
+	int32 tvGain = cosMilliRad(headingDiff) * 2; //TODO use some kind of joystick gain instead of 2
+	//TODO: remember to divide by MILLIRAD_TRIG_SCALER when you use this
+
+}
 
 
 void behaviorTask(void* parameters) {
@@ -100,12 +113,10 @@ void behaviorTask(void* parameters) {
 	boolean printNbrs;
 
 	Beh behOutput, behIRObstacle, behBump, behCharge, behRadio;
-	NbrList nbrListAll, nbrList;
+	NbrList nbrList;
+	NbrList nbrListAll;
 	Nbr* nbrPtr;
-	Nbr* nbrNavTowerHighPtr;
-	Nbr* nbrNavTowerLowPtr;
 	uint32 printMem = 0;
-	uint32 navTowerTime = 0;
 
 	uint32 captainLEDCounter = 0;
 
@@ -124,35 +135,26 @@ void behaviorTask(void* parameters) {
 	while (TRUE) {
 		/* Initialize the output behavior to inactive */
 		behOutput = behInactive;
+		behRadio = behInactive;
 
 		neighborsGetMutex();
 		printNbrs = neighborsNewRoundCheck(&neighborRound);
 		remoteControlUpdateJoysticks();
+		navTowerUpdateHeading(printNbrs);
 
-		// look for the nav tower
+		// only populate nbr list with robots
 		nbrListCreate(&nbrListAll);
 		nbrListGetRobots(&nbrList, &nbrListAll);
 
-		behRadio = behInactive;
 
-		nbrNavTowerLowPtr = nbrListGetNbrWithID(&nbrListAll, NAV_TOWER_LOW_RONE_ID);
-		nbrNavTowerHighPtr = nbrListGetNbrWithID(&nbrListAll, NAV_TOWER_HIGH_RONE_ID);
-		if(nbrNavTowerLowPtr || nbrNavTowerHighPtr) {
-			navTowerTime = osTaskGetTickCount();
-		}
 
-		if (printNbrs){
-			if (nbrNavTowerHighPtr){
-				cprintf("(NavTower High) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerHighPtr->ID, nbrNavTowerHighPtr->bearing, nbrNavTowerHighPtr->orientation);
-			} else if (nbrNavTowerLowPtr){
-				cprintf("(NavTower Low) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerLowPtr->ID, nbrNavTowerLowPtr->bearing, nbrNavTowerLowPtr->orientation);
-			}
-			// print the battery voltages
-			char num1[10],num2[10];
-			sprintf(num1,"%1.2f", systemBatteryVoltageGet());
-			sprintf(num2,"%1.2f", systemUSBVoltageGet());
-			cprintf("vbat=%s vusb=%s charge=%d fast=%d\n", num1, num2, systemBatteryChargingGet(), systemBatteryFastChargingGet());
-		}
+//		if (printNbrs){
+//			// print the battery voltages
+//			char num1[10],num2[10];
+//			sprintf(num1,"%1.2f", systemBatteryVoltageGet());
+//			sprintf(num2,"%1.2f", systemUSBVoltageGet());
+//			cprintf("vbat=%s vusb=%s charge=%d fast=%d\n", num1, num2, systemBatteryChargingGet(), systemBatteryFastChargingGet());
+//		}
 
 		// print the stack usage for debugging
 //		uint32 timeTemp = osTaskGetTickCount() / 2000;
@@ -228,7 +230,7 @@ void behaviorTask(void* parameters) {
 			// use the joystick for flocking
 			if (printNbrs) cprintf("joy %d,%d\n", joystickPtr->x, joystickPtr->y);
 
-			behRemoteControlCompass(&behRadio, joystickPtr, MOTION_TV, nbrNavTowerHighPtr, nbrNavTowerLowPtr);
+			behRemoteControlCompass(&behRadio, joystickPtr, MOTION_TV);
 			if (printNbrs) cprintf("beh %d,%d\n", behOutput.tv, behOutput.rv);
 
 			// Code for the minion rbots
@@ -258,17 +260,17 @@ void behaviorTask(void* parameters) {
 				case MODE_FOLLOW: {
 					// avoid neighbors who are in front of you
 					nbrPtr = nbrListGetClosestNbrToBearing(&nbrList, 0);
-					if (nbrPtr && (abs(nbrGetBearing(nbrPtr)) < MILLIRAD_DEG_45)) {
+					if (nbrPtr &&
+						(abs(nbrGetBearing(nbrPtr)) < MILLIRAD_DEG_45) &&
+						(nbrGetRange(nbrPtr) < FOLLOW_LEADER_AVOID_RANGE)) {
 						// move away from other robots - aka don't drive into your line
-						// todo add range limit here
 						behMoveFromNbr(&behOutput, nbrPtr, MOTION_TV);
 					} else if ((behGetTv(&behRadio) != 0) || (behGetRv(&behRadio) != 0)) {
 						// we have active user input.  follow the joystick
 						behOutput = behRadio;
 					} else {
 						// no nearby robots, no joystick input.  Just move forward
-						//TODO commented out for joystick testing
-						//behMoveForward(&behOutput, MOTION_TV);
+						behMoveForward(&behOutput, MOTION_TV);
 					}
 					break;
 				}
@@ -281,7 +283,7 @@ void behaviorTask(void* parameters) {
 				}
 				case MODE_CLUSTER: {
 					if(behIsActive(&behRadio)) {
-						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER, nbrNavTowerHighPtr, nbrNavTowerLowPtr);
+						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER);
 					}
 					break;
 				}
@@ -316,7 +318,7 @@ void behaviorTask(void* parameters) {
 				}
 
 			} else {
-				// find the behaviormode
+				// find the behavior mode
 				mode = nbrDataGet(&nbrDataMode);
 				if(printNbrs) cprintf("notleader.  mode = %d\n", mode);
 
@@ -324,13 +326,11 @@ void behaviorTask(void* parameters) {
 				ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 				switch (mode) {
 				case MODE_FOLLOW: {
-					//if(remoteControlJoystickIsActive(team, JOYSTICK_TIMEOUT_BEH)) {
-						Beh behFollow, behCluster;
-						behMoveForward(&behOutput, MOTION_TV);
-						behFollowPredesessor(&behFollow, &nbrList, MOTION_TV, FTL_RANGE);
-						behClusterBroadcast(&behCluster, &nbrList, MOTION_TV, &broadcastMsg);
-						behSubsume(&behOutput, &behCluster, &behFollow);
-					//}
+					Beh behFollow, behCluster;
+					behMoveForward(&behOutput, MOTION_TV);
+					behFollowPredesessor(&behFollow, &nbrList, MOTION_TV, FTL_RANGE);
+					behClusterBroadcast(&behCluster, &nbrList, MOTION_TV, &broadcastMsg);
+					behSubsume(&behOutput, &behCluster, &behFollow);
 					break;
 				}
 				case MODE_FLOCK: {

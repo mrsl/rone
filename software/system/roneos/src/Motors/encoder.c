@@ -285,32 +285,16 @@ void encoderPoseClear(void) {
 	odometerUm = 0;
 }
 
-/*
- *	@brief Gets the pose of the encoder and stores it in variables (x, y, theta) of where posePtr points to.
- *
- *	@param posePtr points to a Pose structure
- *	@returns void
- */
 void encoderGetPose(Pose* posePtr) {
 	posePtr->x = pose.x;
 	posePtr->y = pose.y;
 	posePtr->theta = pose.theta;
 }
 
-/*
- *	@brief returns the odometer reading in mm
- *
- *	@returns void
- */
-uint32 encoderGetOdometer(void) {
-	return odometer;
+int32 encoderGetHeading(void) {
+	return pose.theta;
 }
-/*
- * 	@brief Sets the pose of the encoder as variables of where posePtr points to.
- *
- * 	@param posePtr points to a Pose structure
- * 	@returns void
- */
+
 void encoderSetPose(Pose* posePtr) {
 	pose.x = posePtr->x;
 	pose.y = posePtr->y;
@@ -319,4 +303,9 @@ void encoderSetPose(Pose* posePtr) {
 	xUm = pose.x * 1000;
 	yUm = pose.y * 1000;
 	thetaUr = pose.theta * 1000;
+}
+
+
+uint32 encoderGetOdometer(void) {
+	return odometer;
 }

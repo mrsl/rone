@@ -57,9 +57,11 @@ void remoteControlSendMsgAccel(uint8 team);
 */
 boolean remoteControlIsSerialHost(void);
 
+void navTowerUpdateHeading(boolean printNbrs);
+
 Beh* behRemoteControl(Beh* behPtr, uint8 joystickNum);
 
-Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 Tv, Nbr* nbrNavTowerLowPtr, Nbr* nbrNavTowerHighPtr);
+Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 Tv);
 
 //TODO move this to a thread or callback
 void remoteControlUpdateJoysticks(void);

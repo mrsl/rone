@@ -213,39 +213,66 @@ Beh* behRemoteControl(Beh* behPtr, uint8 joystickNum) {
 }
 
 
+#define NAV_TOWER_LOW_RONE_ID			124
+#define NAV_TOWER_HIGH_RONE_ID			125
+#define NAV_TOWER_FILTER_GAIN			50
+
+uint32 navTowerTime = 0;
+
+void navTowerUpdateHeading(boolean printNbrs) {
+	NbrList nbrListAll;
+	Nbr* nbrNavTowerHighPtr;
+	Nbr* nbrNavTowerLowPtr;
+	int32 heading = 0;
+
+	// look for the nav tower
+	nbrListCreate(&nbrListAll);
+	nbrNavTowerLowPtr = nbrListGetNbrWithID(&nbrListAll, NAV_TOWER_LOW_RONE_ID);
+	nbrNavTowerHighPtr = nbrListGetNbrWithID(&nbrListAll, NAV_TOWER_HIGH_RONE_ID);
+	if(nbrNavTowerLowPtr || nbrNavTowerHighPtr) {
+		navTowerTime = osTaskGetTickCount();
+	}
+
+	if (printNbrs){
+		if (nbrNavTowerHighPtr){
+			cprintf("(NavTower High) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerHighPtr->ID, nbrNavTowerHighPtr->bearing, nbrNavTowerHighPtr->orientation);
+		} else if (nbrNavTowerLowPtr){
+			cprintf("(NavTower Low) ID: %d, bearing:%d, orientation:%d \n", nbrNavTowerLowPtr->ID, nbrNavTowerLowPtr->bearing, nbrNavTowerLowPtr->orientation);
+		}
+	}
+
+	Pose pose;
+	encoderGetPose(&pose);
+	if(nbrNavTowerLowPtr) {
+		// we can see the low power nav tower virtual robot.  update the robot's heading
+		heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrNavTowerLowPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrNavTowerLowPtr));
+		//pose.theta = heading;
+		pose.theta = filterIIRAngle(pose.theta, heading, NAV_TOWER_FILTER_GAIN);
+	} else if(nbrNavTowerHighPtr) {
+		// we can see the high power nav tower virtual robot.  update the robot's heading
+		heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrNavTowerHighPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrNavTowerHighPtr));
+		//pose.theta = heading;
+		pose.theta = filterIIRAngle(pose.theta, heading, NAV_TOWER_FILTER_GAIN);
+	} else {
+		// no nav towers. Leave the pose alone
+	}
+	encoderSetPose(&pose);
+}
+
+
 #define REMOTE_CONTROL_COMPASS_TV_GAIN 		1
 #define REMOTE_CONTROL_COMPASS_RV_GAIN 		50
 
-Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 tvMax, Nbr* nbrCompassLowPtr, Nbr* nbrCompassHighPtr) {
-	int32 Xcmd, Ycmd, tv, rv;
-	uint8 team;
+Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 tvMax) {
+	int32 Xcmd, Ycmd, tv;
 	int32 heading, goalVectorAngle, goalVectorMag, alpha;
 	static Beh radioBeh;
 	static uint32 radioMessageTimePrev;
-	Pose pose;
 
 	// process the remote control message
 	radioMessageTimePrev = osTaskGetTickCount();
-	encoderGetPose(&pose);
-	if(nbrCompassLowPtr) {
-		// we can see the low power nav tower virtual robot.  update the robot's heading
-		//TODO use a IIR here or some kind of filtering
-		//IIR example function: nbrPtr->bearing = filterIIRAngle(nbrPtr->bearing, bearing, nbrAnglesIIRTimeConstant);
 
-		heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrCompassLowPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrCompassLowPtr));
-		//pose.theta = heading;
-		pose.theta = filterIIRAngle(pose.theta, heading, 50);
-		encoderSetPose(&pose);
-	} else if(nbrCompassHighPtr) {
-		// we can see the high power nav tower virtual robot.  update the robot's heading
-		//TODO use a IIR here or some kind of filtering
-		heading = normalizeAngleMilliRad2(nbrGetOrientation(nbrCompassHighPtr) + (int32)MILLIRAD_PI - nbrGetBearing(nbrCompassHighPtr));
-		//pose.theta = heading;
-		pose.theta = filterIIRAngle(pose.theta, heading, 60);
-		encoderSetPose(&pose);
-	} else {
-		heading = pose.theta;
-	}
+	heading = encoderGetHeading();
 
 	 /* Set Xcmd and Ycmd */
 	Xcmd = joystickPtr->x;

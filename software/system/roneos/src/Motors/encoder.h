@@ -109,6 +109,14 @@ void encoderGetPose(Pose* posePtr);
 
 
 /**
+ *	@brief Gets the heading of the robot.
+ *
+ *	@returns the current heading in milliradians
+ */
+int32 encoderGetHeading(void);
+
+
+/**
  * 	@brief Sets the pose of the encoder as variables of where posePtr points to.
  *
  * 	@param posePtr points to a Pose structure
