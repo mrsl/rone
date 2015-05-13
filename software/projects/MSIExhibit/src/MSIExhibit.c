@@ -77,38 +77,60 @@ uint8 currentLED = LED_RED;
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
 	boolean tooFar = FALSE;
+
 	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
 	if (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE)) {
 		tooFar = TRUE;
 	}
-	if ((nbrListGetSize(nbrListPtr) > FLOCK_CLUSTER_THRESHOLD) ||
-			(broadcastMsgIsSource(&broadcastMsg)) || tooFar){
-		// you are the source, or a minion surrounded by member of your team.  flock.
+
+	// If we are under the threshold for number of robots to flock or we
+	// are too far, cluster.
+	if ((nbrListGetSize(nbrListPtr) <= FLOCK_CLUSTER_THRESHOLD) || tooFar) {
+		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
+
+	// Else flock
+	} else {
 		behFlock(behOutputPtr, nbrListPtr, MOTION_TV_FLOCK);
 		behOutputPtr->rv += behRadioPtr->rv;
 		behOutputPtr->tv = MOTION_TV_FLOCK;
 		behSetActive(behOutputPtr);
-	} else {
-		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
 	}
+
 	return behOutputPtr;
 }
 
 
 Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr) {
-	// compute the centroid
+	boolean tooFar = FALSE;
 
+	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
+	if (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE)) {
+		tooFar = TRUE;
+	}
 
-	// mix in the remote control
-	// compute the dot product between the joystick direction and the current heading
-	int32 heading = encoderGetHeading();
-	int32 headingJoystick = atan2MilliRad(joystickPtr->y, joystickPtr->x);
-	int32 headingDiff = smallestAngleDifference(headingJoystick, heading);
-	int32 tvGain = cosMilliRad(headingDiff) * 2; //TODO use some kind of joystick gain instead of 2
-	//TODO: remember to divide by MILLIRAD_TRIG_SCALER when you use this
+	// If we are under the threshold for number of robots to flock or we
+	// are too far, cluster.
+	if ((nbrListGetSize(nbrListPtr) <= FLOCK_CLUSTER_THRESHOLD) || tooFar) {
+		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
 
+	// Else flock
+	} else {
+		int32 centroidBearing = centroidLiteGetBearing();
+		int32 centroidDistance = centroidLiteGetDistance();
+
+		// mix in the remote control
+		// compute the dot product between the joystick direction and the current heading
+		int32 heading = encoderGetHeading();
+		int32 headingJoystick = atan2MilliRad(joystickPtr->y, joystickPtr->x);
+		int32 headingDiff = smallestAngleDifference(headingJoystick, heading);
+		int32 tvGain = cosMilliRad(headingDiff) * 2; //TODO use some kind of joystick gain instead of 2
+		//TODO: remember to divide by MILLIRAD_TRIG_SCALER when you use this
+
+		behOrbitRangeRaw(beh, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
+	}
+
+	return behOutputPtr;
 }
-
 
 void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
@@ -123,8 +145,9 @@ void behaviorTask(void* parameters) {
 	boolean behaviorBuilding = FALSE;
 
 	neighborsInit(NEIGHBOR_PERIOD);
+	centroidLiteInit();
 	broadcastMsgCreate(&broadcastMsg, MSI_DEMO_HOPS_MAX);
-	nbrDataCreate(&nbrDataMode, "mode", 4, MODE_FOLLOW);
+	nbrDataCreate(&nbrDataMode, "mode", 4, MODE_IDLE);
 
 	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 65 /100);
 

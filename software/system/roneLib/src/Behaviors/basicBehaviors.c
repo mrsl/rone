@@ -516,6 +516,18 @@ Beh* behOrbit(Beh* behPtr, Nbr* nbrPtr, int32 tv) {
 	return behPtr;
 }
 
+Beh* behOrbitRangeRaw(Beh* behPtr, int32 bearing, int32 range, int32 tv, uint16 desiredRange) {
+	int32 theta = normalizeAngleMilliRad(
+		bearing + 1570 - bound((range - desiredRange),-1000, 1000)
+	);
+
+	rvBearingController(behPtr, theta, ORBIT_RV_GAIN);
+	behPtr->tv = tv;
+	behPtr->active = TRUE;
+
+	return behPtr;
+}
+
 Beh* behOrbitRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range) {	//### orbit
 	static int oldID=0;
 	static uint8 CCW=0;
