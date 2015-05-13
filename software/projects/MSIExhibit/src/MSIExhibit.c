@@ -13,6 +13,7 @@
 
 #include "roneos.h"
 #include "ronelib.h"
+#include "centroidlite.h"
 
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 #define BEHAVIOR_TASK_PERIOD			50
@@ -58,7 +59,8 @@
 #define BEHAVIOR_READY_TIME 			(10 * MS_SECOND)
 
 // time for a behavior to time out.  After this time, the robots become idle
-#define BEHAVIOR_IDLE_TIME				(5 * MS_MINUTE)
+#define BEHAVIOR_SLOW_TIME				(1 * MS_MINUTE)
+#define BEHAVIOR_IDLE_TIME				(3 * MS_MINUTE)
 
 
 /****** Team Broadcast messages *******/
@@ -76,20 +78,19 @@ uint8 currentLED = LED_RED;
 
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
-	boolean tooFar = FALSE;
+	boolean farAway = FALSE;
 
 	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
-	if (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE)) {
-		tooFar = TRUE;
+	if ((nbrListGetSize(nbrListPtr) <= FLOCK_CLUSTER_THRESHOLD) || (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE))) {
+		farAway = TRUE;
 	}
 
 	// If we are under the threshold for number of robots to flock or we
-	// are too far, cluster.
-	if ((nbrListGetSize(nbrListPtr) <= FLOCK_CLUSTER_THRESHOLD) || tooFar) {
+	// are too far away, cluster.
+	if (farAway) {
 		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
-
-	// Else flock
 	} else {
+		// otherwise flock
 		behFlock(behOutputPtr, nbrListPtr, MOTION_TV_FLOCK);
 		behOutputPtr->rv += behRadioPtr->rv;
 		behOutputPtr->tv = MOTION_TV_FLOCK;
@@ -126,7 +127,7 @@ Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr
 		int32 tvGain = cosMilliRad(headingDiff) * 2; //TODO use some kind of joystick gain instead of 2
 		//TODO: remember to divide by MILLIRAD_TRIG_SCALER when you use this
 
-		behOrbitRangeRaw(beh, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
+		behOrbitRangeRaw(behOutputPtr, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
 	}
 
 	return behOutputPtr;
@@ -299,10 +300,12 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				case MODE_CLUSTER: {
-					if(behIsActive(&behRadio)) {
-						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER);
-					}
-					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+//					if(behIsActive(&behRadio)) {
+//						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER);
+//					}
+//					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+					orbitCentroid(&behOutput, joystickPtr, &nbrList);
+					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_IDLE:
@@ -332,18 +335,21 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				case MODE_CLUSTER: {
-					//behClusterBroadcast(&behOutput, &nbrListTeam, MOTION_TV, &broadcastTeamMsg[team]);
-					nbrPtr = nbrListFindSource(&nbrList, &broadcastMsg);
-					if (nbrPtr) {
-						int32 orbitVelocity = MOTION_TV;
-						if (nbrGetRange(nbrPtr) < BEH_CLUSTER_RANGE) {
-							orbitVelocity = MOTION_TV/2;
-						}
-						behOrbit(&behOutput, nbrPtr, orbitVelocity);
-					} else {
-						behClusterBroadcast(&behOutput, &nbrList, MOTION_TV, &broadcastMsg);
-					}
+//					nbrPtr = nbrListFindSource(&nbrList, &broadcastMsg);
+//					if (nbrPtr) {
+//						int32 orbitVelocity = MOTION_TV;
+//						if (nbrGetRange(nbrPtr) < BEH_CLUSTER_RANGE) {
+//							orbitVelocity = MOTION_TV/2;
+//						}
+//						behOrbit(&behOutput, nbrPtr, orbitVelocity);
+//					} else {
+//						behClusterBroadcast(&behOutput, &nbrList, MOTION_TV, &broadcastMsg);
+//					}
+//					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+
+					orbitCentroid(&behOutput, joystickPtr, &nbrList);
 					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+
 					break;
 				}
 				case MODE_IDLE:
