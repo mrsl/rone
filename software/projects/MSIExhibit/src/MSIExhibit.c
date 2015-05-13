@@ -31,7 +31,7 @@
 #define CAPTAIN_LED_COUNTER_TIME		12
 
 #define FTL_RANGE						300
-#define FOLLOW_LEADER_AVOID_RANGE		180
+#define FOLLOW_LEADER_AVOID_RANGE		300
 
 #define BEH_CLUSTER_RANGE				300
 
@@ -43,6 +43,7 @@
 #define MODE_CLUSTER					3
 
 #define FLOCK_CLUSTER_THRESHOLD			1
+#define FLOCK_CLUSTER_RANGE				400
 
 #define JOYSTICK_NUM_MSI				0
 
@@ -78,8 +79,13 @@ uint8 currentLED = LED_RED;
 
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
+	boolean tooFar = FALSE;
+	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
+	if (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE)) {
+		tooFar = TRUE;
+	}
 	if ((nbrListGetSize(nbrListPtr) > FLOCK_CLUSTER_THRESHOLD) ||
-			(broadcastMsgIsSource(&broadcastMsg))){
+			(broadcastMsgIsSource(&broadcastMsg)) || tooFar){
 		// you are the source, or a minion surrounded by member of your team.  flock.
 		behFlock(behOutputPtr, nbrListPtr, MOTION_TV_FLOCK);
 		behOutputPtr->rv += behRadioPtr->rv;

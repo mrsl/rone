@@ -113,13 +113,7 @@ void nbrListRemoveNbr(NbrList* nbrListPtr, Nbr* nbrPtr){
 	}
 }
 
-/*
- * @brief returns the neighbor whose bearing is closest to bearing, NULL if list is empty.
- *
- * @param nbrListPtr list of neighbors
- * @param bearing a reference bearing
- * @returns pointer to neighbor whose bearing is closest to bearing, NULL if list is empty.
- */
+
 Nbr* nbrListGetClosestNbrToBearing(NbrList* nbrListPtr, int16 bearing) {
 	uint8 i;
 	int16 bearingMin = MILLIRAD_PI;
@@ -136,12 +130,7 @@ Nbr* nbrListGetClosestNbrToBearing(NbrList* nbrListPtr, int16 bearing) {
 	return nbrPtr;
 }
 
-/*
- * @brief Returns a pointer to the neighbor at the head of the list, or NULL
- *
- * @param nbrListPtr pointer for the list of neighbors
- * @returns a pointer to the neighbor at the head of the list, or NULL
- */
+
 Nbr* nbrListGetFirst(NbrList* nbrListPtr) {
 	if (nbrListPtr->size > 0) {
 		return nbrListPtr->nbrs[0];
@@ -149,6 +138,25 @@ Nbr* nbrListGetFirst(NbrList* nbrListPtr) {
 		return NULL;
 	}
 }
+
+#define RANGE_MAX	2000
+
+Nbr* nbrListGetClosestNbr(NbrList* nbrListPtr) {
+	uint8 i;
+	int16 rangeMin = RANGE_MAX;
+	Nbr* nbrPtrMin = NULL;
+
+	for (i = 0; i < nbrListPtr->size; i++) {
+		int16 range = nbrGetRange(nbrListPtr->nbrs[i]);
+		Nbr* nbrPtr = nbrListPtr->nbrs[i];
+		if(nbrGetRange(nbrPtr) < rangeMin) {
+			rangeMin = range;
+			nbrPtrMin = nbrPtr;
+		}
+	}
+	return nbrPtrMin;
+}
+
 
 /*
  * @brief Returns a pointer to the neighbor second in the list, or NULL

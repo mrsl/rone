@@ -171,6 +171,15 @@ Nbr* nbrListGetClosestNbrToBearing(NbrList* nbrListPtr, int16 bearing);
 
 
 /**
+ * @brief returns the neighbor who is closest, NULL if there is no neighbor
+ *
+ * @param nbrListPtr list of neighbors
+ * @returns pointer to neighbor whose range is closest, NULL if list is empty.
+ */
+Nbr* nbrListGetClosestNbr(NbrList* nbrListPtr);
+
+
+/**
  * @brief Computes the union of the two input neighbor lists.
  *
  * @param nbrListOutPtr pointer to the list created from the union
