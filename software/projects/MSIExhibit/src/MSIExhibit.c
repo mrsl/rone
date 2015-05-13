@@ -60,9 +60,6 @@
 // time for a behavior to time out.  After this time, the robots become idle
 #define BEHAVIOR_IDLE_TIME				(5 * MS_MINUTE)
 
-#define JOYSTICK_TIMEOUT_TEAM			(5 * MS_MINUTE)
-//#define JOYSTICK_TIMEOUT_BEH			20000
-
 
 /****** Team Broadcast messages *******/
 BroadcastMessage broadcastMsg;
@@ -123,8 +120,7 @@ void behaviorTask(void* parameters) {
 	NbrList nbrListAll;
 	Nbr* nbrPtr;
 	uint32 printMem = 0;
-
-	uint32 captainLEDCounter = 0;
+	boolean behaviorBuilding = FALSE;
 
 	neighborsInit(NEIGHBOR_PERIOD);
 	broadcastMsgCreate(&broadcastMsg, MSI_DEMO_HOPS_MAX);
@@ -170,46 +166,75 @@ void behaviorTask(void* parameters) {
 //		}
 
 
-		if (!remoteControlJoystickIsActive(JOYSTICK_NUM_MSI, BEHAVIOR_IDLE_TIME)) {
-			// no joystick activity for a while.  go idle and flash the lights.
-			ledsSetPattern(LED_ALL, LED_PATTERN_CIRCLE, LED_BRIGHTNESS_MED, LED_RATE_MED);
-			remoteControlLedsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-		} else if (osTaskGetTickCount() - behaviorChangeTime > BEHAVIOR_READY_TIME) {
-			// behavior is settled.  show a steady light
-			ledsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-			remoteControlLedsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+		Joystick* joystickPtr = remoteControlGetJoystick(JOYSTICK_NUM_MSI);
+		if (printNbrs) cprintf("joy %d,%d,%d\n", joystickPtr->x, joystickPtr->y, joystickPtr->buttons);
 
-			//  look for a new behavior button press
-			Joystick* joystickPtr = remoteControlGetJoystick(JOYSTICK_NUM_MSI);
+		// read the joystick buttons for behavior changes
+		if (osTaskGetTickCount() - behaviorChangeTime > BEHAVIOR_READY_TIME) {
+			behaviorBuilding = FALSE;
+		}
+
+		// if we're not building a behavior, check the buttons
+		uint8 modeOld = nbrDataGet(&nbrDataMode);
+		if (!behaviorBuilding) {
 			if(joystickPtr->buttons & JOYSTICK_BUTTON_RED) {
-				if (currentLED != LED_RED) {
-					ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-					remoteControlLedsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-					behaviorChangeTime = osTaskGetTickCount();
-				}
-				currentLED = LED_RED;
+				nbrDataSet(&nbrDataMode, MODE_FOLLOW);
 			} else if(joystickPtr->buttons & JOYSTICK_BUTTON_GREEN) {
-				if (currentLED != LED_GREEN) {
-					ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-					remoteControlLedsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-					behaviorChangeTime = osTaskGetTickCount();
-				}
-				currentLED = LED_GREEN;
+				nbrDataSet(&nbrDataMode, MODE_FLOCK);
 			} else if(joystickPtr->buttons & JOYSTICK_BUTTON_BLUE) {
-				if (currentLED != LED_BLUE) {
-					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-					remoteControlLedsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-					behaviorChangeTime = osTaskGetTickCount();
-				}
-				currentLED = LED_BLUE;
+				nbrDataSet(&nbrDataMode, MODE_CLUSTER);
 			}
+		}
+
+		// check for a change in mode
+		if (modeOld != nbrDataGet(&nbrDataMode)) {
+			// behavior change
+			behaviorChangeTime = osTaskGetTickCount();
+			behaviorBuilding = TRUE;
+		}
+
+		if (!remoteControlJoystickIsActive(JOYSTICK_NUM_MSI, BEHAVIOR_IDLE_TIME)) {
+			// no joystick activity for a long time.  go idle and flash the lights.
+			nbrDataSet(&nbrDataMode, MODE_IDLE);
+			behaviorBuilding = FALSE;
+		}
+
+		if (printNbrs || (modeOld != nbrDataGet(&nbrDataMode))) {
+			cprintf("MSIExhibit mode=%d building=%d\n", nbrDataGet(&nbrDataMode), behaviorBuilding);
 		}
 
 		if(remoteControlIsSerialHost()) {
 			neighborsXmitEnable(FALSE);
-			//radioMessage.command.data[MUSEUM_RADIO_COMMAND_BEH_IDX] = currentLED;
-			//radioCommandXmit(&radioCmdBehavior, ROBOT_ID_ALL, &radioMessage);
 			behSetTvRv(&behOutput, 0, 0);
+
+			switch (nbrDataGet(&nbrDataMode)) {
+			case MODE_FOLLOW: {
+				currentLED = LED_RED;
+				break;
+			}
+			case MODE_FLOCK: {
+				currentLED = LED_GREEN;
+				break;
+			}
+			case MODE_CLUSTER: {
+				currentLED = LED_BLUE;
+				break;
+			}
+			case MODE_IDLE:
+			default:{
+				currentLED = LED_ALL;
+				break;
+			}
+			}
+			// flash the lights
+			if(behaviorBuilding) {
+				ledsSetPattern(currentLED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
+				remoteControlLedsSetPattern(currentLED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+			} else {
+				ledsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+				remoteControlLedsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+			}
+
 		} else {
 			neighborsXmitEnable(TRUE);
 			if(printNbrs) {
@@ -218,45 +243,18 @@ void behaviorTask(void* parameters) {
 			}
 
 			// update the broadcast messages to look for the team leaders
-			if (printNbrs) {
-				broadcastMsgUpdateLeaderElection(&broadcastMsg, &nbrList);
-				broadcastMsgUpdateNbrData(&broadcastMsg, &nbrDataMode);
-			}
-
-			// see if you are your team leader
-			boolean teamLeader = FALSE;
-			Joystick* joystickPtr = remoteControlGetJoystick(JOYSTICK_NUM_MSI);
-			if (broadcastMsgIsSource(&broadcastMsg)) {
-				// you are the team leader
-				teamLeader = TRUE;
-				if(printNbrs) cprintf("leader of swarm\n");
-			}
+			broadcastMsgUpdateLeaderElection(&broadcastMsg, &nbrList);
+			broadcastMsgUpdateNbrData(&broadcastMsg, &nbrDataMode);
 
 			// read the joystick.
-			if (printNbrs) cprintf("joy %d,%d\n", joystickPtr->x, joystickPtr->y);
 			behRemoteControlCompass(&behRadio, joystickPtr, MOTION_TV);
+			behOutput = behRadio;
 
-			// Code for the minion rbots
-			uint8 mode;
-			mode = nbrDataGet(&nbrDataMode);
-			if(printNbrs) cprintf("mode = %d, ", mode);
-
-			if(teamLeader) {
+			if(broadcastMsgIsSource(&broadcastMsg)) {
 				// team leader
 				if(printNbrs) cprintf("leader. \n");
 
-				if (remoteControlJoystickIsActive(JOYSTICK_NUM_MSI, JOYSTICK_TIMEOUT_TEAM) && joystickPtr) {
-					if(joystickPtr->buttons & JOYSTICK_BUTTON_RED) {
-						nbrDataSet(&nbrDataMode, MODE_FOLLOW);
-					} else if(joystickPtr->buttons & JOYSTICK_BUTTON_GREEN) {
-						nbrDataSet(&nbrDataMode, MODE_FLOCK);
-					} else if(joystickPtr->buttons & JOYSTICK_BUTTON_BLUE) {
-						nbrDataSet(&nbrDataMode, MODE_CLUSTER);
-					}
-					behOutput = behRadio;
-				}
-
-				switch (mode) {
+				switch (nbrDataGet(&nbrDataMode)) {
 				case MODE_FOLLOW: {
 					// avoid neighbors who are in front of you
 					nbrPtr = nbrListGetClosestNbrToBearing(&nbrList, 0);
@@ -272,6 +270,7 @@ void behaviorTask(void* parameters) {
 						// no nearby robots, no joystick input.  Just move forward
 						behMoveForward(&behOutput, MOTION_TV);
 					}
+					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_FLOCK: {
@@ -279,60 +278,40 @@ void behaviorTask(void* parameters) {
 						cprintf("Team Size: %d\n", nbrList.size);
 					}
 					demoFlock(&behOutput, &behRadio, &nbrList);
+					ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_CLUSTER: {
 					if(behIsActive(&behRadio)) {
 						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER);
 					}
-					break;
-				}
-				case MODE_IDLE:{
-					break;
-				}
-				default:
-					break;
-				}
-
-
-				// Show team captain colors (alternate between team colors and all the LEDs)
-				if (captainLEDCounter == 0) {
-					captainLEDCounter = TEAM_LEADER_TOTAL_TIME;
-				}
-				if (captainLEDCounter > 0) {
-					captainLEDCounter--;
-				}
-
-//				if ((captainLEDCounter < TEAM_LEADER_ON_TIME) && (mode != MODE_FLOCK)) {
-//					if (hostFlag == FALSE)	ledsSetPattern(LED_ALL, LED_PATTERN_ON, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
-//				} else {
-//					if (hostFlag == FALSE)  ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
-//				}
-				if (mode == MODE_FLOCK) {
-					ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
-				} else {
 					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+					break;
+				}
+				case MODE_IDLE:
+				default: {
+					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_SLOW);
+					break;
+				}
 				}
 
 			} else {
+				// minion code
 				if(printNbrs) cprintf("notleader.\n");
-
-				// Show behavior colors
-				ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
-				switch (mode) {
+				switch (nbrDataGet(&nbrDataMode)) {
 				case MODE_FOLLOW: {
 					Beh behFollow, behCluster;
 					behMoveForward(&behOutput, MOTION_TV);
 					behFollowPredesessor(&behFollow, &nbrList, MOTION_TV, FTL_RANGE);
 					behClusterBroadcast(&behCluster, &nbrList, MOTION_TV, &broadcastMsg);
 					behSubsume(&behOutput, &behCluster, &behFollow);
+					ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_FLOCK: {
-					if(printNbrs) {
-						cprintf("Team Size: %d\n", nbrList.size);
-					}
+					if(printNbrs) cprintf("Team Size: %d\n", nbrList.size);
 					demoFlock(&behOutput, &behRadio, &nbrList);
+					ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_CLUSTER: {
@@ -347,13 +326,14 @@ void behaviorTask(void* parameters) {
 					} else {
 						behClusterBroadcast(&behOutput, &nbrList, MOTION_TV, &broadcastMsg);
 					}
+					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
-				case MODE_IDLE:{
+				case MODE_IDLE:
+				default:{
+					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_SLOW);
 					break;
 				}
-				default:
-					break;
 				}
 			}
 			behChargeStop(&behCharge);
@@ -363,9 +343,7 @@ void behaviorTask(void* parameters) {
 			behChargeStopLights(&behCharge);
 		}
 
-		if (printNbrs) {
-			cprintf("\n\n");
-		}
+		if (printNbrs) cprintf("\n\n");
 
 		neighborsPutMutex();
 		motorSetBeh(&behOutput);

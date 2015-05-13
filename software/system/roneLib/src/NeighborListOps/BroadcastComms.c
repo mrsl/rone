@@ -42,8 +42,6 @@ void broadcastMsgCreate(BroadcastMessage* msgPtr, uint8 maxHops) {
 }
 
 
-
-
 /*
  * @brief Updates neighbor data with data from the sender of the input message.
  *

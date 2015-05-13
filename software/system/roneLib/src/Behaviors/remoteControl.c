@@ -146,7 +146,6 @@ void remoteControlUpdateJoysticks(void) {
 	uint8 joyNum, j;
 
 	if (radioCommandReceive(&radioCmdRemoteControl, &radioMessage, 0) ) {
-
 		// unpack all the joystick data from the radio message
 		//TODO Fix, add bounds checking to make sure we aren't corrupting things
 		j = 0;
@@ -338,7 +337,7 @@ void joystickParseSingle(int32 joystickNum, char* joystickCommand) {
 #define JOYSTICK_MESSAGE_SIZE	6
 
 /* Joystick values:
- * XXYYBB...
+ * UIXXYYBB...
  * XX = 8-bit unsigned value for X.  128 = centered
  * YY = 8-bit unsigned value for Y.  128 = centered
  * BB = 8-bit bit-packed buttons.  bit 0 = r, 1 = g, 2 = b
