@@ -158,9 +158,9 @@ void remoteControlUpdateJoysticks(void) {
 			if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {
 				joysticks[joyNum].activeTime = osTaskGetTickCount();
 			}
-			cprintf("joy%d,%4d,%4d,%4d ",joyNum,joysticks[joyNum].x,joysticks[joyNum].y,joysticks[joyNum].buttons);
+			//cprintf("joy%d,%4d,%4d,%4d ",joyNum,joysticks[joyNum].x,joysticks[joyNum].y,joysticks[joyNum].buttons);
 		}
-		cprintf("\n");
+		//cprintf("\n");
 	}
 }
 

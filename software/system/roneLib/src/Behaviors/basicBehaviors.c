@@ -193,7 +193,7 @@ Beh* behMoveToNbrPRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range) {	//##
 		int32 theta=nbrPtr->bearing;
 		rvBearingController(behPtr, theta, MOVE_TO_NEIGHBOR_RV_GAIN);
 
-		cprintf("rng=%d, goal_rng=%d, e=%d, istate=%d, iterm=%d, pterm=%d\n",nbrPtr->range, range, e, iTermState, iTerm, pTerm);
+		//cprintf("rng=%d, goal_rng=%d, e=%d, istate=%d, iterm=%d, pterm=%d\n",nbrPtr->range, range, e, iTermState, iTerm, pTerm);
 		behPtr->active = TRUE;
 		if(tvTemp>0) {
 			behPtr->tv = tvTemp;

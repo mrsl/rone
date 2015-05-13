@@ -168,10 +168,14 @@ void behaviorTask(void* parameters) {
 
 		Joystick* joystickPtr = remoteControlGetJoystick(JOYSTICK_NUM_MSI);
 		if (printNbrs) cprintf("joy %d,%d,%d\n", joystickPtr->x, joystickPtr->y, joystickPtr->buttons);
+		boolean printExhibitStatus = FALSE;
 
 		// read the joystick buttons for behavior changes
-		if (osTaskGetTickCount() - behaviorChangeTime > BEHAVIOR_READY_TIME) {
-			behaviorBuilding = FALSE;
+		if ((osTaskGetTickCount() - behaviorChangeTime) > BEHAVIOR_READY_TIME) {
+			if(behaviorBuilding) {
+				behaviorBuilding = FALSE;
+				printExhibitStatus |= TRUE;
+			}
 		}
 
 		// if we're not building a behavior, check the buttons
@@ -191,15 +195,17 @@ void behaviorTask(void* parameters) {
 			// behavior change
 			behaviorChangeTime = osTaskGetTickCount();
 			behaviorBuilding = TRUE;
+			printExhibitStatus |= TRUE;
 		}
 
 		if (!remoteControlJoystickIsActive(JOYSTICK_NUM_MSI, BEHAVIOR_IDLE_TIME)) {
 			// no joystick activity for a long time.  go idle and flash the lights.
 			nbrDataSet(&nbrDataMode, MODE_IDLE);
 			behaviorBuilding = FALSE;
+			printExhibitStatus |= TRUE;
 		}
 
-		if (printNbrs || (modeOld != nbrDataGet(&nbrDataMode))) {
+		if (printNbrs || printExhibitStatus) {
 			cprintf("MSIExhibit mode=%d building=%d\n", nbrDataGet(&nbrDataMode), behaviorBuilding);
 		}
 
@@ -208,23 +214,11 @@ void behaviorTask(void* parameters) {
 			behSetTvRv(&behOutput, 0, 0);
 
 			switch (nbrDataGet(&nbrDataMode)) {
-			case MODE_FOLLOW: {
-				currentLED = LED_RED;
-				break;
-			}
-			case MODE_FLOCK: {
-				currentLED = LED_GREEN;
-				break;
-			}
-			case MODE_CLUSTER: {
-				currentLED = LED_BLUE;
-				break;
-			}
+			case MODE_FOLLOW: { currentLED = LED_RED; break; }
+			case MODE_FLOCK: { currentLED = LED_GREEN; break; }
+			case MODE_CLUSTER: { currentLED = LED_BLUE; break; }
 			case MODE_IDLE:
-			default:{
-				currentLED = LED_ALL;
-				break;
-			}
+			default:{ currentLED = LED_ALL; break; }
 			}
 			// flash the lights
 			if(behaviorBuilding) {
@@ -252,7 +246,7 @@ void behaviorTask(void* parameters) {
 
 			if(broadcastMsgIsSource(&broadcastMsg)) {
 				// team leader
-				if(printNbrs) cprintf("leader. \n");
+				if(printNbrs) cprintf("leader\n");
 
 				switch (nbrDataGet(&nbrDataMode)) {
 				case MODE_FOLLOW: {
