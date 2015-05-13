@@ -16,6 +16,7 @@
 #include "../src/NeighborListOps/BroadcastMinMax.h"
 #include "../src/NeighborListOps/NbrNbrComms.h"
 #include "../src/NeighborListOps/GlobalRobotList.h"
+#include "../src/NeighborListOps/centroidLite.h"
 
 
 #include "../src/Behaviors/behaviorSystem.h"

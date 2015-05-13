@@ -13,7 +13,6 @@
 
 #include "roneos.h"
 #include "ronelib.h"
-#include "centroidlite.h"
 
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 #define BEHAVIOR_TASK_PERIOD			50
@@ -102,20 +101,30 @@ Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
 
 
 Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr) {
-	boolean tooFar = FALSE;
+	boolean farAway = FALSE;
 
-	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
-	if (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE)) {
-		tooFar = TRUE;
+//	if (roneID == 143) {
+//		behSetTvRv(behOutputPtr, 0, 0);
+//		return behOutputPtr;
+//	}
+
+//	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
+//	if ((nbrListGetSize(nbrListPtr) < FLOCK_CLUSTER_THRESHOLD) || (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE))) {
+//		farAway = TRUE;
+//	}
+
+	if (nbrListGetSize(nbrListPtr) < FLOCK_CLUSTER_THRESHOLD) {
+		farAway = TRUE;
 	}
 
 	// If we are under the threshold for number of robots to flock or we
 	// are too far, cluster.
-	if ((nbrListGetSize(nbrListPtr) <= FLOCK_CLUSTER_THRESHOLD) || tooFar) {
-		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
-
-	// Else flock
+	if (farAway) {
+		//behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
+		behSetTvRv(behOutputPtr, 0, 0);
+		cprintf("faraway\n");
 	} else {
+		// otherwise orbit the centroid
 		int32 centroidBearing = centroidLiteGetBearing();
 		int32 centroidDistance = centroidLiteGetDistance();
 
@@ -127,7 +136,16 @@ Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr
 		int32 tvGain = cosMilliRad(headingDiff) * 2; //TODO use some kind of joystick gain instead of 2
 		//TODO: remember to divide by MILLIRAD_TRIG_SCALER when you use this
 
-		behOrbitRangeRaw(behOutputPtr, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
+		behOrbitRangeRaw(behOutputPtr, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE/3);
+
+//		if (roneID == 143) {
+//			behSetTvRv(behOutputPtr, 0, 0);
+//		} else {
+//			behOrbitRangeRaw(behOutputPtr, nbrGetBearing(nbrPtr), nbrGetRange(nbrPtr), MOTION_TV, BEH_CLUSTER_RANGE);
+//			//behOrbitRangeRaw(behOutputPtr, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
+//		}
+		cprintf("cent brg=%d dist=%d\n", centroidBearing, centroidDistance);
+
 	}
 
 	return behOutputPtr;
@@ -165,6 +183,7 @@ void behaviorTask(void* parameters) {
 
 		neighborsGetMutex();
 		printNbrs = neighborsNewRoundCheck(&neighborRound);
+		printNbrs = FALSE;
 		remoteControlUpdateJoysticks();
 		navTowerUpdateHeading(printNbrs);
 
@@ -349,7 +368,6 @@ void behaviorTask(void* parameters) {
 
 					orbitCentroid(&behOutput, joystickPtr, &nbrList);
 					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
-
 					break;
 				}
 				case MODE_IDLE:

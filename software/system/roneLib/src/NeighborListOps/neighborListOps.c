@@ -147,9 +147,9 @@ Nbr* nbrListGetClosestNbr(NbrList* nbrListPtr) {
 	Nbr* nbrPtrMin = NULL;
 
 	for (i = 0; i < nbrListPtr->size; i++) {
-		int16 range = nbrGetRange(nbrListPtr->nbrs[i]);
 		Nbr* nbrPtr = nbrListPtr->nbrs[i];
-		if(nbrGetRange(nbrPtr) < rangeMin) {
+		int16 range = nbrGetRange(nbrPtr);
+		if(range < rangeMin) {
 			rangeMin = range;
 			nbrPtrMin = nbrPtr;
 		}

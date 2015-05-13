@@ -96,6 +96,8 @@ Beh* behOrbit(Beh* behPtr, Nbr* nbrPtr, int32 tv);
  */
 Beh* behOrbitRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range);
 
+Beh* behOrbitRangeRaw(Beh* behPtr, int32 bearing, int32 range, int32 tv, uint16 desiredRange);
+
 /**
  *	@brief Robot orbits the input neighbor within given range (clockwise).
  *
