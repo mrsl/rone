@@ -27,6 +27,10 @@ void centroidLiteCalculateCentroid(NbrList *nbrListPtr) {
 			continue;
 		}
 
+		if (nbrIsBeacon(nbrPtr)) {
+			continue;
+		}
+
 		centroidValue nbrX = 0.;
 		centroidValue nbrY = 0.;
 
