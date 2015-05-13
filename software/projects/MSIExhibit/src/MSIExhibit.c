@@ -232,17 +232,19 @@ void behaviorTask(void* parameters) {
 				if(printNbrs) cprintf("leader of swarm\n");
 			}
 
-			// read the joystick for your team.  We read into the behRadio so we can
-			// use the joystick for flocking
+			// read the joystick.
 			if (printNbrs) cprintf("joy %d,%d\n", joystickPtr->x, joystickPtr->y);
-
 			behRemoteControlCompass(&behRadio, joystickPtr, MOTION_TV);
-			if (printNbrs) cprintf("beh %d,%d\n", behOutput.tv, behOutput.rv);
 
 			// Code for the minion rbots
 			uint8 mode;
+			mode = nbrDataGet(&nbrDataMode);
+			if(printNbrs) cprintf("mode = %d, ", mode);
+
 			if(teamLeader) {
 				// team leader
+				if(printNbrs) cprintf("leader. \n");
+
 				if (remoteControlJoystickIsActive(JOYSTICK_NUM_MSI, JOYSTICK_TIMEOUT_TEAM) && joystickPtr) {
 					if(joystickPtr->buttons & JOYSTICK_BUTTON_RED) {
 						nbrDataSet(&nbrDataMode, MODE_FOLLOW);
@@ -254,14 +256,6 @@ void behaviorTask(void* parameters) {
 					behOutput = behRadio;
 				}
 
-//				if (remoteControlJoystickIsActive(team, JOYSTICK_TIMEOUT_TEAM)) {
-//					if (radioCommandReceive(&radioCmdBehavior, &radioMessage, 0) ) {
-//						nbrDataSet(&nbrDataMode[team], radioMessage.command.data[MUSEUM_RADIO_COMMAND_BEH_IDX]);
-//					}
-//					behOutput = behRadio;
-//				}
-
-				mode = nbrDataGet(&nbrDataMode);
 				switch (mode) {
 				case MODE_FOLLOW: {
 					// avoid neighbors who are in front of you
@@ -299,9 +293,6 @@ void behaviorTask(void* parameters) {
 				default:
 					break;
 				}
-				if(printNbrs) {
-					cprintf("leader. mode = %d\n", mode);
-				}
 
 
 				// Show team captain colors (alternate between team colors and all the LEDs)
@@ -324,9 +315,7 @@ void behaviorTask(void* parameters) {
 				}
 
 			} else {
-				// find the behavior mode
-				mode = nbrDataGet(&nbrDataMode);
-				if(printNbrs) cprintf("notleader.  mode = %d\n", mode);
+				if(printNbrs) cprintf("notleader.\n");
 
 				// Show behavior colors
 				ledsSetPattern(mode-1, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
