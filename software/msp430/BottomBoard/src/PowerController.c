@@ -117,7 +117,7 @@ void powerUSBInit(void) {
 	uint8 i;
 
 	// Set up the comparator to read true if we receive more than about 2.5V on
-	// USB 5V. This allows airplaine mode with a 1/3 Voltage Divider
+	// USB 5V. This allows airplane mode with a 1/3 Voltage Divider
 	CACTL1 = CARSEL + CAREF0;  // 0.25 * Vcc reference applied to '-' terminal
 							   // No interrupts.
 	CACTL2 = P2CA0 + CAF;      // Input CA0 on '+' terminal, filter output.
@@ -153,7 +153,7 @@ static void powerUSBSetEnable(boolean on) {
 		CAPD &= ~POWER_USB_BIT;	// Disable digital I/O on P2.3 (technically this step is redundant)
 		CACTL1 |= CAON;		  	// Turn on the comparator
 	} else {
-		CAPD |= POWER_USB_BIT; // Enable digital I/O on P2.3
+		CAPD |= POWER_USB_BIT;  // Enable digital I/O on P2.3
 		CACTL1 &= ~CAON;		// Disable the comparator
 	}
 #endif
@@ -257,7 +257,7 @@ void voltageBatReadADC(void){
 
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
 		if (!(ADC10CTL1 & ADC10BUSY)) {
-			// Add the current read to the sliding average if there was a sucsessful read
+			// Add the current read to the sliding average if there was a successful read
 			voltageBatRunAvg[voltageBatRunAvgCount] = (uint8)(ADC10MEM * VOLTAGE_BAT_CONV_NUMER / VOLTAGE_BAT_CONV_DENOM);
 			voltageBatRunAvgCount = (voltageBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
 			break;

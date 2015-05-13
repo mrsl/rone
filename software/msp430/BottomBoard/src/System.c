@@ -518,7 +518,8 @@ void main(void) {
 			// Determine if it reached threshold for fast charge
 		   	if (voltageUSBGet() > VOLTAGE_USB_FAST_CHARGE_THRESHOLD) {
 		   		/* Set the charge limit to 1 A */
-		   		chargeLimitSet(FALSE);
+		   		//chargeLimitSet(FALSE); // commented out to prevent blowing chargers - needs debugging
+		   		chargeLimitSet(TRUE);
 		   	} else {
 		   		/* Set the charge limit to 500 mA */
 		   		chargeLimitSet(TRUE);
