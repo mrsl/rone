@@ -92,6 +92,7 @@ int32 deadzone(int32 val, int32 deadzone) {
 void remoteControlSendMsg(void) {
 	RadioMessage radioMessage;
 	uint8 i, j;
+	static uint8 nonce = 0;
 
 //	TVcmd = boundAbs(TVcmd, REMOTE_CONTROL_TV_MAX);
 //	RVcmd = boundAbs(RVcmd, REMOTE_CONTROL_RV_MAX);
@@ -113,6 +114,7 @@ void remoteControlSendMsg(void) {
 		radioMessage.command.data[j++] = joysticks[i].x;
 		radioMessage.command.data[j++] = joysticks[i].y;
 		radioMessage.command.data[j++] = joysticks[i].buttons;
+		radioMessage.command.data[j++] = nonce++;
 	}
 	radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessage);
 }
@@ -143,22 +145,24 @@ void remoteControlSendMsgAccel(uint8 team) {
 
 void remoteControlUpdateJoysticks(void) {
 	RadioMessage radioMessage;
-	uint8 joyNum, j;
+	uint8 joyNum, i;
 
 	if (radioCommandReceive(&radioCmdRemoteControl, &radioMessage, 0) ) {
 		// unpack all the joystick data from the radio message
 		//TODO Fix, add bounds checking to make sure we aren't corrupting things
-		j = 0;
+		i = 0;
 		for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
-			joysticks[joyNum].x = (int8)radioMessage.command.data[j++];
-			joysticks[joyNum].y = (int8)radioMessage.command.data[j++];
-			joysticks[joyNum].buttons = radioMessage.command.data[j++];
+			joysticks[joyNum].x = (int8)radioMessage.command.data[i++];
+			joysticks[joyNum].y = (int8)radioMessage.command.data[i++];
+			joysticks[joyNum].buttons = radioMessage.command.data[i++];
+			uint8 nonce = radioMessage.command.data[i++];
 
 			// see if this joystick is active
 			if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {
 				joysticks[joyNum].activeTime = osTaskGetTickCount();
 			}
 			//cprintf("joy%d,%4d,%4d,%4d ",joyNum,joysticks[joyNum].x,joysticks[joyNum].y,joysticks[joyNum].buttons);
+			//cprintf("joy nonce=%3d\n",nonce);
 		}
 		//cprintf("\n");
 	}
