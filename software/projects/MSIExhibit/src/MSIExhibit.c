@@ -42,9 +42,6 @@
 #define MODE_FLOCK						2
 #define MODE_CLUSTER					3
 
-#define FLOCK_CLUSTER_THRESHOLD			1
-#define FLOCK_CLUSTER_RANGE				600
-
 #define JOYSTICK_NUM_MSI				0
 
 #define MUSEUM_RADIO_COMMAND_BEH_IDX	0
@@ -78,25 +75,47 @@ static RadioCmd radioCmdExhibit;
 //#define TEAM_LEADER_ON_TIME			4
 //#define TEAM_LEADER_TOTAL_TIME		25
 
+#define FLOCK_CLUSTER_RANGE				300
+#define FLOCK_CLUSTER_THRESHOLD			1
+
+#define FLOCK_CLUSTER_COUNTER_STEP			40
+#define FLOCK_CLUSTER_COUNTER_MAX			(3 * FLOCK_CLUSTER_COUNTER_STEP)
+#define FLOCK_CLUSTER_COUNTER_CLUSTER 		(2 * FLOCK_CLUSTER_COUNTER_STEP)
+#define FLOCK_CLUSTER_COUNTER_FLOCK 		(1 * FLOCK_CLUSTER_COUNTER_STEP)
+
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
-	boolean farAway = FALSE;
+	static boolean clusterFlock = FALSE;
+	static uint32 clusterCounter = 0;
 
 	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
-	if ((nbrListGetSize(nbrListPtr) <= FLOCK_CLUSTER_THRESHOLD) || (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE))) {
-		farAway = TRUE;
+	//if ((nbrListGetSize(nbrListPtr) <= FLOCK_CLUSTER_THRESHOLD) || (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE))) {
+	if (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE)) {
+		clusterCounter++;
+	} else {
+		clusterCounter--;
+	}
+	clusterCounter = bound(clusterCounter, 0, FLOCK_CLUSTER_COUNTER_MAX);
+
+	if (clusterCounter > FLOCK_CLUSTER_COUNTER_CLUSTER) {
+		clusterFlock = TRUE;
+	}
+	if (clusterCounter < FLOCK_CLUSTER_COUNTER_FLOCK) {
+		clusterFlock = FALSE;
 	}
 
 	// If we are under the threshold for number of robots to flock or we
 	// are too far away, cluster.
-	if (farAway) {
+	if (clusterFlock) {
 		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
+		ledsSetPattern(LED_GREEN, LED_PATTERN_BLINK, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 	} else {
 		// otherwise flock
 		behFlock(behOutputPtr, nbrListPtr, MOTION_TV_FLOCK);
 		behOutputPtr->rv += behRadioPtr->rv;
 		behOutputPtr->tv = MOTION_TV_FLOCK;
 		behSetActive(behOutputPtr);
+		ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 	}
 
 	return behOutputPtr;
@@ -153,6 +172,23 @@ Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr
 
 	return behOutputPtr;
 }
+
+int32 rampVelocity(int32 vel, int32 velGoal, int32 step) {
+	if (vel < velGoal) {
+		vel += step;
+		if (vel > velGoal) {
+			vel = velGoal;
+		}
+	}
+	if (vel > velGoal) {
+		vel -= step;
+		if (vel < velGoal) {
+			vel = velGoal;
+		}
+	}
+	return vel;
+}
+
 
 void behaviorTask(void* parameters) {
 	uint32 lastWakeTime = osTaskGetTickCount();
@@ -331,7 +367,6 @@ void behaviorTask(void* parameters) {
 						cprintf("Team Size: %d\n", nbrList.size);
 					}
 					demoFlock(&behOutput, &behRadio, &nbrList);
-					ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_CLUSTER: {
@@ -368,17 +403,20 @@ void behaviorTask(void* parameters) {
 				case MODE_FLOCK: {
 					if(printNbrs) cprintf("Team Size: %d\n", nbrList.size);
 					demoFlock(&behOutput, &behRadio, &nbrList);
-					ledsSetPattern(LED_GREEN, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_CLUSTER: {
+					static int32 clusterVelocity;
+					int32 clusterVelocityGoal;
 					nbrPtr = nbrListFindSource(&nbrList, &broadcastMsg);
 					if (nbrPtr) {
-						int32 orbitVelocity = MOTION_TV/2;
-						behOrbit(&behOutput, nbrPtr, orbitVelocity);
+						clusterVelocityGoal = MOTION_TV/2;
+						behOrbit(&behOutput, nbrPtr, clusterVelocity);
 					} else {
-						behClusterBroadcast(&behOutput, &nbrList, MOTION_TV, &broadcastMsg);
+						clusterVelocityGoal = MOTION_TV;
+						behClusterBroadcast(&behOutput, &nbrList, clusterVelocity, &broadcastMsg);
 					}
+					clusterVelocity = rampVelocity(clusterVelocity, clusterVelocityGoal, 1);
 //					orbitCentroid(&behOutput, joystickPtr, &nbrList);
 					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
