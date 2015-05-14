@@ -89,37 +89,6 @@ int32 deadzone(int32 val, int32 deadzone) {
 }
 
 
-void remoteControlSendMsg(void) {
-	RadioMessage radioMessage;
-	uint8 i, j;
-	static uint8 nonce = 0;
-
-//	TVcmd = boundAbs(TVcmd, REMOTE_CONTROL_TV_MAX);
-//	RVcmd = boundAbs(RVcmd, REMOTE_CONTROL_RV_MAX);
-//	team = bound(team, 0, RADIO_CONTROL_TEAM_MAX);
-//	//TODO send int16s instead.  Use pack16() or it's relatives
-//	sprintf(radioMsgTX.command.data,"%d,%d,%d",TVcmd, RVcmd, team);
-//	//sprintf(radioMsgTX.command.data,"test message%d",count++);
-//	radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMsgTX);
-//	cprintf("%s\n",radioMsgTX.command.data);
-//
-//	/*
-//	 * Message sending out should look like an array of int8
-//	 * |X|Y|B||X|Y|B||X|Y|B|
-//	 * \  R  /\  G  /\  B  /
-//	 */
-
-	j = 0;
-	for (i = 0; i < REMOTE_CONTROL_JOYSTICK_NUM; i++) {
-		radioMessage.command.data[j++] = joysticks[i].x;
-		radioMessage.command.data[j++] = joysticks[i].y;
-		radioMessage.command.data[j++] = joysticks[i].buttons;
-		radioMessage.command.data[j++] = nonce++;
-	}
-	radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessage);
-}
-
-
 void remoteControlSendMsgAccel(uint8 team) {
 	static int32 accX = 0;
 	static int32 accY = 0;
@@ -143,19 +112,41 @@ void remoteControlSendMsgAccel(uint8 team) {
 }
 
 
+void remoteControlSendMsg(void) {
+	RadioMessage radioMessage;
+	uint8 joyNum, msgIdx;
+	static uint8 nonce = 0;
+
+	/*
+	 * Message sending out should look like an array of int8
+	 * |X|Y|B|N||X|Y|B|N||X|Y|B|N|
+	 * \   0   /\   1   /\   2   /
+	 */
+
+	msgIdx = 0;
+	for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
+		radioMessage.command.data[msgIdx++] = joysticks[joyNum].x;
+		radioMessage.command.data[msgIdx++] = joysticks[joyNum].y;
+		radioMessage.command.data[msgIdx++] = joysticks[joyNum].buttons;
+		radioMessage.command.data[msgIdx++] = nonce++;
+	}
+	radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessage);
+}
+
+
 void remoteControlUpdateJoysticks(void) {
 	RadioMessage radioMessage;
-	uint8 joyNum, i;
+	uint8 joyNum, msgIdx;
 
 	if (radioCommandReceive(&radioCmdRemoteControl, &radioMessage, 0) ) {
 		// unpack all the joystick data from the radio message
 		//TODO Fix, add bounds checking to make sure we aren't corrupting things
-		i = 0;
+		msgIdx = 0;
 		for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
-			joysticks[joyNum].x = (int8)radioMessage.command.data[i++];
-			joysticks[joyNum].y = (int8)radioMessage.command.data[i++];
-			joysticks[joyNum].buttons = radioMessage.command.data[i++];
-			uint8 nonce = radioMessage.command.data[i++];
+			joysticks[joyNum].x = (int8)radioMessage.command.data[msgIdx++];
+			joysticks[joyNum].y = (int8)radioMessage.command.data[msgIdx++];
+			joysticks[joyNum].buttons = radioMessage.command.data[msgIdx++];
+			uint8 nonce = radioMessage.command.data[msgIdx++];
 
 			// see if this joystick is active
 			if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {

@@ -58,8 +58,8 @@
 #define BEHAVIOR_READY_TIME 			(10 * MS_SECOND)
 
 // time for a behavior to time out.  After this time, the robots become idle
-#define BEHAVIOR_SLOW_TIME				(1 * MS_MINUTE)
-#define BEHAVIOR_IDLE_TIME				(3 * MS_MINUTE)
+#define BEHAVIOR_SLOW_TIME				(5 * MS_MINUTE)
+#define BEHAVIOR_IDLE_TIME				(10 * MS_MINUTE)
 
 
 /****** Team Broadcast messages *******/
@@ -183,14 +183,13 @@ void behaviorTask(void* parameters) {
 
 		neighborsGetMutex();
 		printNbrs = neighborsNewRoundCheck(&neighborRound);
-		printNbrs = FALSE;
+		//printNbrs = FALSE;
+
 		remoteControlUpdateJoysticks();
 		navTowerUpdateHeading(printNbrs);
-
-		// only populate nbr list with robots
 		nbrListCreate(&nbrListAll);
+		// make a robot-only nbrlist
 		nbrListGetRobots(&nbrList, &nbrListAll);
-
 
 
 //		if (printNbrs){
@@ -224,7 +223,7 @@ void behaviorTask(void* parameters) {
 		// if we're not building a behavior, check the buttons
 		uint8 modeOld = nbrDataGet(&nbrDataMode);
 		if (!behaviorBuilding) {
-			if(joystickPtr->buttons & JOYSTICK_BUTTON_RED) {
+			if (joystickPtr->buttons & JOYSTICK_BUTTON_RED) {
 				nbrDataSet(&nbrDataMode, MODE_FOLLOW);
 			} else if(joystickPtr->buttons & JOYSTICK_BUTTON_GREEN) {
 				nbrDataSet(&nbrDataMode, MODE_FLOCK);
@@ -319,17 +318,19 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				case MODE_CLUSTER: {
-//					if(behIsActive(&behRadio)) {
-//						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER);
-//					}
-//					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
-					orbitCentroid(&behOutput, joystickPtr, &nbrList);
-					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+					if(behIsActive(&behRadio)) {
+						behRemoteControlCompass(&behOutput, joystickPtr, MOTION_TV_ORBIT_CENTER);
+					}
+					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
+
+//					orbitCentroid(&behOutput, joystickPtr, &nbrList);
+//					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_IDLE:
 				default: {
-					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_SLOW);
+					behSetTvRv(&behOutput, 0, 0);
+					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 					break;
 				}
 				}
@@ -354,25 +355,21 @@ void behaviorTask(void* parameters) {
 					break;
 				}
 				case MODE_CLUSTER: {
-//					nbrPtr = nbrListFindSource(&nbrList, &broadcastMsg);
-//					if (nbrPtr) {
-//						int32 orbitVelocity = MOTION_TV;
-//						if (nbrGetRange(nbrPtr) < BEH_CLUSTER_RANGE) {
-//							orbitVelocity = MOTION_TV/2;
-//						}
-//						behOrbit(&behOutput, nbrPtr, orbitVelocity);
-//					} else {
-//						behClusterBroadcast(&behOutput, &nbrList, MOTION_TV, &broadcastMsg);
-//					}
-//					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
-
-					orbitCentroid(&behOutput, joystickPtr, &nbrList);
+					nbrPtr = nbrListFindSource(&nbrList, &broadcastMsg);
+					if (nbrPtr) {
+						int32 orbitVelocity = MOTION_TV/2;
+						behOrbit(&behOutput, nbrPtr, orbitVelocity);
+					} else {
+						behClusterBroadcast(&behOutput, &nbrList, MOTION_TV, &broadcastMsg);
+					}
+//					orbitCentroid(&behOutput, joystickPtr, &nbrList);
 					ledsSetPattern(LED_BLUE, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 					break;
 				}
 				case MODE_IDLE:
 				default:{
-					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_SLOW);
+					behSetTvRv(&behOutput, 0, 0);
+					ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
 					break;
 				}
 				}

@@ -518,7 +518,7 @@ Beh* behOrbit(Beh* behPtr, Nbr* nbrPtr, int32 tv) {
 
 #define ORBIT_MAX_BEARING	1500
 #define ORBIT_OFFSET_GAIN	400
-#define TV_RANGE_FUDGE		400
+#define TV_RANGE_FUDGE		500
 
 Beh* behOrbitRangeRaw(Beh* behPtr, int32 centerBearingCurrent, int32 centerRangeCurrent, int32 tv, uint16 centerRangeDesired) {
 	// Compute the offset from the desired range
