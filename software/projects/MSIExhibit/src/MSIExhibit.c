@@ -43,7 +43,7 @@
 #define MODE_CLUSTER					3
 
 #define FLOCK_CLUSTER_THRESHOLD			1
-#define FLOCK_CLUSTER_RANGE				400
+#define FLOCK_CLUSTER_RANGE				600
 
 #define JOYSTICK_NUM_MSI				0
 
@@ -61,13 +61,15 @@
 #define BEHAVIOR_SLOW_TIME				(5 * MS_MINUTE)
 #define BEHAVIOR_IDLE_TIME				(10 * MS_MINUTE)
 
+#define EXHIBIT_MESSAGE_MODE_IDX		0
+#define EXHIBIT_MESSAGE_BUILDING_IDX	1
+
 
 /****** Team Broadcast messages *******/
 BroadcastMessage broadcastMsg;
 NbrData nbrDataMode;
 
 uint32 behaviorChangeTime = 0;
-uint8 currentLED = LED_RED;
 static RadioCmd radioCmdExhibit;
 
 
@@ -163,6 +165,7 @@ void behaviorTask(void* parameters) {
 	Nbr* nbrPtr;
 	uint32 printMem = 0;
 	boolean behaviorBuilding = FALSE;
+	RadioMessage exhibitMessage;
 
 	neighborsInit(NEIGHBOR_PERIOD);
 	centroidLiteInit();
@@ -212,77 +215,89 @@ void behaviorTask(void* parameters) {
 
 		Joystick* joystickPtr = remoteControlGetJoystick(JOYSTICK_NUM_MSI);
 		if (printNbrs) cprintf("joy %d,%d,%d\n", joystickPtr->x, joystickPtr->y, joystickPtr->buttons);
-		boolean printExhibitStatus = FALSE;
-
-		// read the joystick buttons for behavior changes
-		if ((osTaskGetTickCount() - behaviorChangeTime) > BEHAVIOR_READY_TIME) {
-			if(behaviorBuilding) {
-				behaviorBuilding = FALSE;
-				printExhibitStatus |= TRUE;
-			}
-		}
-
-		// if we're not building a behavior, check the buttons
-		uint8 modeOld = nbrDataGet(&nbrDataMode);
-		if (!behaviorBuilding) {
-			if (joystickPtr->buttons & JOYSTICK_BUTTON_RED) {
-				nbrDataSet(&nbrDataMode, MODE_FOLLOW);
-			} else if(joystickPtr->buttons & JOYSTICK_BUTTON_GREEN) {
-				nbrDataSet(&nbrDataMode, MODE_FLOCK);
-			} else if(joystickPtr->buttons & JOYSTICK_BUTTON_BLUE) {
-				nbrDataSet(&nbrDataMode, MODE_CLUSTER);
-			}
-		}
-
-		// check for a change in mode
-		if (modeOld != nbrDataGet(&nbrDataMode)) {
-			// behavior change
-			behaviorChangeTime = osTaskGetTickCount();
-			behaviorBuilding = TRUE;
-			printExhibitStatus |= TRUE;
-		}
-
-		if (!remoteControlJoystickIsActive(JOYSTICK_NUM_MSI, BEHAVIOR_IDLE_TIME)) {
-			// no joystick activity for a long time.  go idle and flash the lights.
-			nbrDataSet(&nbrDataMode, MODE_IDLE);
-			behaviorBuilding = FALSE;
-			printExhibitStatus |= TRUE;
-		}
-
-		if (printNbrs || printExhibitStatus) {
-			cprintf("MSIExhibit mode=%d building=%d\n", nbrDataGet(&nbrDataMode), behaviorBuilding);
-		}
 
 		if(remoteControlIsSerialHost()) {
 			neighborsXmitEnable(FALSE);
 			behSetTvRv(&behOutput, 0, 0);
 
+			boolean printExhibitStatus = FALSE;
+			// read the joystick buttons for behavior changes
+			if ((osTaskGetTickCount() - behaviorChangeTime) > BEHAVIOR_READY_TIME) {
+				if(behaviorBuilding) {
+					behaviorBuilding = FALSE;
+					printExhibitStatus |= TRUE;
+				}
+			}
+
+			// if we're not building a behavior, check the buttons
+			uint8 modeOld = nbrDataGet(&nbrDataMode);
+			if (!behaviorBuilding) {
+				if (joystickPtr->buttons & JOYSTICK_BUTTON_RED) {
+					nbrDataSet(&nbrDataMode, MODE_FOLLOW);
+				} else if(joystickPtr->buttons & JOYSTICK_BUTTON_GREEN) {
+					nbrDataSet(&nbrDataMode, MODE_FLOCK);
+				} else if(joystickPtr->buttons & JOYSTICK_BUTTON_BLUE) {
+					nbrDataSet(&nbrDataMode, MODE_CLUSTER);
+				}
+			}
+
+			// check for a change in mode
+			if (modeOld != nbrDataGet(&nbrDataMode)) {
+				// behavior change
+				behaviorChangeTime = osTaskGetTickCount();
+				behaviorBuilding = TRUE;
+				printExhibitStatus |= TRUE;
+			}
+
+			if (!remoteControlJoystickIsActive(JOYSTICK_NUM_MSI, BEHAVIOR_IDLE_TIME)) {
+				// no joystick activity for a long time.  go idle and flash the lights.
+				nbrDataSet(&nbrDataMode, MODE_IDLE);
+				behaviorBuilding = FALSE;
+				printExhibitStatus |= TRUE;
+			}
+
+			if (printNbrs || printExhibitStatus) {
+				cprintf("MSIExhibit mode=%d building=%d\n", nbrDataGet(&nbrDataMode), behaviorBuilding);
+				exhibitMessage.command.data[EXHIBIT_MESSAGE_MODE_IDX] = nbrDataGet(&nbrDataMode);
+				exhibitMessage.command.data[EXHIBIT_MESSAGE_BUILDING_IDX] = behaviorBuilding;
+				radioCommandXmit(&radioCmdExhibit, ROBOT_ID_ALL, &exhibitMessage);
+			}
+
+			uint8 hostLEDColor;
 			switch (nbrDataGet(&nbrDataMode)) {
-			case MODE_FOLLOW: { currentLED = LED_RED; break; }
-			case MODE_FLOCK: { currentLED = LED_GREEN; break; }
-			case MODE_CLUSTER: { currentLED = LED_BLUE; break; }
+			case MODE_FOLLOW: { hostLEDColor = LED_RED; break; }
+			case MODE_FLOCK: { hostLEDColor = LED_GREEN; break; }
+			case MODE_CLUSTER: { hostLEDColor = LED_BLUE; break; }
 			case MODE_IDLE:
-			default:{ currentLED = LED_ALL; break; }
+			default:{ hostLEDColor = LED_ALL; break; }
 			}
 			// flash the lights
 			if(behaviorBuilding) {
-				ledsSetPattern(currentLED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
-				remoteControlLedsSetPattern(currentLED, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+				ledsSetPattern(hostLEDColor, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_MED);
+				remoteControlLedsSetPattern(hostLEDColor, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_FAST);
 			} else {
-				ledsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
-				remoteControlLedsSetPattern(currentLED, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+				ledsSetPattern(hostLEDColor, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
+				remoteControlLedsSetPattern(hostLEDColor, LED_PATTERN_ON, LED_BRIGHTNESS_MED, LED_RATE_FAST);
 			}
 
 		} else {
 			neighborsXmitEnable(TRUE);
+			if (radioCommandReceive(&radioCmdExhibit, &exhibitMessage, 0) ) {
+				// set the behavior mode
+				nbrDataSet(&nbrDataMode, exhibitMessage.command.data[EXHIBIT_MESSAGE_MODE_IDX]);
+				behaviorBuilding = exhibitMessage.command.data[EXHIBIT_MESSAGE_BUILDING_IDX];
+			}
+
 			if(printNbrs) {
+				cprintf("mode=%d building=%d\n", nbrDataGet(&nbrDataMode), behaviorBuilding);
 				nbrListPrint(&nbrListAll, "nbrs");
 				nbrListPrint(&nbrList, "robots");
 			}
 
 			// update the broadcast messages to look for the team leaders
 			broadcastMsgUpdateLeaderElection(&broadcastMsg, &nbrList);
-			broadcastMsgUpdateNbrData(&broadcastMsg, &nbrDataMode);
+			//TODO get mode from the radio now
+			//broadcastMsgUpdateNbrData(&broadcastMsg, &nbrDataMode);
 
 			// read the joystick.
 			behRemoteControlCompass(&behRadio, joystickPtr, MOTION_TV);
