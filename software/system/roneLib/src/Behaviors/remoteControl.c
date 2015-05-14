@@ -77,6 +77,62 @@ static SerialCmd serialCmdUI;
 
 static const Joystick joystickClear = {0, 0, 0};
 
+
+
+boolean remoteControlIsSerialHost(void) {
+	if (((osTaskGetTickCount() - serialCommandGetTimestamp(&serialCmdUI)) < REMOTE_CONTROL_SERIAL_HOST_TIMEOUT) && (osTaskGetTickCount() > REMOTE_CONTROL_SERIAL_HOST_TIMEOUT)) {
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+
+#define JOYSTICK_UI_POSITION_CENTER		128
+#define JOYSTICK_UI_MESSAGE_SIZE		6
+
+int8 joystickAxisConvert(int32 val) {
+	int32 valOut = (int32)val - JOYSTICK_UI_POSITION_CENTER;
+	valOut = bound(valOut, -JOYSTICK_POSITION_MAX, JOYSTICK_POSITION_MAX);
+	return (int8)valOut;
+}
+
+
+void joystickParseSingle(int32 joystickNum, char* joystickCommand) {
+	joysticks[joystickNum].x = joystickAxisConvert((int32)atoi_hex8(&joystickCommand[0]));
+	joysticks[joystickNum].y = joystickAxisConvert((int32)atoi_hex8(&joystickCommand[2]));
+	joysticks[joystickNum].buttons = atoi_hex8(&joystickCommand[4]);
+}
+
+
+/* Joystick values:
+ * UIXXYYBB...
+ * XX = 8-bit unsigned value for X.  128 = centered
+ * YY = 8-bit unsigned value for Y.  128 = centered
+ * BB = 8-bit bit-packed buttons.  bit 0 = r, 1 = g, 2 = b
+ */
+static void serialCmdUIFunc(char* command) {
+	uint8 joyNum;
+
+	// move past the command prefix, skip the 'UI'
+	command = serialCommandRemovePrefix(command);
+
+	for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
+		// parse each message for each joystick
+		char* joystickCommandPtr = &command[joyNum * JOYSTICK_UI_MESSAGE_SIZE];
+
+		joystickParseSingle(joyNum, joystickCommandPtr);
+
+		// see if this joystick is active
+		if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {
+			joysticks[joyNum].activeTime = osTaskGetTickCount();
+		}
+	}
+	remoteControlSendMsg();
+}
+
+
+
 int32 deadzone(int32 val, int32 deadzone) {
 	if (val > deadzone) {
 		val -= deadzone;
@@ -93,7 +149,6 @@ void remoteControlSendMsgAccel(uint8 team) {
 	static int32 accX = 0;
 	static int32 accY = 0;
 	int32 accXNew, accYNew, Xcmd, Ycmd;
-	Joystick joysticks[REMOTE_CONTROL_JOYSTICK_NUM];
 
 	/* This is math for the complimentary filter. It ignores the gyroscopes for now.
 	 * (So not really a complimentary filter, but still filters the accelerometer)
@@ -118,7 +173,7 @@ void remoteControlSendMsg(void) {
 	static uint8 nonce = 0;
 
 	/*
-	 * Message sending out should look like an array of int8
+	 * The message sending out should look like an array of int8
 	 * |X|Y|B|N||X|Y|B|N||X|Y|B|N|
 	 * \   0   /\   1   /\   2   /
 	 */
@@ -128,7 +183,7 @@ void remoteControlSendMsg(void) {
 		radioMessage.command.data[msgIdx++] = joysticks[joyNum].x;
 		radioMessage.command.data[msgIdx++] = joysticks[joyNum].y;
 		radioMessage.command.data[msgIdx++] = joysticks[joyNum].buttons;
-		radioMessage.command.data[msgIdx++] = nonce++;
+		//radioMessage.command.data[msgIdx++] = nonce++;
 	}
 	radioCommandXmit(&radioCmdRemoteControl, ROBOT_ID_ALL, &radioMessage);
 }
@@ -146,7 +201,7 @@ void remoteControlUpdateJoysticks(void) {
 			joysticks[joyNum].x = (int8)radioMessage.command.data[msgIdx++];
 			joysticks[joyNum].y = (int8)radioMessage.command.data[msgIdx++];
 			joysticks[joyNum].buttons = radioMessage.command.data[msgIdx++];
-			uint8 nonce = radioMessage.command.data[msgIdx++];
+			//uint8 nonce = radioMessage.command.data[msgIdx++];
 
 			// see if this joystick is active
 			if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {
@@ -299,65 +354,6 @@ Beh* behRemoteControlCompass(Beh* behPtr, Joystick* joystickPtr, uint16 tvMax) {
 }
 
 
-uint8 demoMode[3] = {DEMOMODE_IDLE};
-uint8 runMode[3] = {RUNMODE_IDLE};
-uint8 buttonVal = 0;
-
-
-boolean remoteControlIsSerialHost(void) {
-	if (((osTaskGetTickCount() - serialCommandGetTimestamp(&serialCmdUI)) < REMOTE_CONTROL_SERIAL_HOST_TIMEOUT) && (osTaskGetTickCount() > REMOTE_CONTROL_SERIAL_HOST_TIMEOUT)) {
-		return TRUE;
-	} else {
-		return FALSE;
-	}
-}
-
-
-#define JOYSTICK_UI_POSITION_CENTER		128
-
-int8 joystickAxisConvert(int32 val) {
-	int32 valOut = (int32)val - JOYSTICK_UI_POSITION_CENTER;
-	valOut = bound(valOut, -JOYSTICK_POSITION_MAX, JOYSTICK_POSITION_MAX);
-	return (int8)valOut;
-}
-
-
-void joystickParseSingle(int32 joystickNum, char* joystickCommand) {
-	joysticks[joystickNum].x = joystickAxisConvert((int32)atoi_hex8(&joystickCommand[0]));
-	joysticks[joystickNum].y = joystickAxisConvert((int32)atoi_hex8(&joystickCommand[2]));
-	joysticks[joystickNum].buttons = atoi_hex8(&joystickCommand[4]);
-}
-
-
-#define JOYSTICK_MESSAGE_SIZE	6
-
-/* Joystick values:
- * UIXXYYBB...
- * XX = 8-bit unsigned value for X.  128 = centered
- * YY = 8-bit unsigned value for Y.  128 = centered
- * BB = 8-bit bit-packed buttons.  bit 0 = r, 1 = g, 2 = b
- */
-static void serialCmdUIFunc(char* command) {
-	uint8 joyNum;
-
-	// move past the command prefix, skip the 'UI'
-	command = serialCommandRemovePrefix(command);
-
-	for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
-		// parse each message for each joystick
-		char* joystickCommandPtr = &command[joyNum * JOYSTICK_MESSAGE_SIZE];
-
-		joystickParseSingle(joyNum, joystickCommandPtr);
-
-		// see if this joystick is active
-		if((vectorMag(joysticks[joyNum].x, joysticks[joyNum].y) > JOYSTICK_ACTIVE_DIRECTION_MAG) || joysticks[joyNum].buttons) {
-			joysticks[joyNum].activeTime = osTaskGetTickCount();
-		}
-	}
-	remoteControlSendMsg();
-}
-
-
 
 #define REMOTE_CONTROL_LED_COMMAND_LEN		12
 char LEDCommandString[REMOTE_CONTROL_LED_COMMAND_LEN + 2];
@@ -433,112 +429,6 @@ void remoteControlInit() {
 
 	// clear all the joysticks
 	for (joyNum = 0; joyNum < REMOTE_CONTROL_JOYSTICK_NUM; joyNum++) {
-		joysticks[joyNum].x = 0;
-		joysticks[joyNum].y = 0;
-		joysticks[joyNum].buttons = 0;
+		joysticks[joyNum] = joystickClear;
 	}
 }
-
-// This code fragment is for setting the demo mode without driving a robot around
-
-//void remoteControlSendDemoMode(RadioCmd* radioCmdPtr, uint8 demoModeXmit) {
-//	RadioMessage message;
-//	char* msg = radioCommandGetDataPtr(&message);
-//
-//	msg[0] = RADIO_MESSAGE_DEMO_MODE;
-//	msg[1] = demoModeXmit;
-//	radioCommandXmit(radioCmdPtr, ROBOT_ID_ALL, &message);
-//}
-//
-
-
-//RadioWrap* parseJoystick(char* msg, uint32 index, Beh* Beh){
-//	RadioWrap* rw;
-////	char color = msg[index];
-//	char joystick = msg[index];
-//	char button = msg[++index];
-//
-//	if(joystick == 0x00 && button == 0x00){
-//		rw->BehPtr->active = TRUE; //Check if behInactive then outside and then run demoMode???
-//		rw->DemoMode = 0; //IDLE Mode
-//	}
-//
-//	if(button == 0x00){ //DO JOYSTICK MOVEMENTS ON FTL
-//		rw->DemoMode = 1;
-//		rw->BehPtr->active = TRUE;
-//		switch (joystick){
-//
-//		case 0x01: { //f
-//			rw->BehPtr->rv = 50;
-//		}
-//		case 0x02: { //r
-//			rw->BehPtr->rv = 50;
-//		}
-//		case 0x03: { //fr
-//			rw->BehPtr->rv = 25;
-//		}
-//		case 0x04: { //b
-//			rw->BehPtr->rv = 50;
-//		}
-//		case 0x06: { ////br
-//			rw->BehPtr->rv = 25;
-//		}
-//		case 0x08: { //l
-//			rw->BehPtr->rv = 50;
-//		}
-//		case 0x0C: { //bl
-//			rw->BehPtr->rv = 25;
-//		}
-//		case 0x09: { //fl
-//			rw->BehPtr->rv = 25;
-//		}
-//		}
-//	}
-//	else if(button == 0x01){
-//		//DO JOYSTICK MOVEMENTS ON CLUSTER
-//	}
-//	else if(button == 0x02 || button == 0x03){
-//		//DO JOYSTICK MOVEMENTS ON FLOCKING
-//	}
-//	else if(button == 0x04 || button == 0x05 || button == 0x06 || button == 0x07){
-//		//DO JOYSTICK MOVEMENTS ON DISPERSE
-//	}
-//
-//}
-//
-//RadioWrap* parseRadio(char* msg, Beh* behPtr, int groupID){
-//	uint32 curIndex = 0;
-//	RadioWrap* rw;
-//
-//	if (msg[curIndex] == 0x6A){ //check that its a joystick message
-//		curIndex++;
-//		if(groupID == 0){ //r
-//			curIndex = 1;
-//			rw = parseJoystick(msg, curIndex, behPtr);
-//		}
-//		if(groupID == 1){ //g
-//			curIndex = 4;
-//			rw = parseJoystick(msg, curIndex, behPtr);
-//		}
-//		if(groupID == 2) {//b
-//			curIndex = 7;
-//			rw = parseJoystick(msg, curIndex, behPtr);
-//		}
-//	}
-//	return rw;
-//}
-//
-//
-//
-//RadioWrap* behRadioControlNew(Beh* behPtr, uint8* demoModePtr, int groupID) {
-//	char message[RADIO_MESSAGE_LENGTH_RAW] = {0};
-//	uint32 message_size;
-//	uint32 message_link_quality;
-//	RadioWrap* rw;
-//
-//	*behPtr = behInactive;
-//	if (radioGetMessageBlocking(message, &message_size, &message_link_quality)) {
-//		rw = parseRadio(message, behPtr, groupID);
-//	}
-//	return rw;
-//}

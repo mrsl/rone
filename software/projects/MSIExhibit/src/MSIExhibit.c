@@ -68,12 +68,13 @@ NbrData nbrDataMode;
 
 uint32 behaviorChangeTime = 0;
 uint8 currentLED = LED_RED;
+static RadioCmd radioCmdExhibit;
 
 
 /******** user code ********/
 
-#define TEAM_LEADER_ON_TIME			4
-#define TEAM_LEADER_TOTAL_TIME		25
+//#define TEAM_LEADER_ON_TIME			4
+//#define TEAM_LEADER_TOTAL_TIME		25
 
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
@@ -172,6 +173,7 @@ void behaviorTask(void* parameters) {
 
 	remoteControlInit();
 	radioCommandSetSubnet(2);
+	radioCommandAddQueue(&radioCmdExhibit, "exhibit", 1);
 
 	ledsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
 	remoteControlLedsSetPattern(LED_ALL, LED_PATTERN_PULSE, LED_BRIGHTNESS_MED, LED_RATE_SLOW);
