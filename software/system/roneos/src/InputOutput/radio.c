@@ -116,8 +116,8 @@ static uint32 radio_write_command_isr(uint32 command) {
 	uint32 error;
 
 	SPISelectDeviceISR(SPI_RADIO);
-	MAP_SSIDataPutNonBlocking(SSI0_BASE, command);
-	MAP_SSIDataGetNonBlocking(SSI0_BASE, &chip_status);
+	MAP_SSIDataPut(SSI0_BASE, command);
+	MAP_SSIDataGet(SSI0_BASE, &chip_status);
 	SPIDeselectISR();
 
 	return chip_status;
@@ -285,16 +285,16 @@ void radioIntHandler(void) {
 
 	// read the interrupt flags and clear the radio interrupt flag register.
 	//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_RECV);
-	//status = radio_write_command_isr(NRF_NOP);
+	status = radio_write_command_isr(NRF_NOP);
 
-	uint32 success;
-	status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
-	if(success) {
-		radioCounterReceiveStatusSuccess++;
-	} else {
-		radioCounterReceiveStatusError++;
-		status = 0;
-	}
+//	uint32 success;
+//	status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
+//	if(success) {
+//		radioCounterReceiveStatusSuccess++;
+//	} else {
+//		radioCounterReceiveStatusError++;
+//		status = 0;
+//	}
 
 
 #ifndef MSI_DEBUG
@@ -388,6 +388,8 @@ void radioIntHandler(void) {
 		// put the received message on the main radio receive queue
 		//TODO - save this value of val , put into a global variable and look for radio recieve errors,
 		val = osQueueSendFromISR(radioCommsQueueRecv, (void*)(&message), &taskWoken);
+	} else {
+		val = 0;
 	}
 
 	// clear all the interrupt bits
@@ -536,8 +538,8 @@ void radioSendMessage(RadioMessage* messagePtr) {
 	radio_ce_on();
 	systemDelayUSec(15);
 	radio_ce_off();
-	//systemDelayUSec(50);
 
+#if 0
 //	// Wait until TX_DS or MAX_RT to pull the IRQ line, and change back to RX mode
 //	while (1) {
 //		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
@@ -557,21 +559,34 @@ void radioSendMessage(RadioMessage* messagePtr) {
 		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
 
 		//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-		uint32 success;
-		status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
+
+		status = radio_write_command_isr(NRF_NOP);
 		radioCounterXmitLoop++;
-		if(success) {
-			radioCounterReadStatusCorrect++;
-			if (status & NRF_STATUS_XMIT) {
-				radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-				break;
-			}
-		} else {
-			radioCounterReadStatusError++;
+		if (status & NRF_STATUS_XMIT) {
+			radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
 			break;
 		}
+
+//		uint32 success;
+//		status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
+//		radioCounterXmitLoop++;
+//		if(success) {
+//			radioCounterReadStatusCorrect++;
+//			if (status & NRF_STATUS_XMIT) {
+//				radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
+//				break;
+//			}
+//		} else {
+//			radioCounterReadStatusError++;
+//			break;
+//		}
 		//}
 	}
+#endif
+
+	systemDelayUSec(200);
+
+	radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
 
 	//radio_set_rx_mode_isr();
 	// power on the radio, primary rx
