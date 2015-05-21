@@ -119,8 +119,8 @@ void SPIConfigure(uint32 ulBase, uint8 wordSize, uint8 mode, uint32 frequency) {
 		// Enable the SSI port.
 		MAP_SSIEnable(ulBase);
 
-		// Wait 3 clock ticks.  We'll double that to be sure
-		MAP_SysCtlDelay(2);
+		// Wait a bit for these changes to stablize
+		MAP_SysCtlDelay(20);
 	}
 }
 

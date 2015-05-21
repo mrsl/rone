@@ -68,12 +68,17 @@ uint32 radioCounterReadStatusError = 0;
 uint32 radioCounterXmitQueue = 0;
 uint32 radioCounterIRQQueueXmit = 0;
 uint32 radioCounterIRQQueueEmpty = 0;
+
+uint32 radioCounterReceiveStatusSuccess = 0;
+uint32 radioCounterReceiveStatusError = 0;
 uint32 radioCounterReceive = 0;
 
 void radioPrintCounters(void) {
 	//cprintf("Radio: xmitMsg %d xmitQueueMsg=%d IRQXmitMsgFromQueue=%d IRQQueueEmpty=%d receive=%d\n",
 	//cprintf("Radio: xmit=%d,%d xmitQ=%d IRQXmitQ=%d IRQQEmpty=%d receive=%d\n",radioCounterXmit, radioCounterXmitLoop, radioCounterXmitQueue, radioCounterIRQQueueXmit, radioCounterIRQQueueEmpty, radioCounterReceive);
-		cprintf("Radio: xmit=%d,%d stat=%d/%d receive=%d\n", radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReceive);
+	//cprintf("Radio: xmit=%d,%d stat=%d/%d receive=%d\n", radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReceive);
+	cprintf("Radio: xmit=%d,%d stat=%d/%d receive=%d stat=%d/%d\n", radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError,
+			radioCounterReceive, radioCounterReceiveStatusSuccess, radioCounterReceiveStatusError);
 }
 
 static uint32 radio_read_register_isr(uint32 reg) {
@@ -119,12 +124,12 @@ static uint32 radio_write_command_isr(uint32 command) {
 }
 
 
-static uint32 radio_write_command_isr_nb(uint32 command, uint32* successPtr) {
+static uint32 radio_write_command_isr_nb(uint32 command, uint32 delay, uint32* successPtr) {
 	uint32 chip_status;
 
 	SPISelectDeviceISR(SPI_RADIO);
 	MAP_SSIDataPutNonBlocking(SSI0_BASE, command);
-	MAP_SysCtlDelay(RADIO_SPI_WRITE_STATUS_DELAY);
+	MAP_SysCtlDelay(delay);
 	*successPtr = MAP_SSIDataGetNonBlocking(SSI0_BASE, &chip_status);
 	SPIDeselectISR();
 
@@ -280,7 +285,16 @@ void radioIntHandler(void) {
 
 	// read the interrupt flags and clear the radio interrupt flag register.
 	//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_RECV);
-	status = radio_write_command_isr(NRF_NOP);
+	//status = radio_write_command_isr(NRF_NOP);
+
+	uint32 success;
+	status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
+	if(success) {
+		radioCounterReceiveStatusSuccess++;
+	} else {
+		radioCounterReceiveStatusError++;
+		status = 0;
+	}
 
 
 #ifndef MSI_DEBUG
@@ -331,9 +345,6 @@ void radioIntHandler(void) {
 		//TODO for now, just flush the fifo and exit
 		radio_write_command_isr(NRF_FLUSH_RX);
 
-		// clear the receive interrupt bit
-		radio_write_register_isr(NRF_STATUS, NRF_STATUS_RECV);
-
 		radioCounterReceive++;
 
 		// Receiving bootloader messages host reprogramming message
@@ -378,6 +389,9 @@ void radioIntHandler(void) {
 		//TODO - save this value of val , put into a global variable and look for radio recieve errors,
 		val = osQueueSendFromISR(radioCommsQueueRecv, (void*)(&message), &taskWoken);
 	}
+
+	// clear all the interrupt bits
+	radio_write_register_isr(NRF_STATUS, NRF_STATUS_ALL);
 
 //	MAP_GPIOPinWrite(BUTTON_RED_BASE, BUTTON_RED_PIN, 0);
 
@@ -522,7 +536,7 @@ void radioSendMessage(RadioMessage* messagePtr) {
 	radio_ce_on();
 	systemDelayUSec(15);
 	radio_ce_off();
-	systemDelayUSec(50);
+	//systemDelayUSec(50);
 
 //	// Wait until TX_DS or MAX_RT to pull the IRQ line, and change back to RX mode
 //	while (1) {
@@ -544,7 +558,7 @@ void radioSendMessage(RadioMessage* messagePtr) {
 
 		//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
 		uint32 success;
-		status = radio_write_command_isr_nb(NRF_NOP, &success);
+		status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
 		radioCounterXmitLoop++;
 		if(success) {
 			radioCounterReadStatusCorrect++;
