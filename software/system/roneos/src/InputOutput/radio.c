@@ -509,23 +509,8 @@ void radioSendMessage(RadioMessage* messagePtr) {
 	// Select the radio, disable the ISRs, grab the mutex
 	SPISelectDevice(SPI_RADIO);
 
-	// switch the radio from receive to transmit mode
-	// disable the CE line
-	radio_ce_off();
-
-	// clear all interrupt flags
-	//radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-
-	// power on the radio, primary tx
-	radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
-
-	//TODO should this happen before CE goes high?
-	//radio_write_command_isr(NRF_FLUSH_TX);
-
-	//TODO check to see if the TX fifo is full
-
-	// select the SPI device and send the 32-byte message
-	SPISelectDeviceISR(SPI_RADIO);
+	// load the 32-byte message into the TX fifo
+	//SPISelectDeviceISR(SPI_RADIO);
 	MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD_NOACK);
 	MAP_SSIDataGet(SSI0_BASE, &spi_data);
 	for (i = 0; i < RADIO_MESSAGE_LENGTH_RAW; ++i) {
@@ -534,12 +519,27 @@ void radioSendMessage(RadioMessage* messagePtr) {
 	}
 	SPIDeselectISR();
 
-	// give a 15us pulse on ce to send the packet
+	// switch the radio from receive to transmit mode
+	// disable the CE line
+	radio_ce_off();
+
+	// clear all interrupt flags
+	radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
+
+	// power on the radio, primary tx
+	radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
+	//systemDelayUSec(130);
+
+	//TODO should this happen before CE goes high?
+	//radio_write_command_isr(NRF_FLUSH_TX);
+
+	//TODO check to see if the TX fifo is full
+
+	// give a > 10us pulse on ce to send the packet
 	radio_ce_on();
 	systemDelayUSec(15);
 	radio_ce_off();
 
-#if 0
 //	// Wait until TX_DS or MAX_RT to pull the IRQ line, and change back to RX mode
 //	while (1) {
 //		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
@@ -555,17 +555,22 @@ void radioSendMessage(RadioMessage* messagePtr) {
 
 	// Wait until TX_DS or MAX_RT status bit is set, then change back to RX mode
 	uint32 status;
+	uint32 xmitLoopCounter = 0;
 	while (1) {
 		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
 
 		//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-
 		status = radio_write_command_isr(NRF_NOP);
-		radioCounterXmitLoop++;
 		if (status & NRF_STATUS_XMIT) {
-			radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
+			radioCounterReadStatusCorrect++;
 			break;
 		}
+		if (xmitLoopCounter > 30) {
+			radioCounterReadStatusError++;
+			break;
+		}
+		radioCounterXmitLoop++;
+		xmitLoopCounter++;
 
 //		uint32 success;
 //		status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
@@ -582,11 +587,9 @@ void radioSendMessage(RadioMessage* messagePtr) {
 //		}
 		//}
 	}
-#endif
-
-	systemDelayUSec(200);
-
 	radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
+
+	//systemDelayUSec(200);
 
 	//radio_set_rx_mode_isr();
 	// power on the radio, primary rx
