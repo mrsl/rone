@@ -224,6 +224,8 @@ void behaviorTask(void* parameters) {
 		printNbrs = neighborsNewRoundCheck(&neighborRound);
 		//printNbrs = FALSE;
 
+		radioWatchdog();
+
 		remoteControlUpdateJoysticks();
 		navTowerUpdateHeading(printNbrs);
 		nbrListCreate(&nbrListAll);

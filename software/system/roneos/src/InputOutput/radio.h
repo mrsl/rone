@@ -76,6 +76,7 @@ typedef union RadioMessage {
  * @returns void
  */
 void radioInit(void);
+void radioWatchdog(void);
 
 
 /**
