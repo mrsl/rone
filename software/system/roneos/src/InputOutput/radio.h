@@ -93,5 +93,7 @@ void radioIntEnable(void);
  */
 void radioIntDisable(void);
 
+void radioPrintCounters(void);
+
 
 #endif /* RADIO_H_ */

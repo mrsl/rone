@@ -476,6 +476,13 @@ Beh* behFlock(Beh* behPtr, NbrList* nbrListPtr, int32 tv) {
 }
 
 
+Beh* behCluster(Beh* behPtr, NbrList* nbrListPtr, int32 tv) {
+	behBearingController(behPtr, nbrListAverageBearing(&nbrListPtr));
+	behSetTv(behPtr, tv);
+	return behPtr;
+}
+
+
 Beh* behClusterBroadcast(Beh* behPtr, NbrList* nbrListPtr, int32 tv, BroadcastMessage* msgPtr) {
 	NbrList nbrListParents;
 	if (msgPtr) {
@@ -485,6 +492,7 @@ Beh* behClusterBroadcast(Beh* behPtr, NbrList* nbrListPtr, int32 tv, BroadcastMe
 	}
 	return behPtr;
 }
+
 
 Beh* behClusterBroadcastStop(Beh* behPtr, NbrList* nbrListPtr, BroadcastMessage* msgPtr, uint16 minRange) {
 	NbrList nbrListParents;

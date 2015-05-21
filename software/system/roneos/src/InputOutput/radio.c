@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MSI_DEBUG
+
 #ifdef PART_LM3S9B92
 	#include "inc/lm3s9b92.h"
 #endif
@@ -59,6 +61,18 @@ static boolean radio_xmit_irq_complete = TRUE;
 static osQueueHandle radioCommsQueueRecv;
 static osQueueHandle radioCommsQueueXmit;
 
+uint32 radioCounterXmit = 0;
+uint32 radioCounterXmitLoop = 0;
+uint32 radioCounterXmitQueue = 0;
+uint32 radioCounterIRQQueueXmit = 0;
+uint32 radioCounterIRQQueueEmpty = 0;
+uint32 radioCounterReceive = 0;
+
+void radioPrintCounters(void) {
+	//cprintf("Radio: xmitMsg %d xmitQueueMsg=%d IRQXmitMsgFromQueue=%d IRQQueueEmpty=%d receive=%d\n",
+	cprintf("Radio: xmit=%d,%d xmitQ=%d IRQXmitQ=%d IRQQEmpty=%d receive=%d\n",
+			radioCounterXmit, radioCounterXmitLoop, radioCounterXmitQueue, radioCounterIRQQueueXmit, radioCounterIRQQueueEmpty, radioCounterReceive);
+}
 
 static uint32 radio_read_register_isr(uint32 reg) {
 	uint32 chip_status;
@@ -89,15 +103,16 @@ static uint32 radio_write_register_isr(uint32 reg, uint32 val) {
 	return chip_status;
 }
 
-static void radio_write_command_isr(uint32 command) {
+
+static uint32 radio_write_command_isr(uint32 command) {
 	uint32 chip_status;
-	//    uint32 spi_data;
 
 	SPISelectDeviceISR(SPI_RADIO);
 	MAP_SSIDataPut(SSI0_BASE, command);
 	MAP_SSIDataGet(SSI0_BASE, &chip_status);
 	SPIDeselectISR();
 
+	return chip_status;
 }
 
 
@@ -131,15 +146,15 @@ static uint32 radio_write_register(uint32 reg, uint32 val) {
 }
 
 
-static void radio_write_command(uint32 command) {
+static uint32 radio_write_command(uint32 command) {
 	uint32 chip_status;
-	//    uint32 spi_data;
 
 	SPISelectDevice(SPI_RADIO);
 	MAP_SSIDataPut(SSI0_BASE, command);
 	MAP_SSIDataGet(SSI0_BASE, &chip_status);
 	SPIDeselect();
 
+	return chip_status;
 }
 
 
@@ -154,10 +169,14 @@ static void radio_ce_off(void) {
 
 
 #define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
+#define NRF_STATUS_RECV				(1 << NRF_STATUS_RX_DR)
+#define NRF_STATUS_XMIT				((1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT))
 #define NRF_STATUS_ALL				((1 << NRF_STATUS_RX_DR) | (1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT))
 
 static void radio_set_tx_mode_isr(void) {
+	// disable the CE line
 	radio_ce_off();
+
 	// clear all interrupt flags
 	radio_write_register_isr(NRF_STATUS, NRF_STATUS_ALL);
 
@@ -244,8 +263,9 @@ void radioIntHandler(void) {
 	MAP_GPIOPinIntClear(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
 
 	// read the interrupt flags and clear the radio interrupt flag register.
-	status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_ALL);
+	status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_RECV);
 
+#ifndef MSI_DEBUG
 	if (status & (1 << NRF_STATUS_TX_DS)) {
 		// transmit finished. if there is data in the xmit queue, then send it out
 		val = osQueueReceiveFromISR(radioCommsQueueXmit, &message, &taskWoken);
@@ -258,10 +278,12 @@ void radioIntHandler(void) {
 				MAP_SSIDataGet(SSI0_BASE, &spi_data);
 			}
 			SPIDeselectISR();
+			radioCounterIRQQueueXmit++;
 		} else {
 			// nothing else to xmit.  return to rx mode
 			radio_set_rx_mode_isr();
 			radio_xmit_irq_complete = TRUE;
+			radioCounterIRQQueueEmpty++;
 		}
 	}
 	if (status & (1 << NRF_STATUS_MAX_RT)) {
@@ -269,9 +291,10 @@ void radioIntHandler(void) {
 		//Give up. Can retry by toggling CE.
 		radio_set_rx_mode_isr();
 	}
+#endif
 
 	/*RECEIVE RADIO */
-	if (status & (1 << NRF_STATUS_RX_DR)) {
+	if (status & NRF_STATUS_RECV) {
 		// receive the message form the SPI bus
 		SPISelectDeviceISR(SPI_RADIO);
 		MAP_SSIDataPut(SSI0_BASE, NRF_R_RX_PAYLOAD);
@@ -287,6 +310,7 @@ void radioIntHandler(void) {
 		message.raw.linkQuality = radio_read_register_isr(NRF_RPD);
 		message.raw.timeStamp = osTaskGetTickCountFromISR();
 		//TODO - save this value of val , put into a global variable and look for radio recieve errors,
+		radioCounterReceive++;
 
 		// Receiving bootloader messages host reprogramming message
 // 		if ((message.command.type & RADIO_COMMAND_TYPE_MASK) >  RADIO_COMMAND_TYPE_REBOOT) {
@@ -355,7 +379,7 @@ void radioInit(void) {
 	MAP_GPIOPinIntEnable(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
 
 	// we assume this is being called before threads are running, so there is no need to get the SPI mutex.
-	//Enable the CE pin
+	//Configure the CE pin
 	radio_ce_off();
 	MAP_GPIOPinTypeGPIOOutput(RADIO_CE_PORT, RADIO_CE_PIN);
 
@@ -415,6 +439,7 @@ void radioSendMessage(RadioMessage* messagePtr) {
 //	}
 //	SPIDeselect();
 
+#ifndef MSI_DEBUG
 	radioIntDisable();
 	if (radio_xmit_irq_complete == TRUE) {
 		// the previous xmit has finished.  start a new xmit
@@ -431,11 +456,91 @@ void radioSendMessage(RadioMessage* messagePtr) {
 			MAP_SSIDataGet(SSI0_BASE, &spi_data);
 		}
 		SPIDeselect();
+		radioCounterXmit++;
 	} else {
 		// buffer the message in case we have a xmit in progress.
+		radioCounterXmitQueue++;
 		osQueueSend(radioCommsQueueXmit, messagePtr, 1);
 	}
 	radioIntEnable();
+#else
+	// make the xmit atomic to other SPI interrupts
+	// Select the radio, disable the ISRs, grab the mutex
+	SPISelectDevice(SPI_RADIO);
+
+	// switch the radio from receive to transmit mode
+	// disable the CE line
+	radio_ce_off();
+
+	// clear all interrupt flags
+	//radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
+
+	// power on the radio, primary tx
+	radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
+
+	//TODO should this happen before CE goes high?
+	//radio_write_command_isr(NRF_FLUSH_TX);
+
+	//TODO check to see if the TX fifo is full
+
+	// select the SPI device and send the 32-byte message
+	SPISelectDeviceISR(SPI_RADIO);
+	MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD_NOACK);
+	MAP_SSIDataGet(SSI0_BASE, &spi_data);
+	for (i = 0; i < RADIO_MESSAGE_LENGTH_RAW; ++i) {
+		MAP_SSIDataPut(SSI0_BASE, messagePtr->raw.data[i]);
+		MAP_SSIDataGet(SSI0_BASE, &spi_data);
+	}
+	SPIDeselectISR();
+
+	// turn on the chip enable to send the packet
+	radio_ce_on();
+
+//	// Wait until TX_DS or MAX_RT to pull the IRQ line, and change back to RX mode
+//	while (1) {
+//		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
+//			uint32 status;
+//
+//			status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_ALL);
+//			if ((status & (1 << NRF_STATUS_TX_DS)) || (status & (1 << NRF_STATUS_MAX_RT))) {
+//				radio_set_rx_mode_isr();
+//				break;
+//			}
+//		//}
+//	}
+
+	// Wait until TX_DS or MAX_RT status bit is set, then change back to RX mode
+	uint32 status;
+	while (1) {
+		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
+
+		//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
+		status = radio_write_command_isr(NRF_NOP);
+		radioCounterXmitLoop++;
+		if (status & NRF_STATUS_XMIT) {
+			radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
+			break;
+		}
+		//}
+	}
+
+	// disable the ce line to stop transmitting
+	radio_ce_off();
+
+	//radio_set_rx_mode_isr();
+	// power on the radio, primary rx
+	radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (1 << NRF_CONFIG_PRIM_RX));
+
+	//TODO need delay here before we reasssert ce?
+	radio_ce_on();
+
+	//TODO should this happen before CE goes high?
+	//radio_write_command_isr(NRF_FLUSH_RX);
+
+	radioCounterXmit++;
+	SPIDeselect();
+
+#endif
 }
 
 

@@ -51,7 +51,7 @@
 #define MS_SECOND						1000
 #define MS_MINUTE						(60 * MS_SECOND)
 
-// time for a behavior fo "settle".  After this time, the user can select another behavior
+// time for a behavior to "settle".  After this time, the user can select another behavior
 #define BEHAVIOR_READY_TIME 			(10 * MS_SECOND)
 
 // time for a behavior to time out.  After this time, the robots become idle
@@ -61,6 +61,7 @@
 #define EXHIBIT_MESSAGE_MODE_IDX		0
 #define EXHIBIT_MESSAGE_BUILDING_IDX	1
 
+#define MSI_FAKE_HOST_ENABLE
 
 /****** Team Broadcast messages *******/
 BroadcastMessage broadcastMsg;
@@ -68,13 +69,9 @@ NbrData nbrDataMode;
 
 uint32 behaviorChangeTime = 0;
 static RadioCmd radioCmdExhibit;
-
+static boolean fakeHostEnable = FALSE;
 
 /******** user code ********/
-
-//#define TEAM_LEADER_ON_TIME			4
-//#define TEAM_LEADER_TOTAL_TIME		25
-
 #define FLOCK_CLUSTER_RANGE				300
 #define FLOCK_CLUSTER_THRESHOLD			1
 
@@ -107,7 +104,8 @@ Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
 	// If we are under the threshold for number of robots to flock or we
 	// are too far away, cluster.
 	if (clusterFlock) {
-		behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
+		//behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
+		behCluster(behOutputPtr, nbrListPtr, MOTION_TV);
 		ledsSetPattern(LED_GREEN, LED_PATTERN_BLINK, LED_BRIGHTNESS_HIGH, LED_RATE_FAST);
 	} else {
 		// otherwise flock
@@ -208,7 +206,7 @@ void behaviorTask(void* parameters) {
 	broadcastMsgCreate(&broadcastMsg, MSI_DEMO_HOPS_MAX);
 	nbrDataCreate(&nbrDataMode, "mode", 4, MODE_IDLE);
 
-	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 65 /100);
+	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 75 /100);
 
 	remoteControlInit();
 	radioCommandSetSubnet(2);
@@ -248,11 +246,18 @@ void behaviorTask(void* parameters) {
 //			systemPrintMemUsage();
 //		}
 
+		if (printNbrs) radioPrintCounters();
 
 		Joystick* joystickPtr = remoteControlGetJoystick(JOYSTICK_NUM_MSI);
 		if (printNbrs) cprintf("joy %d,%d,%d\n", joystickPtr->x, joystickPtr->y, joystickPtr->buttons);
 
-		if(remoteControlIsSerialHost()) {
+#ifdef MSI_FAKE_HOST_ENABLE
+		if (buttonsGet(BUTTON_RED) || buttonsGet(BUTTON_GREEN) || buttonsGet(BUTTON_BLUE)) {
+			fakeHostEnable = TRUE;
+		}
+#endif
+
+		if(remoteControlIsSerialHost() || fakeHostEnable) {
 			neighborsXmitEnable(FALSE);
 			behSetTvRv(&behOutput, 0, 0);
 
@@ -276,6 +281,16 @@ void behaviorTask(void* parameters) {
 					nbrDataSet(&nbrDataMode, MODE_CLUSTER);
 				}
 			}
+
+#ifdef MSI_FAKE_HOST_ENABLE
+			if (buttonsGet(BUTTON_RED)) {
+				nbrDataSet(&nbrDataMode, MODE_FOLLOW);
+			} else if(buttonsGet(BUTTON_GREEN)) {
+				nbrDataSet(&nbrDataMode, MODE_FLOCK);
+			} else if(buttonsGet(BUTTON_BLUE)) {
+				nbrDataSet(&nbrDataMode, MODE_CLUSTER);
+			}
+#endif
 
 			// check for a change in mode
 			if (modeOld != nbrDataGet(&nbrDataMode)) {

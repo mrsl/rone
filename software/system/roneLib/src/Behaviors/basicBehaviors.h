@@ -156,6 +156,7 @@ Beh* behWallFollow(Beh* behPtr, NbrList* nbrListPtr, uint32 tv);
  *	@param msgPtr
  *	@returns updated behPtr
  */
+Beh* behCluster(Beh* behPtr, NbrList* nbrListPtr, int32 tv);
 Beh* behClusterBroadcast(Beh* behPtr, NbrList* nbrListPtr, int32 tv, BroadcastMessage* msgPtr);
 Beh* behClusterBroadcastStop(Beh* behPtr, NbrList* nbrListPtr, BroadcastMessage* msgPtr, uint16 minRange);
 
