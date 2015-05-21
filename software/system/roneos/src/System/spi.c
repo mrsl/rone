@@ -106,7 +106,7 @@ void SPIInit(void) {
 // sound chip - 2s to be 400kHz at first, then bump up speed
 void SPIConfigure(uint32 ulBase, uint8 wordSize, uint8 mode, uint32 frequency) {
 	if ((wordSize != SPIWordSize) || (mode != SPIMode) || (frequency != SPIFrequency)) {
-		// cache word size value
+		// cache argument values to compare next time
 		SPIWordSize = wordSize;
 		SPIMode = mode;
 		SPIFrequency = frequency;
@@ -118,6 +118,9 @@ void SPIConfigure(uint32 ulBase, uint8 wordSize, uint8 mode, uint32 frequency) {
 
 		// Enable the SSI port.
 		MAP_SSIEnable(ulBase);
+
+		// Wait 3 clock ticks.  We'll double that to be sure
+		MAP_SysCtlDelay(2);
 	}
 }
 

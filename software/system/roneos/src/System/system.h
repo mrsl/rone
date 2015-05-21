@@ -154,10 +154,10 @@ void systemIDInit(void);
 
 /**
  * @brief simple counting delay
- * @param delay the amount of time to delay the system
+ * @param delay the amount of time to delay the system.  Units are approximatly usecs
  * @returns void
  */
-void systemDelay(uint32 delay);
+void systemDelayUSec(uint32 delay);
 
 
 /**

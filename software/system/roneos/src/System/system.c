@@ -425,14 +425,14 @@ void systemIDInit(void) {
 	}
 }
 
-
+#define SYSCTL_DELAY_USEC 		16
 /*
  * @brief simple counting delay
  * @param delay the amount of time to delay the system
  * @returns void
  */
-void systemDelay(uint32 delay){
-	SysCtlDelay(delay);
+void systemDelayUSec(uint32 delay){
+	SysCtlDelay(delay * SYSCTL_DELAY_USEC);
 }
 
 #define HEARTBEAT_10HZ_COUNTER	6
