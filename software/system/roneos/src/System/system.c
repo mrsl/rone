@@ -88,7 +88,7 @@ uint8 roneID;
 uint8 msp430SPIOperationState = MSP430_SPI_NORMAL_OPERATION;
 
 
-void playError();
+//void playError();
 
 /*
  * FreeRTOS API hooks.

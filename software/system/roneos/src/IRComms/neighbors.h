@@ -20,7 +20,7 @@
 #define NEIGHBOR_PERIOD_DEFAULT 		500
 #define NEIGHBOR_TIMEOUT_ROUNDS			4
 #define OBSTACLE_TIMEOUT_ROUNDS			2
-#define NEIGHBOR_MAX					10
+#define NEIGHBOR_MAX					12
 
 /*
  * TODO: IR: Do these really need to be removed???? It seems like they are kinda necessary

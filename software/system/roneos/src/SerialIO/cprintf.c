@@ -24,7 +24,7 @@ static boolean cprintfOSInit = FALSE;
 
 static char cfprintfBuffer[CPRINTF_TEXT_STRING_SIZE];
 static char* cfprintfBufferPtr = cfprintfBuffer;
-static uint8 cfprintfBufferLength = 0;
+//static uint8 cfprintfBufferLength = 0;
 
 //TODO this shold be static, but the logger uses it too.
 uint8 CRLFMode = CPRINTF_CRLF_CRLF;

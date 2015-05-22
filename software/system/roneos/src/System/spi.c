@@ -120,15 +120,16 @@ void SPIConfigure(uint32 ulBase, uint8 wordSize, uint8 mode, uint32 frequency) {
 		MAP_SSIEnable(ulBase);
 
 		// Wait a bit for these changes to stabilize
-		MAP_SysCtlDelay(20);
+		MAP_SysCtlDelay(5);
 	}
 }
 
 
-void SPISemaphoreGiveFromISR(void) {
-	portBASE_TYPE taskWoken = pdFALSE;
-	osSemaphoreGiveFromISR(spiMutex, &taskWoken);
-}
+//TODO this seems very dangerous.  Why does this function exist?
+//void SPISemaphoreGiveFromISR(void) {
+//	portBASE_TYPE taskWoken = pdFALSE;
+//	osSemaphoreGiveFromISR(spiMutex, &taskWoken);
+//}
 
 
 /*
@@ -141,7 +142,7 @@ void SPIDeselect(void) {
 	// do the actual deselect
 	SPIDeselectISR();
 
-	// return the mutex, enable the radio IRQ
+	// return the mutex, enable the SPI interrupts
 	osSemaphoreGive(spiMutex);
 	radioIntEnable();
 	msp430InterruptEnable();

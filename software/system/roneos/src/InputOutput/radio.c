@@ -65,6 +65,7 @@ uint32 radioCounterXmit = 0;
 uint32 radioCounterXmitLoop = 0;
 uint32 radioCounterReadStatusCorrect = 0;
 uint32 radioCounterReadStatusError = 0;
+uint32 radioCounterReadStatusTimeout = 0;
 uint32 radioCounterXmitQueue = 0;
 uint32 radioCounterIRQQueueXmit = 0;
 uint32 radioCounterIRQQueueEmpty = 0;
@@ -79,7 +80,8 @@ void radioPrintCounters(void) {
 	//cprintf("Radio: xmitMsg %d xmitQueueMsg=%d IRQXmitMsgFromQueue=%d IRQQueueEmpty=%d receive=%d\n",
 	//cprintf("Radio: xmit=%d,%d xmitQ=%d IRQXmitQ=%d IRQQEmpty=%d receive=%d\n",radioCounterXmit, radioCounterXmitLoop, radioCounterXmitQueue, radioCounterIRQQueueXmit, radioCounterIRQQueueEmpty, radioCounterReceive);
 	//cprintf("Radio: xmit=%d,%d stat=%d/%d receive=%d\n", radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReceive);
-	cprintf("Radio: xmit=%d,%d stat=%d/%d receive=%d stat=%d/%d wd=%d\n", radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError,
+	cprintf("Radio: xmit=%d/%d c/e/t=%d/%d/%d receive=%d stat=%d/%d wd=%d\n",
+			radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReadStatusTimeout,
 			radioCounterReceive, radioCounterReceiveStatusSuccess, radioCounterReceiveStatusError,
 			radioWatchdogCounter);
 }
@@ -192,7 +194,7 @@ static void radio_ce_off(void) {
 }
 
 
-#define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
+#define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_MASK_TX_DS) | (1 << NRF_CONFIG_MASK_MAX_RT) | (1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
 #define NRF_STATUS_RECV				(1 << NRF_STATUS_RX_DR)
 #define NRF_STATUS_XMIT				((1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT))
 #define NRF_STATUS_ALL				((1 << NRF_STATUS_RX_DR) | (1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT))
@@ -262,9 +264,7 @@ void radioIntDisable(void) {
 }
 
 
-//#define BUTTON_RED_PERIPH 			SYSCTL_PERIPH_GPIOF
-//#define BUTTON_RED_BASE 			GPIO_PORTF_BASE
-//#define BUTTON_RED_PIN 				GPIO_PIN_1
+boolean radioManualIRQ = FALSE;
 
 /*
  * @brief Handles radio interrupt.
@@ -282,6 +282,11 @@ void radioIntHandler(void) {
 
 	// the radio irq is disabled when any other SPI device is selected, so
 	// we don't need to get the SPI mutex here (can't get mutex from an interrupt anyway)
+
+	//TODO test edge triggered interrupt
+	if(radioManualIRQ) {
+		MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_FALLING_EDGE);
+	}
 
 	// clear the 8962 interrupt pin
 	MAP_GPIOPinIntClear(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
@@ -339,7 +344,7 @@ void radioIntHandler(void) {
 			message.raw.data[i] = (char)spi_data;
 		}
 		SPIDeselectISR();
-		//TODO the RPD seems mostly useless.  Maybe can test later today
+		//TODO the RPD seems mostly useless.  Maybe can test later...
 		//message.raw.linkQuality = radio_read_register_isr(NRF_RPD);
 		message.raw.linkQuality = 0;
 		message.raw.timeStamp = osTaskGetTickCountFromISR();
@@ -396,7 +401,7 @@ void radioIntHandler(void) {
 	}
 
 	// clear all the interrupt bits
-	radio_write_register_isr(NRF_STATUS, NRF_STATUS_ALL);
+	radio_write_register_isr(NRF_STATUS, NRF_STATUS_RECV);
 
 //	MAP_GPIOPinWrite(BUTTON_RED_BASE, BUTTON_RED_PIN, 0);
 
@@ -512,6 +517,10 @@ void radioSendMessage(RadioMessage* messagePtr) {
 	}
 	radioIntEnable();
 #else
+	//TODO test a self-interrupt
+	radioManualIRQ = TRUE;
+	MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_HIGH_LEVEL);
+
 	// make the xmit atomic to other SPI interrupts
 	// Select the radio, disable the ISRs, grab the mutex
 	SPISelectDevice(SPI_RADIO);
@@ -542,15 +551,14 @@ void radioSendMessage(RadioMessage* messagePtr) {
 
 	//TODO check to see if the TX fifo is full
 
-	// give a > 10us pulse on ce to send the packet
+	// give a > 10us pulse on CE to send the packet
 	radio_ce_on();
 	systemDelayUSec(15);
 	radio_ce_off();
 
 	// Wait until TX_DS or MAX_RT status bit is set, then change back to RX mode
-	uint32 status;
-	uint32 xmitLoopCounter = 0;
-
+//	uint32 status;
+//	uint32 xmitLoopCounter = 0;
 //	while (1) {
 //		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
 //
@@ -568,6 +576,8 @@ void radioSendMessage(RadioMessage* messagePtr) {
 //		xmitLoopCounter++;
 //	}
 
+	uint32 status;
+	uint32 xmitLoopCounter = 0;
 	while (1) {
 		uint32 success;
 		status = radio_write_command_isr_nb(NRF_NOP, 1, &success);
@@ -577,9 +587,11 @@ void radioSendMessage(RadioMessage* messagePtr) {
 				radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
 				break;
 			}
+		} else {
+			radioCounterReadStatusError++;
 		}
 		if (xmitLoopCounter > 40) {
-			radioCounterReadStatusError++;
+			radioCounterReadStatusTimeout++;
 			break;
 		}
 		radioCounterXmitLoop++;

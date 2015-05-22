@@ -14,6 +14,8 @@
 #include "roneos.h"
 #include "ronelib.h"
 
+#define MSI_FAKE_HOST_ENABLE
+
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 #define BEHAVIOR_TASK_PERIOD			50
 #define NEIGHBOR_PERIOD					250
@@ -61,7 +63,6 @@
 #define EXHIBIT_MESSAGE_MODE_IDX		0
 #define EXHIBIT_MESSAGE_BUILDING_IDX	1
 
-#define MSI_FAKE_HOST_ENABLE
 
 /****** Team Broadcast messages *******/
 BroadcastMessage broadcastMsg;

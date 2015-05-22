@@ -477,7 +477,7 @@ Beh* behFlock(Beh* behPtr, NbrList* nbrListPtr, int32 tv) {
 
 
 Beh* behCluster(Beh* behPtr, NbrList* nbrListPtr, int32 tv) {
-	behBearingController(behPtr, nbrListAverageBearing(&nbrListPtr));
+	behBearingController(behPtr, nbrListAverageBearing(nbrListPtr));
 	behSetTv(behPtr, tv);
 	return behPtr;
 }
