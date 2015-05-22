@@ -234,13 +234,15 @@ void behaviorTask(void* parameters) {
 		nbrListGetRobots(&nbrList, &nbrListAll);
 
 
-//		if (printNbrs){
-//			// print the battery voltages
-//			char num1[10],num2[10];
-//			sprintf(num1,"%1.2f", systemBatteryVoltageGet());
-//			sprintf(num2,"%1.2f", systemUSBVoltageGet());
-//			cprintf("vbat=%s vusb=%s charge=%d fast=%d\n", num1, num2, systemBatteryChargingGet(), systemBatteryFastChargingGet());
-//		}
+		if (printNbrs) cprintf("Robot %d:\n", roneID);
+
+		if (printNbrs){
+			// print the battery voltages
+			char num1[10],num2[10];
+			sprintf(num1,"%1.2f", systemBatteryVoltageGet());
+			sprintf(num2,"%1.2f", systemUSBVoltageGet());
+			cprintf("vbat=%s vusb=%s charge=%d fast=%d\n", num1, num2, systemBatteryChargingGet(), systemBatteryFastChargingGet());
+		}
 
 		// print the stack usage for debugging
 //		uint32 timeTemp = osTaskGetTickCount() / 2000;
