@@ -636,7 +636,7 @@ Beh* behOrbitCCWRange(Beh* behPtr, Nbr* nbrPtr, int32 tv, uint16 range) {	//### 
  *	@returns updated behPtr
  */
 Beh* behFollowPredesessor(Beh* behPtr, NbrList* nbrListPtr, int32 tv, int32 range) {
-	int32 i, x, y, avgOrientation, theta;
+	int32 i;
 	Nbr* nbrPtr;
 	Nbr* leaderNbrPtr;
 	uint8 leaderID = 0;

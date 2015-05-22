@@ -14,23 +14,23 @@
 #include "roneos.h"
 #include "ronelib.h"
 
-#define MSI_FAKE_HOST_ENABLE
+//#define MSI_FAKE_HOST_ENABLE
 
 #define BEHAVIOR_TASK_PRIORITY			(BACKGROUND_TASK_PRIORITY + 1)
 #define BEHAVIOR_TASK_PERIOD			50
 #define NEIGHBOR_PERIOD					250
 
 // flocking
-#define DEMO_TV_FLOCK					0
-#define BUTTON_COUNT_CHANGE				20
+//#define DEMO_TV_FLOCK					0
+//#define BUTTON_COUNT_CHANGE				20
 #define MSI_DEMO_HOPS_MAX				12
 
 
-#define SNAKE_NAV_TOWER_TIMEOUT			1000
-#define MOTION_TV						120
+//#define SNAKE_NAV_TOWER_TIMEOUT			1000
+#define MOTION_TV						110
 #define MOTION_TV_FLOCK					(MOTION_TV*2/3)
-#define MOTION_TV_ORBIT_CENTER			55
-#define CAPTAIN_LED_COUNTER_TIME		12
+#define MOTION_TV_ORBIT_CENTER			50
+//#define CAPTAIN_LED_COUNTER_TIME		12
 
 #define FTL_RANGE						300
 #define FOLLOW_LEADER_AVOID_RANGE		300
@@ -76,10 +76,9 @@ static boolean fakeHostEnable = FALSE;
 #define FLOCK_CLUSTER_RANGE				300
 #define FLOCK_CLUSTER_THRESHOLD			1
 
-#define FLOCK_CLUSTER_COUNTER_STEP			40
-#define FLOCK_CLUSTER_COUNTER_MAX			(3 * FLOCK_CLUSTER_COUNTER_STEP)
-#define FLOCK_CLUSTER_COUNTER_CLUSTER 		(2 * FLOCK_CLUSTER_COUNTER_STEP)
-#define FLOCK_CLUSTER_COUNTER_FLOCK 		(1 * FLOCK_CLUSTER_COUNTER_STEP)
+#define FLOCK_CLUSTER_COUNTER_MAX			120
+#define FLOCK_CLUSTER_COUNTER_CLUSTER 		90
+#define FLOCK_CLUSTER_COUNTER_FLOCK 		50
 
 
 Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
@@ -91,7 +90,7 @@ Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
 	if (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE)) {
 		clusterCounter++;
 	} else {
-		clusterCounter--;
+		clusterCounter-=3;
 	}
 	clusterCounter = bound(clusterCounter, 0, FLOCK_CLUSTER_COUNTER_MAX);
 
@@ -172,6 +171,7 @@ Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr
 	return behOutputPtr;
 }
 
+
 int32 rampVelocity(int32 vel, int32 velGoal, int32 step) {
 	if (vel < velGoal) {
 		vel += step;
@@ -198,16 +198,17 @@ void behaviorTask(void* parameters) {
 	NbrList nbrList;
 	NbrList nbrListAll;
 	Nbr* nbrPtr;
-	uint32 printMem = 0;
+//	uint32 printMem = 0;
 	boolean behaviorBuilding = FALSE;
 	RadioMessage exhibitMessage;
 
 	neighborsInit(NEIGHBOR_PERIOD);
+
 	centroidLiteInit();
 	broadcastMsgCreate(&broadcastMsg, MSI_DEMO_HOPS_MAX);
 	nbrDataCreate(&nbrDataMode, "mode", 4, MODE_IDLE);
 
-	irCommsSetXmitPower(IR_COMMS_POWER_MAX * 75 /100);
+	//irCommsSetXmitPower(IR_COMMS_POWER_MAX * 85 /100);
 
 	remoteControlInit();
 	radioCommandSetSubnet(2);
@@ -227,15 +228,18 @@ void behaviorTask(void* parameters) {
 
 		radioWatchdog();
 
+		// update the joystick data from the RaspPi Host
 		remoteControlUpdateJoysticks();
+
+		// update the pose heading from the nav tower
 		navTowerUpdateHeading(printNbrs);
+
+		// make neighbor lists, all neighbors and robots only
 		nbrListCreate(&nbrListAll);
-		// make a robot-only nbrlist
 		nbrListGetRobots(&nbrList, &nbrListAll);
 
 
 		if (printNbrs) cprintf("Robot %d:\n", roneID);
-
 		if (printNbrs){
 			// print the battery voltages
 			char num1[10],num2[10];
@@ -245,11 +249,11 @@ void behaviorTask(void* parameters) {
 		}
 
 		// print the stack usage for debugging
-//		uint32 timeTemp = osTaskGetTickCount() / 2000;
-//		if(printMem != timeTemp) {
-//			printMem = timeTemp;
-//			systemPrintMemUsage();
-//		}
+		//	uint32 timeTemp = osTaskGetTickCount() / 2000;
+		//		if(printMem != timeTemp) {
+		//			printMem = timeTemp;
+		//			systemPrintMemUsage();
+		//		}
 
 		if (printNbrs) radioPrintCounters();
 

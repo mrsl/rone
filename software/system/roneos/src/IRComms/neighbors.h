@@ -44,6 +44,10 @@
 
 #define	MAX_PARENT_ID					0x7F
 
+#define NBR_SIGNALBITS_ROUNDS_DEFAULT			4
+#define NBR_SIGNALBITS_MIN_ACTIVE_DEFAULT 		2
+#define NBR_SIGNALBITS_MAX_INACTIVE_DEFAULT 	0
+
 // nbr radio messages - low-level system that underpins nbrnbr data and nbrData messages
 #define NBR_RADIO_MESSAGES_MAX   				16
 #define NBR_RADIO_MESSAGES_SENDER_ID_IDX		0
@@ -67,6 +71,7 @@
 #define NBR_ANGLE_MAX_DELTA_PER_ROUND	(MILLIRAD_PI / 4)
 
 #define BEACON_RANGE_SCALE		10
+
 
 /******** Structs ********/
 

@@ -21,9 +21,6 @@
 
 // the mask limits the signal bits to only compare the last few neighbor cycles
 //#define NBR_SIGNALBITS_MASK 					0x0F
-#define NBR_SIGNALBITS_ROUNDS_DEFAULT			4
-#define NBR_SIGNALBITS_MIN_ACTIVE_DEFAULT 		2
-#define NBR_SIGNALBITS_MAX_INACTIVE_DEFAULT 	0
 
 #define NEIGHBOR_RANGE_IIR_GAIN					50
 #define NEIGHBOR_ANGLES_IIR_GAIN				75
