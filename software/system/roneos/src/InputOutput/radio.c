@@ -61,14 +61,15 @@ static int radioTXerror = 0; //TODO look up the queue overflow in FreeRTOS
 static osQueueHandle radioCommsQueueRecv;
 static osQueueHandle radioCommsQueueXmit;
 
+uint32 radioCounterXmitQueue = 0;
+uint32 radioCounterIRQStartXmit = 0;
 uint32 radioCounterXmit = 0;
-uint32 radioCounterXmitLoop = 0;
 uint32 radioCounterReadStatusCorrect = 0;
+uint32 radioCounterStopXmit = 0;
+
+uint32 radioCounterXmitLoop = 0;
 uint32 radioCounterReadStatusError = 0;
 uint32 radioCounterReadStatusTimeout = 0;
-uint32 radioCounterXmitQueue = 0;
-uint32 radioCounterIRQQueueXmit = 0;
-uint32 radioCounterIRQQueueEmpty = 0;
 
 uint32 radioCounterReceiveStatusSuccess = 0;
 uint32 radioCounterReceiveStatusError = 0;
@@ -80,9 +81,21 @@ void radioPrintCounters(void) {
 	//cprintf("Radio: xmitMsg %d xmitQueueMsg=%d IRQXmitMsgFromQueue=%d IRQQueueEmpty=%d receive=%d\n",
 	//cprintf("Radio: xmit=%d,%d xmitQ=%d IRQXmitQ=%d IRQQEmpty=%d receive=%d\n",radioCounterXmit, radioCounterXmitLoop, radioCounterXmitQueue, radioCounterIRQQueueXmit, radioCounterIRQQueueEmpty, radioCounterReceive);
 	//cprintf("Radio: xmit=%d,%d stat=%d/%d receive=%d\n", radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReceive);
-	cprintf("Radio: xmit=%d/%d c/e/t=%d/%d/%d receive=%d stat=%d/%d wd=%d\n",
-			radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReadStatusTimeout,
-			radioCounterReceive, radioCounterReceiveStatusSuccess, radioCounterReceiveStatusError,
+//	cprintf("Radio: xmit=%d/%d c/e/t=%d/%d/%d receive=%d stat=%d/%d wd=%d\n",
+//			radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReadStatusTimeout,
+//			radioCounterReceive, radioCounterReceiveStatusSuccess, radioCounterReceiveStatusError,
+//			radioWatchdogCounter);
+	cprintf("Radio: xmit q/sta/x/stp/stat=%d/%d/%d/%d/%d receive=%d s/e=%d/%d wd=%d\n",
+			radioCounterXmitQueue,
+			radioCounterIRQStartXmit,
+			radioCounterXmit,
+			radioCounterStopXmit,
+			radioCounterReadStatusCorrect,
+
+			radioCounterReceive,
+			radioCounterReceiveStatusSuccess,
+			radioCounterReceiveStatusError,
+
 			radioWatchdogCounter);
 }
 
@@ -194,9 +207,8 @@ static void radio_ce_off(void) {
 }
 
 
-#define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_MASK_TX_DS) | (1 << NRF_CONFIG_MASK_MAX_RT) | (1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
-#define NRF_STATUS_RECV				(1 << NRF_STATUS_RX_DR)
-#define NRF_STATUS_XMIT				((1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT))
+//#define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_MASK_TX_DS) | (1 << NRF_CONFIG_MASK_MAX_RT) | (1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
+#define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
 #define NRF_STATUS_ALL				((1 << NRF_STATUS_RX_DR) | (1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT))
 
 static void radio_set_tx_mode_isr(void) {
@@ -238,7 +250,7 @@ static void radio_set_rx_mode_isr(void) {
 	radio_ce_on();
 
 	//TODO should this happen before CE goes high?
-	radio_write_command_isr(NRF_FLUSH_RX);
+	//radio_write_command_isr(NRF_FLUSH_RX);
 }
 
 
@@ -264,7 +276,7 @@ void radioIntDisable(void) {
 }
 
 
-boolean radioManualIRQ = FALSE;
+boolean radioStartXmit = FALSE;
 
 /*
  * @brief Handles radio interrupt.
@@ -278,21 +290,21 @@ void radioIntHandler(void) {
 	portBASE_TYPE taskWoken = pdFALSE;
 	RadioMessage message;
 
-//	MAP_GPIOPinWrite(BUTTON_RED_BASE, BUTTON_RED_PIN, BUTTON_RED_PIN);
+	// blink the button for timing measurements
+	//MAP_GPIOPinWrite(BUTTON_RED_BASE, BUTTON_RED_PIN, BUTTON_RED_PIN);
 
 	// the radio irq is disabled when any other SPI device is selected, so
-	// we don't need to get the SPI mutex here (can't get mutex from an interrupt anyway)
+	// we don't need to worry about being mutex on the SPI bus (can't get mutex from an interrupt anyway)
 
-	//TODO test edge triggered interrupt
-	if(radioManualIRQ) {
+	// If this interrupt was manually triggered, reset the pin back to edge-triggered
+	if(radioStartXmit) {
 		MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_FALLING_EDGE);
 	}
 
-	// clear the 8962 interrupt pin
+	// clear the 8962 interrupt pin flag
 	MAP_GPIOPinIntClear(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
 
-	// read the interrupt flags and clear the radio interrupt flag register.
-	//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_RECV);
+	// read the radio interrupt flags
 	status = radio_write_command_isr(NRF_NOP);
 
 //	uint32 success;
@@ -305,9 +317,9 @@ void radioIntHandler(void) {
 //	}
 
 
-#ifndef MSI_DEBUG
-	if (status & (1 << NRF_STATUS_TX_DS)) {
-		// transmit finished. if there is data in the xmit queue, then send it out
+	if ((status & (1 << NRF_STATUS_TX_DS)) || radioStartXmit) {
+		// new packet to transmit or transmit finished.
+		// check the xmit queue for a packet.  if there is data in the xmit queue, then send it out
 		val = osQueueReceiveFromISR(radioCommsQueueXmit, &message, &taskWoken);
 		if (val == pdPASS) {
 			SPISelectDeviceISR(SPI_RADIO);
@@ -318,23 +330,50 @@ void radioIntHandler(void) {
 				MAP_SSIDataGet(SSI0_BASE, &spi_data);
 			}
 			SPIDeselectISR();
-			radioCounterIRQQueueXmit++;
+
+			if(radioStartXmit) {
+				// new packet to xmit.  switch the radio to xmit mode
+				// disable the CE line
+				radio_ce_off();
+
+				// power on the radio, primary tx
+				radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
+				//systemDelayUSec(130);
+
+				//TODO should this happen before CE goes high?
+				//radio_write_command_isr(NRF_FLUSH_TX);
+
+				//TODO check to see if the TX fifo is full
+				radioStartXmit = FALSE;
+				radioCounterIRQStartXmit++;
+			}
+
+			// give a > 10us pulse on CE to send the packet
+			radio_ce_on();
+			systemDelayUSec(15);
+			radio_ce_off();
+			radioCounterXmit++;
 		} else {
 			// nothing else to xmit.  return to rx mode
 			radio_set_rx_mode_isr();
-			radio_xmit_irq_complete = TRUE;
-			radioCounterIRQQueueEmpty++;
+			radioCounterStopXmit++;
+		}
+		if (status & (1 << NRF_STATUS_TX_DS)) {
+			// clear the TX_DS  interrupt flags
+			radio_write_register_isr(NRF_STATUS, (1 << NRF_STATUS_TX_DS));
+			radioCounterReadStatusCorrect++;
 		}
 	}
+
 	if (status & (1 << NRF_STATUS_MAX_RT)) {
-		//reach maximum retransmissions.
-		//Give up. Can retry by toggling CE.
+		// We have reached the maximum number of retransmissions. we should never get here,
+		// because we don't use rexmit feature. But, clear the status bit and return to receive mode anyway
+		radio_write_register_isr(NRF_STATUS, (1 << NRF_STATUS_MAX_RT));
 		radio_set_rx_mode_isr();
 	}
-#endif
 
-	if (status & NRF_STATUS_RECV) {
-		// receive the message form the SPI bus
+	if (status & (1 << NRF_STATUS_RX_DR)) {
+		// a received message has arrived.  transfer the message over the SPI bus
 		SPISelectDeviceISR(SPI_RADIO);
 		MAP_SSIDataPut(SSI0_BASE, NRF_R_RX_PAYLOAD);
 		MAP_SSIDataGet(SSI0_BASE, &chip_status);
@@ -351,7 +390,9 @@ void radioIntHandler(void) {
 
 		//TODO in the future, check to see if fifo is empty.  if not, get another packet
 		//TODO for now, just flush the fifo and exit
-		radio_write_command_isr(NRF_FLUSH_RX);
+		//radio_write_command_isr(NRF_FLUSH_RX);
+
+		radio_write_register_isr(NRF_STATUS, (1 << NRF_STATUS_RX_DR));
 
 		radioCounterReceive++;
 
@@ -396,12 +437,7 @@ void radioIntHandler(void) {
 		// put the received message on the main radio receive queue
 		//TODO - save this value of val , put into a global variable and look for radio recieve errors,
 		val = osQueueSendFromISR(radioCommsQueueRecv, (void*)(&message), &taskWoken);
-	} else {
-		val = 0;
 	}
-
-	// clear all the interrupt bits
-	radio_write_register_isr(NRF_STATUS, NRF_STATUS_RECV);
 
 //	MAP_GPIOPinWrite(BUTTON_RED_BASE, BUTTON_RED_PIN, 0);
 
@@ -490,7 +526,16 @@ void radioWatchdog(void) {
 void radioSendMessage(RadioMessage* messagePtr) {
 	uint32 spi_data;
 	uint8 i;
+	portBASE_TYPE val;
 
+	// queue the message in the xmit queue
+	val = osQueueSend(radioCommsQueueXmit, messagePtr, 0);
+	if(val == pdPASS) {
+		radioCounterXmitQueue++;
+		//trigger a radio interrupt to talk to the SPI device
+		radioStartXmit = TRUE;
+		MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_HIGH_LEVEL);
+	}
 
 #ifndef MSI_DEBUG
 	radioIntDisable();
@@ -516,11 +561,10 @@ void radioSendMessage(RadioMessage* messagePtr) {
 		osQueueSend(radioCommsQueueXmit, messagePtr, 1);
 	}
 	radioIntEnable();
-#else
-	//TODO test a self-interrupt
-	radioManualIRQ = TRUE;
-	MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_HIGH_LEVEL);
+#endif
 
+
+#if 0
 	// make the xmit atomic to other SPI interrupts
 	// Select the radio, disable the ISRs, grab the mutex
 	SPISelectDevice(SPI_RADIO);
