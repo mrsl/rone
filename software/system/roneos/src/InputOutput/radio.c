@@ -208,6 +208,7 @@ static void radio_ce_off(void) {
 
 
 //#define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_MASK_TX_DS) | (1 << NRF_CONFIG_MASK_MAX_RT) | (1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
+#define NRF_RADIO_CONFIG_POWER_DOWN	((0 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
 #define NRF_RADIO_CONFIG_DEFAULT	((1 << NRF_CONFIG_PWR_UP) | (1 << NRF_CONFIG_EN_CRC) | (1 << NRF_CONFIG_CRCO))
 #define NRF_STATUS_ALL				((1 << NRF_STATUS_RX_DR) | (1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT))
 
@@ -277,7 +278,6 @@ void radioIntDisable(void) {
 
 
 boolean radioStartXmit = FALSE;
-boolean radioWatchdogReset = FALSE;
 
 /*
  * @brief Handles radio interrupt.
@@ -298,27 +298,12 @@ void radioIntHandler(void) {
 	// we don't need to worry about being mutex on the SPI bus (can't get mutex from an interrupt anyway)
 
 	// If this interrupt was manually triggered, reset the pin back to edge-triggered
-	if(radioStartXmit || radioWatchdogReset) {
+	if(radioStartXmit) {
 		MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_FALLING_EDGE);
 	}
 
 	// clear the 8962 interrupt pin flag
 	MAP_GPIOPinIntClear(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
-
-	if (radioWatchdogReset) {
-		radio_ce_off();
-		systemDelayUSec(2);
-		radio_write_register_isr(NRF_STATUS, NRF_STATUS_ALL);
-		systemDelayUSec(2);
-		radio_write_command_isr(NRF_FLUSH_RX);
-		systemDelayUSec(2);
-		radio_write_command_isr(NRF_FLUSH_TX);
-		systemDelayUSec(2);
-		radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (1 << NRF_CONFIG_PRIM_RX));
-		systemDelayUSec(2);
-		radio_ce_on();
-		radioWatchdogReset = FALSE;
-	}
 
 	// read the radio interrupt flags
 	status = radio_write_command_isr(NRF_NOP);
@@ -515,11 +500,22 @@ void radioWatchdog(void) {
 	if ((osTaskGetTickCount() - lastReceiveTime) > RADIO_WATCHDOG_RECEIVE_TIME) {
 		// you have received no messages for a while.  radio bug.  reset the radio
 
+		radio_ce_off();
+		systemDelayUSec(2);
+		radio_write_register(NRF_CONFIG, NRF_RADIO_CONFIG_POWER_DOWN | (1 << NRF_CONFIG_PRIM_RX));
+		systemDelayUSec(200);
+		radio_write_register(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (1 << NRF_CONFIG_PRIM_RX));
+		systemDelayUSec(200);
+		radio_write_command(NRF_FLUSH_RX);
+		systemDelayUSec(2);
+		radio_write_command(NRF_FLUSH_TX);
+		systemDelayUSec(2);
+		radio_write_register(NRF_STATUS, NRF_STATUS_ALL);
+		systemDelayUSec(2);
+		radio_ce_on();
+
 		lastReceiveTime = osTaskGetTickCount();
 		radioWatchdogCounter++;
-
-		radioWatchdogReset = TRUE;
-		MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_HIGH_LEVEL);
 	}
 }
 
