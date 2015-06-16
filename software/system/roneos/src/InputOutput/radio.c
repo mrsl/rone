@@ -66,6 +66,7 @@ uint32 radioCounterIRQStartXmit = 0;
 uint32 radioCounterXmit = 0;
 uint32 radioCounterReadStatusCorrect = 0;
 uint32 radioCounterStopXmit = 0;
+uint32 radioCounterMAXRT = 0;
 
 uint32 radioCounterXmitLoop = 0;
 uint32 radioCounterReadStatusError = 0;
@@ -78,19 +79,13 @@ uint32 radioCounterReceive = 0;
 uint32 radioWatchdogCounter = 0;
 
 void radioPrintCounters(void) {
-	//cprintf("Radio: xmitMsg %d xmitQueueMsg=%d IRQXmitMsgFromQueue=%d IRQQueueEmpty=%d receive=%d\n",
-	//cprintf("Radio: xmit=%d,%d xmitQ=%d IRQXmitQ=%d IRQQEmpty=%d receive=%d\n",radioCounterXmit, radioCounterXmitLoop, radioCounterXmitQueue, radioCounterIRQQueueXmit, radioCounterIRQQueueEmpty, radioCounterReceive);
-	//cprintf("Radio: xmit=%d,%d stat=%d/%d receive=%d\n", radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReceive);
-//	cprintf("Radio: xmit=%d/%d c/e/t=%d/%d/%d receive=%d stat=%d/%d wd=%d\n",
-//			radioCounterXmit, radioCounterXmitLoop, radioCounterReadStatusCorrect, radioCounterReadStatusError, radioCounterReadStatusTimeout,
-//			radioCounterReceive, radioCounterReceiveStatusSuccess, radioCounterReceiveStatusError,
-//			radioWatchdogCounter);
-	cprintf("Radio: xmit q/sta/x/stp/stat=%d/%d/%d/%d/%d receive=%d s/e=%d/%d wd=%d\n",
+	cprintf("Radio: xmit q/sta/x/stp/stat=%d/%d/%d/%d/%d/%d receive=%d s/e=%d/%d wd=%d\n",
 			radioCounterXmitQueue,
 			radioCounterIRQStartXmit,
 			radioCounterXmit,
 			radioCounterStopXmit,
 			radioCounterReadStatusCorrect,
+			radioCounterMAXRT,
 
 			radioCounterReceive,
 			radioCounterReceiveStatusSuccess,
@@ -231,11 +226,11 @@ static void radio_set_tx_mode_isr(void) {
 static void radio_set_tx_mode(void) {
 	radio_ce_off();
 	// clear all interrupt flags
-
 	radio_write_register(NRF_STATUS, NRF_STATUS_ALL);
 
 	// power on the radio, primary tx
 	radio_write_register(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
+	systemDelayUSec(130);
 	radio_ce_on();
 
 	//TODO should this happen before CE goes high?
@@ -246,12 +241,12 @@ static void radio_set_tx_mode(void) {
 static void radio_set_rx_mode_isr(void) {
 	radio_ce_off();
 
+	radio_write_command_isr(NRF_FLUSH_RX);
+
 	// power on the radio, primary rx
 	radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (1 << NRF_CONFIG_PRIM_RX));
+	//systemDelayUSec(130);
 	radio_ce_on();
-
-	//TODO should this happen before CE goes high?
-	//radio_write_command_isr(NRF_FLUSH_RX);
 }
 
 
@@ -286,6 +281,7 @@ boolean radioStartXmit = FALSE;
  */
 void radioIntHandler(void) {
 	uint32 status, statusFIFO, chip_status, spi_data, i;
+	uint32 statusWrite = 0;
 	uint8 pipe, subnet, programTime;
 	portBASE_TYPE val;
 	portBASE_TYPE taskWoken = pdFALSE;
@@ -296,58 +292,51 @@ void radioIntHandler(void) {
 
 	// the radio irq is disabled when any other SPI device is selected, so
 	// we don't need to worry about being mutex on the SPI bus (can't get mutex from an interrupt anyway)
-
-	// If this interrupt was manually triggered, reset the pin back to edge-triggered
-	if(radioStartXmit) {
-		MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_FALLING_EDGE);
-	}
-
 	// clear the 8962 interrupt pin flag
 	MAP_GPIOPinIntClear(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
 
 	// read the radio interrupt flags
 	status = radio_write_command_isr(NRF_NOP);
-
-//	uint32 success;
-//	status = radio_write_command_isr_nb(NRF_NOP, RADIO_SPI_WRITE_STATUS_DELAY, &success);
-//	if(success) {
-//		radioCounterReceiveStatusSuccess++;
-//	} else {
-//		radioCounterReceiveStatusError++;
-//		status = 0;
-//	}
-
+	statusWrite = status & ((1 << NRF_STATUS_TX_DS) | (1 << NRF_STATUS_MAX_RT) | (1 << NRF_STATUS_RX_DR));
 
 	if ((status & (1 << NRF_STATUS_TX_DS)) || radioStartXmit) {
 		// new packet to transmit or transmit finished.
 		// check the xmit queue for a packet.  if there is data in the xmit queue, then send it out
+		if(radioStartXmit) {
+			// If this interrupt was manually triggered, reset the pin back to low-level
+			MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_LOW_LEVEL);
+
+			// Flush the TX FIFO
+			//radio_write_command_isr(NRF_FLUSH_TX);
+		}
+
+		//todo comment out all xmit
+#if 1
 		val = osQueueReceiveFromISR(radioCommsQueueXmit, &message, &taskWoken);
 		if (val == pdPASS) {
+			// disable the CE line
+			radio_ce_off();
+
+			if(radioStartXmit) {
+				// new packet to xmit.  switch the radio to xmit mode
+				// power on the radio, primary tx
+				//systemDelayUSec(130);
+				radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
+				//systemDelayUSec(130);
+
+				radioStartXmit = FALSE;
+				radioCounterIRQStartXmit++;
+			}
+
 			SPISelectDeviceISR(SPI_RADIO);
-			MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD_NOACK);
+			//MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD_NOACK);
+			MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD);
 			MAP_SSIDataGet(SSI0_BASE, &chip_status);
 			for (i = 0; i < RADIO_MESSAGE_LENGTH_RAW; ++i) {
 				MAP_SSIDataPut(SSI0_BASE, message.raw.data[i]);
 				MAP_SSIDataGet(SSI0_BASE, &spi_data);
 			}
 			SPIDeselectISR();
-
-			if(radioStartXmit) {
-				// new packet to xmit.  switch the radio to xmit mode
-				// disable the CE line
-				radio_ce_off();
-
-				// power on the radio, primary tx
-				radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
-				//systemDelayUSec(130);
-
-				//TODO should this happen before CE goes high?
-				//radio_write_command_isr(NRF_FLUSH_TX);
-
-				//TODO check to see if the TX fifo is full
-				radioStartXmit = FALSE;
-				radioCounterIRQStartXmit++;
-			}
 
 			// give a > 10us pulse on CE to send the packet
 			radio_ce_on();
@@ -361,89 +350,117 @@ void radioIntHandler(void) {
 		}
 		if (status & (1 << NRF_STATUS_TX_DS)) {
 			// clear the TX_DS  interrupt flags
-			radio_write_register_isr(NRF_STATUS, (1 << NRF_STATUS_TX_DS));
 			radioCounterReadStatusCorrect++;
 		}
+#endif
+
 	}
 
 	if (status & (1 << NRF_STATUS_MAX_RT)) {
 		// We have reached the maximum number of retransmissions. we should never get here,
-		// because we don't use rexmit feature. But, clear the status bit and return to receive mode anyway
-		radio_write_register_isr(NRF_STATUS, (1 << NRF_STATUS_MAX_RT));
-		radio_set_rx_mode_isr();
+		// because we don't use the rexmit feature. But, clear the status bit and put the radio in
+		// receive mode anyway
+
+		radio_write_command_isr(NRF_FLUSH_RX);
+		radio_write_command_isr(NRF_FLUSH_TX);
+
+		// turn off all auto acknowledgements
+		radio_write_register_isr(NRF_EN_AA, 0x00);
+
+		 // turn off auto rexmit
+		radio_write_register_isr(NRF_SETUP_RETR, 0x00);
+
+		 // enable only data pipe 0
+		radio_write_register_isr(NRF_EN_RXADDR, 0x01);
+
+		// set a fixed 32-byte message length
+		radio_write_register_isr(NRF_RX_PW_P0, RADIO_MESSAGE_LENGTH_RAW);
+
+		// enable the noack payload command
+		radio_write_register_isr(NRF_FEATURE, (1 << NRF_FEATURE_EN_DYN_ACK));
+
+		//radio_set_rx_mode_isr();
+		radioCounterMAXRT++;
 	}
 
 	if (status & (1 << NRF_STATUS_RX_DR)) {
-		// a received message has arrived.  transfer the message over the SPI bus
-		SPISelectDeviceISR(SPI_RADIO);
-		MAP_SSIDataPut(SSI0_BASE, NRF_R_RX_PAYLOAD);
-		MAP_SSIDataGet(SSI0_BASE, &chip_status);
-		for (i = 0; i < RADIO_MESSAGE_LENGTH_RAW; i++) {
-			MAP_SSIDataPut(SSI0_BASE, 0x00);
-			MAP_SSIDataGet(SSI0_BASE, &spi_data);
-			message.raw.data[i] = (char)spi_data;
-		}
-		SPIDeselectISR();
-		//TODO the RPD seems mostly useless.  Maybe can test later...
-		//message.raw.linkQuality = radio_read_register_isr(NRF_RPD);
-		message.raw.linkQuality = 0;
-		message.raw.timeStamp = osTaskGetTickCountFromISR();
+		boolean moreMessages = FALSE;
+		do {
+			// a received message has arrived.  transfer the message from the radio over the SPI bus
+			SPISelectDeviceISR(SPI_RADIO);
+			MAP_SSIDataPut(SSI0_BASE, NRF_R_RX_PAYLOAD);
+			MAP_SSIDataGet(SSI0_BASE, &chip_status);
+			for (i = 0; i < RADIO_MESSAGE_LENGTH_RAW; i++) {
+				MAP_SSIDataPut(SSI0_BASE, 0x00);
+				MAP_SSIDataGet(SSI0_BASE, &spi_data);
+				message.raw.data[i] = (char)spi_data;
+			}
+			SPIDeselectISR();
+			//TODO the RPD seems mostly useless.  Maybe can test later...
+			//message.raw.linkQuality = radio_read_register_isr(NRF_RPD);
+			message.raw.linkQuality = 0;
+			message.raw.timeStamp = osTaskGetTickCountFromISR();
 
-		//TODO in the future, check to see if fifo is empty.  if not, get another packet
-		//TODO for now, just flush the fifo and exit
-		//radio_write_command_isr(NRF_FLUSH_RX);
+			radioCounterReceive++;
 
-		radio_write_register_isr(NRF_STATUS, (1 << NRF_STATUS_RX_DR));
+	#if 0
+			// Receiving bootloader messages host reprogramming message
+	// 		if ((message.command.type & RADIO_COMMAND_TYPE_MASK) >  RADIO_COMMAND_TYPE_REBOOT) {
+	// 			// Select to right version
+	// #if defined(RONE_V9)
+	// 			programTime = RADIO_COMMAND_TYPE_PROGRAM_TIME_V11;
+	// #elif defined(RONE_V12)
+	// 			programTime = RADIO_COMMAND_TYPE_PROGRAM_TIME_V12;
+	// #endif
+	// 			subnet = radioCommandGetSubnet(&message);
 
-		radioCounterReceive++;
+	// //			cprintf("SUBNET = %d\n", subnet);
+	// //			cprintf("programTime = %d \n", (int)(message.command.type & RADIO_COMMAND_TYPE_MASK));
+	// //			cprintf("range = [%d, %d] \n",  (int)(message.raw.data[1]), (int)(message.raw.data[2]));
+	// //			SysCtlDelay(500000);
 
-		// Receiving bootloader messages host reprogramming message
-// 		if ((message.command.type & RADIO_COMMAND_TYPE_MASK) >  RADIO_COMMAND_TYPE_REBOOT) {
-// 			// Select to right version
-// #if defined(RONE_V9)
-// 			programTime = RADIO_COMMAND_TYPE_PROGRAM_TIME_V11;
-// #elif defined(RONE_V12)
-// 			programTime = RADIO_COMMAND_TYPE_PROGRAM_TIME_V12;
-// #endif
-// 			subnet = radioCommandGetSubnet(&message);
+	// 			// Only put robot in receive mode if: correct subnet, right hardware version, and ID range
+	// 			// RADIO_COMMAND_TYPE_PROGRAM_TIME: message_header[4] = [type + subnet, id_range_min, id_range_max, sender ID]
+	// 			if (((subnet == RADIO_SUBNET_ALL) || (subnet == radioCommandGetLocalSubnet())) &&
+	// 					(programTime == (uint8)(message.command.type & RADIO_COMMAND_TYPE_MASK)) &&
+	// 					(roneID >= (uint8)(message.raw.data[1]) && roneID <= (uint8)(message.raw.data[2]))) {
+	// 				writeBootloaderState(BL_STATE_RECEIVE);
+	// 			} else {
+	// 				// If the robot receives non-'Program Time' bootloader commands, traps it
+	// 				if ((message.command.type & RADIO_COMMAND_TYPE_MASK) < RADIO_COMMAND_TYPE_PROGRAM_TIME_V14) {
+	// 					while (1) {
+	// 						blinkyLedSet(1);
+	// 						SysCtlDelay(5000000);
+	// 						blinkyLedSet(0);
+	// 						SysCtlDelay(5000000);
+	// 					}
+	// 				}
+	// 				// Put robot in limbo state if the host program is not meant for this robot (wrong subnet or version)
+	// 				writeBootloaderState(BL_STATE_LIMBO);
+	// 			}
+	// 			// Load bootloader
+	// 			bootloading();
+	// 		}
+	#endif
 
-// //			cprintf("SUBNET = %d\n", subnet);
-// //			cprintf("programTime = %d \n", (int)(message.command.type & RADIO_COMMAND_TYPE_MASK));
-// //			cprintf("range = [%d, %d] \n",  (int)(message.raw.data[1]), (int)(message.raw.data[2]));
-// //			SysCtlDelay(500000);
-
-// 			// Only put robot in receive mode if: correct subnet, right hardware version, and ID range
-// 			// RADIO_COMMAND_TYPE_PROGRAM_TIME: message_header[4] = [type + subnet, id_range_min, id_range_max, sender ID]
-// 			if (((subnet == RADIO_SUBNET_ALL) || (subnet == radioCommandGetLocalSubnet())) &&
-// 					(programTime == (uint8)(message.command.type & RADIO_COMMAND_TYPE_MASK)) &&
-// 					(roneID >= (uint8)(message.raw.data[1]) && roneID <= (uint8)(message.raw.data[2]))) {
-// 				writeBootloaderState(BL_STATE_RECEIVE);
-// 			} else {
-// 				// If the robot receives non-'Program Time' bootloader commands, traps it
-// 				if ((message.command.type & RADIO_COMMAND_TYPE_MASK) < RADIO_COMMAND_TYPE_PROGRAM_TIME_V14) {
-// 					while (1) {
-// 						blinkyLedSet(1);
-// 						SysCtlDelay(5000000);
-// 						blinkyLedSet(0);
-// 						SysCtlDelay(5000000);
-// 					}
-// 				}
-// 				// Put robot in limbo state if the host program is not meant for this robot (wrong subnet or version)
-// 				writeBootloaderState(BL_STATE_LIMBO);
-// 			}
-// 			// Load bootloader
-// 			bootloading();
-// 		}
-
-		// put the received message on the main radio receive queue
-		//TODO - save this value of val , put into a global variable and look for radio recieve errors,
-		val = osQueueSendFromISR(radioCommsQueueRecv, (void*)(&message), &taskWoken);
+			// put the received message on the main radio receive queue
+			val = osQueueSendFromISR(radioCommsQueueRecv, (void*)(&message), &taskWoken);
+			uint32 FIFOStatus = radio_read_register_isr(NRF_FIFO_STATUS);
+			moreMessages = !(FIFOStatus & (1 << NRF_FIFOSTATUS_RX_EMPTY));
+			if (moreMessages) {
+				FIFOStatus++;
+				FIFOStatus--;
+			}
+		} while (moreMessages);
 	}
+
+	radio_write_register_isr(NRF_STATUS, statusWrite);
 
 //	MAP_GPIOPinWrite(BUTTON_RED_BASE, BUTTON_RED_PIN, 0);
 
 	portEND_SWITCHING_ISR(taskWoken);
 }
+
 
 /*
  * @brief Initializes the radio.
@@ -461,7 +478,10 @@ void radioInit(void) {
 	//Set up interrupt on the Radio IRQ line
 	MAP_GPIOPinTypeGPIOInput(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
 	MAP_GPIOPadConfigSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_STRENGTH_2MA, GPIO_PIN_TYPE_STD_WPU);
-	MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_FALLING_EDGE);
+
+	//TODO testing level-sensitive interrupt
+	//MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_FALLING_EDGE);
+	MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_LOW_LEVEL);
 	MAP_GPIOPinIntEnable(RADIO_IRQ_PORT, RADIO_IRQ_PIN);
 
 	// we assume this is being called before threads are running, so there is no need to get the SPI mutex.
@@ -472,8 +492,17 @@ void radioInit(void) {
 	 // turn off all auto acknowledgements
 	radio_write_register_isr(NRF_EN_AA, 0x00);
 
+	 // turn off auto rexmit
+	radio_write_register_isr(NRF_SETUP_RETR, 0x00);
+
+	 // enable only data pipe 0
+	radio_write_register_isr(NRF_EN_RXADDR, 0x01);
+
 	// set a fixed 32-byte message length
 	radio_write_register_isr(NRF_RX_PW_P0, RADIO_MESSAGE_LENGTH_RAW);
+
+	// enable the noack payload command
+	radio_write_register_isr(NRF_FEATURE, (1 << NRF_FEATURE_EN_DYN_ACK));
 
 	// clear int flags
 	radio_write_register_isr(NRF_STATUS, NRF_STATUS_ALL);
@@ -500,19 +529,31 @@ void radioWatchdog(void) {
 	if ((osTaskGetTickCount() - lastReceiveTime) > RADIO_WATCHDOG_RECEIVE_TIME) {
 		// you have received no messages for a while.  radio bug.  reset the radio
 
-		radio_ce_off();
-		systemDelayUSec(2);
-		radio_write_register(NRF_CONFIG, NRF_RADIO_CONFIG_POWER_DOWN | (1 << NRF_CONFIG_PRIM_RX));
-		systemDelayUSec(200);
-		radio_write_register(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (1 << NRF_CONFIG_PRIM_RX));
-		systemDelayUSec(200);
-		radio_write_command(NRF_FLUSH_RX);
-		systemDelayUSec(2);
-		radio_write_command(NRF_FLUSH_TX);
-		systemDelayUSec(2);
+ 		radio_ce_off();
+
+//		radio_write_register(NRF_CONFIG, NRF_RADIO_CONFIG_POWER_DOWN | (1 << NRF_CONFIG_PRIM_RX));
+//		systemDelayUSec(200);
+//
+//		radio_write_register(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (1 << NRF_CONFIG_PRIM_RX));
+//		systemDelayUSec(200);
+
+		 // turn off all auto acknowledgements
+		radio_write_register(NRF_EN_AA, 0x00);
+
+		 // turn off auto rexmit
+		radio_write_register(NRF_SETUP_RETR, 0x00);
+
+		 // enable only data pipe 0
+		radio_write_register(NRF_EN_RXADDR, 0x01);
+
+		// set a fixed 32-byte message length
+		radio_write_register(NRF_RX_PW_P0, RADIO_MESSAGE_LENGTH_RAW);
+
+		// enable the noack payload command
+		radio_write_register(NRF_FEATURE, (1 << NRF_FEATURE_EN_DYN_ACK));
+
+		// clear int flags
 		radio_write_register(NRF_STATUS, NRF_STATUS_ALL);
-		systemDelayUSec(2);
-		radio_ce_on();
 
 		lastReceiveTime = osTaskGetTickCount();
 		radioWatchdogCounter++;
@@ -540,130 +581,6 @@ void radioSendMessage(RadioMessage* messagePtr) {
 		radioStartXmit = TRUE;
 		MAP_GPIOIntTypeSet(RADIO_IRQ_PORT, RADIO_IRQ_PIN, GPIO_HIGH_LEVEL);
 	}
-
-#ifndef MSI_DEBUG
-	radioIntDisable();
-	if (radio_xmit_irq_complete == TRUE) {
-		// the previous xmit has finished.  start a new xmit
-		radio_xmit_irq_complete = FALSE;
-		// switch the radio from receive to transmit mode
-		radio_set_tx_mode();
-
-		// select the SPI device and send the 32-byte message
-		SPISelectDevice(SPI_RADIO);
-		MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD_NOACK);
-		MAP_SSIDataGet(SSI0_BASE, &spi_data);
-		for (i = 0; i < RADIO_MESSAGE_LENGTH_RAW; ++i) {
-			MAP_SSIDataPut(SSI0_BASE, messagePtr->raw.data[i]);
-			MAP_SSIDataGet(SSI0_BASE, &spi_data);
-		}
-		SPIDeselect();
-		radioCounterXmit++;
-	} else {
-		// buffer the message in case we have a xmit in progress.
-		radioCounterXmitQueue++;
-		osQueueSend(radioCommsQueueXmit, messagePtr, 1);
-	}
-	radioIntEnable();
-#endif
-
-
-#if 0
-	// make the xmit atomic to other SPI interrupts
-	// Select the radio, disable the ISRs, grab the mutex
-	SPISelectDevice(SPI_RADIO);
-
-	// load the 32-byte message into the TX fifo
-	//SPISelectDeviceISR(SPI_RADIO);
-	MAP_SSIDataPut(SSI0_BASE, NRF_W_TX_PAYLOAD_NOACK);
-	MAP_SSIDataGet(SSI0_BASE, &spi_data);
-	for (i = 0; i < RADIO_MESSAGE_LENGTH_RAW; ++i) {
-		MAP_SSIDataPut(SSI0_BASE, messagePtr->raw.data[i]);
-		MAP_SSIDataGet(SSI0_BASE, &spi_data);
-	}
-	SPIDeselectISR();
-
-	// switch the radio from receive to transmit mode
-	// disable the CE line
-	radio_ce_off();
-
-	// clear all interrupt flags
-	radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-
-	// power on the radio, primary tx
-	radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (0 << NRF_CONFIG_PRIM_RX));
-	//systemDelayUSec(130);
-
-	//TODO should this happen before CE goes high?
-	//radio_write_command_isr(NRF_FLUSH_TX);
-
-	//TODO check to see if the TX fifo is full
-
-	// give a > 10us pulse on CE to send the packet
-	radio_ce_on();
-	systemDelayUSec(15);
-	radio_ce_off();
-
-	// Wait until TX_DS or MAX_RT status bit is set, then change back to RX mode
-//	uint32 status;
-//	uint32 xmitLoopCounter = 0;
-//	while (1) {
-//		//if (!GPIOPinRead(RADIO_IRQ_PORT, RADIO_IRQ_PIN)) {
-//
-//		//status = radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-//		status = radio_write_command_isr(NRF_NOP);
-//		if (status & NRF_STATUS_XMIT) {
-//			radioCounterReadStatusCorrect++;
-//			break;
-//		}
-//		if (xmitLoopCounter > 30) {
-//			radioCounterReadStatusError++;
-//			break;
-//		}
-//		radioCounterXmitLoop++;
-//		xmitLoopCounter++;
-//	}
-
-	uint32 status;
-	uint32 xmitLoopCounter = 0;
-	while (1) {
-		uint32 success;
-		status = radio_write_command_isr_nb(NRF_NOP, 1, &success);
-		if(success) {
-			radioCounterReadStatusCorrect++;
-			if (status & NRF_STATUS_XMIT) {
-				radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-				break;
-			}
-		} else {
-			radioCounterReadStatusError++;
-		}
-		if (xmitLoopCounter > 40) {
-			radioCounterReadStatusTimeout++;
-			break;
-		}
-		radioCounterXmitLoop++;
-		xmitLoopCounter++;
-	}
-
-	radio_write_register_isr(NRF_STATUS, NRF_STATUS_XMIT);
-
-	//systemDelayUSec(200);
-
-	//radio_set_rx_mode_isr();
-	// power on the radio, primary rx
-	radio_write_register_isr(NRF_CONFIG, NRF_RADIO_CONFIG_DEFAULT | (1 << NRF_CONFIG_PRIM_RX));
-
-	//TODO need delay here before we reasssert ce?
-	radio_ce_on();
-
-	//TODO should this happen before CE goes high?
-	//radio_write_command_isr(NRF_FLUSH_RX);
-
-	radioCounterXmit++;
-	SPIDeselect();
-
-#endif
 }
 
 
