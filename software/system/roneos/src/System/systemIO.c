@@ -8,7 +8,8 @@
 #include "roneos.h"
 #include <stdio.h>
 
-uint8 voltageBattery, voltageUSB, powerButton, mspVersion, mspVersionHardware, prevVal, prevValHardware;
+uint16 voltageBattery, voltageUSB;
+uint8 powerButton, mspVersion, mspVersionHardware, prevVal, prevValHardware;
 boolean batteryCharging, batteryFastCharging;
 
 /*
@@ -74,6 +75,15 @@ void systemIOInit() {
 	prevVal = 0;
 }
 
+#define SPI_MESSAGE_VOLTAGE_OFFSET	300
+#define SPI_MESSAGE_VOLTAGE_SCALER	2
+
+uint16 voltageMessageConvert(uint8 voltageMsg) {
+	//TODO check for bounds
+	uint16 voltage = (uint16)voltageMsg * SPI_MESSAGE_VOLTAGE_SCALER + SPI_MESSAGE_VOLTAGE_OFFSET;
+	return voltage;
+}
+
 /*
  * Update the battery voltage.
  *
@@ -81,7 +91,7 @@ void systemIOInit() {
  * @returns void
  */
 void systemBatteryVoltageUpdate(uint8 val) {
-	voltageBattery = val;
+	voltageBattery = voltageMessageConvert(val);
 }
 
 /*
@@ -90,7 +100,7 @@ void systemBatteryVoltageUpdate(uint8 val) {
  * @returns batteryVoltage the battery voltage
  */
 float systemBatteryVoltageGet(void) {
-	float bv = ((float)voltageBattery) / 10.0;
+	float bv = ((float)voltageBattery) / 100.0;
 	return bv;
 }
 
@@ -102,7 +112,7 @@ float systemBatteryVoltageGet(void) {
  * @returns void
  */
 void systemBatteryVoltageGet2(uint8* onesPtr, uint8* tenthsPtr) {
-	float bv = ((float)voltageBattery) / 10.0;
+	float bv = ((float)voltageBattery) / 100.0;
 	float ones, tenths;
 
 	ones = (float)(int)(bv);

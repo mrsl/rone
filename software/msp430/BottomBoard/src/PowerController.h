@@ -1,11 +1,18 @@
 #ifndef POWERCONTROLLER_H_
 #define POWERCONTROLLER_H_
 
+//// constants to convert raw ADC values of battery and USB to voltage
+//#define VOLTAGE_BAT_CONV_NUMER			(2.5 * 10)
+///* The 0.467 Constant comes from the 1/2 voltage divider + sampling droop */
+//#define VOLTAGE_BAT_CONV_DENOM			(1024 * 0.467)
+//#define VOLTAGE_BAT_FULLY_CHARGED		41
+
 // constants to convert raw ADC values of battery and USB to voltage
-#define VOLTAGE_BAT_CONV_NUMER			(2.5 * 10)
-/* The 0.467 Constant comes from the 1/2 voltage divider + sampling droop */
-#define VOLTAGE_BAT_CONV_DENOM			(1024 * 0.467)
-#define VOLTAGE_BAT_FULLY_CHARGED		41
+#define VOLTAGE_BAT_CONV_NUMER			10
+#define VOLTAGE_BAT_CONV_DENOM			21
+#define VOLTAGE_BAT_CONV_OFFSET			15
+
+#define VOLTAGE_BAT_FULLY_CHARGED		410
 
 
 // Experimentally determined number for V15
@@ -54,7 +61,7 @@ uint16 voltageUSBGet(void);
 void voltageUSBReadADC(void);
 
 void powerVBatInit(void);
-uint8 voltageBatGet(void);
+uint16 voltageBatGet(void);
 void voltageBatReadADC(void);
 
 #endif /*POWERCONTROLLER_H_*/

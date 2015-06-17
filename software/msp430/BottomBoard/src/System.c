@@ -53,8 +53,10 @@
 #define SYSTEM_LED_DIMMER_DELAY		150
 
 /* The voltage at which the MSP430 will shut the robot down to prevent damage
- * This is 10x the voltage (e.g. 3.6V = 36) */
-#define VBAT_SHUTDOWN_THRESHOLD			35
+ * This is 100x the voltage (e.g. 3.6V = 360) */
+#define VBAT_SHUTDOWN_THRESHOLD					350
+#define VBAT_CRITICAL_SHUTDOWN_THRESHOLD		340
+
 #define VBAT_SHUTDOWN_BLINK_DELAY		300000
 #define VBAT_SHUTDOWN_BLINK_LED_TIMES	3
 #define VBAT_SHUTDOWN_BLINK_LED			10
@@ -246,7 +248,7 @@ void setAllLEDData(uint8 *data, uint8 value){
 
 
 void setBatteryLEDData(uint8 *data){
-	unsigned long int vbatt = (long int)voltageBatGet();
+	unsigned long int vbatt = (long int)voltageBatGet()/10; // we divide by 10 to get the old 2 digit battery voltage
 	int i = 10;
 	//The range of vbat is from 
 	//4.3V = 43 = 5 Lights
@@ -615,7 +617,7 @@ void main(void) {
 		}
 
 		//Turn off the robot as soon as possible if the VBat drops below a threshold
-		if (voltageBatGet() < VBAT_SHUTDOWN_THRESHOLD && voltageUSBGet() < VOLTAGE_USB_PLUGGED_IN_THRESHOLD) {
+		if ((voltageBatGet() < VBAT_SHUTDOWN_THRESHOLD) && (voltageUSBGet() < VOLTAGE_USB_PLUGGED_IN_THRESHOLD)) {
 			resetSet(TRUE);
 			#ifdef RONE_V12
 				ftdiResetSet(TRUE);
@@ -627,7 +629,7 @@ void main(void) {
 			airplaneMode = FALSE;
 
 			// Go into airplane mode if the battery is beyond dead
-			if (voltageBatGet() < (VBAT_SHUTDOWN_THRESHOLD-3)) {
+			if (voltageBatGet() < (VBAT_CRITICAL_SHUTDOWN_THRESHOLD)) {
 				airplaneMode = TRUE;
 			}
 

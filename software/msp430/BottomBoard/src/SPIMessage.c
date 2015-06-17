@@ -18,6 +18,14 @@
 
 const uint8 MSP430Code[] = {'B', 'O', 'T'};
 
+#define SPI_MESSAGE_VOLTAGE_OFFSET	300
+#define SPI_MESSAGE_VOLTAGE_SCALER	2
+
+uint8 voltageMessageConvert(uint16 voltage) {
+	//TODO check for bounds
+	voltage = (voltage - SPI_MESSAGE_VOLTAGE_OFFSET) / SPI_MESSAGE_VOLTAGE_SCALER;
+	return (uint8)voltage;
+}
 
 // process messageIn and messageOut from CPU board
 void msp430CheckAndUpdate(void) {
@@ -61,7 +69,7 @@ void msp430CheckAndUpdate(void) {
 		}
 #endif //RONE_V12_TILETRACK
 
-		SPIMessageOut[MSP430_MSG_VBAT_IDX] = voltageBatGet();
+		SPIMessageOut[MSP430_MSG_VBAT_IDX] = voltageMessageConvert(voltageBatGet());
 		// convert and pack the USB voltage.  this int will range from 30-65ish.
 		// we subtract 30 to free up some room at the top for the charge bits
 		uint8 vUSB = voltageUSBGet() * VOLTAGE_USB_CONV_NUMER / VOLTAGE_USB_CONV_DENOM - VOLTAGE_USB_CONV_OFFSET;

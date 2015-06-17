@@ -92,15 +92,14 @@
 #endif // #ifndef RONE_V12_TILETRACK
 
 boolean powerOn = FALSE;
-uint16 startCount;
-uint16 endCount;
+//uint16 startCount;
+//uint16 endCount;
+
 #define VBAT_RUN_AVG_LEN		3
-//Start off assuming that the battery is fully charged
-uint8 voltageBatRunAvg[VBAT_RUN_AVG_LEN];
+uint16 voltageBatRunAvg[VBAT_RUN_AVG_LEN];
 uint8 voltageBatRunAvgCount = 0;
 
 #define VOLTAGE_USB_SENSE_RUN_AVG_LEN 	3
-//Start off assuming that USB line gives 0V, used for ADC mode only
 uint16 voltageUSBSenseRunAvg[VOLTAGE_USB_SENSE_RUN_AVG_LEN];
 uint8 voltageUSBSenseRunAvgCount = 0;
 
@@ -192,16 +191,16 @@ uint16 voltageUSBGet() {
 }
 
 
-uint8 voltageBatGet(void){
-	//Returns 10x the battery voltage as an integer
+uint16 voltageBatGet(void){
+	//Returns 100x the battery voltage as an integer
 	//Takes a running average of the last three reads to filter out noise
 	uint8 i;
 	uint16 voltageAvg = 0;
 
 	for(i=0; i<VBAT_RUN_AVG_LEN; i++){
-		voltageAvg += (uint16)(voltageBatRunAvg[i]);
+		voltageAvg += voltageBatRunAvg[i];
 	}
-	return (uint8)(voltageAvg / VBAT_RUN_AVG_LEN);
+	return (uint16)(voltageAvg / VBAT_RUN_AVG_LEN);
 }
 
 
@@ -227,9 +226,10 @@ void ADC10Shutdown(void){
 void powerVBatInit(void) {
 	uint8 i;
 	//Start off assuming that the battery is fully charged
-	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
-		voltageBatRunAvg[i] = 42;
-	}
+//	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
+//		voltageBatRunAvg[i] = 42;
+//	}
+
 	//Read the battery and use that as all of the running averages
 	//Esensially, this should give a starting place unless the read fails
 	voltageBatRunAvgCount = 0;
@@ -258,7 +258,8 @@ void voltageBatReadADC(void){
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
 		if (!(ADC10CTL1 & ADC10BUSY)) {
 			// Add the current read to the sliding average if there was a successful read
-			voltageBatRunAvg[voltageBatRunAvgCount] = (uint8)(ADC10MEM * VOLTAGE_BAT_CONV_NUMER / VOLTAGE_BAT_CONV_DENOM);
+			uint16 adcTemp = ADC10MEM;
+			voltageBatRunAvg[voltageBatRunAvgCount] = (uint16)(adcTemp * VOLTAGE_BAT_CONV_NUMER / VOLTAGE_BAT_CONV_DENOM) + VOLTAGE_BAT_CONV_OFFSET;
 			voltageBatRunAvgCount = (voltageBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
 			break;
 		} 
