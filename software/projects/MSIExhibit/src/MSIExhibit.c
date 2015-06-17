@@ -120,54 +120,16 @@ Beh* demoFlock(Beh* behOutputPtr, Beh* behRadioPtr, NbrList* nbrListPtr) {
 }
 
 
+#define ORBIT_RV	900
+
 Beh* orbitCentroid(Beh* behOutputPtr, Joystick* joystickPtr, NbrList* nbrListPtr) {
-	boolean farAway = FALSE;
-
-//	if (roneID == 143) {
-//		behSetTvRv(behOutputPtr, 0, 0);
-//		return behOutputPtr;
-//	}
-
-//	Nbr* nbrPtr = nbrListGetClosestNbr(nbrListPtr);
-//	if ((nbrListGetSize(nbrListPtr) < FLOCK_CLUSTER_THRESHOLD) || (nbrPtr && (nbrGetRange(nbrPtr) > FLOCK_CLUSTER_RANGE))) {
-//		farAway = TRUE;
-//	}
-
-	if (nbrListGetSize(nbrListPtr) < FLOCK_CLUSTER_THRESHOLD) {
-		farAway = TRUE;
-	}
-
-	// If we are under the threshold for number of robots to flock or we
-	// are too far, cluster.
-	if (farAway) {
-		//behClusterBroadcast(behOutputPtr, nbrListPtr, MOTION_TV, &broadcastMsg);
-		behSetTvRv(behOutputPtr, 0, 0);
-		cprintf("faraway\n");
-	} else {
-		// otherwise orbit the centroid
-		int32 centroidBearing = centroidLiteGetBearing();
-		int32 centroidDistance = centroidLiteGetDistance();
-
-		// mix in the remote control
-		// compute the dot product between the joystick direction and the current heading
-		int32 heading = encoderGetHeading();
-		int32 headingJoystick = atan2MilliRad(joystickPtr->y, joystickPtr->x);
-		int32 headingDiff = smallestAngleDifference(headingJoystick, heading);
-		int32 tvGain = cosMilliRad(headingDiff) * 2; //TODO use some kind of joystick gain instead of 2
-		//TODO: remember to divide by MILLIRAD_TRIG_SCALER when you use this
-
-		behOrbitRangeRaw(behOutputPtr, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE/3);
-
-//		if (roneID == 143) {
-//			behSetTvRv(behOutputPtr, 0, 0);
-//		} else {
-//			behOrbitRangeRaw(behOutputPtr, nbrGetBearing(nbrPtr), nbrGetRange(nbrPtr), MOTION_TV, BEH_CLUSTER_RANGE);
-//			//behOrbitRangeRaw(behOutputPtr, centroidBearing, centroidDistance, MOTION_TV, BEH_CLUSTER_RANGE);
-//		}
-		cprintf("cent brg=%d dist=%d\n", centroidBearing, centroidDistance);
-
-	}
-
+	Beh behFollow = behInactive;
+	Beh behCluster = behInactive;
+	behSetTvRv(behOutputPtr, MOTION_TV, ORBIT_RV);
+	behFollowPredesessor(&behFollow, nbrListPtr, MOTION_TV, FTL_RANGE);
+	//behClusterBroadcast(&behCluster, nbrListPtr, MOTION_TV, &broadcastMsg);
+	behSubsume(behOutputPtr, &behCluster, &behFollow);
+	ledsSetPattern(LED_RED, LED_PATTERN_PULSE, LED_BRIGHTNESS_HIGH, LED_RATE_MED);
 	return behOutputPtr;
 }
 
