@@ -52,10 +52,6 @@
 #define SYSTEM_LED_BRIGHTNESS		20
 #define SYSTEM_LED_DIMMER_DELAY		150
 
-/* The voltage at which the MSP430 will shut the robot down to prevent damage
- * This is 100x the voltage (e.g. 3.6V = 360) */
-#define VBAT_SHUTDOWN_THRESHOLD					350
-#define VBAT_CRITICAL_SHUTDOWN_THRESHOLD		340
 
 #define VBAT_SHUTDOWN_BLINK_DELAY		300000
 #define VBAT_SHUTDOWN_BLINK_LED_TIMES	3
@@ -491,7 +487,7 @@ void main(void) {
 			watchdogDisable();
 
 			// Update the values
-			voltageBatReadADC();
+			voltageBatUpdate();
 			timerVBatADCUpdate = TIMER_ADC_PERIOD;
 
 			// Re-enable inturupts
@@ -617,7 +613,9 @@ void main(void) {
 		}
 
 		//Turn off the robot as soon as possible if the VBat drops below a threshold
-		if ((voltageBatGet() < VBAT_SHUTDOWN_THRESHOLD) && (voltageUSBGet() < VOLTAGE_USB_PLUGGED_IN_THRESHOLD)) {
+
+		//if ((voltageBatGet() < VBAT_SHUTDOWN_THRESHOLD) && (voltageUSBGet() < VOLTAGE_USB_PLUGGED_IN_THRESHOLD)) {
+		if (voltageBatIsLow() && (voltageUSBGet() < VOLTAGE_USB_PLUGGED_IN_THRESHOLD)) {
 			resetSet(TRUE);
 			#ifdef RONE_V12
 				ftdiResetSet(TRUE);
@@ -640,7 +638,7 @@ void main(void) {
 			// Make sure the LED's don't turn off
 			ledTimeoutReset();
 
-			// Turn off the bliky led so it isn't stuck on
+			// Turn off the blinky led so it isn't stuck on
 			blinkyLEDSet(0);
 
 			// Blink the red light 3 times so that the user knows there is no battery

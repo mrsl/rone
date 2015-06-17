@@ -10,9 +10,15 @@
 // constants to convert raw ADC values of battery and USB to voltage
 #define VOLTAGE_BAT_CONV_NUMER			10
 #define VOLTAGE_BAT_CONV_DENOM			21
-#define VOLTAGE_BAT_CONV_OFFSET			15
+#define VOLTAGE_BAT_CONV_OFFSET			10
 
-#define VOLTAGE_BAT_FULLY_CHARGED		410
+/* The voltage at which the MSP430 will shut the robot down to prevent damage
+ * This is 100x the voltage (e.g. 3.6V = 360) */
+#define VOLTAGE_BAT_FULLY_CHARGED			410
+#define VBAT_SHUTDOWN_THRESHOLD				340
+#define VBAT_CRITICAL_SHUTDOWN_THRESHOLD	320
+
+#define VBAT_SHUTDOWN_THRESHOLD_TIMER		40
 
 
 // Experimentally determined number for V15
@@ -62,6 +68,7 @@ void voltageUSBReadADC(void);
 
 void powerVBatInit(void);
 uint16 voltageBatGet(void);
-void voltageBatReadADC(void);
+boolean voltageBatIsLow(void);
+void voltageBatUpdate(void);
 
 #endif /*POWERCONTROLLER_H_*/

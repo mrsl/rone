@@ -96,8 +96,10 @@ boolean powerOn = FALSE;
 //uint16 endCount;
 
 #define VBAT_RUN_AVG_LEN		3
-uint16 voltageBatRunAvg[VBAT_RUN_AVG_LEN];
-uint8 voltageBatRunAvgCount = 0;
+//uint16 voltageBatRunAvg[VBAT_RUN_AVG_LEN];
+//uint8 voltageBatRunAvgCount = 0;
+uint16 voltageBatAvg = VOLTAGE_BAT_FULLY_CHARGED;
+uint8 voltageBatShutdownCounter = 0;
 
 #define VOLTAGE_USB_SENSE_RUN_AVG_LEN 	3
 uint16 voltageUSBSenseRunAvg[VOLTAGE_USB_SENSE_RUN_AVG_LEN];
@@ -191,19 +193,6 @@ uint16 voltageUSBGet() {
 }
 
 
-uint16 voltageBatGet(void){
-	//Returns 100x the battery voltage as an integer
-	//Takes a running average of the last three reads to filter out noise
-	uint8 i;
-	uint16 voltageAvg = 0;
-
-	for(i=0; i<VBAT_RUN_AVG_LEN; i++){
-		voltageAvg += voltageBatRunAvg[i];
-	}
-	return (uint16)(voltageAvg / VBAT_RUN_AVG_LEN);
-}
-
-
 void ADC10Init(void){
 	/* Set up the ADC10 for single sample conversions at a slow (<100 Hz) rate. */
 	ADC10CTL0 = SREF_1 + 		/* Vr+ = Vref+, Vr- = Vss */
@@ -223,28 +212,11 @@ void ADC10Shutdown(void){
 }
 
 
-void powerVBatInit(void) {
-	uint8 i;
-	//Start off assuming that the battery is fully charged
-//	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
-//		voltageBatRunAvg[i] = 42;
-//	}
-
-	//Read the battery and use that as all of the running averages
-	//Esensially, this should give a starting place unless the read fails
-	voltageBatRunAvgCount = 0;
-	voltageBatReadADC();
-	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
-		voltageBatRunAvg[i] = voltageBatRunAvg[0];
-	}
-	//Reset the read count to 0
-	voltageBatRunAvgCount = 0;
-}
-
 #define ADC_MAX_DELAY_TIME		500
 
-void voltageBatReadADC(void){
+uint16 voltageReadADC(void){
 	uint16 i;
+	uint16 voltage = 0;
 	// Reconfigure ADC10 for power sense
 	/* Turn off the ENC and conversion start */
 	ADC10CTL0 &= ~(ENC + ADC10SC);
@@ -258,11 +230,70 @@ void voltageBatReadADC(void){
 	for (i = 0 ; i < ADC_MAX_DELAY_TIME ; i++) {
 		if (!(ADC10CTL1 & ADC10BUSY)) {
 			// Add the current read to the sliding average if there was a successful read
-			uint16 adcTemp = ADC10MEM;
-			voltageBatRunAvg[voltageBatRunAvgCount] = (uint16)(adcTemp * VOLTAGE_BAT_CONV_NUMER / VOLTAGE_BAT_CONV_DENOM) + VOLTAGE_BAT_CONV_OFFSET;
-			voltageBatRunAvgCount = (voltageBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
+			voltage = (ADC10MEM * VOLTAGE_BAT_CONV_NUMER / VOLTAGE_BAT_CONV_DENOM) + VOLTAGE_BAT_CONV_OFFSET;
+			//			voltageBatRunAvg[voltageBatRunAvgCount] = (uint16)(adcTemp * VOLTAGE_BAT_CONV_NUMER / VOLTAGE_BAT_CONV_DENOM) + VOLTAGE_BAT_CONV_OFFSET;
+//			voltageBatRunAvgCount = (voltageBatRunAvgCount + 1) % VBAT_RUN_AVG_LEN;
 			break;
 		} 
+	}
+	return voltage;
+}
+
+
+void powerVBatInit(void) {
+	uint8 i;
+	//Start off assuming that the battery is fully charged
+//	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
+//		voltageBatRunAvg[i] = 42;
+//	}
+
+//	//Read the battery and use that as all of the running averages
+//	//Esensially, this should give a starting place unless the read fails
+//	voltageBatRunAvgCount = 0;
+//	voltageBatReadADC();
+//	for(i = 0; i < VBAT_RUN_AVG_LEN; i++){
+//		voltageBatRunAvg[i] = voltageBatRunAvg[0];
+//	}
+//	//Reset the read count to 0
+//	voltageBatRunAvgCount = 0;
+
+	voltageBatAvg =  voltageReadADC();
+}
+
+
+void voltageBatUpdate(void){
+	voltageBatAvg = (voltageBatAvg * 31 + voltageReadADC()) >> 5;
+	if (voltageBatAvg < VBAT_SHUTDOWN_THRESHOLD) {
+		voltageBatShutdownCounter++;
+		if(voltageBatShutdownCounter > VBAT_SHUTDOWN_THRESHOLD_TIMER) {
+			voltageBatShutdownCounter = VBAT_SHUTDOWN_THRESHOLD_TIMER;
+		}
+	} else {
+		voltageBatShutdownCounter = 0;
+	}
+}
+
+
+uint16 voltageBatGet(void){
+	//Returns 100x the battery voltage as an integer
+	//Takes a running average of the last three reads to filter out noise
+//	uint8 i;
+//	uint16 voltageAvg = 0;
+//
+//	for(i=0; i<VBAT_RUN_AVG_LEN; i++){
+//		voltageAvg += voltageBatRunAvg[i];
+//	}
+//	return (uint16)(voltageAvg / VBAT_RUN_AVG_LEN);
+
+	return voltageBatAvg;
+}
+
+
+boolean voltageBatIsLow(void) {
+	if(voltageBatShutdownCounter == VBAT_SHUTDOWN_THRESHOLD_TIMER) {
+		return TRUE;
+	} else {
+		return FALSE;
 	}
 }
 
