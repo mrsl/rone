@@ -54,7 +54,7 @@
 #define MS_MINUTE						(60 * MS_SECOND)
 
 // time for a behavior to "settle".  After this time, the user can select another behavior
-#define BEHAVIOR_READY_TIME 			(10 * MS_SECOND)
+#define BEHAVIOR_READY_TIME 			(15 * MS_SECOND)
 
 // time for a behavior to time out.  After this time, the robots become idle
 #define BEHAVIOR_SLOW_TIME				(5 * MS_MINUTE)
